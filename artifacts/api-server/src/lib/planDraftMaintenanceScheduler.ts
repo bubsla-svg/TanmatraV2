@@ -30,6 +30,7 @@ import { and, eq, gt, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import { db, planDraftsTable, type PlanDraftStatus } from "@workspace/db";
 import { logger } from "./logger";
 import { sweepExpiredGenerationLeases } from "./planDraftStore";
+import { expireLapsedQuotes } from "./planDraftSchedule";
 
 /** Statuses that are safe to delete once abandoned: nothing downstream can
  *  reference a draft that never reached a quote. */
@@ -61,6 +62,8 @@ export interface PlanDraftMaintenanceResult {
   leasesExpired: number;
   /** Abandoned pre-quote drafts deleted. */
   draftsCollected: number;
+  /** Quotes past their TTL, expired and their held capacity released. */
+  quotesExpired: number;
 }
 
 export async function runPlanDraftMaintenance(
@@ -70,6 +73,10 @@ export async function runPlanDraftMaintenance(
   // to generation_failed and becomes collectable in the same tick rather than
   // waiting a full interval.
   const expired = await sweepExpiredGenerationLeases(now);
+
+  // Release capacity held by quotes nobody paid for. Runs before collection so
+  // a draft whose quote just lapsed is collectable in the same tick.
+  const quotesExpired = await expireLapsedQuotes(now);
 
   const supersededCutoff = new Date(now.getTime() - SUPERSEDED_RETENTION_MS);
   const collected = await db
@@ -95,18 +102,23 @@ export async function runPlanDraftMaintenance(
     )
     .returning({ id: planDraftsTable.id });
 
-  if (expired.length > 0 || collected.length > 0) {
+  if (expired.length > 0 || collected.length > 0 || quotesExpired > 0) {
     logger.info(
       {
         leasesExpired: expired.length,
         draftsCollected: collected.length,
+        quotesExpired,
         supersededRetentionMs: SUPERSEDED_RETENTION_MS,
       },
       "plan-draft maintenance: tick complete",
     );
   }
 
-  return { leasesExpired: expired.length, draftsCollected: collected.length };
+  return {
+    leasesExpired: expired.length,
+    draftsCollected: collected.length,
+    quotesExpired,
+  };
 }
 
 /**
