@@ -127,6 +127,20 @@ export interface PlanDraftDay {
   slots: PlanDraftMealSlot[];
 }
 
+/**
+ * Why an already-chosen delivery schedule has to be picked again.
+ *
+ * Exists so an invalidation is always ANNOUNCED. The alternative — quietly
+ * reinterpreting a stored selection under new rules — is how a customer ends up
+ * with a delivery at a time they never agreed to, and it leaves no trace that
+ * anything changed.
+ */
+export type PlanDraftScheduleReconfirmReason =
+  /** The window label a customer picked was rendered in UTC before the
+   *  operational timezone was pinned to Asia/Kolkata, so the same text no
+   *  longer denotes the same time of day (DEFECT-PLAN-SLOT-DATE-001). */
+  | "delivery_window_timezone_updated";
+
 export interface PlanDraftDuration {
   cycle: "weekly" | "monthly" | "quarterly";
   renewal: PlanDraftRenewalChoice;
@@ -267,6 +281,12 @@ export const planDraftsTable = pgTable(
     previousLineup: jsonb("previous_lineup").$type<PlanDraftDay[] | null>(),
 
     deliverySchedule: jsonb("delivery_schedule").$type<PlanDraftDeliverySchedule | null>(),
+
+    /** Set when a schedule the customer already chose can no longer be taken at
+     *  face value, so it must be re-picked rather than silently reinterpreted.
+     *  Null once they reconfirm. See PlanDraftScheduleReconfirmReason. */
+    scheduleReconfirmReason: varchar("schedule_reconfirm_reason", { length: 64 })
+      .$type<PlanDraftScheduleReconfirmReason | null>(),
 
     /** Guest drafts expire and become eligible for cleanup; refreshed on
      *  every PATCH. Claiming a draft does not change this — a claimed

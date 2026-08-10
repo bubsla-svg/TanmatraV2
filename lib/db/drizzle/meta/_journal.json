@@ -218,6 +218,13 @@
       "when": 1786700000000,
       "tag": "0030_plan_draft_quote_idempotency",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1786800000000,
+      "tag": "0031_delivery_slot_operational_date",
+      "breakpoints": true
     }
   ]
 }

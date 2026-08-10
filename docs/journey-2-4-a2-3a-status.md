@@ -187,6 +187,14 @@ operational timezone (no DST, so a constant +05:30 and no ambiguous local hour).
 zone by whoever publishes slots — the eligibility query groups by it verbatim
 rather than re-deriving a date from the instant.
 
+> **This paragraph was documentation-only, and the A2.3a review was right to
+> refuse that.** "Must be written in this zone" bound nobody: every writer in
+> the repository was producing `toISOString().slice(0, 10)` — the UTC date — and
+> the seeder was additionally generating its wall-clock times in the container's
+> zone, so a "19:00" dinner slot was published at 00:30 IST the next morning
+> under the previous day's date. Now enforced by a database trigger, with the
+> derivation in one canonical helper. See **`docs/DEFECT-PLAN-SLOT-DATE-001.md`**.
+
 ### 3.5 Catalog drift after quote creation ✅ — policy: honour until expiry
 
 **Recorded policy:** a quote is a snapshot, not a live query. An `active`,
@@ -215,6 +223,7 @@ stored row untouched · a withdrawn plan blocks a new quote with
 | DEFECT-CUSTOM-PRICING-001 | **Open — BLOCKED ON PRODUCT DECISION.** See `docs/DEFECT-CUSTOM-PRICING-001.md`. | Product + Finance + Nutrition Ops |
 | DEFECT-PLAN-CAPACITY-002 | **Closed here.** §2. | — |
 | DEFECT-PLAN-QUOTE-STALE-001 | **Closed here.** §2. | — |
+| DEFECT-PLAN-SLOT-DATE-001 | **Closed** by the follow-up PR — `slot_date` enforced at the database boundary; see `docs/DEFECT-PLAN-SLOT-DATE-001.md`. It was a gate on A2.4 acceptance. | — |
 | DEFECT-CUSTOM-ROUTE-001 | Open. Frontend routing. | Journey 4 FE |
 
 A2.3's own status doc carried "DEFECT-PLAN-CONVERT-001 → Closed for

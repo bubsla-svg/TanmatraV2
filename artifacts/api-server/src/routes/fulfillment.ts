@@ -2,6 +2,8 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { requireAuthUser as requireAuth } from "../middlewares/requireAuth";
 import {
   db,
+  deriveOperationalDate,
+  operationalInstant,
   deliverySlotsTable,
   pickupLocationsTable,
   packagingReturnsTable,
@@ -35,9 +37,18 @@ const router: IRouter = Router();
 // uniq_delivery_slot_zone_window index, throttled to once per process per day.
 let lastSeedDate = "";
 async function ensureSlots(zone = "default"): Promise<void> {
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = deriveOperationalDate(new Date());
   if (lastSeedDate === todayStr) return;
-  // Seed the next 7 days × 4 windows at 12:00 / 13:30 / 19:00 / 20:30.
+  // Seed the next 7 days × 4 windows at 12:00 / 13:30 / 19:00 / 20:30 —
+  // ASIA/KOLKATA wall-clock, which is what "lunch" and "dinner" mean here.
+  //
+  // This used to build the instants with `setHours`, i.e. in whatever timezone
+  // the container ran with, and then take the date with `toISOString()`, i.e.
+  // in UTC. Two different zones in one function. On Cloud Run (UTC) the 19:00
+  // dinner window was published at 19:00Z — 00:30 the next morning in Noida —
+  // and stamped with the previous day's `slot_date`, so it was both at the
+  // wrong time and filed under the wrong day. `operationalInstant` is how a
+  // publisher says 19:00 and means 19:00 where the food is delivered.
   const windows: Array<[number, number]> = [
     [12, 0],
     [13, 30],
@@ -45,19 +56,20 @@ async function ensureSlots(zone = "default"): Promise<void> {
     [20, 30],
   ];
   const rows: Array<typeof deliverySlotsTable.$inferInsert> = [];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
   for (let d = 0; d < 7; d++) {
-    const day = new Date(today);
-    day.setDate(today.getDate() + d);
-    const dateStr = day.toISOString().slice(0, 10);
+    // Step by operational date, not by adding 24h to an instant: those differ
+    // across a DST boundary, and stepping the date is what "the next 7 days"
+    // means to the kitchen.
+    const dateStr = deriveOperationalDate(
+      new Date(Date.now() + d * 24 * 60 * 60 * 1000),
+    );
     for (const [h, m] of windows) {
-      const start = new Date(day);
-      start.setHours(h, m, 0, 0);
-      const end = new Date(start);
-      end.setMinutes(end.getMinutes() + 60);
+      const start = operationalInstant(dateStr, h, m);
+      const end = new Date(start.getTime() + 60 * 60 * 1000);
       rows.push({
-        slotDate: dateStr,
+        // Derived from the instant by the one canonical helper, so it cannot
+        // drift from it. A database trigger rejects the row if it does.
+        slotDate: deriveOperationalDate(start),
         startsAt: start,
         endsAt: end,
         zone,

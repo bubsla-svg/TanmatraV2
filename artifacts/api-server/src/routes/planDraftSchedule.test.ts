@@ -28,6 +28,7 @@ import { eq, inArray } from "drizzle-orm";
 import {
   db,
   deliverySlotsTable,
+  deriveOperationalDate,
   planDraftQuotesTable,
   planDraftsTable,
   slotReservationsTable,
@@ -144,7 +145,7 @@ async function makeSlot(dayOffset: number, capacity = 5, hour = 12): Promise<num
   const [row] = await db
     .insert(deliverySlotsTable)
     .values({
-      slotDate: start.toISOString().slice(0, 10),
+      slotDate: deriveOperationalDate(start),
       startsAt: start,
       endsAt: end,
       zone: "default",
@@ -255,7 +256,7 @@ test("eligible dates and windows come from the server, past the cutoff only", as
   const [inside] = await db
     .insert(deliverySlotsTable)
     .values({
-      slotDate: tooSoon.toISOString().slice(0, 10),
+      slotDate: deriveOperationalDate(tooSoon),
       startsAt: tooSoon,
       endsAt: new Date(tooSoon.getTime() + 3600_000),
       zone: "default",

@@ -31,6 +31,7 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import {
   db,
   deliverySlotsTable,
+  deriveOperationalDate,
   marketplaceItemsTable,
   slotReservationsTable,
   usersTable,
@@ -297,7 +298,7 @@ test("orphan slot reservation sweeper reclaims capacity", async () => {
   const [slot] = await db
     .insert(deliverySlotsTable)
     .values({
-      slotDate: start.toISOString().slice(0, 10),
+      slotDate: deriveOperationalDate(start),
       startsAt: start,
       endsAt: end,
       zone: `mkt-sweeper-${randomUUID().slice(0, 8)}`,
@@ -361,7 +362,7 @@ test("reserveSlot rejects null orderId and rolls back atomically when slot full"
   const [slot] = await db
     .insert(deliverySlotsTable)
     .values({
-      slotDate: start.toISOString().slice(0, 10),
+      slotDate: deriveOperationalDate(start),
       startsAt: start,
       endsAt: end,
       zone: `mkt-reserve-${randomUUID().slice(0, 8)}`,
@@ -457,7 +458,7 @@ test("crash-injection: connection drop after reserveSlot is reclaimed within SLA
   const [slot] = await db
     .insert(deliverySlotsTable)
     .values({
-      slotDate: start.toISOString().slice(0, 10),
+      slotDate: deriveOperationalDate(start),
       startsAt: start,
       endsAt: end,
       zone: `mkt-crash-${randomUUID().slice(0, 8)}`,
@@ -571,7 +572,7 @@ test("sweeper leaves in-flight (recent) orphan rows alone", async () => {
   const [slot] = await db
     .insert(deliverySlotsTable)
     .values({
-      slotDate: start.toISOString().slice(0, 10),
+      slotDate: deriveOperationalDate(start),
       startsAt: start,
       endsAt: end,
       zone: `mkt-sweeper-recent-${randomUUID().slice(0, 8)}`,
