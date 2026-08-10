@@ -11,12 +11,19 @@ import {
 import { PLAN_CATALOG } from "@workspace/subscription-rules";
 import { requireAuthUser } from "../middlewares/requireAuth";
 import {
+  planDraftCreateRateLimit,
+  planDraftMutateRateLimit,
+  planDraftReadRateLimit,
+} from "../middlewares/rateLimitMiddleware";
+import {
   PLAN_DRAFT_TTL_MS,
   setPlanDraftCookie,
   readPlanDraftCookie,
   resolvePlanDraftAccess,
 } from "../lib/planDraftAuth";
 import { casUpdateDraft, loadLiveDraft } from "../lib/planDraftStore";
+import { runAfterClaimRead } from "../lib/planDraftTestHooks";
+import { countLiveDraftsForUser } from "../lib/planDraftMaintenanceScheduler";
 import {
   CLIENT_SETTABLE_STATUS_VALUES,
   canTransitionPlanDraftStatus,
@@ -34,6 +41,14 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const router: IRouter = Router();
+
+/** Ceiling on simultaneously-live drafts per authenticated customer. Generous:
+ *  a customer legitimately comparing a recommended plan against a custom build,
+ *  across a couple of abandoned attempts, stays well under it. */
+export const DEFAULT_MAX_LIVE_DRAFTS_PER_USER = 10;
+const MAX_LIVE_DRAFTS_PER_USER = Number(
+  process.env["PLAN_DRAFT_MAX_LIVE_PER_USER"] ?? DEFAULT_MAX_LIVE_DRAFTS_PER_USER,
+);
 
 const TERMINAL_STATUSES: PlanDraftStatus[] = [
   "converted",
@@ -135,7 +150,10 @@ const patchDraftSchema = z.object({
   duration: durationSchema.optional(),
 });
 
-router.post("/plan-drafts", async (req: Request, res: Response) => {
+router.post(
+  "/plan-drafts",
+  planDraftCreateRateLimit,
+  async (req: Request, res: Response) => {
   const parsed = createDraftSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid request" });
@@ -158,6 +176,27 @@ router.post("/plan-drafts", async (req: Request, res: Response) => {
 
   const id = crypto.randomBytes(32).toString("hex");
   const userId = req.isAuthenticated() ? req.user.id : null;
+
+  // Bound the STOCK of live drafts one signed-in customer can hold. The rate
+  // limiter bounds how fast drafts are created; this bounds how many can
+  // accumulate. Guest drafts are not counted here — a guest has no stable
+  // server-side identity to count against (the cookie is the only handle, and
+  // it is trivially discarded), so for them the rate limit plus the retention
+  // sweep are the controls. Deliberately not silently deleting an old draft to
+  // make room: which of a customer's in-progress plans to destroy is not a
+  // decision to make on their behalf.
+  if (userId) {
+    const live = await countLiveDraftsForUser(userId);
+    if (live >= MAX_LIVE_DRAFTS_PER_USER) {
+      res.status(429).json({
+        error: "too many plans in progress",
+        code: "PLAN_DRAFT_LIMIT_REACHED",
+        limit: MAX_LIVE_DRAFTS_PER_USER,
+      });
+      return;
+    }
+  }
+
   const now = Date.now();
 
   const [draft] = await db
@@ -176,7 +215,10 @@ router.post("/plan-drafts", async (req: Request, res: Response) => {
   res.status(201).json({ draft });
 });
 
-router.get("/plan-drafts/:id", async (req: Request, res: Response) => {
+router.get(
+  "/plan-drafts/:id",
+  planDraftReadRateLimit,
+  async (req: Request, res: Response) => {
   const id = paramId(req.params.id);
   const draft = await loadLiveDraft(id);
   if (!draft) {
@@ -193,7 +235,10 @@ router.get("/plan-drafts/:id", async (req: Request, res: Response) => {
   res.json({ draft });
 });
 
-router.patch("/plan-drafts/:id", async (req: Request, res: Response) => {
+router.patch(
+  "/plan-drafts/:id",
+  planDraftMutateRateLimit,
+  async (req: Request, res: Response) => {
   const id = paramId(req.params.id);
   const parsed = patchDraftSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -286,7 +331,10 @@ router.patch("/plan-drafts/:id", async (req: Request, res: Response) => {
   res.json({ draft: updated });
 });
 
-router.post("/plan-drafts/:id/claim", async (req: Request, res: Response) => {
+router.post(
+  "/plan-drafts/:id/claim",
+  planDraftMutateRateLimit,
+  async (req: Request, res: Response) => {
   const userId = requireAuthUser(req, res);
   if (!userId) return;
 
@@ -313,6 +361,11 @@ router.post("/plan-drafts/:id/claim", async (req: Request, res: Response) => {
     res.status(404).json({ error: "draft not found" });
     return;
   }
+
+  // Test-only seam. A no-op in every real request; see lib/planDraftTestHooks.
+  // This is the exact point the claim race opens: the draft has been read and
+  // authorized, and the ownership CAS has not run yet.
+  await runAfterClaimRead();
 
   const now = Date.now();
   const claimed = await db.transaction(async (tx) => {

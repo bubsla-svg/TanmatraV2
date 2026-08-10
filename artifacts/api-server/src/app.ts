@@ -17,7 +17,6 @@ import {
   rationaleRateLimit,
   paymentRouteRateLimit,
   addressRateLimit,
-  planDraftRateLimit,
 } from "./middlewares/rateLimitMiddleware";
 import { idempotencyMiddleware } from "./middlewares/idempotency";
 
@@ -197,7 +196,11 @@ app.use("/api/support-agent", aiRateLimit);
 app.use("/api/dish-rationales", rationaleRateLimit);
 app.use("/api/payments", paymentRouteRateLimit);
 app.use("/api/addresses", addressRateLimit);
-app.use("/api/plan-drafts", planDraftRateLimit);
+// Plan drafts deliberately do NOT get a blanket limiter here: their budgets
+// differ by an order of magnitude between cheap edits and full lineup
+// generation, and the per-caller key needs `:id` from the route pattern, which
+// only exists inside the router. See routes/planDrafts.ts and
+// routes/planDraftLineup.ts, where each route carries its own policy.
 
 // Surface body-parser failures as a clean 413 / 400 instead of a 500.
 app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {

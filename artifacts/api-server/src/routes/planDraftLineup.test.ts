@@ -74,6 +74,16 @@ function makeApp(): Express {
 }
 
 before(async () => {
+  // These suites exercise draft behaviour, not throttling — the rate-limit
+  // contract has its own test (planDraftRateLimit.test.ts). Every request here
+  // comes from one loopback IP, so the production ceilings would throttle the
+  // suite itself and mask what it is actually asserting.
+  process.env["PLAN_DRAFT_CREATE_PER_MIN"] = "100000";
+  process.env["PLAN_DRAFT_MUTATE_PER_MIN"] = "100000";
+  process.env["PLAN_GENERATION_PER_MIN"] = "100000";
+  process.env["PLAN_SHUFFLE_PER_MIN"] = "100000";
+  process.env["PLAN_DRAFT_READ_PER_MIN"] = "100000";
+
   server = http.createServer(makeApp());
   await new Promise<void>((resolve) => server.listen(0, resolve));
   baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
@@ -90,6 +100,16 @@ after(async () => {
     await db.delete(usersTable).where(inArray(usersTable.id, CREATED_USER_IDS));
   }
 });
+
+/** Reads a draft row straight from the DB, bypassing the HTTP surface — used
+ *  by the lease tests, which drive the store primitives directly to reproduce
+ *  interleavings the route API cannot express. */
+async function loadDraftRow(id: string): Promise<PlanDraft> {
+  const { loadLiveDraft } = await import("../lib/planDraftStore");
+  const row = await loadLiveDraft(id);
+  assert.ok(row, `draft ${id} should exist`);
+  return row;
+}
 
 function cookieFrom(res: globalThis.Response): string | null {
   for (const raw of res.headers.getSetCookie()) {
@@ -311,27 +331,28 @@ test("a concurrent edit during generation never strands the draft in `generating
   // `generating` at the caller's version (exactly what generate's claim does),
   // then let a concurrent writer bump the version before generate's final
   // write lands.
-  const claimVersion = s.version;
-  const { casUpdateDraft } = await import("../lib/planDraftStore");
-  const claimed = await casUpdateDraft(s.id, claimVersion, {
-    status: "generating",
-  });
-  assert.ok(claimed, "claim should succeed");
-  const bumped = await casUpdateDraft(s.id, claimed.version, {
+  const { acquireGenerationLease, casUpdateDraft, releaseGenerationAttempt } =
+    await import("../lib/planDraftStore");
+  const draftRow = await loadDraftRow(s.id);
+  const lease = await acquireGenerationLease(s.id, draftRow, s.version);
+  assert.equal(lease.kind, "acquired");
+  if (lease.kind !== "acquired") return;
+
+  const bumped = await casUpdateDraft(s.id, lease.draft.version, {
     spicePreference: "hot",
   });
   assert.ok(bumped, "the concurrent write should succeed");
 
-  // Now the generate route's final CAS would fail. Whatever it reports, the
-  // draft must not be left in `generating`.
-  const { releaseGeneratingClaim } = await import("../lib/planDraftStore");
-  const released = await releaseGeneratingClaim(s.id, {
+  // Now the generate route's finalize would fail its version guard. Releasing
+  // by ATTEMPT id still works, so the draft never stays in `generating`.
+  const released = await releaseGenerationAttempt(s.id, lease.attemptId, {
     code: "concurrent_edit",
     message: "Your plan changed while we were building it.",
     details: {},
   });
   assert.ok(released, "the claim must be releasable even after the version moved");
   assert.equal(released.status, "generation_failed");
+  assert.equal(released.generationAttemptId, null, "the lease is cleared on release");
 
   // And the customer can actually recover from there.
   s.version = released.version;
@@ -341,11 +362,11 @@ test("a concurrent edit during generation never strands the draft in `generating
 
 test("releasing a generating claim only touches a draft that is actually generating", async () => {
   const { session } = await generatedCustomDraft();
-  const { releaseGeneratingClaim } = await import("../lib/planDraftStore");
+  const { releaseGenerationAttempt } = await import("../lib/planDraftStore");
 
   // The draft is lineup_ready, not generating — the release must be a no-op so
   // it can never clobber a state another writer legitimately moved to.
-  const released = await releaseGeneratingClaim(session.id, {
+  const released = await releaseGenerationAttempt(session.id, "any-attempt", {
     code: "concurrent_edit",
     message: "should not apply",
     details: {},

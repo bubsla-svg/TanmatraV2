@@ -146,6 +146,14 @@ export type PlanDraftGenerationCode =
    *  the lineup we built no longer matches the customer's saved answers and was
    *  discarded rather than persisted. */
   | "concurrent_edit"
+  /** The attempt that held the generation lease stopped reporting (typically a
+   *  worker crash) and the lease aged out. Always retryable — nothing about
+   *  the customer's configuration caused it. */
+  | "generation_lease_expired"
+  /** This attempt lost its lease to a newer one and was refused when it tried
+   *  to finalize. Recorded for the losing attempt's own response only; the
+   *  draft itself belongs to the newer attempt. */
+  | "generation_attempt_superseded"
   /** An unexpected server-side failure. Recorded so the draft never strands in
    *  `generating` — a status no client transition can leave. */
   | "internal_error";
@@ -222,6 +230,33 @@ export const planDraftsTable = pgTable(
      *  recovery" half of DEFECT-PLAN-GEN-001. Cleared on every successful
      *  generation. */
     generationError: jsonb("generation_error").$type<PlanDraftGenerationFailure | null>(),
+
+    // ── Generation lease (A2.2H) ────────────────────────────────────────────
+    // `status = 'generating'` on its own says a generation is in flight but not
+    // WHOSE. That is not enough: a worker that stalls past its lease, or one
+    // that crashes outright, would otherwise either strand the row forever or
+    // come back later and overwrite a newer attempt's result. These three
+    // columns make the claim attempt-owned and time-bounded, so every finalize
+    // and release can be guarded on "…and this is still MY attempt".
+    //
+    // `generationFailureCode` is deliberately NOT a separate column: the code
+    // already lives in `generationError.code` (typed as PlanDraftGenerationCode
+    // and persisted with its message and details). A second copy would be a
+    // drift hazard with no reader that needs it.
+
+    /** Server-generated id of the attempt currently holding the lease. Null
+     *  whenever `status !== 'generating'`. */
+    generationAttemptId: varchar("generation_attempt_id", { length: 64 }),
+    /** When the current attempt acquired the lease. */
+    generationStartedAt: timestamp("generation_started_at", {
+      withTimezone: true,
+    }),
+    /** When the current attempt's lease lapses. Past this instant another
+     *  attempt may reclaim the draft, and the original attempt loses the right
+     *  to finalize. SERVER-computed — never supplied by a client. */
+    generationLeaseExpiresAt: timestamp("generation_lease_expires_at", {
+      withTimezone: true,
+    }),
     /** Keep-protected slot keys, formatted "<deliveryDate>:<mealPeriod>".
      *  Survives Shuffle by construction (A2.2 filters these out of the
      *  shuffle candidate set). */
@@ -248,6 +283,11 @@ export const planDraftsTable = pgTable(
   (table) => [
     index("idx_plan_drafts_user").on(table.userId),
     index("idx_plan_drafts_expires").on(table.expiresAt),
+    // The stale-lease sweeper scans for expired leases; the retention job
+    // scans by status. Both would otherwise be sequential scans as the table
+    // grows with abandoned guest drafts.
+    index("idx_plan_drafts_generation_lease").on(table.generationLeaseExpiresAt),
+    index("idx_plan_drafts_status").on(table.status),
   ],
 );
 

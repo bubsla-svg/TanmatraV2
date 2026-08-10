@@ -5,20 +5,54 @@ function clientIp(req: Request): string {
   return req.ip ?? req.socket?.remoteAddress ?? "unknown";
 }
 
+export interface RateLimitOptions {
+  /** Derives the bucket key suffix. Defaults to the client IP. Use this to
+   *  bucket per authenticated caller so shared egress IPs (corporate NAT,
+   *  carrier gateways) do not put unrelated customers in one bucket. */
+  key?: (req: Request) => string;
+  /** Machine-readable code returned in the 429 body, so a client can tell
+   *  WHICH budget it exhausted and react appropriately. Defaults to the
+   *  generic `rate_limited`. */
+  code?: string;
+}
+
 /**
  * Express middleware factory that applies the Postgres-backed rate limiter.
+ *
+ * A refused request is rejected BEFORE the handler runs, so a 429 can never
+ * have partially mutated anything — no draft write, no generation claim, no
+ * partial lineup.
  *
  * @param scope   Logical action name embedded in the key (e.g. "public:menu")
  * @param max     Maximum allowed requests within the window
  * @param windowMs  Window duration in milliseconds
+ * @param opts    Optional key derivation and typed error code
  */
-export function rateLimitMiddleware(scope: string, max: number, windowMs: number) {
+export function rateLimitMiddleware(
+  scope: string,
+  /** A fixed ceiling, or a getter resolved per request. The getter form lets a
+   *  limit stay configurable at runtime instead of freezing whatever the
+   *  environment happened to hold at import time. */
+  max: number | (() => number),
+  windowMs: number,
+  opts: RateLimitOptions = {},
+) {
+  const deriveKey = opts.key ?? ((req: Request) => `ip:${clientIp(req)}`);
+  const code = opts.code ?? "rate_limited";
+  const resolveMax = typeof max === "function" ? max : () => max;
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const key = `${scope}:ip:${clientIp(req)}`;
-      const allowed = await rateLimit(key, windowMs, max);
+      const key = `${scope}:${deriveKey(req)}`;
+      const allowed = await rateLimit(key, windowMs, resolveMax());
       if (!allowed) {
-        res.status(429).json({ error: "rate_limited" });
+        // Retry-After is in seconds, per RFC 9110. The window length is the
+        // honest upper bound on how long the caller must wait.
+        res.setHeader("Retry-After", String(Math.ceil(windowMs / 1000)));
+        res.status(429).json({
+          error: "rate_limited",
+          code,
+          retryAfterSeconds: Math.ceil(windowMs / 1000),
+        });
         return;
       }
     } catch (err) {
@@ -28,6 +62,28 @@ export function rateLimitMiddleware(scope: string, max: number, windowMs: number
     }
     next();
   };
+}
+
+/**
+ * Bucket key for the plan-draft family: the authenticated customer when there
+ * is one, else the guest draft cookie (an opaque server-issued 32-byte token —
+ * the same credential that authorizes access to the draft), else the IP.
+ *
+ * Draft-specific operations additionally fold in the draft id from the path, so
+ * a customer working on two plans in two tabs does not throttle themselves by
+ * sharing one bucket across both.
+ */
+export function planDraftRateLimitKey(req: Request): string {
+  const authed = req.isAuthenticated?.() ? req.user?.id : undefined;
+  const identity = authed
+    ? `user:${authed}`
+    : typeof req.cookies?.["plan_draft_id"] === "string"
+      ? `guest:${req.cookies["plan_draft_id"]}`
+      : `ip:${clientIp(req)}`;
+  const draftId = req.params?.["id"];
+  return typeof draftId === "string" && draftId.length > 0
+    ? `${identity}:draft:${draftId}`
+    : identity;
 }
 
 // Pre-built limiters for the key endpoint categories.
@@ -62,18 +118,92 @@ export const aiStaffRateLimit = rateLimitMiddleware("ai:agent:staff", 20, 60_000
 /** Dish rationale AI — called on menu scroll, batched but still limited. */
 export const rationaleRateLimit = rateLimitMiddleware("ai:rationale", 40, 60_000);
 
-/**
- * Pre-purchase plan drafts.
- *
- * `POST /plan-drafts` needs no auth and writes a row plus a cookie on every
- * call, and `POST /plan-drafts/:id/generate` and `.../shuffle` each fetch the
- * merged catalog and rewrite the draft's whole lineup. Unthrottled, that is an
- * unbounded row-creation and compute surface for an unauthenticated caller.
- * Sized above the order limit because configuring a plan is genuinely
- * click-heavy — a customer editing a lineup slot by slot issues far more
- * writes than someone placing an order.
- */
-export const planDraftRateLimit = rateLimitMiddleware("plan:drafts", 60, 60_000);
+// ── Pre-purchase plan drafts (A2.2H) ─────────────────────────────────────────
+//
+// A single flat bucket over every /plan-drafts route was wrong in both
+// directions: too tight for cheap, click-heavy editing (a customer walking a
+// lineup slot by slot issues far more requests than someone placing an order),
+// and far too loose for the two genuinely expensive endpoints. `generate` and
+// `shuffle` each fetch the merged catalog and rewrite the draft's entire
+// lineup; `POST /plan-drafts` needs no auth at all and writes a row per call.
+// Those deserve their own budgets, not a share of the editing budget.
+//
+// Keying: per CALLER identity, not per IP alone. `planDraftRateLimitKey`
+// prefers the authenticated user, then the guest draft cookie (an opaque
+// 32-byte server-issued token — the same credential that authorizes the draft),
+// and only falls back to IP for an unidentified caller. IP alone would put
+// every customer behind one corporate NAT or mobile carrier gateway into a
+// shared bucket.
+//
+// Limits are env-overridable rather than baked in, so an operator can retune
+// them from observed traffic without a deploy.
+
+function envLimit(name: string, fallback: number): number {
+  const raw = process.env[name];
+  const parsed = raw === undefined ? NaN : Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+/** Defaults, in requests per minute. Each is env-overridable at RUNTIME (the
+ *  getters below re-read on every request), so an operator can retune from
+ *  observed traffic without a deploy. */
+export const PLAN_DRAFT_LIMIT_DEFAULTS = {
+  /** Row-creating and unauthenticated. Tightest of the family. */
+  create: 10,
+  /** Preference PATCHes and per-slot lineup edits. Deliberately generous —
+   *  this is ordinary typing and tapping. */
+  mutate: 120,
+  /** Catalog fetch + full lineup build. */
+  generate: 10,
+  /** Same cost as generate; separated so a shuffle-spamming UI bug cannot
+   *  exhaust the budget a customer needs to generate at all. */
+  shuffle: 20,
+  /** Read-only candidate/option lookups. */
+  read: 120,
+} as const;
+
+export const PLAN_DRAFT_LIMITS = {
+  create: () => envLimit("PLAN_DRAFT_CREATE_PER_MIN", PLAN_DRAFT_LIMIT_DEFAULTS.create),
+  mutate: () => envLimit("PLAN_DRAFT_MUTATE_PER_MIN", PLAN_DRAFT_LIMIT_DEFAULTS.mutate),
+  generate: () => envLimit("PLAN_GENERATION_PER_MIN", PLAN_DRAFT_LIMIT_DEFAULTS.generate),
+  shuffle: () => envLimit("PLAN_SHUFFLE_PER_MIN", PLAN_DRAFT_LIMIT_DEFAULTS.shuffle),
+  read: () => envLimit("PLAN_DRAFT_READ_PER_MIN", PLAN_DRAFT_LIMIT_DEFAULTS.read),
+} as const;
+
+export const planDraftCreateRateLimit = rateLimitMiddleware(
+  "plan:draft:create",
+  PLAN_DRAFT_LIMITS.create,
+  60_000,
+  { key: planDraftRateLimitKey, code: "PLAN_DRAFT_CREATION_RATE_LIMITED" },
+);
+
+export const planDraftMutateRateLimit = rateLimitMiddleware(
+  "plan:draft:mutate",
+  PLAN_DRAFT_LIMITS.mutate,
+  60_000,
+  { key: planDraftRateLimitKey, code: "PLAN_DRAFT_MUTATION_RATE_LIMITED" },
+);
+
+export const planGenerationRateLimit = rateLimitMiddleware(
+  "plan:draft:generate",
+  PLAN_DRAFT_LIMITS.generate,
+  60_000,
+  { key: planDraftRateLimitKey, code: "PLAN_GENERATION_RATE_LIMITED" },
+);
+
+export const planShuffleRateLimit = rateLimitMiddleware(
+  "plan:draft:shuffle",
+  PLAN_DRAFT_LIMITS.shuffle,
+  60_000,
+  { key: planDraftRateLimitKey, code: "PLAN_SHUFFLE_RATE_LIMITED" },
+);
+
+export const planDraftReadRateLimit = rateLimitMiddleware(
+  "plan:draft:read",
+  PLAN_DRAFT_LIMITS.read,
+  60_000,
+  { key: planDraftRateLimitKey, code: "PLAN_DRAFT_READ_RATE_LIMITED" },
+);
 
 /** Payment initiation — very tight to block synthetic order fraud. */
 export const paymentRateLimit = rateLimitMiddleware("payments", 10, 60_000);

@@ -114,6 +114,16 @@ async function api(
 }
 
 before(async () => {
+  // These suites exercise draft behaviour, not throttling — the rate-limit
+  // contract has its own test (planDraftRateLimit.test.ts). Every request here
+  // comes from one loopback IP, so the production ceilings would throttle the
+  // suite itself and mask what it is actually asserting.
+  process.env["PLAN_DRAFT_CREATE_PER_MIN"] = "100000";
+  process.env["PLAN_DRAFT_MUTATE_PER_MIN"] = "100000";
+  process.env["PLAN_GENERATION_PER_MIN"] = "100000";
+  process.env["PLAN_SHUFFLE_PER_MIN"] = "100000";
+  process.env["PLAN_DRAFT_READ_PER_MIN"] = "100000";
+
   const app = makeApp();
   server = http.createServer(app);
   await new Promise<void>((resolve) => server.listen(0, resolve));
@@ -333,4 +343,65 @@ test("claiming an already-claimed-by-me draft stays idempotent", async () => {
   assert.equal(again.status, 200, "re-claiming your own draft must not 404 or 409");
   assert.equal(again.json.draft.id, created.draft.id);
   assert.equal(again.json.draft.userId, user.id);
+});
+
+test("claim loses a deterministic version race and does not rewind or overwrite", async () => {
+  // THE race, forced open with a test-only seam rather than approximated with
+  // timing (see lib/planDraftTestHooks for why): request A reads the unclaimed
+  // draft at version N, request B lands a PATCH taking it to N+1, and only then
+  // does A's ownership CAS run. Before the guard existed, A's UPDATE had no
+  // version predicate and set `version = <its stale read> + 1`, so it rewound
+  // the counter and stomped B's write.
+  const { setAfterClaimReadHook, clearPlanDraftTestHooks } = await import(
+    "../lib/planDraftTestHooks"
+  );
+  const user = await makeUser("claim-race");
+  const created = await createGuestDraft("custom");
+  const draftId = created.draft.id;
+  const versionAtRead = created.draft.version;
+
+  let fired = false;
+  setAfterClaimReadHook(async () => {
+    if (fired) return;
+    fired = true;
+    // Request B, landing inside A's read→write window.
+    const b = await api(
+      "PATCH",
+      `/plan-drafts/${draftId}`,
+      { version: versionAtRead, goal: "gain_muscle" },
+      { cookie: created.cookie },
+    );
+    assert.equal(b.status, 200, "the interleaved write should succeed");
+  });
+
+  try {
+    const claim = await api("POST", `/plan-drafts/${draftId}/claim`, undefined, {
+      user,
+      cookie: created.cookie,
+    });
+    assert.equal(claim.status, 409, "a claim on a stale read must be refused");
+    assert.equal(claim.json.code, "stale_version");
+  } finally {
+    clearPlanDraftTestHooks();
+  }
+
+  const after = await api("GET", `/plan-drafts/${draftId}`, undefined, {
+    cookie: created.cookie,
+  });
+  assert.equal(after.status, 200);
+  assert.equal(
+    after.json.draft.version,
+    versionAtRead + 1,
+    "the version must not rewind below the interleaved write",
+  );
+  assert.equal(
+    after.json.draft.goal,
+    "gain_muscle",
+    "the interleaved write's data must survive",
+  );
+  assert.equal(
+    after.json.draft.userId,
+    null,
+    "a refused claim must not transfer ownership",
+  );
 });

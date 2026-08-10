@@ -427,5 +427,7 @@ jobs:
           ./src/routes/menuPriceValidation.test.ts
           ./src/lib/planDraftStateMachine.test.ts
           ./src/lib/planDraftGenerator.test.ts
+          ./src/lib/planDraftLease.test.ts
           ./src/routes/planDrafts.test.ts
           ./src/routes/planDraftLineup.test.ts
+          ./src/routes/planDraftRateLimit.test.ts
