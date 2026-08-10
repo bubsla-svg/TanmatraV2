@@ -62,6 +62,19 @@ export const aiStaffRateLimit = rateLimitMiddleware("ai:agent:staff", 20, 60_000
 /** Dish rationale AI — called on menu scroll, batched but still limited. */
 export const rationaleRateLimit = rateLimitMiddleware("ai:rationale", 40, 60_000);
 
+/**
+ * Pre-purchase plan drafts.
+ *
+ * `POST /plan-drafts` needs no auth and writes a row plus a cookie on every
+ * call, and `POST /plan-drafts/:id/generate` and `.../shuffle` each fetch the
+ * merged catalog and rewrite the draft's whole lineup. Unthrottled, that is an
+ * unbounded row-creation and compute surface for an unauthenticated caller.
+ * Sized above the order limit because configuring a plan is genuinely
+ * click-heavy — a customer editing a lineup slot by slot issues far more
+ * writes than someone placing an order.
+ */
+export const planDraftRateLimit = rateLimitMiddleware("plan:drafts", 60, 60_000);
+
 /** Payment initiation — very tight to block synthetic order fraud. */
 export const paymentRateLimit = rateLimitMiddleware("payments", 10, 60_000);
 

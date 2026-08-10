@@ -334,21 +334,47 @@ router.post("/plan-drafts/:id/claim", async (req: Request, res: Response) => {
         ),
       );
 
+    // A real compare-and-swap, like every other write to this table. Guarding
+    // only on `userId IS NULL` while setting `version` to a number computed
+    // from an earlier read would let this statement roll a concurrent writer's
+    // counter backwards, which in turn lets an already-stale request pass a
+    // later CAS check it should have failed. The version is incremented
+    // DB-side for the same reason the supersede statement above is.
     const [row] = await tx
       .update(planDraftsTable)
       .set({
         userId,
-        version: draft.version + 1,
+        version: sql`${planDraftsTable.version} + 1`,
         expiresAt: new Date(now + PLAN_DRAFT_TTL_MS),
       })
-      .where(and(eq(planDraftsTable.id, id), isNull(planDraftsTable.userId)))
+      .where(
+        and(
+          eq(planDraftsTable.id, id),
+          isNull(planDraftsTable.userId),
+          eq(planDraftsTable.version, draft.version),
+        ),
+      )
       .returning();
     return row;
   });
 
   if (!claimed) {
-    // Someone else claimed it in the race window between our read and the
-    // transaction — treat exactly like "not yours".
+    // The CAS lost. Distinguish the two reasons, because they mean different
+    // things to the caller: someone else took ownership (indistinguishable from
+    // "doesn't exist", by design), versus a concurrent edit moved the version
+    // while the draft is still unclaimed — which is simply retryable.
+    const current = await loadLiveDraft(id);
+    if (current?.userId === userId) {
+      res.json({ draft: current });
+      return;
+    }
+    if (current && current.userId == null) {
+      res.status(409).json({
+        error: "draft was modified elsewhere",
+        code: "stale_version",
+      });
+      return;
+    }
     res.status(404).json({ error: "draft not found" });
     return;
   }

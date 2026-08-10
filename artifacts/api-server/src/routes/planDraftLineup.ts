@@ -8,7 +8,11 @@ import {
 } from "@workspace/db";
 import { PLAN_CATALOG, type PlanId } from "@workspace/subscription-rules";
 import { resolvePlanDraftAccess } from "../lib/planDraftAuth";
-import { casUpdateDraft, loadLiveDraft } from "../lib/planDraftStore";
+import {
+  casUpdateDraft,
+  loadLiveDraft,
+  releaseGeneratingClaim,
+} from "../lib/planDraftStore";
 import { isPlanDraftStatusTerminal } from "../lib/planDraftStateMachine";
 import { liveDishes } from "../lib/mealPlanner";
 import {
@@ -207,7 +211,23 @@ router.post(
         generationError: null,
       });
       if (!updated) {
-        staleVersion(res);
+        // Someone edited the draft while we were building. Two things are true:
+        // the lineup we just built came from answers that are no longer current
+        // (persisting it could contradict a safety field the other writer just
+        // changed), and the row is still sitting in `generating`, which no
+        // client transition can leave. Discard the lineup and release the claim
+        // so the customer can retry against their new answers.
+        const released = await releaseGeneratingClaim(claimed.id, {
+          code: "concurrent_edit",
+          message:
+            "Your plan changed while we were building it. Please generate again.",
+          details: {},
+        });
+        res.status(409).json({
+          error: "draft was modified elsewhere",
+          code: "stale_version",
+          draft: released ?? undefined,
+        });
         return;
       }
       res.json({ draft: updated, notes });
@@ -229,10 +249,10 @@ router.post(
             message: "Something went wrong building your plan. Please try again.",
             details: {},
           };
-      const failed = await casUpdateDraft(claimed.id, claimed.version, {
-        status: "generation_failed",
-        generationError: failure,
-      });
+      // Guarded on the STATUS, not the version: a concurrent write may have
+      // moved the version on while we were generating, and a version CAS would
+      // then fail and strand the row in `generating` for good.
+      const failed = await releaseGeneratingClaim(claimed.id, failure);
       if (!expected) throw err;
       // 422, not 500: the configuration is the problem and the customer can
       // fix it. The state machine allows generation_failed -> ready_to_generate

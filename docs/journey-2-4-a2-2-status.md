@@ -184,6 +184,41 @@ snapshot describes a lineup the customer has since edited past. `shuffle` writes
 exactly one Undo snapshot; a second `undo` in a row 409s `no_undo` rather than
 unwinding a stack that was never kept.
 
+## 3.9 Post-merge review follow-ups (A2.2a)
+
+An adversarial review pass was run against A2.2 after it merged. It found **no**
+hard-allergen, money-path or ownership bypass — the safety screen, the
+`priceAdjustmentPaise` provenance and the 404-not-403 ownership handling all
+held up under targeted probing. It did find two concurrency defects and one
+convention gap, all fixed in the follow-up PR:
+
+1. **`generating` was escapable only in theory.** §3.2 above recorded stranding
+   as a *crash-recovery* gap. That framing was wrong and too generous: the
+   generate route's final write is a version CAS, and **any** concurrent write
+   landing between the claim and that write — an ordinary PATCH from a second
+   tab is enough — made it fail, and both failure branches returned without
+   releasing the claim. The draft was then permanently unusable, with the
+   process perfectly healthy. Fixed with `releaseGeneratingClaim`, which is
+   guarded on `status = 'generating'` rather than on the version (the version
+   has legitimately moved in exactly this case, so re-guarding on it would fail
+   for the same reason). The lineup built against now-stale answers is
+   discarded rather than persisted, and the caller gets a `concurrent_edit`
+   reason it can retry from.
+2. **`claim`'s ownership write was not a real compare-and-swap.** It guarded
+   only on `userId IS NULL` while setting `version` to a number computed from an
+   earlier read, so a write landing in that window could have its version bump
+   rewound — which in turn could let an already-stale request pass a later CAS
+   it should have failed. Now guarded on the version and incremented DB-side,
+   matching the supersede statement three lines above it in the same
+   transaction. **Coverage caveat:** the tests added for this pin only the
+   sequential properties; there is no seam to force the interleaving through the
+   HTTP surface, and a timing-dependent race would be a flaky test rather than a
+   regression test. This fix is argued from the invariant, not proven by a test.
+3. **No rate limit on `/api/plan-drafts`.** Every other write-heavy route family
+   in `app.ts` has one. `POST /plan-drafts` needs no auth and writes a row per
+   call, and A2.2 added `generate`/`shuffle` (catalog fetch + full lineup
+   rewrite) to that unthrottled surface. Now `planDraftRateLimit`, 60/min.
+
 ## 4. Verification
 
 - `node --test --import tsx ./src/lib/planDraftGenerator.test.ts` — 23/23

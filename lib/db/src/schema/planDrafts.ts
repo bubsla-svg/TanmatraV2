@@ -142,6 +142,10 @@ export type PlanDraftGenerationCode =
   | "no_meal_periods"
   | "empty_safe_pool"
   | "incomplete_lineup"
+  /** The draft was edited by another writer while generation was in flight, so
+   *  the lineup we built no longer matches the customer's saved answers and was
+   *  discarded rather than persisted. */
+  | "concurrent_edit"
   /** An unexpected server-side failure. Recorded so the draft never strands in
    *  `generating` — a status no client transition can leave. */
   | "internal_error";
