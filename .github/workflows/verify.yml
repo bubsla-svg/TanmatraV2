@@ -392,6 +392,7 @@ jobs:
           ./src/routes/ops.kds.test.ts
           ./src/routes/ops.paidGate.test.ts
           ./src/routes/checkout.customizations.test.ts
+          ./src/routes/checkout.doubletap.test.ts
           ./src/routes/serviceability.test.ts
           ./src/routes/serviceabilityInterest.test.ts
           ./src/routes/geo.test.ts
