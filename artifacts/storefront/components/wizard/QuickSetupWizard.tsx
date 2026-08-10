@@ -8,7 +8,7 @@
 // stay LOCAL-ONLY: they still drive the live preview below, but conditions
 // are clinical/PHI data that belongs to the separate consent-gated
 // /account/health-information surface, never this PATCH.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import type { DishData } from "@workspace/menu-catalog";
@@ -17,6 +17,7 @@ import { ApiError } from "@/lib/apiClient";
 import { savePreferences, type DietaryStyle, type WellnessGoal } from "@/lib/preferencesApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 import { StepDots } from "@/components/checkout/StepDots";
+import { readQuickSetupDraft, stashQuickSetupDraft, clearQuickSetupDraft } from "@/lib/quickSetupDraft";
 
 const GOALS = [
   { id: "lose_weight", label: "Fat Loss & Metabolic Reset", desc: "Calorie-controlled volume density" },
@@ -56,13 +57,24 @@ function headingTone(state: SaveState): string {
 }
 
 export function QuickSetupWizard({ dishes }: { dishes: DishData[] }) {
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const [goal, setGoal] = useState("maintenance");
-  const [allergens, setAllergens] = useState<string[]>([]);
-  const [dietaryStyle, setDietaryStyle] = useState("omnivore");
-  const [conditions, setConditions] = useState<string[]>([]);
+  // Lazy initializer — reads sessionStorage once, at mount, never again. A
+  // dropped-off wizard (refresh, accidental back-swipe, tab switch) used to
+  // silently discard every answer with no way back; now the in-progress
+  // survey (steps 1-3 only — step 4 is a submitted state, not a draft) rides
+  // out a reload.
+  const [draft] = useState(() => readQuickSetupDraft());
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(draft?.step ?? 1);
+  const [goal, setGoal] = useState(draft?.goal ?? "maintenance");
+  const [allergens, setAllergens] = useState<string[]>(draft?.allergens ?? []);
+  const [dietaryStyle, setDietaryStyle] = useState(draft?.dietaryStyle ?? "omnivore");
+  const [conditions, setConditions] = useState<string[]>(draft?.conditions ?? []);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (step === 4) return;
+    stashQuickSetupDraft({ step, goal, allergens, dietaryStyle, conditions });
+  }, [step, goal, allergens, dietaryStyle, conditions]);
 
   const toggleAllergen = (id: string) =>
     setAllergens((p) => (p.includes(id) ? p.filter((i) => i !== id) : [...p, id]));
@@ -93,6 +105,7 @@ export function QuickSetupWizard({ dishes }: { dishes: DishData[] }) {
 
   function handleContinue() {
     if (step === 3) {
+      clearQuickSetupDraft();
       setStep(4);
       void attemptSave();
       return;
@@ -275,7 +288,7 @@ export function QuickSetupWizard({ dishes }: { dishes: DishData[] }) {
       <div className="flex items-center gap-3 pt-3 border-t border-line">
         {step > 1 && (
           <Button
-            onClick={() => setStep((step - 1) as any)}
+            onClick={() => setStep((step - 1) as 1 | 2 | 3)}
             variant="outline"
             shape="pill"
             size="fluid"
