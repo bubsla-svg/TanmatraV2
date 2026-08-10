@@ -2,7 +2,7 @@
 // One-tap add. Normally mutates the LOCAL cart (§4.1 conversion lever). But when
 // the URL carries ?group=CODE (an invitee arriving from a group order), the add
 // POSTs the pick to the shared group instead — the host pays at close.
-import type { DishData } from "@workspace/menu-catalog";
+import type { DishData, DishMacros } from "@workspace/menu-catalog";
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -11,7 +11,15 @@ import { useCart } from "@/components/cart/CartProvider";
 import { ApiError } from "@/lib/apiClient";
 import { addItem } from "@/lib/groupOrdersApi";
 
-type Dish = Pick<DishData, "id" | "slug" | "name" | "price">;
+// macros/macrosEstimated optional (not Pick'd straight off DishData, which
+// declares macros as required) — D-14's capture is best-effort: a caller
+// that builds a narrower literal (InstantPlanPreview) still type-checks and
+// simply adds a line with no macro chip, same as any cart written before
+// this field existed.
+type Dish = Pick<DishData, "id" | "slug" | "name" | "price"> & {
+  macros?: DishMacros;
+  macrosEstimated?: boolean;
+};
 const GROUP_CODE = /^[0-9A-Za-z]{6,8}$/;
 
 export function AddToCart({ dish }: { dish: Dish }) {
@@ -72,7 +80,18 @@ function GroupAdd({ code, dish }: { code: string; dish: Dish }) {
 function CartAdd({ dish }: { dish: Dish }) {
   const { cart, setCart } = useCart();
   const qty = qtyOf(cart, dish.id, "dish");
-  const line = { dishId: dish.id, kind: "dish" as const, slug: dish.slug, name: dish.name, pricePaise: dish.price };
+  const line = {
+    dishId: dish.id,
+    kind: "dish" as const,
+    slug: dish.slug,
+    name: dish.name,
+    pricePaise: dish.price,
+    // D-14: same figures the menu card already shows. Omitted entirely when
+    // the dish has no macros to offer, rather than a fabricated {0,0}.
+    ...(dish.macros
+      ? { macros: { calories: dish.macros.calories, protein: dish.macros.protein, estimated: dish.macrosEstimated } }
+      : {}),
+  };
 
   if (qty === 0) {
     return (

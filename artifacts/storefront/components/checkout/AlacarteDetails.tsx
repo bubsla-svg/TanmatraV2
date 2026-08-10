@@ -155,6 +155,13 @@ export function AlacarteDetails({
                   <p className="truncate text-xs text-ink-muted">{l.customizations.join(", ")}</p>
                 )}
                 <p className="tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
+                {/* D-14: the last look before money shows more than name +
+                    price — same figures the menu card already showed. */}
+                {l.macros && (
+                  <p className="tabular text-xs text-ink-faint">
+                    {l.macros.estimated ? "~" : ""}{l.macros.calories} kcal · {l.macros.estimated ? "~" : ""}{l.macros.protein}g P
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-3">
                 {/* .touch-target-critical (48px): globals.css reserves the
