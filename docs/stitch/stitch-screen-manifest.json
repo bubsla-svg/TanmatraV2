@@ -32,22 +32,34 @@
       "light": null
     },
     "testId": "styleguide-dark-tokens",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/design-system.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/design-system.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
-      "triggerDefinition": "pending",
+      "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/styleguide",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/4.1-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -84,22 +96,34 @@
       "light": null
     },
     "testId": "styleguide-light-tokens",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/design-system.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/design-system.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
-      "triggerDefinition": "pending",
+      "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/styleguide",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "light",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/4.2-light.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -136,22 +160,34 @@
       "light": null
     },
     "testId": "home-feed-render",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/commerce.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/5.1-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -188,22 +224,34 @@
       "light": null
     },
     "testId": "menu-grid-catalog",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/commerce.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/menu",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/5.2-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -249,7 +297,7 @@
       "light": null
     },
     "testId": "menu-filter-sheet",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/commerce.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "partial",
@@ -312,22 +360,34 @@
       "light": null
     },
     "testId": "dish-quick-view-drawer",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/commerce.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "verified",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/menu",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/5.4-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -364,22 +424,34 @@
       "light": null
     },
     "testId": "dish-pdp-full",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/commerce.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/dish/[slug]",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/5.5-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -425,22 +497,34 @@
       "light": null
     },
     "testId": "cart-drawer-commerce",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/commerce.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
-      "triggerDefinition": "pending",
-      "transitionDefinition": "pending",
-      "localRuntime": "pending",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "verified",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/5.6-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -477,22 +561,34 @@
       "light": null
     },
     "testId": "marketplace-grid",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/commerce.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/marketplace",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/5.7-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -529,22 +625,34 @@
       "light": null
     },
     "testId": "marketplace-pdp",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/commerce.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/marketplace/[slug]",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/5.8-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -581,22 +689,34 @@
       "light": null
     },
     "testId": "meal-deals-catalog",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/commerce.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/meal-deals",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/5.9-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -633,22 +753,34 @@
       "light": null
     },
     "testId": "meal-recommendations-feed",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/commerce.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/meal-recommendations",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/5.10-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -685,22 +817,34 @@
       "light": null
     },
     "testId": "meal-reheating-guide",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/commerce.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
-      "triggerDefinition": "pending",
+      "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/meal-guides/[dishSlug]",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/5.11-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -737,22 +881,34 @@
       "light": null
     },
     "testId": "rd-recipes-library",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/commerce.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/commerce.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/recipes",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/5.12-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -789,22 +945,34 @@
       "light": null
     },
     "testId": "plans-discovery-grid",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/plan-discovery.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/plan-discovery.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/plans",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/6.1-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -850,7 +1018,7 @@
       "light": null
     },
     "testId": "plans-mealtime-sheet",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/plan-discovery.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/plan-discovery.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -908,7 +1076,7 @@
       "light": null
     },
     "testId": "plan-config-initial",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/plan-discovery.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/plan-discovery.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -973,7 +1141,7 @@
       "light": null
     },
     "testId": "plan-meal-lineup",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/plan-discovery.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/plan-discovery.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -1052,7 +1220,7 @@
       "light": null
     },
     "testId": "plan-change-dish-sheet",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/plan-discovery.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/plan-discovery.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -1116,7 +1284,7 @@
       "light": null
     },
     "testId": "plan-accompaniment-editor",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/plan-discovery.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/plan-discovery.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -1175,7 +1343,7 @@
       "light": null
     },
     "testId": "plan-delivery-schedule",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/plan-discovery.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/plan-discovery.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -1236,22 +1404,34 @@
       "light": null
     },
     "testId": "trial-checkout-funnel",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/plan-discovery.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/plan-discovery.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/trial",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/6.8-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -1292,22 +1472,34 @@
       "light": null
     },
     "testId": "quick-setup-goal",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/quick-setup.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/quick-setup.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "verified",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/quick-setup",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/6.9.1-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -1348,22 +1540,34 @@
       "light": null
     },
     "testId": "quick-setup-food-pattern",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/quick-setup.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/quick-setup.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "verified",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/quick-setup",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/6.9.2-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -1404,22 +1608,34 @@
       "light": null
     },
     "testId": "quick-setup-cadence",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/quick-setup.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/quick-setup.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "verified",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/quick-setup",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/6.9.3-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [
       "DEF-6.9.3-CADENCE-001"
     ],
@@ -1462,7 +1678,7 @@
       "light": null
     },
     "testId": "custom-build-goal",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/custom-build.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/custom-build.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -1527,7 +1743,7 @@
       "light": null
     },
     "testId": "custom-build-routine",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/custom-build.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/custom-build.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -1592,7 +1808,7 @@
       "light": null
     },
     "testId": "custom-build-wearables",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/custom-build.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/custom-build.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -1657,7 +1873,7 @@
       "light": null
     },
     "testId": "custom-build-preferences",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/custom-build.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/custom-build.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -1722,7 +1938,7 @@
       "light": null
     },
     "testId": "custom-build-intensity",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/custom-build.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/custom-build.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -1787,7 +2003,7 @@
       "light": null
     },
     "testId": "custom-build-duration",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/custom-build.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/custom-build.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -1852,7 +2068,7 @@
       "light": null
     },
     "testId": "custom-build-review",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/custom-build.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/custom-build.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -1917,7 +2133,7 @@
       "light": null
     },
     "testId": "custom-build-generated-plan",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/custom-build.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/custom-build.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -1982,7 +2198,7 @@
       "light": null
     },
     "testId": "custom-build-questions",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/custom-build.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/custom-build.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -2043,22 +2259,34 @@
       "light": null
     },
     "testId": "checkout-focus-flow",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/checkout.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/checkout.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/checkout",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/8.1-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -2099,7 +2327,7 @@
       "light": null
     },
     "testId": "checkout-quote-expired",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/checkout.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/checkout.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -2153,7 +2381,7 @@
       "light": null
     },
     "testId": "order-confirmed-success",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/checkout.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/checkout.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
@@ -2205,22 +2433,34 @@
       "light": null
     },
     "testId": "meal-planner-schedule",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/account.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/meal-planner",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/9.1-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -2266,22 +2506,34 @@
       "light": null
     },
     "testId": "meal-planner-delivery-sheet",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/account.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "partial",
       "renderChain": "partial",
       "triggerDefinition": "verified",
       "transitionDefinition": "verified",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/meal-planner",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/9.2-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [
       "DEF-9.2-DELIVERY-ROUTE-001",
       "DEF-9.2-ACTIONS-001"
@@ -2321,22 +2573,34 @@
       "light": null
     },
     "testId": "account-subscriptions-manager",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/account.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/account/subscriptions",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/9.3-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -2373,22 +2637,34 @@
       "light": null
     },
     "testId": "account-hub-profile",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/account.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/account",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/10.1-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -2425,22 +2701,34 @@
       "light": null
     },
     "testId": "account-order-history",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/account.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/account/orders",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/10.2-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -2477,22 +2765,34 @@
       "light": null
     },
     "testId": "account-addresses-list",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/account.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/account/addresses",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/10.3-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -2529,22 +2829,34 @@
       "light": null
     },
     "testId": "account-preferences-form",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/account.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/account/preferences",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/10.4-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -2581,22 +2893,34 @@
       "light": null
     },
     "testId": "account-wellness-trends",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/account.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/account/wellness",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/10.5-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -2633,22 +2957,34 @@
       "light": null
     },
     "testId": "account-consumption-history",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/account.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/account/history",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/10.6-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -2685,22 +3021,34 @@
       "light": null
     },
     "testId": "account-symptoms-logger",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/account.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/account/symptoms",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/10.7-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -2737,22 +3085,34 @@
       "light": null
     },
     "testId": "account-health-connections",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/account.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/account/connections",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/10.8-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -2798,7 +3158,7 @@
       "light": null
     },
     "testId": "post-meal-feedback-sheet",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/account.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/account.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
@@ -2852,7 +3212,7 @@
       "light": null
     },
     "testId": "metabolic-program-landing",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/clinical.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/clinical.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "partial",
@@ -2906,22 +3266,34 @@
       "light": null
     },
     "testId": "performance-nutrition-landing",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/clinical.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/clinical.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/performance",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/11.2-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -2958,22 +3330,34 @@
       "light": null
     },
     "testId": "clinical-protocols-hub",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/clinical.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/clinical.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/clinical",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/11.3-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -3010,22 +3394,34 @@
       "light": null
     },
     "testId": "care-condition-page",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/clinical.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/clinical.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/care/[condition]",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/11.4-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -3062,22 +3458,34 @@
       "light": null
     },
     "testId": "rd-roster-directory",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/clinical.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/clinical.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/rd",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/11.5-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -3118,22 +3526,34 @@
       "light": null
     },
     "testId": "rd-booking-flow",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/clinical.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/clinical.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
-      "triggerDefinition": "pending",
-      "transitionDefinition": "pending",
-      "localRuntime": "pending",
+      "triggerDefinition": "verified",
+      "transitionDefinition": "verified",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/rd/[slug]",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/11.6-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -3170,22 +3590,34 @@
       "light": null
     },
     "testId": "ai-coach-chat",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/clinical.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/clinical.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/coach",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/11.7-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -3222,22 +3654,34 @@
       "light": null
     },
     "testId": "community-qa-forum",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/clinical.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/clinical.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/qa",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/11.8-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -3274,22 +3718,34 @@
       "light": null
     },
     "testId": "corporate-invite-activation",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/partners.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/partners.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/corporate/invite/[token]",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/12.1-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -3326,22 +3782,34 @@
       "light": null
     },
     "testId": "corporate-wellness-acquisition",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/partners.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/partners.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/corporate-wellness",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/12.2-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -3378,22 +3846,34 @@
       "light": null
     },
     "testId": "partners-gyms-landing",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/partners.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/partners.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/partners/gyms",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/12.3-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -3434,7 +3914,7 @@
       "light": null
     },
     "testId": "gym-membership-verification",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/partners.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/partners.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -3488,22 +3968,34 @@
       "light": null
     },
     "testId": "partners-fitness-clubs",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/partners.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/partners.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/partners/fitness-clubs",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/12.5-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -3540,22 +4032,34 @@
       "light": null
     },
     "testId": "partners-dietitians-referral",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/partners.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/partners.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/partners/dietitians",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/12.6-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -3592,22 +4096,34 @@
       "light": null
     },
     "testId": "rd-partners-network",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/partners.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/partners.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/rd-partners",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/12.7-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -3644,22 +4160,34 @@
       "light": null
     },
     "testId": "challenges-discovery-feed",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/challenges.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/challenges.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/challenges",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/13.1-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -3696,22 +4224,34 @@
       "light": null
     },
     "testId": "challenge-pdp-detail",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/challenges.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/challenges.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/challenges/[slug]",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/13.2-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -3748,22 +4288,34 @@
       "light": null
     },
     "testId": "challenge-active-tracker",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/challenges.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/challenges.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "not-applicable",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/challenges/tracker",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/13.3-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -3800,22 +4352,34 @@
       "light": null
     },
     "testId": "cart-empty-state",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/utility-states.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/utility-states.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "pending",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/14.1-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -3852,7 +4416,7 @@
       "light": null
     },
     "testId": "menu-no-match-empty",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/utility-states.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/utility-states.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -3910,7 +4474,7 @@
       "light": null
     },
     "testId": "plan-generating-skeleton",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/utility-states.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/utility-states.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -3969,7 +4533,7 @@
       "light": null
     },
     "testId": "plan-error-recovery",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/utility-states.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/utility-states.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "missing",
@@ -4024,22 +4588,34 @@
       "light": null
     },
     "testId": "account-unserviceable-address",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/utility-states.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/utility-states.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "pending",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/account/addresses",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/14.5-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   },
@@ -4080,22 +4656,34 @@
       "light": null
     },
     "testId": "checkout-payment-processing",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/utility-states.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/checkout.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "partial",
       "renderChain": "partial",
       "triggerDefinition": "partial",
-      "transitionDefinition": "pending",
-      "localRuntime": "pending",
+      "transitionDefinition": "verified",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/checkout",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/14.6-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [
       "DEF-14.6-PAYPROCESSING-001"
     ],
@@ -4138,22 +4726,34 @@
       "light": null
     },
     "testId": "checkout-payment-timeout",
-    "testFile": "artifacts/storefront/e2e/stitch-runtime/utility-states.spec.ts",
+    "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/checkout.spec.ts",
     "proof": {
       "declared": "verified",
       "sourceDefinition": "verified",
       "renderChain": "verified",
       "triggerDefinition": "verified",
       "transitionDefinition": "verified",
-      "localRuntime": "pending",
+      "localRuntime": "verified",
       "containerRuntime": "pending",
       "stagingRuntime": "pending",
       "productionRuntime": "pending",
       "visualApproval": "pending",
       "accessibilityApproval": "pending"
     },
-    "evidence": [],
-    "evidenceSha": null,
+    "evidence": [
+      {
+        "type": "local-runtime",
+        "sha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
+        "environment": "local-production-build",
+        "url": "http://127.0.0.1:3001/checkout",
+        "viewport": "Pixel 7 (mobile project)",
+        "theme": "dark",
+        "screenshot": "artifacts/audit/stitch-integration/screenshots/14.7-dark.png",
+        "trace": "artifacts/audit/stitch-integration/traces/ (gitignored; regenerate: E2E_FULL_STACK=1 pnpm run test:stitch-runtime -- --trace on)",
+        "recordedAt": "2026-08-10T17:23:08+00:00"
+      }
+    ],
+    "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
     "defectIds": [],
     "designDisposition": "original"
   }
