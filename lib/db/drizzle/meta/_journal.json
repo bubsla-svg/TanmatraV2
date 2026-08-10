@@ -225,6 +225,13 @@
       "when": 1786800000000,
       "tag": "0031_delivery_slot_operational_date",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1786900000000,
+      "tag": "0032_plan_draft_conversions",
+      "breakpoints": true
     }
   ]
 }

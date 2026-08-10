@@ -434,3 +434,4 @@ jobs:
           ./src/routes/planDraftSchedule.test.ts
           ./src/routes/planDraftQuoteLifecycle.test.ts
           ./src/routes/deliverySlotOperationalDate.test.ts
+          ./src/routes/planDraftConvert.test.ts

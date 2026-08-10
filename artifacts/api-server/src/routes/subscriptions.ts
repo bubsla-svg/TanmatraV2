@@ -69,6 +69,7 @@ import {
   upsertActiveMandate,
 } from "../lib/razorpayRecurring";
 import { encryptClinicalStrings, decryptClinicalStrings } from "../lib/crypto";
+import { createFirstCycleOrder } from "../lib/subscriptionOrigination";
 import { getDecryptedPreferences } from "../lib/userPreferences";
 import { hashTrialPhone } from "../lib/trialEligibility";
 import { hasRedeemedTrialPhone } from "../lib/trialRedemption";
@@ -501,55 +502,20 @@ async function createOrderForNewSubscription(
   deliveries: SubscriptionDelivery[],
   bridgeCreditPaise: number,
 ): Promise<void> {
-  if (deliveries.length === 0) return;
-  const firstDelivery = deliveries.reduce((earliest, d) =>
-    d.scheduledFor < earliest.scheduledFor ? d : earliest,
-  );
-
+  // The order body itself lives in lib/subscriptionOrigination so the
+  // plan-draft path (A2.4) bills through the same code rather than a second
+  // copy of it. What stays here is this path's own pricing decision: the
+  // catalog price less whatever credit was consumed in this transaction.
   const chargePaise = Math.max(0, sub.pricePerDeliveryPaise - bridgeCreditPaise);
-  const orderItems = firstDelivery.items.map((item) => ({
-    id: 0,
-    name: item.name,
-    qty: item.quantity,
-    // Flat per-meal rate breakdown, NOT the (unused) dish catalog price —
-    // subscription pricing never depends on which dishes were picked.
-    price: PER_MEAL_PAISE * item.quantity,
-  }));
-
-  const [order] = await tx
-    .insert(ordersTable)
-    .values({
-      userId: sub.userId,
-      orderChannel: "own_app",
-      externalOrderId: `sub-${sub.id}`,
-      // A first cycle the bridge/ledger credits fully covered is settled at
-      // creation (the credits are consumed in this same transaction) — born
-      // "preparing", exactly like a captured payment would leave it
-      // (lib/paidGate.ts). A payable order stays "placed" until payments.ts
-      // promotes it on capture.
-      status: chargePaise === 0 ? "preparing" : "placed",
-      totalPaise: chargePaise,
-      chargePaise,
-      items: orderItems,
-      addressLabel: sub.addressLabel ?? null,
-      addressLine: sub.addressLine ?? null,
-      city: sub.city ?? null,
-      pincode: sub.pincode ?? null,
-      phone: sub.phone ?? null,
-      fulfillmentType: "delivery",
-    })
-    .onConflictDoNothing({
-      target: [ordersTable.userId, ordersTable.externalOrderId],
-      where: sql`${ordersTable.externalOrderId} is not null`,
-    })
-    .returning();
-
-  if (!order) return; // idempotency race — a row already exists for this sub
-
-  await tx
-    .update(subscriptionDeliveriesTable)
-    .set({ orderId: order.id })
-    .where(eq(subscriptionDeliveriesTable.id, firstDelivery.id));
+  await createFirstCycleOrder(tx, sub, deliveries, {
+    chargePaise,
+    // A first cycle the bridge/ledger credits fully covered is settled at
+    // creation (the credits are consumed in this same transaction) — born
+    // "preparing", exactly like a captured payment would leave it
+    // (lib/paidGate.ts). A payable order stays "placed" until payments.ts
+    // promotes it on capture.
+    settled: chargePaise === 0,
+  });
 }
 
 async function validateDishForSubscription(
