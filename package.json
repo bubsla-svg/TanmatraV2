@@ -13,7 +13,8 @@
     "verify:stitch-manifest": "node tools/verify-stitch-manifest.mjs",
     "verify:stitch-wiring": "node tools/verify-stitch-wiring.mjs",
     "test": "pnpm -r --if-present run test",
-    "evals": "pnpm --filter @workspace/api-server run evals"
+    "evals": "pnpm --filter @workspace/api-server run evals",
+    "test:stitch-runtime": "pnpm --filter @workspace/storefront exec playwright test --config=e2e/playwright.config.ts --project=mobile stitch-runtime"
   },
   "private": true,
   "devDependencies": {
