@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { OrderBump } from "./OrderBump";
 import type { PlanId, DietTrack, PlanCycle } from "@workspace/subscription-rules";
 import type { PlanBuilderData } from "@/lib/plans";
-import { Leaf, Egg, Bone } from "lucide-react";
+import { Leaf, Egg, Bone, Check } from "lucide-react";
 
 const TRACK_LABEL: Record<DietTrack, string> = { veg: "Veg", egg: "Egg", nonveg: "Non-veg" };
 
@@ -107,18 +107,22 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
                   }
                   emitFunnel("cuj_track_selected", { planId, track: t.track });
                 }}
-                className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-                style={
+                // D-08: selection state, not a second action colour — border +
+                // tint + marker (SquircleOptionCard's established pattern),
+                // never a solid --gold fill. "Continue to checkout" below stays
+                // the one gold action on this screen.
+                className={`rounded-lg border-2 px-4 py-2 text-sm font-medium transition-colors ${
                   track === t.track
-                    ? { background: "var(--gold)", color: "var(--gold-ink)" }
-                    : { color: "var(--ink-muted)" }
-                }
+                    ? "border-gold bg-gold/10 text-gold-text"
+                    : "border-transparent text-ink-muted"
+                }`}
               >
                 <div className="flex items-center gap-2">
-                  {t.track === "veg" && <Leaf size={16} className={track === t.track ? "text-[var(--gold-ink)]" : "text-ink-muted"} />}
-                  {t.track === "egg" && <Egg size={16} className={track === t.track ? "text-[var(--gold-ink)]" : "text-ink-muted"} />}
-                  {t.track === "nonveg" && <Bone size={16} className={track === t.track ? "text-[var(--gold-ink)]" : "text-ink-muted"} />}
+                  {t.track === "veg" && <Leaf size={16} className={track === t.track ? "text-gold-text" : "text-ink-muted"} />}
+                  {t.track === "egg" && <Egg size={16} className={track === t.track ? "text-gold-text" : "text-ink-muted"} />}
+                  {t.track === "nonveg" && <Bone size={16} className={track === t.track ? "text-gold-text" : "text-ink-muted"} />}
                   <span>{TRACK_LABEL[t.track]}</span>
+                  {track === t.track && <Check size={14} className="text-gold-text" aria-hidden />}
                 </div>
               </button>
             ))}
@@ -135,14 +139,15 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
                   type="button"
                   aria-pressed={cycle === q.cycle}
                   onClick={() => setCycle(q.cycle)}
-                  className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-                  style={
+                  // D-08: same selection treatment as the track pills above.
+                  className={`flex items-center gap-1.5 rounded-lg border-2 px-4 py-2 text-sm font-medium transition-colors ${
                     cycle === q.cycle
-                      ? { background: "var(--gold)", color: "var(--gold-ink)" }
-                      : { color: "var(--ink-muted)" }
-                  }
+                      ? "border-gold bg-gold/10 text-gold-text"
+                      : "border-transparent text-ink-muted"
+                  }`}
                 >
                   {q.cycle.charAt(0).toUpperCase() + q.cycle.slice(1)}
+                  {cycle === q.cycle && <Check size={14} className="text-gold-text" aria-hidden />}
                 </button>
               ))}
             </div>

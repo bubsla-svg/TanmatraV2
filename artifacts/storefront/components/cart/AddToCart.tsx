@@ -55,11 +55,14 @@ function GroupAdd({ code, dish }: { code: string; dish: Dish }) {
   }
   return (
     <div className="flex flex-col items-end gap-0.5">
+      {/* D-08: Secondary CTA styling — frosted surface, visible border, same
+          neutral language CartAdd's own qty stepper below already uses. Gold
+          stays reserved for the drawer's Checkout / the mini-cart bar. */}
       <button
         type="button"
         onClick={(e) => { e.preventDefault(); void add(); }}
         disabled={status === "adding"}
-        className="min-h-11 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-60"
+        className="min-h-11 rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-ink transition-transform active:scale-[0.98] disabled:opacity-60"
       >
         {status === "adding" ? "Adding…" : status === "added" ? "Added ✓" : "Add to group"}
       </button>
@@ -76,13 +79,18 @@ function CartAdd({ dish }: { dish: Dish }) {
 
   if (qty === 0) {
     return (
+      // D-08: Secondary CTA styling — every card on the grid renders one of
+      // these, so a solid gold fill here is the "3 Add per viewport"
+      // violation the runbook names. Gold stays reserved for the single
+      // action that actually moves the customer onward (mini-cart bar,
+      // drawer Checkout, PDP Add to cart).
       <button
         type="button"
         onClick={(e) => {
           e.stopPropagation();
           setCart(addLine(cart, line));
         }}
-        className="min-h-11 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98]"
+        className="min-h-11 rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-ink transition-transform active:scale-[0.98]"
       >
         Add
       </button>
