@@ -626,6 +626,36 @@ export const ROUTER_ANSWER_TO_PLAN: ReadonlyArray<{
   .filter((p): p is PlanConfig & { routerAnswer: string } => p.routerAnswer !== null)
   .map((p) => ({ answer: p.routerAnswer, planId: p.id }));
 
+/**
+ * Condition-slug → PlanId (D-04B, TNM-CRO-01 owner ruling 2026-08-11:
+ * `/quick-setup?condition=<slug>` must exit deterministically to "the plan
+ * the condition page recommends"). No such mapping existed anywhere in the
+ * corpus before this — `/care/[condition]` is a free-text catch-all with no
+ * fixed condition list — so this is a first-cut, INFERRED mapping onto the
+ * two condition-relevant plans the catalog actually has: `steady` (low-GI /
+ * blood-sugar) and `glp1_companion` (GLP-1 medication support). Every other
+ * plan is goal-based, not condition-based, and stays unmapped. Unknown slugs
+ * return null — callers fall back to the trial, never a dead end.
+ */
+const CONDITION_PLAN_MAP: Readonly<Record<string, PlanId>> = {
+  pcos: "steady",
+  "insulin-resistance": "steady",
+  prediabetes: "steady",
+  diabetes: "steady",
+  "type-2-diabetes": "steady",
+  glp1: "glp1_companion",
+  "glp-1": "glp1_companion",
+  ozempic: "glp1_companion",
+  wegovy: "glp1_companion",
+};
+
+/** Normalizes a condition slug (case/space/underscore-insensitive) and looks
+ *  it up in CONDITION_PLAN_MAP. null when there's no mapped plan. */
+export function planForCondition(conditionSlug: string): PlanId | null {
+  const key = conditionSlug.trim().toLowerCase().replace(/[\s_]+/g, "-");
+  return CONDITION_PLAN_MAP[key] ?? null;
+}
+
 // ── Corporate Teams Seat Tiers (Table II.2) ──────────────────────────────────
 export interface B2BSeatTier {
   tier: 1 | 2 | 3;

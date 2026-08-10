@@ -5,14 +5,16 @@ import { marker, evidenceShot } from "./support";
 /**
  * Stitch-runtime evidence — §6.9 quick-setup wizard (manifest 6.9.1 → 6.9.3).
  *
- * The three entries are wizard-stages of ONE client state machine
- * (components/wizard/QuickSetupWizard.tsx) on /quick-setup, reachable only by
- * real Continue clicks (manifest trigger: button "Continue" from the prior
- * stage) — so this is a single flow test, not three isolated ones. At each
- * stage: role/name assertion first, then the stage's diagnostic marker
- * (data-screen-id/-state), then the evidence screenshot. The tail walks Back
- * once and asserts the prior stage re-renders WITH its selection preserved
- * (the wizard's draft state, not a fresh mount).
+ * Rebuilt under D-04B (TNM-CRO-01 owner ruling 2026-08-11): exactly three
+ * one-question viewports — goal → dietary style → allergens — replacing the
+ * old goal → allergens → (dietary style + conditions) order and its
+ * disapproved "menu-matching + Sign in to save your profile" exit. The
+ * business-logic contract (deterministic exit routing) is covered separately
+ * in quicksetup-contract.spec.ts; this spec is visual/wiring evidence for the
+ * three stages, same pattern as before: role/name assertion first, then the
+ * stage's diagnostic marker, then the evidence screenshot. The tail walks
+ * Back once and asserts the prior stage re-renders WITH its selection
+ * preserved (the wizard's draft state, not a fresh mount).
  */
 
 test.describe("stitch-runtime · quick-setup wizard", () => {
@@ -33,30 +35,32 @@ test.describe("stitch-runtime · quick-setup wizard", () => {
     await page.getByRole("button", { name: /fat loss & metabolic reset/i }).click();
     await page.getByRole("button", { name: /continue/i }).click();
 
-    // — 6.9.2 step-2-food-pattern —
-    await expect(
-      page.getByRole("heading", { name: /select dietary allergens our kitchen must strictly omit/i }),
-    ).toBeVisible();
-    await expect(marker(page, "6.9.2", "step-2-food-pattern")).toBeVisible();
+    // — 6.9.2 step-2-dietary-style —
+    await expect(page.getByRole("heading", { name: /what.s your kitchen dietary style/i })).toBeVisible();
+    await expect(marker(page, "6.9.2", "step-2-dietary-style")).toBeVisible();
     // Make a selection this stage owns, so the Back leg below can prove the
-    // draft survives: Dairy's accessible name flips to "Dairy Excluding ✓".
-    await page.getByRole("button", { name: /^dairy/i }).click();
-    await expect(page.getByRole("button", { name: /dairy excluding/i })).toBeVisible();
+    // draft survives. SquircleOptionCard marks selection with a border-gold
+    // class, not an accessible-name change — assert on that.
+    const vegetarian = page.getByRole("button", { name: /strictly vegetarian/i });
+    await vegetarian.click();
+    await expect(vegetarian).toHaveClass(/border-gold/);
     await evidenceShot(page, "6.9.2");
 
     await page.getByRole("button", { name: /continue/i }).click();
 
-    // — 6.9.3 step-3-cadence —
-    await expect(page.getByRole("button", { name: /strictly vegetarian/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /see customized menu/i })).toBeVisible();
-    await expect(marker(page, "6.9.3", "step-3-cadence")).toBeVisible();
+    // — 6.9.3 step-3-allergens —
+    await expect(
+      page.getByRole("heading", { name: /select dietary allergens our kitchen must strictly omit/i }),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /see my plan/i })).toBeVisible();
+    await expect(marker(page, "6.9.3", "step-3-allergens")).toBeVisible();
     await evidenceShot(page, "6.9.3");
 
-    // Back once: step 2 re-renders and the Dairy exclusion chosen before is
-    // still active — state preserved, not a reset wizard.
+    // Back once: step 2 re-renders and the vegetarian pick from before is
+    // still selected — state preserved, not a reset wizard.
     await page.getByRole("button", { name: "Back" }).click();
-    await expect(marker(page, "6.9.2", "step-2-food-pattern")).toBeVisible();
-    await expect(page.getByRole("button", { name: /dairy excluding/i })).toBeVisible();
+    await expect(marker(page, "6.9.2", "step-2-dietary-style")).toBeVisible();
+    await expect(page.getByRole("button", { name: /strictly vegetarian/i })).toHaveClass(/border-gold/);
 
     expect(errors).toEqual([]);
   });

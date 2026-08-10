@@ -22,6 +22,7 @@ import {
   planIsSelfServiceLaunchable,
   planServesTrack,
   ROUTER_ANSWER_TO_PLAN,
+  planForCondition,
   isServable,
 } from "./planCatalog.js";
 
@@ -335,5 +336,27 @@ test("computeCorporateTeamsQuote throws for <10 seats and calculates exact invoi
   assert.equal(q.preTaxPaise, Math.round(q.cycleTotalPaise / 1.05));
   assert.equal(q.gstPaise, q.cycleTotalPaise - q.preTaxPaise);
   assert.ok(q.discountSource.includes("Corporate Teams Tier 2"));
+});
+
+// ── D-04B condition → plan mapping ───────────────────────────────────────────
+test("planForCondition maps known blood-sugar and GLP-1 slugs to their plans", () => {
+  assert.equal(planForCondition("pcos"), "steady");
+  assert.equal(planForCondition("diabetes"), "steady");
+  assert.equal(planForCondition("type-2-diabetes"), "steady");
+  assert.equal(planForCondition("glp1"), "glp1_companion");
+  assert.equal(planForCondition("glp-1"), "glp1_companion");
+});
+
+test("planForCondition is case/space/underscore-insensitive", () => {
+  assert.equal(planForCondition("PCOS"), "steady");
+  assert.equal(planForCondition("Type 2 Diabetes"), "steady");
+  assert.equal(planForCondition("type_2_diabetes"), "steady");
+  assert.equal(planForCondition("  pcos  "), "steady");
+});
+
+test("planForCondition returns null for unknown slugs — never guesses a plan", () => {
+  assert.equal(planForCondition("acne"), null);
+  assert.equal(planForCondition(""), null);
+  assert.equal(planForCondition("desk-fuel"), null);
 });
 

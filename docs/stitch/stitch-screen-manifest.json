@@ -1507,10 +1507,10 @@
     "schemaVersion": 2,
     "promptId": "6.9.2",
     "stitchScreenId": "21ee21b9d8e94c98927f921775b8c5f3-qs2",
-    "designName": "Quick Setup Step 2: Food Pattern",
+    "designName": "Quick Setup Step 2: Dietary Style",
     "artifactType": "wizard-stage",
     "canonicalRoute": "/quick-setup",
-    "state": "step-2-food-pattern",
+    "state": "step-2-dietary-style",
     "layout": "FocusLayout",
     "themes": [
       "dark"
@@ -1530,7 +1530,7 @@
     "transition": {
       "from": "step-1-goal",
       "action": "CONTINUE",
-      "to": "step-2-food-pattern"
+      "to": "step-2-dietary-style"
     },
     "expectedPrimaryAction": "Continue",
     "expectedCloseBehavior": null,
@@ -1539,7 +1539,7 @@
       "dark": "artifacts/stitch/storefront/6.9.2.png",
       "light": null
     },
-    "testId": "quick-setup-food-pattern",
+    "testId": "quick-setup-dietary-style",
     "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/quick-setup.spec.ts",
     "proof": {
       "declared": "verified",
@@ -1575,10 +1575,10 @@
     "schemaVersion": 2,
     "promptId": "6.9.3",
     "stitchScreenId": "21ee21b9d8e94c98927f921775b8c5f3-qs3",
-    "designName": "Quick Setup Step 3: Cadence",
+    "designName": "Quick Setup Step 3: Allergens",
     "artifactType": "wizard-stage",
     "canonicalRoute": "/quick-setup",
-    "state": "step-3-cadence",
+    "state": "step-3-allergens",
     "layout": "FocusLayout",
     "themes": [
       "dark"
@@ -1593,12 +1593,12 @@
     "trigger": {
       "type": "button",
       "accessibleName": "Continue",
-      "sourceState": "step-2-food-pattern"
+      "sourceState": "step-2-dietary-style"
     },
     "transition": {
-      "from": "step-2-food-pattern",
+      "from": "step-2-dietary-style",
       "action": "CONTINUE",
-      "to": "step-3-cadence"
+      "to": "step-3-allergens"
     },
     "expectedPrimaryAction": "See my plan",
     "expectedCloseBehavior": null,
@@ -1607,7 +1607,7 @@
       "dark": "artifacts/stitch/storefront/6.9.3.png",
       "light": null
     },
-    "testId": "quick-setup-cadence",
+    "testId": "quick-setup-allergens",
     "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/quick-setup.spec.ts",
     "proof": {
       "declared": "verified",
@@ -1636,9 +1636,7 @@
       }
     ],
     "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
-    "defectIds": [
-      "DEF-6.9.3-CADENCE-001"
-    ],
+    "defectIds": [],
     "designDisposition": "original"
   },
   {
