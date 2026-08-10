@@ -5,6 +5,7 @@ import { z } from "zod/v4";
 import {
   db,
   planDraftsTable,
+  type PlanDraft,
   type PlanDraftStatus,
 } from "@workspace/db";
 import { PLAN_CATALOG } from "@workspace/subscription-rules";
@@ -15,6 +16,7 @@ import {
   readPlanDraftCookie,
   resolvePlanDraftAccess,
 } from "../lib/planDraftAuth";
+import { casUpdateDraft, loadLiveDraft } from "../lib/planDraftStore";
 import {
   CLIENT_SETTABLE_STATUS_VALUES,
   canTransitionPlanDraftStatus,
@@ -83,6 +85,31 @@ const shortLabel = (max: number) => z.string().trim().min(1).max(max);
 
 function isKnownPlanId(planId: string): boolean {
   return Object.prototype.hasOwnProperty.call(PLAN_CATALOG, planId);
+}
+
+/** Fields an already-generated lineup was derived from. Changing any of them
+ *  makes that lineup either unsafe (the first three) or structurally wrong for
+ *  the plan the customer now wants (the rest). */
+const LINEUP_INPUT_KEYS = [
+  "hardAllergens",
+  "hardExclusions",
+  "dietaryPattern",
+  "planId",
+  "mealtime",
+  "routine",
+  "duration",
+] as const;
+
+/** True when this PATCH actually changes one of those inputs. Re-sending an
+ *  identical value is not a change and must not discard a good lineup. */
+function changesLineupInputs(
+  draft: PlanDraft,
+  patch: Record<string, unknown>,
+): boolean {
+  return LINEUP_INPUT_KEYS.some((key) => {
+    if (patch[key] === undefined) return false;
+    return JSON.stringify(patch[key]) !== JSON.stringify(draft[key]);
+  });
 }
 
 const createDraftSchema = z.object({
@@ -214,20 +241,42 @@ router.patch("/plan-drafts/:id", async (req: Request, res: Response) => {
     return;
   }
 
-  const now = Date.now();
-  const [updated] = await db
-    .update(planDraftsTable)
-    .set({
-      ...rest,
-      ...(planId !== undefined ? { planId } : {}),
-      ...(status !== undefined ? { status } : {}),
-      version: draft.version + 1,
-      expiresAt: new Date(now + PLAN_DRAFT_TTL_MS),
-    })
-    .where(
-      and(eq(planDraftsTable.id, id), eq(planDraftsTable.version, version)),
-    )
-    .returning();
+  // A lineup is only as safe as the answers it was generated from. Editing an
+  // allergen, an exclusion, the dietary pattern or the plan's shape after
+  // generation would otherwise leave a persisted lineup that the customer's
+  // CURRENT answers would never have produced — a dairy dish still sitting in
+  // the plan of someone who just declared a dairy allergy. Discard it and send
+  // them back to re-generate rather than keeping a lineup we know is stale.
+  const invalidatesLineup =
+    draft.lineup != null && changesLineupInputs(draft, parsed.data);
+  if (
+    invalidatesLineup &&
+    !canTransitionPlanDraftStatus(draft.status, "collecting_preferences")
+  ) {
+    res.status(409).json({
+      error: "this plan has progressed too far to change these answers",
+      code: "lineup_locked",
+      from: draft.status,
+    });
+    return;
+  }
+
+  const updated = await casUpdateDraft(id, version, {
+    ...rest,
+    ...(planId !== undefined ? { planId } : {}),
+    ...(status !== undefined ? { status } : {}),
+    ...(invalidatesLineup
+      ? {
+          lineup: null,
+          previousLineup: null,
+          lockedSlotKeys: [],
+          generationError: null,
+          // Overrides any status the same request asked for: whatever the
+          // caller wanted, there is no lineup any more.
+          status: "collecting_preferences" as const,
+        }
+      : {}),
+  });
 
   if (!updated) {
     res.status(409).json({ error: "draft was modified elsewhere", code: "stale_version" });
@@ -306,21 +355,5 @@ router.post("/plan-drafts/:id/claim", async (req: Request, res: Response) => {
 
   res.json({ draft: claimed });
 });
-
-/** Loads a draft, treating an expired-but-not-yet-purged row as absent —
- *  mirrors getSession()'s expire-on-read handling of sessionsTable. */
-async function loadLiveDraft(id: string) {
-  if (!id) return null;
-  const [row] = await db
-    .select()
-    .from(planDraftsTable)
-    .where(eq(planDraftsTable.id, id));
-  if (!row) return null;
-  if (row.expiresAt.getTime() < Date.now()) {
-    await db.delete(planDraftsTable).where(eq(planDraftsTable.id, id));
-    return null;
-  }
-  return row;
-}
 
 export default router;
