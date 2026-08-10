@@ -17,7 +17,9 @@ const CartDrawer = dynamic(
   { ssr: false },
 );
 
-type Dish = Pick<DishData, "id" | "slug" | "name" | "price">;
+// isAvailable optional for the same reason AddToCart's Dish type is: most
+// callers pass a full DishData and get it for free.
+type Dish = Pick<DishData, "id" | "slug" | "name" | "price"> & { isAvailable?: boolean };
 const GROUP_CODE = /^[0-9A-Za-z]{6,8}$/;
 
 /**
@@ -52,6 +54,24 @@ function LocalLedger({ dish }: { dish: Dish }) {
   const qty = qtyOf(cart, dish.id, "dish");
   const count = itemCount(cart);
 
+  // D-19: the PDP's sticky CTA is the primary place a customer discovers a
+  // paused dish — the whole point is answering it BEFORE checkout, not
+  // after. Same disabled treatment regardless of hydration/cart state,
+  // since a paused dish is never addable no matter what else is true.
+  if (dish.isAvailable === false) {
+    return (
+      <Button
+        type="button"
+        disabled
+        shape="pill"
+        size="fluid"
+        className="min-h-11 flex-1 px-6 py-3 font-semibold opacity-70"
+      >
+        Back soon — kitchen has paused this dish
+      </Button>
+    );
+  }
+
   if (!hydrated) {
     // Stable-height placeholder: no wrong-state flash for returning visitors,
     // no layout shift when the real face arrives.
@@ -84,13 +104,20 @@ function LocalLedger({ dish }: { dish: Dish }) {
             className="min-h-11 flex-1 px-6 py-3 font-semibold"
             onClick={() => {
               setCart(
-                addLine(cart, {
-                  dishId: dish.id,
-                  kind: "dish",
-                  slug: dish.slug,
-                  name: dish.name,
-                  pricePaise: dish.price,
-                }),
+                // cartStore's own backstop (D-19) — the disabled branch
+                // above is the primary gate; this dish is available by the
+                // time execution reaches here, but the guard costs nothing.
+                addLine(
+                  cart,
+                  {
+                    dishId: dish.id,
+                    kind: "dish",
+                    slug: dish.slug,
+                    name: dish.name,
+                    pricePaise: dish.price,
+                  },
+                  { isAvailable: dish.isAvailable },
+                ),
               );
               setDrawerOpen(true);
             }}

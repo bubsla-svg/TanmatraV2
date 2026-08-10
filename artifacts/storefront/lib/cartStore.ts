@@ -62,7 +62,22 @@ function sameLine(l: CartLine, dishId: number, kind: CartLine["kind"], signature
   return l.dishId === dishId && l.kind === kind && lineSignature(l.customizations) === signature;
 }
 
-export function addLine(state: CartState, line: Omit<CartLine, "qty">): CartState {
+/**
+ * `opts.isAvailable`: defense-in-depth for D-19 (availability propagation).
+ * The UI layer (AddToCart, PdpBuyLedger) is meant to never render an add
+ * action for a paused dish in the first place — this is the backstop for
+ * every OTHER path into the cart (stale client state, a caller that forgets
+ * the check) so an unavailable dish can never enter the cart from here.
+ * `undefined` means "caller didn't pass availability" and is treated as
+ * available, matching the `!== false` convention `catalog.ts`/`reorder.ts`
+ * already use — every existing call site is unaffected.
+ */
+export function addLine(
+  state: CartState,
+  line: Omit<CartLine, "qty">,
+  opts?: { isAvailable?: boolean },
+): CartState {
+  if (opts?.isAvailable === false) return state;
   return addOrUpdateQty(state, line, 1);
 }
 
