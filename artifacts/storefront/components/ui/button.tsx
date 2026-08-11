@@ -39,11 +39,11 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-10 px-4 py-2 has-[>svg]:px-3",
-        sm: "h-9 px-3",
-        lg: "h-11 px-6",
-        icon: "size-10",
-        fluid: "h-auto",
+        default: "h-12 px-4 py-2 has-[>svg]:px-3 min-h-[48px]",
+        sm: "h-11 px-3 min-h-[48px]",
+        lg: "h-14 px-6 min-h-[48px]",
+        icon: "size-12 min-h-[48px]",
+        fluid: "h-auto min-h-[48px]",
       },
       shape: {
         default: "rounded-md",

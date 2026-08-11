@@ -1,7 +1,8 @@
 "use client"; // Interactive hero CTA clicks and assessment trigger event emission
 
 import React from "react";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/SafeImage";
+import { GsapScrollImage } from "./GsapScrollImage";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { emitLpEvent } from "@/lib/lpEvents";
@@ -53,36 +54,30 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
     <section 
       data-ui-generation="stitch-74" 
       data-screen-id="MOB-10-Home-Dark"
-      className="mx-auto w-full max-w-screen-xl px-4 pt-8 pb-10 sm:px-6 sm:pt-12 sm:pb-14"
+      className="mx-auto w-full max-w-screen-xl px-4 py-section-py sm:px-6"
     >
-      <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-12">
-        {/* Copy column — 7/12, left-weighted */}
-        <div className="lg:col-span-7">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-semibold tracking-wider uppercase mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            {hero.eyebrow}
-          </div>
+      <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
+        {/* Centered Hero Architecture */}
+        <h1 className="text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-6xl">
+          {headStart}{" "}
+          <span className="inline-block align-middle mx-1.5 w-12 h-10 sm:w-16 sm:h-12 rounded-2xl overflow-hidden border border-line translate-y-[-2px]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <SafeImage
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTXgMAoQYxN5p3zcei43W83rQfIoGOdQIO50IXWQyIhBz5qZE3bZ49KT7w1hQmkMVfz9MXWxiPKiegmpAqtWbxDBHxl0ef-8j-NGzOrqsz4XffWPew40F1JHL4h-OejaOjZc6ghvxRhoaseR4F8xrQprNkxz7yPyq8l7BxubvT41I0uW_7RUl4wYQ-c8EyjkcbmTS-iCXT8JY93CjsazBM-FnaNe91ByEkXEjDeN4gSRIq1LBRkNvzifaunvZYeSiBgpjFbIKtA1I"
+              alt=""
+              aria-hidden
+              className="w-full h-full object-cover"
+            />
+          </span>{" "}
+          {headEnd}
+        </h1>
 
-          <h1 className="mt-2 text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-6xl">
-            {headStart}{" "}
-            <span className="inline-block align-middle mx-1.5 w-12 h-10 sm:w-16 sm:h-12 rounded-2xl overflow-hidden border border-line translate-y-[-2px]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTXgMAoQYxN5p3zcei43W83rQfIoGOdQIO50IXWQyIhBz5qZE3bZ49KT7w1hQmkMVfz9MXWxiPKiegmpAqtWbxDBHxl0ef-8j-NGzOrqsz4XffWPew40F1JHL4h-OejaOjZc6ghvxRhoaseR4F8xrQprNkxz7yPyq8l7BxubvT41I0uW_7RUl4wYQ-c8EyjkcbmTS-iCXT8JY93CjsazBM-FnaNe91ByEkXEjDeN4gSRIq1LBRkNvzifaunvZYeSiBgpjFbIKtA1I"
-                alt=""
-                aria-hidden
-                className="w-full h-full object-cover"
-              />
-            </span>{" "}
-            {headEnd}
-          </h1>
-
-          <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-muted sm:text-lg">
+          <p className="mt-5 text-base leading-relaxed text-ink-muted sm:text-lg">
             {hero.blurb}
           </p>
 
-          <div className="mt-7 flex flex-wrap items-center gap-3.5 sm:mt-9">
-            <Button asChild shape="pill" size="fluid" className="px-8 py-3.5 font-bold shadow-lg shadow-gold/10">
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-3.5 sm:mt-9">
+            <Button asChild shape="pill" size="fluid" className="px-8 py-3.5 font-bold shadow-lg shadow-gold/20 transition-transform duration-300 hover:scale-105 hover:shadow-gold/40 active:scale-95">
               <Link
                 href="/menu"
                 onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "Explore Today's Menu" })}
@@ -90,7 +85,7 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
                 Explore menu
               </Link>
             </Button>
-            <Button asChild variant="outline" shape="pill" size="fluid" className="border-line-strong px-7 py-3.5 font-semibold hover:bg-surface">
+            <Button asChild variant="outline" shape="pill" size="fluid" className="border-line-strong px-7 py-3.5 font-semibold transition-transform duration-300 hover:bg-surface hover:scale-105 active:scale-95">
               <Link
                 href="/plans"
                 onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "Find a Therapeutic Plan" })}
@@ -108,7 +103,16 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
           </div>
 
           {/* Clinical authority trust bar */}
-          <div className="mt-9 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-line pt-5 text-xs font-medium text-ink-muted">
+          <div className="mt-9 flex flex-wrap justify-center items-center gap-x-3 gap-y-1.5 border-t border-line pt-5 text-xs font-medium text-ink-muted">
+            <span className="flex items-center gap-1 text-gold-text">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <svg key={i} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+                  <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
+                </svg>
+              ))}
+              <span className="ml-1 text-ink">4.9/5</span>
+            </span>
+            <span aria-hidden className="text-line-strong">·</span>
             <span>ISO 22000 Certified</span>
             <span aria-hidden className="text-line-strong">·</span>
             <span>FSSAI Verified</span>
@@ -117,22 +121,22 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
           </div>
         </div>
 
-        {/* Photo column — 5/12, tall frame + floating glass macro badge */}
-        <div className="relative lg:col-span-5">
+        {/* Photo area — centered below text */}
+        <GsapScrollImage className="relative mt-12 w-full max-w-2xl mx-auto">
           {hero.badge && (
             <span className="absolute left-4 top-4 z-10 rounded-full border border-gold bg-[var(--glass)] px-3 py-1 text-xs font-bold text-gold-text backdrop-blur-md">
               {hero.badge}
             </span>
           )}
           <div className="overflow-hidden rounded-3xl border border-line bg-surface-raised shadow-2xl shadow-black/40">
-            <div className="relative aspect-[4/5] w-full">
+            <div className="relative aspect-[16/9] w-full">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <SafeImage
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkXUatAbp7GpnFbDf0BTpJCPRd2FRuRIoRlbyoRY_B4NGgShl6G32eTYQQ1uxUSny6sOye9Rpm3Xe7cKS4wizt7QZgR72SoEfWc7C02yvSId2aujwgQ8RFWMZVmOfN4ckkE81T7Rkli2yA5Z-tVzDrRcgOmFT5r8klXpPd2k8EuassiZLq5821La5aJB_rvWSK_UQUdLuk5qZwIYRIVhJ85beF2yu9DY9gqtx9XAGuHIN_-stMpiWveI18_bU9E1qUpqZ9a_hlIrE"
                 alt="Chef-plated clinical meal, photographed from above"
                 className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
               />
-              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between rounded-2xl border border-line bg-[var(--glass)] p-4 backdrop-blur-md shadow-xl">
+              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-2xl border border-line bg-[var(--glass)] p-4 backdrop-blur-md shadow-xl max-w-sm mx-auto">
                 <div>
                   <div className="text-[10px] font-mono uppercase tracking-widest text-primary mb-0.5">MACRO PROFILE</div>
                   <p className="font-mono text-sm font-bold text-ink tracking-tight">32P · 41C · 12F</p>
@@ -146,8 +150,7 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </GsapScrollImage>
     </section>
   );
 }

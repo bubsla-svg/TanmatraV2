@@ -217,13 +217,19 @@ export function PlanDetails({
           <Button
             type="button" disabled={!valid || busy}
             onClick={() => onSubmit({ member: draftToMember(member), address: { line1: line1.trim(), city: city.trim(), pincode: pincode.replace(/\D/g, "") } })}
-            shape="pill" size="fluid" className="px-8 py-3.5 text-center font-semibold disabled:opacity-40"
+            shape="pill" size="fluid" className="px-8 py-3.5 text-center font-semibold disabled:opacity-40 shadow-lg shadow-gold/20 transition-transform duration-300 hover:scale-[1.02] hover:shadow-gold/40 active:scale-95"
           >
             {/* Once the modal resolves, money is already captured — "Opening
                 payment…" would read as a hung or failed button on a charge
                 that already went through. */}
             {verifying ? "Confirming your payment…" : busy ? "Opening payment…" : "Continue to payment"}
           </Button>
+          <div className="mt-3 flex items-center justify-center gap-1.5 text-xs font-medium text-ink-muted">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 text-ink-muted">
+              <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
+            </svg>
+            Secure, encrypted checkout
+          </div>
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { SafeImage } from "@/components/ui/SafeImage";
 import { formatPaise } from "@/lib/format";
 import { emitLpEvent } from "@/lib/lpEvents";
 import { TRIAL_PRICE_PAISE } from "@/lib/trial";
@@ -34,6 +35,13 @@ export function Section04ProtocolsGrid() {
         <p className="mt-3 text-sm text-ink-muted sm:text-base">
           Choose a plan tailored to your health goals, whether it's sustainable weight loss, hormone balance, or building strength.
         </p>
+        <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/5 px-4 py-1.5 text-xs font-semibold text-gold-text">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-gold"></span>
+          </span>
+          Only 14 trial slots left this week
+        </div>
       </div>
 
       {/* Two rules this grid used to break, both fixed in place:
@@ -56,15 +64,22 @@ export function Section04ProtocolsGrid() {
        *    at all and sat inert next to CTAs that do respond. --surface-raised
        *    is the house hover for a bordered control on a card (AccountHub,
        *    BillingPanel, VoucherRedeem, …). */}
-      <div className="mt-12 grid gap-8 lg:grid-cols-3">
+      <div className="mt-12 grid grid-flow-dense gap-8 lg:grid-cols-3">
         {/* Card 1: Weight-Loss Jumpstart */}
-        <div className="flex flex-col justify-between rounded-2xl border border-line bg-surface p-6 shadow-sm">
+        <div className="group flex flex-col justify-between rounded-2xl border border-line bg-surface p-6 shadow-sm overflow-hidden transition-transform duration-700 ease-out hover:scale-105 hover:shadow-xl hover:border-gold/30">
           <div>
             <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-ink-faint">
                 Plan 1 · Weight Loss
               </span>
               <span className="tabular text-xs font-bold text-ink-muted">{deskFuelMonthly}/mo</span>
+            </div>
+            <div className="mt-4 mb-2 aspect-[4/3] w-full overflow-hidden rounded-xl border border-line">
+              <SafeImage
+                src="https://picsum.photos/seed/weightloss/800/600"
+                alt="Weight Loss Meal"
+                className="w-full h-full object-cover mix-blend-luminosity opacity-90 transition-transform duration-700 ease-out group-hover:scale-105 group-hover:mix-blend-normal group-hover:opacity-100"
+              />
             </div>
             <h3 className="mt-2 text-xl font-bold text-ink">Weight-Loss Jumpstart</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
@@ -99,13 +114,20 @@ export function Section04ProtocolsGrid() {
         </div>
 
         {/* Card 2: PCOS Hormone Balance */}
-        <div className="flex flex-col justify-between rounded-2xl border-2 border-gold-text bg-surface p-6 shadow-md">
+        <div className="group flex flex-col justify-between rounded-2xl border-2 border-gold-text bg-surface p-6 shadow-md overflow-hidden transition-transform duration-700 ease-out hover:scale-105 hover:shadow-xl hover:border-gold/80">
           <div>
             <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-gold-text">
                 Plan 2 · Recommended Care
               </span>
               <span className="tabular text-xs font-bold text-ink">{steadyMonthly}/mo</span>
+            </div>
+            <div className="mt-4 mb-2 aspect-[4/3] w-full overflow-hidden rounded-xl border border-line">
+              <SafeImage
+                src="https://picsum.photos/seed/hormone/800/600"
+                alt="Hormone Balance Meal"
+                className="w-full h-full object-cover mix-blend-luminosity opacity-90 transition-transform duration-700 ease-out group-hover:scale-105 group-hover:mix-blend-normal group-hover:opacity-100"
+              />
             </div>
             <h3 className="mt-2 text-xl font-bold text-ink">PCOS Hormone Balance</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
@@ -141,13 +163,20 @@ export function Section04ProtocolsGrid() {
         </div>
 
         {/* Card 3: Lean Muscle Builder */}
-        <div className="flex flex-col justify-between rounded-2xl border border-line bg-surface-raised p-6 shadow-sm">
+        <div className="group flex flex-col justify-between rounded-2xl border border-line bg-surface-raised p-6 shadow-sm overflow-hidden transition-transform duration-700 ease-out hover:scale-105 hover:shadow-xl hover:border-gold/30">
           <div>
             <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-ink-faint">
                 Plan 3 · Strength &amp; Recovery
               </span>
               <span className="tabular text-xs font-bold text-ink-muted">{proteinMonthly}/mo</span>
+            </div>
+            <div className="mt-4 mb-2 aspect-[4/3] w-full overflow-hidden rounded-xl border border-line">
+              <SafeImage
+                src="https://picsum.photos/seed/muscle/800/600"
+                alt="Muscle Building Meal"
+                className="w-full h-full object-cover mix-blend-luminosity opacity-90 transition-transform duration-700 ease-out group-hover:scale-105 group-hover:mix-blend-normal group-hover:opacity-100"
+              />
             </div>
             <h3 className="mt-2 text-xl font-bold text-ink">Lean Muscle Builder</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">

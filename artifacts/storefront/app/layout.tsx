@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { IBM_Plex_Sans, JetBrains_Mono } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 // FIRST, always. A bare @layer statement that fixes the cascade-layer order;
 // layer rank is set at first declaration, so this has to be declared before any
 // sheet that opens a layer. Without it Tailwind's Preflight (declared last, via
@@ -41,15 +41,8 @@ import {
   STITCH_PREFIX_ROUTES,
 } from "@/lib/stitchRoutes";
 
-// TNM-UIF-01 §10.2: IBM Plex Sans (UI) + JetBrains Mono (macro/numeric data).
-// next/font self-hosts the files and exposes each as a CSS variable that
-// globals.css folds into --font-sans / --font-mono.
-const ibmPlexSans = IBM_Plex_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-ibm-plex-sans",
-  display: "swap",
-});
+// TNM-UIF-01 §10.2: Satoshi (UI) + JetBrains Mono (macro/numeric data).
+// next/font self-hosts JetBrains Mono; Satoshi is loaded via CDN in globals.css.
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500"],
@@ -189,7 +182,7 @@ export default function RootLayout({
       // document is in scope and the tokens inherit everywhere.
       data-astryx-theme="tanmatra"
       suppressHydrationWarning
-      className={`${ibmPlexSans.variable} ${jetbrainsMono.variable}`}
+      className={`${jetbrainsMono.variable}`}
     >
       <body
         // Paints the canvas itself so there is no unpainted gap between the
