@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import type { DishData } from "@workspace/menu-catalog";
+import type { DishData, DishMacros } from "@workspace/menu-catalog";
 import { Button } from "@/components/ui/button";
 import { formatPaise } from "@/lib/format";
 import { addLine, itemCount, qtyOf, setQty, subtotalPaise } from "@/lib/cartStore";
@@ -17,9 +17,14 @@ const CartDrawer = dynamic(
   { ssr: false },
 );
 
-// isAvailable optional for the same reason AddToCart's Dish type is: most
-// callers pass a full DishData and get it for free.
-type Dish = Pick<DishData, "id" | "slug" | "name" | "price"> & { isAvailable?: boolean };
+// isAvailable, macros and macrosEstimated all optional — see AddToCart.tsx's
+// identical Dish type for the rationale (D-19 availability, D-14 best-effort
+// macro capture).
+type Dish = Pick<DishData, "id" | "slug" | "name" | "price"> & {
+  isAvailable?: boolean;
+  macros?: DishMacros;
+  macrosEstimated?: boolean;
+};
 const GROUP_CODE = /^[0-9A-Za-z]{6,8}$/;
 
 /**
@@ -115,6 +120,10 @@ function LocalLedger({ dish }: { dish: Dish }) {
                     slug: dish.slug,
                     name: dish.name,
                     pricePaise: dish.price,
+                    // D-14: same figures the PDP's own macro strip already shows.
+                    ...(dish.macros
+                      ? { macros: { calories: dish.macros.calories, protein: dish.macros.protein, estimated: dish.macrosEstimated } }
+                      : {}),
                   },
                   { isAvailable: dish.isAvailable },
                 ),

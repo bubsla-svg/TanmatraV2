@@ -90,6 +90,7 @@ export {
   planIsSelfServiceLaunchable,
   planServesTrack,
   ROUTER_ANSWER_TO_PLAN,
+  planForCondition,
   type B2BSeatTier,
   type CorporateInvoiceQuote,
   TEAMS_SEAT_TIERS,

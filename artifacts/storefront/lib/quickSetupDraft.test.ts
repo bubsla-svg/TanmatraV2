@@ -19,7 +19,7 @@ function memoryStorage(): StorageLike & { data: Map<string, string> } {
   };
 }
 
-const DRAFT = { step: 2 as const, goal: "gain_muscle", allergens: ["dairy"], dietaryStyle: "omnivore", conditions: [] };
+const DRAFT = { step: 2 as const, goal: "gain_muscle", dietaryStyle: "omnivore", allergens: ["dairy"] };
 
 test("stash → read round-trips the in-progress survey", () => {
   const storage = memoryStorage();

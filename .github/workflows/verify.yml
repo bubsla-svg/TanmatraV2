@@ -359,6 +359,28 @@ jobs:
           ./src/lib/trialRedemption.test.ts
           ./src/routes/payments.trialCreditback.test.ts
           ./src/routes/subscriptions.planV2Trial.test.ts
+          # Both of these ran in NO workflow and had gone stale unnoticed:
+          # dayplan asserted the retired per-meal price (₹10,473 against a real
+          # ₹1,199) and planV2AddOns built its "non-plan-v2" fixture through a
+          # create path that can no longer produce one. Neither failure was
+          # visible because neither file was executed anywhere. Wiring them in
+          # is what stops that recurring — a money-path test nobody runs is
+          # indistinguishable from one that passes.
+          ./src/routes/subscriptions.dayplan.test.ts
+          ./src/routes/subscriptions.planV2AddOns.test.ts
+          # Same story: all three ran in no workflow and had rotted against the
+          # plan-v2 migration — every create 400'd on the now-required planId,
+          # and the charge-mandate/pre-debit guards 403'd because ADM-02 moved
+          # them behind a named `finance` role that a bare x-admin-token no
+          # longer satisfies. They cover cancel-stops-billing, skip credits and
+          # the pre-debit guard: contracts worth actually running.
+          #
+          # subscriptions.changePlan.test.ts is DELIBERATELY still absent — it
+          # fails for a real product reason, not a stale one. See
+          # docs/DEFECT-CHANGE-PLAN-PRICING-001.md.
+          ./src/routes/subscriptions.cancel.test.ts
+          ./src/routes/subscriptions.skip.test.ts
+          ./src/routes/subscriptions.sprint56.test.ts
           ./src/routes/subscriptions.creditLedger.test.ts
           ./src/lib/loyaltyEngine.creditDerivation.test.ts
           ./src/routes/subscriptions.quoteCreditPreview.test.ts
@@ -392,6 +414,7 @@ jobs:
           ./src/routes/ops.kds.test.ts
           ./src/routes/ops.paidGate.test.ts
           ./src/routes/checkout.customizations.test.ts
+          ./src/routes/checkout.doubletap.test.ts
           ./src/routes/serviceability.test.ts
           ./src/routes/serviceabilityInterest.test.ts
           ./src/routes/geo.test.ts

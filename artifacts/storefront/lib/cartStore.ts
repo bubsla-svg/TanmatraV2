@@ -23,6 +23,18 @@ export interface CartLineCustomization {
   optionNames: string[];
 }
 
+/** Display-only macro snapshot captured at add-time (D-14 — "Andaaza nahi,
+ *  likha hua"; the checkout line shows more than name + price). Same figures
+ *  the menu card already renders (DishData.macros / macrosEstimated) — never
+ *  re-derived here, never sent to the server, never part of pricing. */
+export interface CartLineMacros {
+  calories: number;
+  protein: number;
+  /** Mirrors DishData.macrosEstimated — the UI labels an estimated figure
+   *  with "~", the same convention DishCard/the PDP already use. */
+  estimated?: boolean;
+}
+
 export interface CartLine {
   dishId: number;
   kind: "dish" | "marketplace";
@@ -39,6 +51,9 @@ export interface CartLine {
    *  rather than re-derived here — this module doesn't have the dish's group
    *  definitions to derive it from. */
   customizations?: string[];
+  /** Optional so a cart written before this field existed still parses and
+   *  renders — as a line with no macro chip, never a crash. */
+  macros?: CartLineMacros;
 }
 
 export interface CartState {
@@ -146,6 +161,18 @@ function isValidCustomizationSelections(x: unknown): x is CartLineCustomization[
   );
 }
 
+function isValidMacros(x: unknown): x is CartLineMacros {
+  if (typeof x !== "object" || x === null) return false;
+  const m = x as Record<string, unknown>;
+  return (
+    typeof m.calories === "number" &&
+    m.calories >= 0 &&
+    typeof m.protein === "number" &&
+    m.protein >= 0 &&
+    (m.estimated === undefined || typeof m.estimated === "boolean")
+  );
+}
+
 function isValidLine(x: unknown): x is CartLine {
   if (typeof x !== "object" || x === null) return false;
   const l = x as Record<string, unknown>;
@@ -160,7 +187,12 @@ function isValidLine(x: unknown): x is CartLine {
     l.qty >= 1 &&
     l.qty <= MAX_QTY_PER_LINE &&
     (l.customizations === undefined || isStringArray(l.customizations)) &&
-    (l.customizationSelections === undefined || isValidCustomizationSelections(l.customizationSelections))
+    (l.customizationSelections === undefined || isValidCustomizationSelections(l.customizationSelections)) &&
+    // Absent entirely on a cart written before this field existed — that
+    // line still passes (macros stays undefined, no chip renders). A
+    // PRESENT-but-malformed value is what gets refused, same policy as
+    // customizations/customizationSelections above.
+    (l.macros === undefined || isValidMacros(l.macros))
   );
 }
 

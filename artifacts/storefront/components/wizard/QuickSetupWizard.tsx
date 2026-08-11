@@ -1,28 +1,36 @@
 "use client";
-// Client: interactive 3-step preference wizard with instant plan previews.
-// On step 3 -> step 4, goal/allergens/dietary style are persisted to the real
-// preferences surface (lib/preferencesApi). Auth-gated like every other island
-// in this app: a 401 on save renders <PhoneAuth> inline and retries the same
-// save — it never redirects, and steps 1-3 stay usable with zero auth
-// friction. Clinical conditions (step 3's PCOS / Type 2 Diabetes checkboxes)
-// stay LOCAL-ONLY: they still drive the live preview below, but conditions
-// are clinical/PHI data that belongs to the separate consent-gated
-// /account/health-information surface, never this PATCH.
+// Client: interactive 3-step assessment (D-04B / TNM-CRO-01 owner ruling
+// 2026-08-11 — "/quick-setup is the approved canonical assessment only if it
+// fulfills the quiz contract"). Exactly three one-question, tap-first
+// viewports (goal → dietary style → allergens); finishing routes
+// DETERMINISTICALLY to /trial or /plan/[planId] — never to an in-page
+// results screen. goal/allergens/dietary style are best-effort persisted to
+// the real preferences surface (lib/preferencesApi) in the background: it
+// never gates the exit, so a signed-out visitor routes exactly as fast as a
+// signed-in one (the old "Sign in to save your profile" gate is the thing
+// this contract disapproves of). Clinical conditions are no longer a wizard
+// question — a condition signal arrives only via the incoming `?condition=`
+// param from /care, carried through to the exit, never asked for here.
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import type { DishData } from "@workspace/menu-catalog";
-import { InstantPlanPreview } from "./InstantPlanPreview";
-import { ApiError } from "@/lib/apiClient";
-import { savePreferences, type DietaryStyle, type WellnessGoal } from "@/lib/preferencesApi";
-import { PhoneAuth } from "@/components/checkout/PhoneAuth";
+import { SquircleOptionCard } from "@/components/primitives/OptionCards";
 import { StepDots } from "@/components/checkout/StepDots";
+import { Button } from "@/components/ui/button";
 import { readQuickSetupDraft, stashQuickSetupDraft, clearQuickSetupDraft } from "@/lib/quickSetupDraft";
+import { createAcquisitionContext } from "@/lib/acquisitionContext";
+import { savePreferences, type DietaryStyle, type WellnessGoal } from "@/lib/preferencesApi";
+import { planForCondition } from "@workspace/subscription-rules";
 
 const GOALS = [
   { id: "lose_weight", label: "Fat Loss & Metabolic Reset", desc: "Calorie-controlled volume density" },
   { id: "gain_muscle", label: "Lean Muscle Hypertrophy", desc: "High bioavailable protein (>30g)" },
   { id: "maintenance", label: "Holistic Longevity Care", desc: "Balanced daily macronutrients" },
+];
+
+const STYLES = [
+  { id: "vegetarian", label: "Strictly Vegetarian" },
+  { id: "omnivore", label: "Omnivore" },
 ];
 
 const ALLERGIES = [
@@ -32,12 +40,7 @@ const ALLERGIES = [
   { id: "soy", label: "Soy" },
 ];
 
-const STYLES = [
-  { id: "vegetarian", label: "Strictly Vegetarian", type: "style" },
-  { id: "omnivore", label: "Omnivore", type: "style" },
-  { id: "pcos", label: "PCOS / Insulin Resistance", type: "condition" },
-  { id: "diabetes", label: "Type 2 Diabetes / Prediabetes", type: "condition" },
-];
+const STEP_LABELS: Record<1 | 2 | 3, string> = { 1: "Goal", 2: "Dietary Style", 3: "Allergens" };
 
 /** Local goal ids match the wire WellnessGoal verbatim except "maintenance",
  *  whose wire value is "maintain". */
@@ -45,132 +48,68 @@ function toWireGoal(id: string): WellnessGoal {
   return id === "maintenance" ? "maintain" : (id as WellnessGoal);
 }
 
-type SaveState = "idle" | "busy" | "saved" | "needsAuth" | "error";
-
-const STEP_LABELS: Record<1 | 2 | 3, string> = { 1: "Goal", 2: "Allergens", 3: "Diet Profile" };
-
-function headingTone(state: SaveState): string {
-  if (state === "saved") return "text-sage-text";
-  if (state === "error") return "text-[var(--danger)]";
-  if (state === "needsAuth") return "text-gold-text";
-  return "text-ink-muted";
+/** The D-04B exit mapping, verbatim: a mapped `?condition=` routes to that
+ *  condition's plan; anything else (no condition, or a condition with no
+ *  mapped plan) routes to the trial — never a dead end. */
+function resolveExitPath(condition: string | null): string {
+  const planId = condition ? planForCondition(condition) : null;
+  return planId ? `/plan/${planId}` : "/trial";
 }
 
-export function QuickSetupWizard({ dishes }: { dishes: DishData[] }) {
+export function QuickSetupWizard() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const condition = searchParams.get("condition");
+
   // Lazy initializer — reads sessionStorage once, at mount, never again. A
   // dropped-off wizard (refresh, accidental back-swipe, tab switch) used to
-  // silently discard every answer with no way back; now the in-progress
-  // survey (steps 1-3 only — step 4 is a submitted state, not a draft) rides
-  // out a reload.
+  // silently discard every answer with no way back; the in-progress survey
+  // rides out a reload.
   const [draft] = useState(() => readQuickSetupDraft());
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(draft?.step ?? 1);
+  const [step, setStep] = useState<1 | 2 | 3>(draft?.step ?? 1);
   const [goal, setGoal] = useState(draft?.goal ?? "maintenance");
-  const [allergens, setAllergens] = useState<string[]>(draft?.allergens ?? []);
   const [dietaryStyle, setDietaryStyle] = useState(draft?.dietaryStyle ?? "omnivore");
-  const [conditions, setConditions] = useState<string[]>(draft?.conditions ?? []);
-  const [saveState, setSaveState] = useState<SaveState>("idle");
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const [allergens, setAllergens] = useState<string[]>(draft?.allergens ?? []);
 
   useEffect(() => {
-    if (step === 4) return;
-    stashQuickSetupDraft({ step, goal, allergens, dietaryStyle, conditions });
-  }, [step, goal, allergens, dietaryStyle, conditions]);
+    stashQuickSetupDraft({ step, goal, dietaryStyle, allergens });
+  }, [step, goal, dietaryStyle, allergens]);
 
   const toggleAllergen = (id: string) =>
     setAllergens((p) => (p.includes(id) ? p.filter((i) => i !== id) : [...p, id]));
-  const toggleCondition = (id: string) =>
-    setConditions((p) => (p.includes(id) ? p.filter((i) => i !== id) : [...p, id]));
 
-  async function attemptSave() {
-    setSaveState("busy");
-    setSaveError(null);
-    try {
-      await savePreferences({
-        goal: toWireGoal(goal),
-        allergens,
-        dietaryStyle: dietaryStyle as DietaryStyle,
-      });
-      setSaveState("saved");
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 401) {
-        setSaveState("needsAuth");
-        return;
-      }
-      setSaveState("error");
-      setSaveError(
-        e instanceof ApiError ? e.message : "Couldn't save your profile — you can still see your matches below.",
-      );
-    }
+  function finish() {
+    clearQuickSetupDraft();
+    const wireGoal = toWireGoal(goal);
+    const recommendedPlanId = condition ? (planForCondition(condition) ?? undefined) : undefined;
+
+    // Best-effort background save — never gates the exit. A 401 (signed-out
+    // visitor) is swallowed exactly like every other auth-gated island in
+    // this app; the old "Sign in to save your profile" wall is the thing
+    // this contract disapproves of.
+    void savePreferences({ goal: wireGoal, dietaryStyle: dietaryStyle as DietaryStyle, allergens }).catch(() => {
+      // Signed out / offline — the assessment still routes; nothing to save yet.
+    });
+
+    const acquisitionContextId = createAcquisitionContext({
+      intendedGoal: wireGoal,
+      recommendedPlanId,
+      returnRoute: "/quick-setup",
+    });
+
+    const params = new URLSearchParams();
+    if (condition) params.set("condition", condition);
+    params.set("goal", wireGoal);
+    params.set("acquisitionContextId", acquisitionContextId);
+    router.push(`${resolveExitPath(condition)}?${params.toString()}`);
   }
 
   function handleContinue() {
     if (step === 3) {
-      clearQuickSetupDraft();
-      setStep(4);
-      void attemptSave();
+      finish();
       return;
     }
-    setStep((step + 1) as 1 | 2 | 3 | 4);
-  }
-
-  if (step === 4) {
-    const heading =
-      saveState === "saved"
-        ? "Profile Saved"
-        : saveState === "needsAuth"
-          ? "Sign In to Save Your Profile"
-          : saveState === "error"
-            ? "Profile Not Saved"
-            : "Saving your profile…";
-
-    return (
-      <div className="flex flex-col gap-6">
-        <div className="rounded-3xl border border-line bg-surface p-5 flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex flex-col gap-1">
-              <span className={`text-[11px] font-semibold uppercase tracking-widest ${headingTone(saveState)}`}>
-                {heading}
-              </span>
-              <p className="text-sm font-medium text-ink">
-                Goal: {goal.replace("_", " ").toUpperCase()} &bull; Style: {dietaryStyle}
-              </p>
-            </div>
-            <button
-              onClick={() => setStep(1)}
-              className="text-xs font-semibold text-gold-text hover:underline uppercase shrink-0 transition-transform active:scale-[0.95]"
-            >
-              Edit &rarr;
-            </button>
-          </div>
-          {saveState === "needsAuth" && (
-            <div className="flex flex-col gap-2 border-t border-line pt-3">
-              <p className="text-xs text-ink-muted">Sign in to save these preferences to your account.</p>
-              <PhoneAuth startExpanded onVerified={() => void attemptSave()} />
-            </div>
-          )}
-          {saveState === "error" && (
-            <div className="flex items-center justify-between gap-3 border-t border-line pt-3">
-              <p className="text-xs text-ink-muted">
-                {saveError ?? "Couldn't save your profile — you can still see your matches below."}
-              </p>
-              <button
-                onClick={() => void attemptSave()}
-                className="rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-ink shrink-0 transition-transform active:scale-[0.95]"
-              >
-                Retry
-              </button>
-            </div>
-          )}
-        </div>
-        <InstantPlanPreview
-          dishes={dishes}
-          goal={goal}
-          allergens={allergens}
-          dietaryStyle={dietaryStyle}
-          medicalConditions={conditions}
-        />
-      </div>
-    );
+    setStep((step + 1) as 1 | 2 | 3);
   }
 
   return (
@@ -184,127 +123,81 @@ export function QuickSetupWizard({ dishes }: { dishes: DishData[] }) {
 
       {step === 1 && (
         <div data-ui-generation="stitch-74" data-screen-id="6.9.1" data-screen-state="step-1-goal" className="flex flex-col gap-3">
+          <h2 className="text-xl font-semibold leading-snug text-ink">What&rsquo;s your goal?</h2>
           {GOALS.map((g) => (
-            <button
+            <SquircleOptionCard
               key={g.id}
+              title={g.label}
+              description={g.desc}
+              isSelected={goal === g.id}
               onClick={() => setGoal(g.id)}
-              className={`rounded-2xl border p-4 text-left transition-all active:scale-[0.98] ${
-                goal === g.id ? "border-gold bg-gold/10 font-medium shadow-sm" : "border-line hover:border-line-strong"
-              }`}
-            >
-              <div className="text-sm font-semibold text-ink">{g.label}</div>
-              <div className="text-xs text-ink-muted mt-0.5">{g.desc}</div>
-            </button>
+            />
           ))}
         </div>
       )}
 
       {step === 2 && (
-        <div data-ui-generation="stitch-74" data-screen-id="6.9.2" data-screen-state="step-2-food-pattern" className="flex flex-col gap-4">
-          <h2 className="text-xl font-semibold leading-snug text-ink">
-            Select dietary allergens our kitchen must strictly omit
-          </h2>
-          <div className="flex flex-col gap-3">
-            {ALLERGIES.map((a) => {
-              const active = allergens.includes(a.id);
-              return (
-                <button
-                  key={a.id}
-                  onClick={() => toggleAllergen(a.id)}
-                  className={`rounded-2xl border p-4 flex items-center justify-between text-sm transition-all active:scale-[0.98] ${
-                    active ? "border-gold bg-gold/10 font-medium text-ink" : "border-line text-ink hover:border-line-strong"
-                  }`}
-                >
-                  <span>{a.label}</span>
-                  <span
-                    className={`text-[11px] font-bold uppercase tracking-wide ${active ? "text-gold-text" : "text-ink-muted"}`}
-                  >
-                    {active ? "Excluding ✓" : "+ Add"}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+        <div data-ui-generation="stitch-74" data-screen-id="6.9.2" data-screen-state="step-2-dietary-style" className="flex flex-col gap-3">
+          <h2 className="text-xl font-semibold leading-snug text-ink">What&rsquo;s your kitchen dietary style?</h2>
+          {STYLES.map((s) => (
+            <SquircleOptionCard
+              key={s.id}
+              title={s.label}
+              isSelected={dietaryStyle === s.id}
+              onClick={() => setDietaryStyle(s.id)}
+            />
+          ))}
         </div>
       )}
 
       {step === 3 && (
-        <div data-ui-generation="stitch-74" data-screen-id="6.9.3" data-screen-state="step-3-cadence" className="flex flex-col gap-5">
-          <div className="flex flex-col gap-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Kitchen dietary style</p>
-            {STYLES.filter((c) => c.type === "style").map((c) => {
-              const active = dietaryStyle === c.id;
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => setDietaryStyle(c.id)}
-                  className={`rounded-2xl border p-4 flex items-center justify-between text-sm transition-all active:scale-[0.98] ${
-                    active ? "border-gold bg-gold/10 font-medium text-ink" : "border-line text-ink hover:border-line-strong"
-                  }`}
-                >
-                  <span>{c.label}</span>
-                  <span
-                    className={`text-[11px] font-bold uppercase tracking-wide ${active ? "text-gold-text" : "text-ink-muted"}`}
-                  >
-                    {active ? "Active ✓" : "+ Select"}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-line bg-bg p-4">
-            <p className="text-xs leading-relaxed text-ink-faint">
-              These conditions shape today’s preview only — they are not saved to your account. For a real,
-              consent-gated clinical record, visit{" "}
-              <Link href="/account/health-information" className="font-semibold text-gold-text hover:underline">
-                Health Information
-              </Link>
-              .
-            </p>
-            {STYLES.filter((c) => c.type === "condition").map((c) => {
-              const active = conditions.includes(c.id);
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => toggleCondition(c.id)}
-                  className={`rounded-xl border border-dashed p-3 flex items-center justify-between text-xs transition-all active:scale-[0.98] ${
-                    active ? "border-gold text-ink" : "border-line-strong text-ink-faint hover:text-ink-muted"
-                  }`}
-                >
-                  <span>{c.label}</span>
-                  <span
-                    className={`text-[10px] font-bold uppercase tracking-wide ${active ? "text-gold-text" : "text-ink-faint"}`}
-                  >
-                    {active ? "Active ✓" : "+ Select"}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+        <div data-ui-generation="stitch-74" data-screen-id="6.9.3" data-screen-state="step-3-allergens" className="flex flex-col gap-3">
+          <h2 className="text-xl font-semibold leading-snug text-ink">
+            Select dietary allergens our kitchen must strictly omit
+          </h2>
+          {ALLERGIES.map((a) => (
+            <SquircleOptionCard
+              key={a.id}
+              title={a.label}
+              isSelected={allergens.includes(a.id)}
+              onClick={() => toggleAllergen(a.id)}
+            />
+          ))}
         </div>
       )}
 
-      <div className="flex items-center gap-3 pt-3 border-t border-line">
-        {step > 1 && (
+      <div className="flex flex-col gap-3 pt-3 border-t border-line">
+        <div className="flex items-center gap-3">
+          {step > 1 && (
+            <Button
+              type="button"
+              onClick={() => setStep((step - 1) as 1 | 2 | 3)}
+              variant="outline"
+              shape="pill"
+              size="fluid"
+              className="flex-1 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-center"
+            >
+              Back
+            </Button>
+          )}
           <Button
-            onClick={() => setStep((step - 1) as 1 | 2 | 3)}
-            variant="outline"
+            type="button"
+            onClick={handleContinue}
             shape="pill"
             size="fluid"
-            className="flex-1 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-center"
+            className="flex-[2] px-6 py-3 text-xs font-semibold uppercase tracking-wide shadow-sm text-center"
           >
-            Back
+            {step === 3 ? "See my plan" : "Continue →"}
           </Button>
-        )}
-        <Button
-          onClick={handleContinue}
-          shape="pill"
-          size="fluid"
-          className="flex-[2] px-6 py-3 text-xs font-semibold uppercase tracking-wide shadow-sm text-center"
+        </div>
+        {/* Tertiary escape hatch (D-04B): the menu-matching outcome survives
+            only as a low-emphasis text link, never the primary exit. */}
+        <Link
+          href="/menu"
+          className="text-center text-[11px] font-medium text-ink-faint hover:text-ink-muted hover:underline"
         >
-          {step === 3 ? "See Customized Menu" : "Continue →"}
-        </Button>
+          Skip &mdash; just browse matching dishes
+        </Link>
       </div>
     </div>
   );

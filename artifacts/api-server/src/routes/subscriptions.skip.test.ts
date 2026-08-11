@@ -136,6 +136,11 @@ function baseBody(extra: Record<string, unknown>) {
     deliveryWindow: "12:00-14:00",
     startDate: futureISO(2),
     planType: "standard",
+    // `planId` became required for new signups ("legacy pricing is disabled")
+    // after this file was written; without it every create here 400s and the
+    // skip/credit contract below asserts against nothing.
+    planId: "desk_fuel",
+    track: "veg",
     members: [{ name: "Primary", diet: "any", allergens: [], spiceLevel: "medium" }],
     defaultItems: [],
     ...extra,
@@ -258,7 +263,14 @@ test("legacy delivery with no items falls back to mealsPerDelivery", async () =>
   );
   assert.equal(created.status, 201, JSON.stringify(created.json));
   const { subscription, deliveries } = created.json;
-  assert.equal(subscription.mealsPerDelivery, 5);
+  // The SERVER decides the meal count from the plan catalog — the requested
+  // `mealsPerDelivery: 5` above is ignored on purpose, the same rule
+  // subscriptions.dayplan.test.ts pins with its deliberately-bogus 50. What
+  // this test is actually about is the FALLBACK: an itemless delivery credits
+  // whatever the subscription says. So read that number back rather than
+  // asserting the one we asked for, which the server was never going to honour.
+  const mealsPerDelivery = subscription.mealsPerDelivery as number;
+  assert.ok(mealsPerDelivery > 0, "the plan must yield a meal count");
   const target = deliveries[0];
   assert.equal((target.items ?? []).length, 0);
 
@@ -276,7 +288,11 @@ test("legacy delivery with no items falls back to mealsPerDelivery", async () =>
     (c: { deliveryId: number }) => c.deliveryId === target.id,
   );
   assert.equal(credits.length, 1);
-  assert.equal(credits[0].amount, 5);
+  assert.equal(
+    credits[0].amount,
+    mealsPerDelivery,
+    "an itemless delivery credits the subscription's own meal count",
+  );
 });
 
 after(async () => {

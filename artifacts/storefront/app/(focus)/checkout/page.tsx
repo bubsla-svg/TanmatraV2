@@ -93,6 +93,14 @@ export default async function CheckoutPage({ searchParams }: Props) {
     return (
       <div data-ui-generation="stitch-74" data-screen-id="8.1" data-screen-state="quote-active" className="min-h-dvh">
         <section className="mx-auto max-w-md px-4 pt-10 pb-44">
+          {/* D-16: the à-la-carte checkout's own "Back to cart" pattern —
+              FocusHeader's goBack() is real history navigation (router.back()),
+              not a fresh push, so returning lands on the SAME /plan/[planId]
+              instance rather than a reset one. No `title`: PlanIdentityGate
+              and PlanCheckout each already render their own contextual h1
+              ("Start your X plan" / the plan name) — FocusHeader's own doc
+              comment names this exact case as the reason `title` is optional. */}
+          <FocusHeader backLabel="Back to plan" trustSignal="Secure UPI checkout" />
           <PlanCheckout
             planId={id}
             planName={d.name}

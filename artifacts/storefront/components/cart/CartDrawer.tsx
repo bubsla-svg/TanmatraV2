@@ -68,6 +68,15 @@ export function CartDrawer({
                     <p className="truncate text-xs text-ink-muted">{l.customizations.join(", ")}</p>
                   )}
                   <p className="tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
+                  {/* D-14: "Andaaza nahi, likha hua" — the same figures the
+                      menu card shows, absent only for a line with none captured
+                      (marketplace items, or a cart written before this field
+                      existed). "~" prefix matches DishCard/PDP's own convention. */}
+                  {l.macros && (
+                    <p className="tabular text-xs text-ink-faint">
+                      {l.macros.estimated ? "~" : ""}{l.macros.calories} kcal · {l.macros.estimated ? "~" : ""}{l.macros.protein}g P
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center rounded-full border border-line bg-surface-raised" role="group" aria-label={`${l.name} quantity`}>

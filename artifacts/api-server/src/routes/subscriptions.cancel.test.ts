@@ -22,6 +22,7 @@ import { eq, inArray } from "drizzle-orm";
 import {
   db,
   usersTable,
+  adminRolesTable,
   subscriptionsTable,
   subscriptionMandatesTable,
   preDebitNotificationsTable,
@@ -69,6 +70,27 @@ async function makeUser(): Promise<TestUser> {
   return u;
 }
 
+/**
+ * An operator holding the `finance` role.
+ *
+ * `/payments/charge-mandate` used to be satisfied by `x-admin-token` alone —
+ * which is what this file's header comment still described. ADM-02 changed the
+ * gate to `requireRole(req, res, "finance")`, which resolves a NAMED ROLE from
+ * `admin_roles`, so a bare token now gets `403 finance scope required` and the
+ * billing assertions below never reached the code they were written to check.
+ * The token still matters (the no-token test asserts exactly that); it is just
+ * no longer sufficient on its own.
+ */
+async function makeFinanceOperator(): Promise<TestUser> {
+  const operator = await makeUser();
+  await db.insert(adminRolesTable).values({
+    userId: operator.id,
+    role: "finance",
+    assignedBy: null,
+  });
+  return operator;
+}
+
 async function api(
   method: string,
   path: string,
@@ -108,6 +130,11 @@ async function seedActiveSubscription(user: TestUser): Promise<number> {
     deliveryWindow: "12:00-14:00",
     startDate: futureISO(2),
     planType: "standard",
+    // `planId` became required for new signups ("legacy pricing is disabled")
+    // after this file was written; without it every create here 400s and the
+    // mandate-revocation contract below asserts against nothing.
+    planId: "desk_fuel",
+    track: "veg",
     members: [{ name: "Primary", diet: "any", allergens: [], spiceLevel: "medium" }],
     defaultItems: [],
   }, user);
@@ -166,11 +193,12 @@ test("charge-mandate refuses after the mandate is revoked (404) — billing stop
   const subId = await seedActiveSubscription(user);
   await seedMandate(subId, "cancelled"); // post-cancel state
 
+  const finance = await makeFinanceOperator();
   const res = await api("POST", "/payments/charge-mandate", {
     subscriptionId: subId,
     amountPaise: 380000,
     scheduledChargeDate: futureISO(1),
-  }, undefined, { "x-admin-token": ADMIN_TOKEN });
+  }, finance, { "x-admin-token": ADMIN_TOKEN });
   assert.equal(res.status, 404, JSON.stringify(res.json));
 });
 
@@ -183,11 +211,12 @@ test("charge-mandate refuses a cancelled subscription even if a mandate row ling
   // Simulate the race: subscription cancelled but a stale active mandate remains.
   await db.update(subscriptionsTable).set({ status: "cancelled" }).where(eq(subscriptionsTable.id, subId));
 
+  const finance = await makeFinanceOperator();
   const res = await api("POST", "/payments/charge-mandate", {
     subscriptionId: subId,
     amountPaise: 380000,
     scheduledChargeDate: futureISO(1),
-  }, undefined, { "x-admin-token": ADMIN_TOKEN });
+  }, finance, { "x-admin-token": ADMIN_TOKEN });
   assert.equal(res.status, 409, JSON.stringify(res.json));
   assert.equal(res.json.code, "subscription_inactive");
 });
@@ -234,6 +263,9 @@ after(async () => {
     // first-cycle order, so it must be cleared before the user row.
     await db.delete(ordersTable).where(inArray(ordersTable.userId, CREATED_USER_IDS));
     await db.delete(subscriptionsTable).where(inArray(subscriptionsTable.userId, CREATED_USER_IDS));
+    // Finance-operator grants, before the users they reference. Left behind,
+    // these accumulate role rows in a database every other suite shares.
+    await db.delete(adminRolesTable).where(inArray(adminRolesTable.userId, CREATED_USER_IDS));
     await db.delete(usersTable).where(inArray(usersTable.id, CREATED_USER_IDS));
   }
 });

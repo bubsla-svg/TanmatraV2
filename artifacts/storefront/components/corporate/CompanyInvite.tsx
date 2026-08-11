@@ -69,7 +69,7 @@ export function CompanyInvite({ token }: { token: string }) {
         <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-full border border-line bg-surface">
           <Building2 className="h-7 w-7 text-ink-faint" strokeWidth={1.75} />
         </div>
-        <p className="text-base font-semibold text-ink">{notFound ? "Invite unavailable" : "Couldn't load this invite"}</p>
+        <h1 className="text-base font-semibold text-ink">{notFound ? "Invite unavailable" : "Couldn't load this invite"}</h1>
         <p className="text-sm text-ink-muted">
           {notFound
             ? "This link may have expired or already been used. Ask your company admin for a fresh invite."
