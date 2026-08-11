@@ -182,3 +182,87 @@ export const fastingLogsTable = pgTable(
 );
 
 export type FastingLog = typeof fastingLogsTable.$inferSelect;
+
+// ── Precision Planner drafts ─────────────────────────────────────────────
+// Persists a generated ICMR precision plan (BMR/TDEE/macro targets + 7-day
+// thali lineup) so it survives navigation and the auth boundary, mirroring
+// planDrafts.ts's guest-ownership pattern (opaque id, httpOnly cookie while
+// unclaimed, claim-on-auth) — see api-server/src/lib/precisionPlanDraftAuth.ts.
+// Deliberately its own minimal table rather than reusing plan_drafts: that
+// table's shape (journey/lineup/generation-lease/status-machine) models the
+// dish-pool quiz-and-shuffle flow, not this formula-driven, computed-once
+// calculator — forcing the two together would bend one domain to fit the
+// other's state machine for no shared behaviour.
+//
+// Local, loose types rather than importing api-server's PrecisionPlannerInput/
+// PrecisionPlanResult: lib/db must not depend on an artifacts/ package, and
+// $type<>() is a compile-time label only — it does not validate storage.
+export interface PrecisionPlanDraftInput {
+  age: number;
+  gender: "male" | "female" | "other";
+  heightCm: number;
+  weightKg: number;
+  activityLevel: "sedentary" | "light" | "moderate" | "active" | "very_active";
+  goal: "fat_loss" | "muscle_gain" | "maintenance" | "diabetic_friendly";
+  dietPreference: "any" | "veg" | "vegan" | "keto";
+  allergens?: string[];
+}
+
+export interface PrecisionPlanDraftThaliMeal {
+  id: number;
+  slug: string;
+  name: string;
+  category: string;
+  calories: number;
+  proteinGrams: number;
+  carbsGrams: number;
+  fatGrams: number;
+  pricePaise: number;
+  image?: string;
+}
+
+export interface PrecisionPlanDraftDay {
+  dayNumber: number;
+  dayName: string;
+  meals: PrecisionPlanDraftThaliMeal[];
+  totals: {
+    calories: number;
+    proteinGrams: number;
+    carbsGrams: number;
+    fatGrams: number;
+    pricePaise: number;
+  };
+}
+
+export interface PrecisionPlanDraftResult {
+  bmr: number;
+  tdee: number;
+  targetCalories: number;
+  targetProteinG: number;
+  targetCarbsG: number;
+  targetFatG: number;
+  dailyThalis: PrecisionPlanDraftDay[];
+  totalPlanPricePaise: number;
+}
+
+export const precisionPlanDraftsTable = pgTable(
+  "precision_plan_drafts",
+  {
+    /** Opaque, server-generated (crypto.randomBytes(32).toString("hex")) —
+     *  same shape and same guest-ownership role as plan_drafts.id. */
+    id: varchar("id").primaryKey(),
+    /** Null while guest-owned. Set once by the claim route; never cleared. */
+    userId: varchar("user_id").references(() => usersTable.id, {
+      onDelete: "cascade",
+    }),
+    input: jsonb("input").$type<PrecisionPlanDraftInput>().notNull(),
+    result: jsonb("result").$type<PrecisionPlanDraftResult>().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [index("idx_precision_plan_drafts_user").on(table.userId)],
+);
+
+export type PrecisionPlanDraft = typeof precisionPlanDraftsTable.$inferSelect;

@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { requireAuthUser as requireAuth } from "../middlewares/requireAuth";
 import { and, asc, eq, gte, lte, sql, isNull, desc } from "drizzle-orm";
 import { z } from "zod/v4";
+import crypto from "crypto";
 import {
   db,
   nutritionLogsTable,
@@ -10,12 +11,19 @@ import {
   streaksTable,
   userPreferencesTable,
   fastingLogsTable,
+  precisionPlanDraftsTable,
   type NutritionLog,
   type DailyTargets,
   type WearableLink,
   type Streak,
   type WearableProvider,
 } from "@workspace/db";
+import {
+  PRECISION_PLAN_DRAFT_TTL_MS,
+  setPrecisionPlanDraftCookie,
+  readPrecisionPlanDraftCookie,
+  resolvePrecisionPlanDraftAccess,
+} from "../lib/precisionPlanDraftAuth";
 
 const router: IRouter = Router();
 
@@ -641,6 +649,17 @@ const precisionPlannerInputSchema = z.object({
   allergens: z.array(z.string()).optional(),
 });
 
+/**
+ * Generates the plan AND persists it as an authoritative draft (opaque id,
+ * guest-cookie ownership — same security shape as plan-drafts, see
+ * lib/precisionPlanDraftAuth.ts). Before this, the plan existed only in the
+ * caller's React state: navigating away (including the sign-in redirect the
+ * checkout handoff could trigger) silently discarded it, and the "Checkout"
+ * CTA pointed at a plan id (`7day_precision`) that PLAN_CATALOG has never
+ * heard of, so checkout.tsx's own `if (!id) redirect("/plans")` bounced the
+ * customer to a generic plans page with zero explanation. See
+ * docs/audit/PRECISION-PLANNER-DRAFT-ID.md.
+ */
 router.post("/wellness/precision-planner/generate", async (req: Request, res: Response) => {
   const parsed = precisionPlannerInputSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -649,8 +668,97 @@ router.post("/wellness/precision-planner/generate", async (req: Request, res: Re
   }
   const { generatePrecisionPlanLogic } = await import("../lib/icmrPrecisionPlanner");
   const plan = await generatePrecisionPlanLogic(parsed.data);
-  res.json({ plan });
+
+  const id = crypto.randomBytes(32).toString("hex");
+  const userId = req.isAuthenticated() ? req.user.id : null;
+  await db.insert(precisionPlanDraftsTable).values({
+    id,
+    userId,
+    input: parsed.data,
+    result: plan,
+    expiresAt: new Date(Date.now() + PRECISION_PLAN_DRAFT_TTL_MS),
+  });
+  if (!userId) setPrecisionPlanDraftCookie(res, id);
+
+  res.json({ plan, draftId: id });
 });
+
+/** Resolve a previously-generated draft by id — lets the results screen (or
+ *  whatever it hands off to) survive a reload or a sign-in redirect instead
+ *  of forcing the customer to redo the whole quiz. */
+router.get("/wellness/precision-planner/drafts/:id", async (req: Request, res: Response) => {
+  const id = typeof req.params.id === "string" ? req.params.id : "";
+  if (!id) {
+    res.status(400).json({ error: "missing draft id" });
+    return;
+  }
+  const [draft] = await db
+    .select()
+    .from(precisionPlanDraftsTable)
+    .where(eq(precisionPlanDraftsTable.id, id))
+    .limit(1);
+  if (!draft || draft.expiresAt.getTime() < Date.now()) {
+    res.status(404).json({ error: "draft not found" });
+    return;
+  }
+  const access = resolvePrecisionPlanDraftAccess(req, draft);
+  if (!access.ok) {
+    res.status(access.status).json({ error: "draft not found" });
+    return;
+  }
+  res.json({ draft: { id: draft.id, input: draft.input, result: draft.result } });
+});
+
+/** Claim a guest-owned draft once the customer signs in — same
+ *  cookie-possession-required pattern as POST /plan-drafts/:id/claim. */
+router.post(
+  "/wellness/precision-planner/drafts/:id/claim",
+  async (req: Request, res: Response) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const id = typeof req.params.id === "string" ? req.params.id : "";
+    if (!id) {
+      res.status(400).json({ error: "missing draft id" });
+      return;
+    }
+    const [draft] = await db
+      .select()
+      .from(precisionPlanDraftsTable)
+      .where(eq(precisionPlanDraftsTable.id, id))
+      .limit(1);
+    if (!draft || draft.expiresAt.getTime() < Date.now()) {
+      res.status(404).json({ error: "draft not found" });
+      return;
+    }
+    if (draft.userId != null) {
+      if (draft.userId === userId) {
+        res.json({ draft: { id: draft.id, input: draft.input, result: draft.result } });
+        return;
+      }
+      res.status(404).json({ error: "draft not found" });
+      return;
+    }
+    if (readPrecisionPlanDraftCookie(req) !== draft.id) {
+      res.status(404).json({ error: "draft not found" });
+      return;
+    }
+    const [claimed] = await db
+      .update(precisionPlanDraftsTable)
+      .set({ userId })
+      .where(
+        and(
+          eq(precisionPlanDraftsTable.id, id),
+          isNull(precisionPlanDraftsTable.userId),
+        ),
+      )
+      .returning();
+    if (!claimed) {
+      res.status(409).json({ error: "draft was claimed elsewhere" });
+      return;
+    }
+    res.json({ draft: { id: claimed.id, input: claimed.input, result: claimed.result } });
+  },
+);
 
 router.post("/wellness/pantry-scan", async (req: Request, res: Response) => {
   const rawImageContent = (req.body?.imageContent as string) ?? "";
