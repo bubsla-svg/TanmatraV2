@@ -15,7 +15,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod/v4";
 import { sendOrderConfirmation } from "../lib/orderNotification";
 import { emitServerEvent } from "../lib/serverEvents";
-import { commitSubsidyForOrder } from "../lib/corporateSubsidy";
+import { commitSubsidyForOrder, releaseSubsidyForOrder } from "../lib/corporateSubsidy";
 import { pushOrderToPetpooja } from "../lib/petpoojaClient";
 import { runPreDebitNotificationsSweep } from "../lib/preDebitScheduler";
 import {
@@ -1006,11 +1006,35 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
       // client's recovery poller surfaces a terminal failure. Guarded to a
       // still-unpaid order so a retry-after-success can't flip a paid order.
       const razorpayOrderId = paymentEntity?.order_id ?? "";
+      let failedOrderIds: number[] = [];
       if (razorpayOrderId) {
-        await db
+        const failed = await db
           .update(ordersTable)
           .set({ status: "failed" })
-          .where(and(eq(ordersTable.razorpayOrderId, razorpayOrderId), eq(ordersTable.status, "placed")));
+          .where(and(eq(ordersTable.razorpayOrderId, razorpayOrderId), eq(ordersTable.status, "placed")))
+          .returning({ id: ordersTable.id });
+        failedOrderIds = failed.map((row) => row.id);
+      }
+      // Give the employee their corporate budget back, exactly as the cancel
+      // path does (routes/orders.ts). A subsidy is reserved when the order is
+      // priced; an order that never gets paid would otherwise hold that
+      // allowance until month end. Cancel already released it — a payment that
+      // FAILS strands the same reservation, and nothing here released it.
+      // Only a `reserved` row is released; an already-committed one means the
+      // money really was collected, so unwinding that belongs to the refund
+      // path. Driven off the guarded UPDATE's returned ids so a losing race
+      // (order already paid/cancelled) releases nothing. Best-effort and
+      // logged: a subsidy-release failure must not abort webhook processing,
+      // mirroring the commitSubsidyForOrder call on the capture path.
+      for (const orderId of failedOrderIds) {
+        try {
+          await releaseSubsidyForOrder(orderId);
+        } catch (err) {
+          req.log.error(
+            { err, orderId },
+            "corporate subsidy release failed in payment.failed webhook",
+          );
+        }
       }
       req.log.warn({ razorpayOrderId }, "webhook: payment failed");
     } else if (eventType === "refund.processed" || eventType === "refund.failed") {
