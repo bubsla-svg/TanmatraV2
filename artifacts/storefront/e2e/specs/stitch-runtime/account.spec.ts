@@ -182,6 +182,54 @@ test.describe("stitch-runtime §10 — account hub sections", () => {
     await evidenceShot(page, "10.5");
   });
 
+  // DEF-RECON-PANTRY-001 (docs/reconciliation/defects.md): the pantry scanner's
+  // "Add to Subscription" button rendered with no onClick at all — a dead CTA.
+  // The suggestions it lists are catalogue dishes (pantryVisionScanner.ts on
+  // the server slices them straight off the menu), not a subscription add-on,
+  // so the fix wires it to the same cart mechanism the menu/PDP already use
+  // and relabels it "Add to cart" to match what it actually does.
+  test("10.5 pantry scan suggestion Add to cart adds a real cart line", async ({ page }) => {
+    // Layered over the beforeEach 401 catch-all (later routes take
+    // precedence) — the scan endpoint itself needs no session.
+    await page.route("**/api/wellness/pantry-scan", (route) =>
+      route.fulfill(
+        json({
+          scanResult: {
+            detectedIngredients: [{ name: "Paneer", category: "dairy", confidenceScore: 0.92 }],
+            suggestedRecipes: [],
+            suggestedTanmatraAddOns: [
+              {
+                id: 501,
+                slug: "high-protein-thali",
+                name: "High-Protein Thali",
+                category: "thali",
+                pricePaise: 24900,
+                rationale: "Pairs with the paneer we spotted in your fridge.",
+              },
+            ],
+          },
+        }),
+      ),
+    );
+
+    await page.goto("/account/wellness");
+    await page.getByRole("button", { name: "Pantry Vision Scanner" }).click();
+
+    await page
+      .locator('input[type="file"]')
+      .setInputFiles({ name: "fridge.jpg", mimeType: "image/jpeg", buffer: Buffer.from("fake") });
+
+    const addButton = page.getByRole("button", { name: "Add to cart" });
+    await expect(addButton).toBeVisible();
+    await addButton.click();
+    await expect(page.getByRole("button", { name: "Added to cart" })).toBeVisible();
+
+    const cart = await page.evaluate(() => window.localStorage.getItem("storefront:cart:v1"));
+    expect(JSON.parse(cart ?? "{}")).toMatchObject({
+      lines: [{ dishId: 501, kind: "dish", slug: "high-protein-thali", pricePaise: 24900, qty: 1 }],
+    });
+  });
+
   test("10.6 consumption history is wired", async ({ page }) => {
     await page.goto("/account/history");
     await expect(
