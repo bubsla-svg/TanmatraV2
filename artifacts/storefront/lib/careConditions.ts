@@ -22,6 +22,16 @@ export const CARE_CONDITIONS: readonly CareCondition[] = [
 ];
 
 /**
+ * Slugs recognized as known conditions beyond the /care rail's own list
+ * above — same clinical concept, a different URL form already in live
+ * circulation (lib/nav.ts's Plan group links /care/diabetes, not
+ * /care/type-2-diabetes). Kept separate from CARE_CONDITIONS rather than
+ * renaming that list's entry, since ConditionRail still needs
+ * "type-2-diabetes" for its own /care rail card.
+ */
+const KNOWN_CONDITION_ALIASES: readonly string[] = ["diabetes"];
+
+/**
  * /care/[condition] stays a free-text catch-all per the ruling above (no
  * notFound(), no new fetch surface) — this only decides whether that route's
  * copy is allowed to sound clinical. An arbitrary slug must not render the
@@ -29,5 +39,5 @@ export const CARE_CONDITIONS: readonly CareCondition[] = [
  */
 export function isCareConditionKnown(slug: string): boolean {
   const key = slug.trim().toLowerCase();
-  return CARE_CONDITIONS.some((c) => c.slug === key);
+  return CARE_CONDITIONS.some((c) => c.slug === key) || KNOWN_CONDITION_ALIASES.includes(key);
 }
