@@ -11,11 +11,16 @@ export function QuoteBreakdown({
   quote,
   quoteState,
   quoteError,
+  quoteRetryable = true,
   onRefreshQuote,
 }: {
   quote: QuoteSnapshot | null;
   quoteState: QuoteUiState;
   quoteError: string | null;
+  /** False for deterministic refusals (safety block, paused dish) where the
+   *  fix is editing the cart — the retry button is withheld so the customer
+   *  is never handed a loop that cannot converge. */
+  quoteRetryable?: boolean;
   onRefreshQuote: () => void;
 }) {
   return (
@@ -26,9 +31,11 @@ export function QuoteBreakdown({
       {quoteState === "error" && (
         <div role="status" className="flex flex-col gap-2 py-1">
           <p className="text-sm text-ink-muted">{quoteError ?? "We couldn't price your order just now."}</p>
-          <Button type="button" variant="outline" shape="pill" size="fluid" onClick={onRefreshQuote} className="self-start bg-surface px-4 py-2 text-sm font-semibold">
-            Retry pricing
-          </Button>
+          {quoteRetryable && (
+            <Button type="button" variant="outline" shape="pill" size="fluid" onClick={onRefreshQuote} className="self-start bg-surface px-4 py-2 text-sm font-semibold">
+              Retry pricing
+            </Button>
+          )}
         </div>
       )}
       {/* Stitch 8.2 — quote-expired recovery. The pack's contract is met by the
