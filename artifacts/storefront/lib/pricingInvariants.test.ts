@@ -229,9 +229,11 @@ test("every rupee figure in the trial copy is the trial price", () => {
 test("no plan/trial/checkout surface imports the legacy cadence price constructs", () => {
   const LEGACY = ["PER_MEAL_PAISE", "CADENCE_DISCOUNT", "cadenceDiscountPct", "MAX_CADENCE_DISCOUNT_PCT", "TRIAL_DISCOUNT",
     "TRIAL_3DAY_SUBTOTAL_PAISE", "TRIAL_DAYS", "TRIAL_MEALS_PER_DAY", "TRIAL_MEALS", "computeDeliveryPricePaise", "computeTrialPricePaise"];
-  // The server's change-plan route prices v1 subscriptions with this exact
-  // function (api-server subscriptions.ts), so the preview mirrors the charge.
-  const ALLOWED: Record<string, string> = { "components/account/ChangePlanPanel.tsx": "computeDeliveryPricePaise" };
+  // ChangePlanPanel.tsx no longer imports computeDeliveryPricePaise —
+  // change-plan is disabled server-side (DEFECT-CHANGE-PLAN-PRICING-001) and
+  // the panel is a static "unavailable" notice, so there is nothing left to
+  // allowlist here.
+  const ALLOWED: Record<string, string> = {};
   let imports = 0;
   for (const [rel, src] of sources()) {
     const bindings = [...src.matchAll(/import\s+(?:type\s+)?\{([^}]*)\}\s*from\s*["']@workspace\/subscription-rules["']/g)]
