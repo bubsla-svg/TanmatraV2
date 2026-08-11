@@ -1,0 +1,229 @@
+[
+  {
+    "id": "DEF-RECON-ZEROPAYABLE-001",
+    "severity": "CRITICAL",
+    "class": "missing branch",
+    "area": "money path",
+    "summary": "Client calls createRazorpayOrder unconditionally after subscription/order creation; server 409s a zero-payable order, and the client has no branch to detect or recover from that case.",
+    "evidence": [
+      "artifacts/storefront/lib/moneyPath.ts:142 finishPlanPayment, :240 finishAlacartePayment — createRazorpayOrder called unconditionally",
+      "artifacts/api-server/src/routes/payments.ts:272-275 — 409 'order has no payable amount' when authoritativePaise <= 0",
+      "artifacts/api-server/src/routes/subscriptions.ts:508-517 — settled: chargePaise === 0 computed server-side, never returned to or read by the client"
+    ],
+    "impact": "A customer whose first subscription cycle is fully covered by credit gets a generic 'Something went wrong' error instead of a confirmation, even though the subscription was created successfully.",
+    "reuseDecision": "REUSE_WITH_ADAPTER — add a chargePaise/settled field to CreateSubscriptionResponse (and the à-la-carte order-create response) and branch in moneyPath.ts before calling createRazorpayOrder.",
+    "stitchIds": [],
+    "phase": 4
+  },
+  {
+    "id": "DEF-RECON-CARECONDITION-001",
+    "severity": "CRITICAL",
+    "class": "governance conflict",
+    "area": "clinical safety",
+    "summary": "/care/[condition] renders synthesized therapeutic copy for any arbitrary slug — no allowlist gate, no notFound(), conflicting with a prior documented product ruling that explicitly forbids adding one.",
+    "evidence": [
+      "artifacts/storefront/app/(global)/care/[condition]/page.tsx — uses conditionDisplayName() only, no CARE_CONDITIONS check, no notFound()",
+      "artifacts/storefront/lib/conditionDisplay.ts — pure casing function, not a gate",
+      "artifacts/storefront/lib/careConditions.ts — allowlist exists but is wired only into /care's ConditionRail, not the detail route; its own comment records the conflicting ruling"
+    ],
+    "impact": "/care/asdfqwerty renders 'Asdfqwerty Protocol' with the same clinical-objectives boilerplate as an approved condition.",
+    "reuseDecision": "BLOCKED_BY_PRODUCT_DECISION — this sweep's §13 and the prior TNM-CRO ruling conflict; needs clinical/product ownership to resolve, not a unilateral fix.",
+    "stitchIds": ["11.4"],
+    "phase": 3
+  },
+  {
+    "id": "DEF-RECON-ROUTE-RULING-001",
+    "severity": "CRITICAL",
+    "class": "wrong route / dead-end nav",
+    "area": "route ruling",
+    "summary": "The approved ruling declares /corporate canonical and /corporate-wellness an alias to redirect, but /corporate is a live placeholder and /corporate-wellness is the real 138-line implementation — inverted from what §25 requires.",
+    "evidence": [
+      "artifacts/storefront/app/(b2b)/corporate/page.tsx — PlaceholderPage, 'Clean slate placeholder pending implementation'",
+      "artifacts/storefront/app/(b2b)/corporate-wellness/page.tsx — 138 lines, substantive",
+      "artifacts/storefront/lib/nav.ts — COMPANY_LINKS links /corporate; Community group links both /corporate-wellness and /corporate side by side"
+    ],
+    "impact": "Production nav sends some clicks (COMPANY_LINKS 'Corporate') to a dead placeholder.",
+    "reuseDecision": "Do not install the redirect as currently specified. Either migrate /corporate-wellness's content onto /corporate first, then redirect the alias — or formally flip which side is canonical.",
+    "stitchIds": [],
+    "phase": 3
+  },
+  {
+    "id": "DEF-RECON-DEADLINKS-001",
+    "severity": "CRITICAL",
+    "class": "dead nav / missing routes",
+    "area": "legal & company routes",
+    "summary": "9 nav targets have no live route: /about, /faq, /legal/terms, /legal/privacy, /legal/refunds, /legal/shipping, /legal/disclaimer, /legal/grievance, /wellness. All are footer/account-hub links reachable on every page.",
+    "evidence": [
+      "Computed by matching every href literal in the active storefront tree against the 61 built routes; 9 targets have no match.",
+      "lib/content/legal/{terms,privacy,refunds,shipping,disclaimer,grievance,company}.ts exist, active, zero route imports.",
+      "Quarantined candidates exist: app/about/page.tsx, app/faq/page.tsx, app/legal/page.tsx, app/legal/[slug]/page.tsx, components/legal/LegalArticle.tsx + LegalMasthead.tsx."
+    ],
+    "impact": "Every legal document is unreachable in production; FSSAI-adjacent compliance pages 404 from the footer on every page of the live site.",
+    "reuseDecision": "RESTORE_FROM_QUARANTINE for /about, /faq, /legal/[slug] after a token/component-compatibility pass (quarantined legal components use raw dark: Tailwind variants, not the current token system) and a content-approval check per §14. /wellness needs a product decision first (see DEF-RECON-WELLNESS-001).",
+    "stitchIds": [],
+    "phase": 3
+  },
+  {
+    "id": "DEF-RECON-PLACEHOLDERS-001",
+    "severity": "MAJOR",
+    "class": "route returning 200 with no content",
+    "area": "routes",
+    "summary": "5 live routes are unimplemented PlaceholderPage stubs: /corporate, /corporate/[slug], /team, /group/[code], /office-lunch/[id]. /team and /corporate are reachable from general nav.",
+    "evidence": [
+      "Mechanical grep for the 'Clean slate placeholder'/PlaceholderPage signature across all active route files, each result read to confirm live markup (one false positive excluded: /metabolic's doc-comment mention of its own fix history)."
+    ],
+    "impact": "/team is linked from lib/nav.ts's Community group ('Our team — Chefs & dietitians') and 404s functionally (200 with no content). /team/[slug] (individual profiles) exists only in quarantine, so implementing /team alone still has nowhere to link to.",
+    "reuseDecision": "RESTORE_FROM_QUARANTINE candidate for /team/[slug]; /team index and /office-lunch/[id]/ /corporate/[slug] need new minimal implementations per REBUILD_MINIMALLY.",
+    "stitchIds": [],
+    "phase": 3
+  },
+  {
+    "id": "DEF-RECON-MARKETPLACE-001",
+    "severity": "MAJOR",
+    "class": "prebuilt unwired",
+    "area": "marketplace",
+    "summary": "payForMarketplace() (client) and POST /marketplace/checkout (server) are both complete and tested; no active caller invokes either.",
+    "evidence": [
+      "artifacts/storefront/lib/marketplaceApi.ts:77,105 — checkout(), payForMarketplace(), zero active importers",
+      "artifacts/storefront/lib/marketplaceApi.test.ts — full sequence tested",
+      "artifacts/storefront/components/checkout/AlacarteCheckout.tsx:71 — comment confirms the intended design ('items ship through their own product-page checkout')"
+    ],
+    "impact": "Marketplace items can be added to cart but have no confirmed, wired path to payment.",
+    "reuseDecision": "REUSE_AS_IS for payForMarketplace — wire it from the marketplace item PDP (app/(focus)/marketplace/[slug]/page.tsx) per the design comment's own stated intent.",
+    "stitchIds": [],
+    "phase": 4
+  },
+  {
+    "id": "DEF-RECON-GROUPORDER-001",
+    "severity": "MAJOR",
+    "class": "prebuilt unwired / partial revenue journey",
+    "area": "group orders",
+    "summary": "Full group-order lifecycle exists client+server (create, get, add item, remove line, close); /group/[code] — the only screen that could host it — is a placeholder.",
+    "evidence": [
+      "artifacts/api-server/src/routes/groupOrders.ts — 5 endpoints",
+      "artifacts/storefront/lib/groupOrdersApi.ts — full client, tested",
+      "artifacts/storefront/app/(focus)/group/[code]/page.tsx — PlaceholderPage",
+      "components/cart/AddToCart.tsx imports addItem — a join action is live with nowhere for the joiner to land"
+    ],
+    "impact": "Partial revenue journey is exposed: a join link can be sent and acted on, but the group cart/close/pay screen doesn't exist.",
+    "reuseDecision": "REUSE_AS_IS for the lifecycle functions — build the /group/[code] screen against them; do not leave AddToCart's join entry point live on its own until the destination exists.",
+    "stitchIds": [],
+    "phase": 4
+  },
+  {
+    "id": "DEF-RECON-TRIALCTA-001",
+    "severity": "CRITICAL",
+    "class": "dead-end CTA",
+    "area": "trial funnel",
+    "summary": "TrialStart's only purchase CTA is suppressed once cart.lines.length > 0, and FocusLayout (which hosts /trial) never mounts MiniCartBar to replace it — a customer with an existing cart sees no way to start the trial.",
+    "evidence": [
+      "artifacts/storefront/components/trial/TrialStart.tsx:120 — {cart.lines.length === 0 && (...)}",
+      "artifacts/storefront/app/(focus)/layout.tsx — 'no Header, no MobileBottomNav, no Footer, no MiniCartBar' (verbatim)"
+    ],
+    "impact": "Dead-end on a revenue CTA, §15.",
+    "reuseDecision": "REUSE_WITH_REFACTOR — TrialStart needs its own always-visible sticky bar regardless of cart state (the FocusLayout convention every other focus-route CTA already follows), not a MiniCartBar handoff that doesn't exist in this shell.",
+    "stitchIds": ["6.8"],
+    "phase": 4
+  },
+  {
+    "id": "DEF-RECON-PANTRY-001",
+    "severity": "MAJOR",
+    "class": "empty handler",
+    "area": "wellness / pantry scan",
+    "summary": "PantryVisionScanner's 'Add to Subscription' button has no onClick handler — a bare <button> with zero behavior.",
+    "evidence": ["artifacts/storefront/components/wellness/PantryVisionScanner.tsx:104-107"],
+    "impact": "Terminal CTA on a real, wired AI feature does nothing when pressed.",
+    "reuseDecision": "REUSE_WITH_REFACTOR — wire to the existing addons/cart mutation path; also flagged for a design-token pass (raw Tailwind palette classes, not the token system the rest of the storefront uses).",
+    "stitchIds": [],
+    "phase": 4
+  },
+  {
+    "id": "DEF-RECON-5.5-REVIEWS-001",
+    "severity": "MAJOR",
+    "class": "prebuilt unwired",
+    "area": "dish PDP",
+    "summary": "A complete, tested, server-backed dish-review feature (DishReviews.tsx, DishReviewForm.tsx, dish_reviews table, order-eligibility gate, AI digest) has zero importers from the live PDP route.",
+    "evidence": [
+      "artifacts/storefront/components/menu/DishReviews.tsx, DishReviewForm.tsx — zero active importers",
+      "artifacts/storefront/lib/dishReviewsApi.ts — full tested client",
+      "artifacts/api-server/src/routes/menuEngineering.ts:235-290 — GET/POST /dish-reviews",
+      "artifacts/storefront/app/(focus)/dish/[slug]/page.tsx (Stitch 5.5) — hand-rolled markup, no DishReviews import"
+    ],
+    "impact": "Customers cannot see or leave dish reviews anywhere in the product despite the feature being fully built.",
+    "reuseDecision": "REUSE_AS_IS — compose DishReviews/DishReviewForm into the existing 5.5 PDP.",
+    "stitchIds": ["5.5"],
+    "phase": 7
+  },
+  {
+    "id": "DEF-RECON-WELLNESS-001",
+    "severity": "MODERATE",
+    "class": "governance gap",
+    "area": "nav / routes",
+    "summary": "/wellness is a dead nav link. /account/wellness (a different, active route hosting WellnessHub) exists and is wired — unclear whether /wellness was meant to be a separate public landing page or the link target is simply wrong.",
+    "evidence": ["lib/nav.ts Track group: { label: 'Wellness', href: '/wellness', desc: 'Preventive, everyday nutrition' }", "quarantine/app/wellness/page.tsx (42 lines) exists as a candidate but was not diffed against a confirmed intent"],
+    "impact": "One more dead footer/nav link; low functional severity relative to the legal-docs cluster since it is not a compliance surface.",
+    "reuseDecision": "BLOCKED_BY_PRODUCT_DECISION",
+    "stitchIds": [],
+    "phase": 3
+  },
+  {
+    "id": "DEF-J2-PLANCONFIG-001",
+    "severity": "CRITICAL",
+    "class": "rebuild",
+    "area": "Journey 2",
+    "summary": "Carried from docs/stitch/stitch-defect-register.md: plan-configuration journey not contract-equivalent; Journey 2 UI needs rebuilding over the merged plan-draft contracts. This sweep confirms MISSING_IMPLEMENTATION for 6.2-6.7 and 14.3/14.4 (18 entries total including Journey 4) — none of the required initial-configuration/generating/generation-error/lineup-active/change-dish-open/accompaniment-editor-open/delivery-schedule/validating/ready-for-quote states exist as implementationComponent files.",
+    "evidence": ["stitch-code-matrix.json — MISSING_IMPLEMENTATION rows 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 14.3, 14.4"],
+    "impact": "Journey 2 (Recommended Plan Configuration) does not exist as a state-driven experience; /plan/[planId] currently only branches launchable-vs-waitlist, then hands off to a PlanBuilder whose internal stages were not confirmed to match the required model.",
+    "reuseDecision": "REBUILD_MINIMALLY — reuse plan-draft/generation/schedule backend contracts (planDraftLineup.ts, planDraftSchedule.ts server routes exist per the defect register) rather than inventing new ones.",
+    "stitchIds": ["6.2", "6.3", "6.4", "6.5", "6.6", "6.7", "14.3", "14.4"],
+    "phase": 5
+  },
+  {
+    "id": "DEF-J4-CUSTOMBUILD-001",
+    "severity": "CRITICAL",
+    "class": "rebuild",
+    "area": "Journey 4",
+    "summary": "The required 12-stage persisted /custom-build wizard does not exist. The active /custom-build route is a per-dish customization/add-to-cart builder — a different feature answering a different product question — confirmed byte-identical to its quarantined twin (no hidden wizard candidate anywhere in the repo).",
+    "evidence": ["artifacts/storefront/components/custom/CustomBuildHub.tsx — dish customization builder, not a plan wizard", "stitch-code-matrix.json — MISSING_IMPLEMENTATION rows 7.2-7.10"],
+    "impact": "Journey 4 (Custom Build) does not exist in any form; the route that should host it is occupied by an unrelated feature.",
+    "reuseDecision": "REBUILD_MINIMALLY — reuse Journey 2's generated-plan-review/schedule/generation components once built (§11's explicit requirement to share them), and quick-setup's wizard shell pattern if compatible (components/wizard/QuickSetupWizard.tsx, quarantined, not yet assessed for reuse).",
+    "stitchIds": ["7.2", "7.3", "7.4", "7.5", "7.6", "7.7", "7.8", "7.9", "7.10"],
+    "phase": 6
+  },
+  {
+    "id": "DEF-9.2-DELIVERY-ROUTE-001",
+    "severity": "MINOR",
+    "class": "wrong route",
+    "area": "9.2 Manage Delivery",
+    "summary": "Carried from stitch-defect-register.md: ManageDeliverySheet reachable from /account/subscriptions, not the approved /meal-planner overlay.",
+    "evidence": ["docs/stitch/stitch-screen-manifest.json promptId 9.2"],
+    "impact": "Low — the sheet works, just from a different entry point than approved.",
+    "reuseDecision": "REUSE_AS_IS, confirm entry-point ruling before moving it.",
+    "stitchIds": ["9.2"],
+    "phase": 7
+  },
+  {
+    "id": "DEF-9.2-ACTIONS-001",
+    "severity": "MODERATE",
+    "class": "partial stub",
+    "area": "9.2 Manage Delivery",
+    "summary": "ManageDeliverySheet (reschedule + swap, both real and tested) is missing 5 of the pack's 7 action rows: Skip this delivery (exists elsewhere in DeliveryList, not in this sheet), Pause plan, Add another meal, Change address, Get help — plus the one-unavailable-action-with-reason row.",
+    "evidence": ["artifacts/storefront/components/account/ManageDeliverySheet.tsx — reschedule + swap only", "docs/stitch/BATCH-9 pack text (recovered from session transcript): required rows are Change meal, Change delivery time, Skip this delivery, Pause plan, Add another meal, Change address, Get help"],
+    "impact": "Partial contract — functional but incomplete.",
+    "reuseDecision": "REUSE_WITH_REFACTOR — additive; subscriptionsApi.ts already exports pause/resume, so most of the missing rows have a backend seam ready.",
+    "stitchIds": ["9.2"],
+    "phase": 7
+  },
+  {
+    "id": "DEF-10.9-FEEDBACK-001",
+    "severity": "MODERATE",
+    "class": "unwired source",
+    "area": "10.9 Meal Feedback",
+    "summary": "MealFeedback.tsx is a complete UI component (default export, full rating/reasons/comments flow matching the pack) with zero importers and no submit API. No /meal-feedback route exists server-side; dish_reviews is a different entity and must not be overloaded for this.",
+    "evidence": ["artifacts/storefront/components/feedback/MealFeedback.tsx — zero importers", "no meal-feedback route found in artifacts/api-server/src/routes/"],
+    "impact": "Feature is entirely unreachable and has nowhere to persist a submission even once mounted.",
+    "reuseDecision": "REUSE_WITH_ADAPTER — mount from an order-history 'Rate meal' action; replace the hand-rolled fixed-overlay with the repo's Drawer primitive; add a new typed backend contract (do not reuse dish_reviews).",
+    "stitchIds": ["10.9"],
+    "phase": 7
+  }
+]
