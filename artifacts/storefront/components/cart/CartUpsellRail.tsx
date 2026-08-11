@@ -62,10 +62,12 @@ export function CartUpsellRail({
                 {formatPaise(item.pricePaise)}
               </p>
             </div>
+            {/* D-08: Secondary CTA — up to 3 of these can render alongside the
+                drawer's own Checkout button, which stays the one gold action. */}
             <button
               type="button"
               onClick={() => onAdd(item)}
-              className="min-h-11 shrink-0 rounded-md bg-gold px-3 py-1.5 text-xs font-bold text-[var(--gold-ink)] transition-transform active:scale-95 hover:opacity-90"
+              className="min-h-11 shrink-0 rounded-md border border-line-strong bg-surface px-3 py-1.5 text-xs font-bold text-ink transition-transform active:scale-95 hover:bg-surface-raised"
             >
               + Add
             </button>

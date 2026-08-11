@@ -2,7 +2,7 @@
 // Client: the builder is interactive (track axis + confirm) and emits funnel
 // events — the configure-by-exception decision the CUJ needs.
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPaise } from "@/lib/format";
 import { planDisplay, planQuoteView } from "@/lib/plans";
@@ -12,9 +12,20 @@ import { Button } from "@/components/ui/button";
 import { OrderBump } from "./OrderBump";
 import type { PlanId, DietTrack, PlanCycle } from "@workspace/subscription-rules";
 import type { PlanBuilderData } from "@/lib/plans";
-import { Leaf, Egg, Bone } from "lucide-react";
+import { Leaf, Egg, Bone, Check } from "lucide-react";
 
 const TRACK_LABEL: Record<DietTrack, string> = { veg: "Veg", egg: "Egg", nonveg: "Non-veg" };
+
+/** D-16: keyed per-plan (not global) — configuring two different plans in the
+ *  same tab must not cross-contaminate each other's draft. Mirrors
+ *  AlacarteCheckout's PHONE_DRAFT_KEY/ADDRESS_DRAFT_KEY pattern: without it,
+ *  FocusHeader's "Back to plan" (real history navigation, not a fresh push)
+ *  still remounts this component with fresh useState defaults — verified
+ *  empirically, not assumed; a plain router.back() alone does NOT preserve
+ *  React state here the way it might look like it should. */
+function draftKey(planId: PlanId): string {
+  return `plan_builder_draft_v1:${planId}`;
+}
 
 /** Reference clinic rate shown adjacent to the bump price (02f §2.5 — "₹1,999+",
  *  someone else's price, never a strikethrough of a former price). */
@@ -51,6 +62,30 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
   const currentQuote = trackConfig.quotes.find(q => q.cycle === cycle) ?? trackConfig.quotes[0];
 
   const [bump, setBump] = useState(false);
+
+  // D-16: restore a draft written before navigating away (see draftKey's
+  // comment), once — a customer who's already started picking wins over a
+  // stale draft only if they hadn't touched anything yet, same "restore into
+  // untouched state" rule AlacarteDetails' address draft follows.
+  const restoredDraft = useRef(false);
+  useEffect(() => {
+    if (restoredDraft.current) return;
+    restoredDraft.current = true;
+    try {
+      const raw = sessionStorage.getItem(draftKey(planId));
+      if (!raw) return;
+      const saved = JSON.parse(raw) as { track?: DietTrack; cycle?: PlanCycle; bump?: boolean };
+      if (saved.track && builderData.servedTracks.some((t) => t.track === saved.track)) setTrack(saved.track);
+      if (saved.cycle) setCycle(saved.cycle);
+      if (typeof saved.bump === "boolean") setBump(saved.bump);
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(draftKey(planId), JSON.stringify({ track, cycle, bump }));
+    } catch {}
+  }, [planId, track, cycle, bump]);
 
   // The RD bump is the only upsell here (02d stage 4), offered only where the
   // plan permits it. RD identity is blocked on #3, so OrderBump renders the
@@ -107,18 +142,22 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
                   }
                   emitFunnel("cuj_track_selected", { planId, track: t.track });
                 }}
-                className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-                style={
+                // D-08: selection state, not a second action colour — border +
+                // tint + marker (SquircleOptionCard's established pattern),
+                // never a solid --gold fill. "Continue to checkout" below stays
+                // the one gold action on this screen.
+                className={`rounded-lg border-2 px-4 py-2 text-sm font-medium transition-colors ${
                   track === t.track
-                    ? { background: "var(--gold)", color: "var(--gold-ink)" }
-                    : { color: "var(--ink-muted)" }
-                }
+                    ? "border-gold bg-gold/10 text-gold-text"
+                    : "border-transparent text-ink-muted"
+                }`}
               >
                 <div className="flex items-center gap-2">
-                  {t.track === "veg" && <Leaf size={16} className={track === t.track ? "text-[var(--gold-ink)]" : "text-ink-muted"} />}
-                  {t.track === "egg" && <Egg size={16} className={track === t.track ? "text-[var(--gold-ink)]" : "text-ink-muted"} />}
-                  {t.track === "nonveg" && <Bone size={16} className={track === t.track ? "text-[var(--gold-ink)]" : "text-ink-muted"} />}
+                  {t.track === "veg" && <Leaf size={16} className={track === t.track ? "text-gold-text" : "text-ink-muted"} />}
+                  {t.track === "egg" && <Egg size={16} className={track === t.track ? "text-gold-text" : "text-ink-muted"} />}
+                  {t.track === "nonveg" && <Bone size={16} className={track === t.track ? "text-gold-text" : "text-ink-muted"} />}
                   <span>{TRACK_LABEL[t.track]}</span>
+                  {track === t.track && <Check size={14} className="text-gold-text" aria-hidden />}
                 </div>
               </button>
             ))}
@@ -135,14 +174,15 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
                   type="button"
                   aria-pressed={cycle === q.cycle}
                   onClick={() => setCycle(q.cycle)}
-                  className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-                  style={
+                  // D-08: same selection treatment as the track pills above.
+                  className={`flex items-center gap-1.5 rounded-lg border-2 px-4 py-2 text-sm font-medium transition-colors ${
                     cycle === q.cycle
-                      ? { background: "var(--gold)", color: "var(--gold-ink)" }
-                      : { color: "var(--ink-muted)" }
-                  }
+                      ? "border-gold bg-gold/10 text-gold-text"
+                      : "border-transparent text-ink-muted"
+                  }`}
                 >
                   {q.cycle.charAt(0).toUpperCase() + q.cycle.slice(1)}
+                  {cycle === q.cycle && <Check size={14} className="text-gold-text" aria-hidden />}
                 </button>
               ))}
             </div>

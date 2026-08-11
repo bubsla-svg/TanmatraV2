@@ -10,7 +10,6 @@ import { HorizontalSnapRail } from "@/components/primitives/HorizontalSnapRail";
 import { StickyLedger } from "@/components/primitives/StickyLedger";
 import { PriceDisplay } from "@/components/primitives/PriceDisplay";
 import { GlobalHeader } from "@/components/primitives/Headers";
-import { BottomTabBar } from "@/components/primitives/BottomTabBar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TextInput, SearchInput } from "@/components/primitives/Inputs";
 import { InlineError, EmptyState } from "@/components/primitives/Feedback";
@@ -98,8 +97,9 @@ export default function StyleguidePage({
           </div>
         </section>
       </main>
-      
-      <BottomTabBar activeTab="home" onTabSelect={() => {}} />
+      {/* D-17: no in-page duplicate nav demo any more — app/(global)/layout.tsx
+          already mounts the real MobileBottomNav for every (global) route,
+          including this one. That's "the real one" this branch points at. */}
     </div>
   );
 }

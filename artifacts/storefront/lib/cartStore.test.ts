@@ -66,6 +66,36 @@ test("parseStoredCart survives garbage, wrong shapes, and hostile values", () =>
   assert.equal(s.lines[0]?.dishId, 7);
 });
 
+// ── D-14: display-only macro snapshot ───────────────────────────────────────
+
+test("addLine carries a macros snapshot through when the caller supplies one", () => {
+  const withMacros = { ...dish, macros: { calories: 260, protein: 12, estimated: false } };
+  const s = addLine(EMPTY_CART, withMacros);
+  assert.deepEqual(s.lines[0]?.macros, { calories: 260, protein: 12, estimated: false });
+});
+
+test("a cart written before this field existed still parses — old lines render with no macro chip, never crash", () => {
+  const preExisting = JSON.stringify({
+    lines: [{ dishId: 7, kind: "dish", slug: "quinoa-khichdi", name: "Quinoa Khichdi", pricePaise: 19900, qty: 1 }],
+  });
+  const s = parseStoredCart(preExisting);
+  assert.equal(s.lines.length, 1, "the pre-existing line is still valid");
+  assert.equal(s.lines[0]?.macros, undefined);
+});
+
+test("a present-but-malformed macros value is refused like any other malformed optional field", () => {
+  const bad = JSON.stringify({
+    lines: [
+      { dishId: 7, kind: "dish", slug: "a", name: "A", pricePaise: 100, qty: 1, macros: { calories: "not a number", protein: 12 } },
+      { dishId: 8, kind: "dish", slug: "b", name: "B", pricePaise: 100, qty: 1, macros: { calories: -5, protein: 12 } },
+      { dishId: 9, kind: "dish", slug: "c", name: "C", pricePaise: 100, qty: 1, macros: { calories: 200, protein: 10, estimated: true } },
+    ],
+  });
+  const s = parseStoredCart(bad);
+  assert.equal(s.lines.length, 1, "only the well-formed line survives");
+  assert.equal(s.lines[0]?.dishId, 9);
+});
+
 // ── Customised lines: identity must not collide with a plain line ──────────
 
 const customBread = {

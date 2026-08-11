@@ -315,13 +315,30 @@ test("post-purchase: detach soft-deactivates the add-on", async () => {
 });
 
 test("post-purchase: a non-plan-v2 subscription cannot attach add-ons (409)", async () => {
-  // Flag OFF → planId ignored → no plan_v2 tag in notes.
-  process.env["FLAG_PLAN_V2"] = "";
+  // The guard being tested keys off the plan_v2 tag in `notes`
+  // (`planIdFromNotes(sub.notes)` → 409 `not_plan_v2`).
+  //
+  // This used to build that state by creating with FLAG_PLAN_V2 off, on the
+  // assumption the flag would make the server ignore `planId`. It no longer
+  // does: `planId` is required for new signups and legacy pricing is disabled,
+  // so EVERY subscription created through this route is now tagged — the
+  // create path could not produce the state under test, the attach succeeded
+  // (201), and the test failed.
+  //
+  // The 409 branch is still live and still worth covering: it protects
+  // subscriptions written before plan-v2, which are untagged. So build that
+  // state the only way it now occurs — an untagged row — rather than through
+  // a create path that can no longer produce one.
+  process.env["FLAG_PLAN_V2"] = "true";
   const user = await makeUser();
   const created = await api("POST", "/subscriptions", baseBody({ planId: "desk_fuel", track: "veg" }), user);
   const subId = created.json.subscription.id as number;
 
-  process.env["FLAG_PLAN_V2"] = "true";
+  await db
+    .update(subscriptionsTable)
+    .set({ notes: "legacy subscription predating plan-v2" })
+    .where(eq(subscriptionsTable.id, subId));
+
   const attach = await api("POST", `/subscriptions/${subId}/add-ons`, { addOnId: "rd_bump" }, user);
   assert.equal(attach.status, 409, JSON.stringify(attach.json));
   assert.equal(attach.json.code, "not_plan_v2");

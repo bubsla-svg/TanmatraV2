@@ -1,32 +1,29 @@
 import React from "react";
 import { GlobalHeader } from "./Headers";
-import { BottomTabBar } from "./BottomTabBar";
 
 interface GlobalLayoutProps {
   children: React.ReactNode;
-  activeTab?: "home" | "menu" | "plan" | "account";
   currentRoute?: string;
   onNavigate?: (route: string) => void;
 }
 
+// D-17: this file has zero importers anywhere in the app (the real global
+// chrome is app/(global)/layout.tsx + components/MobileBottomNav.tsx) — its
+// own BottomTabBar demo dependency was the dead duplicate that branch
+// deleted. Kept minimal and compiling rather than expanding scope to
+// deleting this whole unreferenced file.
 export const GlobalLayout: React.FC<GlobalLayoutProps> = ({
   children,
-  activeTab = "home",
   currentRoute = "/",
   onNavigate,
 }) => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
       <GlobalHeader currentRoute={currentRoute} onNavigate={onNavigate} />
-      
+
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 py-6 pb-24 md:pb-12">
         {children}
       </main>
-
-      <BottomTabBar activeTab={activeTab} onTabSelect={(tab) => {
-        const routeMap = { home: "/", menu: "/menu", plan: "/plans", account: "/account" };
-        onNavigate?.(routeMap[tab]);
-      }} />
     </div>
   );
 };

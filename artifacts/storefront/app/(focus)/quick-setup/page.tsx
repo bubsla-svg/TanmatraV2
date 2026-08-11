@@ -1,16 +1,13 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { fetchMenu } from "@/lib/catalog";
 import { QuickSetupWizard } from "@/components/wizard/QuickSetupWizard";
 
 export const metadata: Metadata = {
   title: "Quick Dietary Setup | Tanmatra",
-  description: "Answer 3 quick questions about your goal, allergens and dietary style — see matching dishes instantly, and save your allergen exclusions to your account.",
+  description: "Answer 3 quick questions about your goal, dietary style and allergens — we'll route you straight to your plan.",
 };
 
-export default async function QuickSetupPage() {
-  const { dishes } = await fetchMenu();
-
+export default function QuickSetupPage() {
   return (
     <div className="min-h-dvh">
       <section className="mx-auto flex max-w-lg flex-col gap-8 px-4 py-12">
@@ -22,13 +19,13 @@ export default async function QuickSetupPage() {
             3-Step Dietary Setup
           </h1>
           <p className="text-sm leading-relaxed text-ink-muted">
-            Tell us your goal, allergens and dietary style — we&rsquo;ll match you to dishes on the menu
-            right away, and save your allergens to your account so the kitchen knows to omit them.
+            Tell us your goal, dietary style and allergens — we&rsquo;ll route you straight to the right
+            plan, and save your allergens to your account so the kitchen knows to omit them.
           </p>
         </div>
 
-        <Suspense fallback={<p className="text-sm text-ink-muted">Loading clinical menu capabilities…</p>}>
-          <QuickSetupWizard dishes={dishes} />
+        <Suspense fallback={<p className="text-sm text-ink-muted">Loading…</p>}>
+          <QuickSetupWizard />
         </Suspense>
       </section>
     </div>

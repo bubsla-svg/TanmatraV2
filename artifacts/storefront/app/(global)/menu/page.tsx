@@ -6,6 +6,7 @@ import { DishCard } from "@/components/DishCard";
 import type { MenuGridRow } from "@/components/MenuGrid";
 import { PersonalizedMenu } from "@/components/menu/PersonalizedMenu";
 import { DishDrawer } from "@/components/menu/DishDrawer";
+import { FallbackMenuBanner } from "@/components/menu/FallbackMenuBanner";
 
 /**
  * The only fields PersonalizedMenu's client-side ranking/diet-filter actually
@@ -56,7 +57,7 @@ export default async function MenuPage({
 }: {
   searchParams: Promise<{ dish?: string }>;
 }) {
-  const [{ dishes }, { dish: dishSlug }] = await Promise.all([
+  const [{ dishes, source }, { dish: dishSlug }] = await Promise.all([
     fetchMenu(),
     searchParams,
   ]);
@@ -81,6 +82,7 @@ export default async function MenuPage({
           {orderable.length} dishes · order today · verified macros · RD-reviewed kitchen
         </p>
       </div>
+      {source === "fallback" && <FallbackMenuBanner />}
       <h2 className="sr-only">Dishes</h2>
       <PersonalizedMenu dishes={orderable.map(forMatch)} rows={rows} />
       {openDish && <DishDrawer dish={openDish} />}

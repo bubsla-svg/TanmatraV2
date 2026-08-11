@@ -37,7 +37,15 @@ import subscriptionsRouter from "./subscriptions";
 // functions the route bills through (Checklist v1.2: ₹750/meal base, cadence
 // discounts, 5% GST). Deriving them here asserts the route's wiring and
 // server-side meal-count math without going stale on a price change.
-import { computeDeliveryPricePaise } from "../lib/subscriptionPricing";
+// Price from the SAME source the server prices from — `computePlanQuote`
+// (subscriptions.ts: `q.cycleTotalPaise + planReviewAddOnPaise`). These
+// assertions used to call `computeDeliveryPricePaise`, the legacy per-meal
+// helper, which stopped being the server's answer once `planId` became
+// required and pricing moved to the plan catalog. That made them assert
+// ₹10,473 against a real ₹1,199 — a money-path test that had quietly become
+// a test of nothing. Deriving from the catalog keeps this suite honest if
+// the price changes again.
+import { computePlanQuote } from "@workspace/subscription-rules";
 
 interface TestUser {
   id: string;
@@ -184,7 +192,7 @@ test("weekly dayPlan: dated delivery per day, server-priced meal count", async (
   assert.equal(subscription.mealsPerDelivery, 14);
   assert.equal(
     subscription.pricePerDeliveryPaise,
-    computeDeliveryPricePaise("weekly", 14),
+    computePlanQuote("desk_fuel", "veg", "weekly").cycleTotalPaise,
   );
   // 4 weekly cycles × 7 days.
   assert.equal(deliveries.length, 28);
@@ -229,7 +237,7 @@ test("fortnightly dayPlan: full-cycle meals at 10% off, 2 cycles ahead", async (
   assert.equal(subscription.mealsPerDelivery, 28);
   assert.equal(
     subscription.pricePerDeliveryPaise,
-    computeDeliveryPricePaise("fortnightly", 28),
+    computePlanQuote("desk_fuel", "veg", "fortnightly" as never).cycleTotalPaise,
   );
   assert.equal(deliveries.length, 28); // 2 cycles × 14 days
 });

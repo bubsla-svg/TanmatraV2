@@ -84,6 +84,23 @@ export function AlacarteDetails({
   const allergenAckRef = useRef<HTMLInputElement>(null);
   const prefilled = useRef(false);
 
+  // D-22: a synchronous, non-React-state guard against multi-tap. `busy`
+  // (a prop, driven by React state in the parent) already disables the
+  // button — but a fast double-tap can fire twice before React commits that
+  // disabled attribute to the real DOM node, since the state update is
+  // batched and the second click event can land in the same task. A ref
+  // mutation is visible to the very next synchronous call, batching or not,
+  // so this closes the race `disabled={busy}` alone doesn't. It EXTENDS the
+  // existing guard (busy still drives the visible/disabled state) rather
+  // than replacing it — the server's own idempotency-key dedup on
+  // POST /orders (idempotencyMiddleware, mounted in app.ts) is the actual
+  // money-safety backstop either way; this only stops the wasted duplicate
+  // requests the audit observed reaching it.
+  const submitLockRef = useRef(false);
+  useEffect(() => {
+    if (!busy) submitLockRef.current = false;
+  }, [busy]);
+
   const { setCart } = useCart();
 
   // Same public menu the rest of the app reads client-side (ReorderButton,
@@ -181,6 +198,13 @@ export function AlacarteDetails({
                   <p className="truncate text-xs text-ink-muted">{l.customizations.join(", ")}</p>
                 )}
                 <p className="tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
+                {/* D-14: the last look before money shows more than name +
+                    price — same figures the menu card already showed. */}
+                {l.macros && (
+                  <p className="tabular text-xs text-ink-faint">
+                    {l.macros.estimated ? "~" : ""}{l.macros.calories} kcal · {l.macros.estimated ? "~" : ""}{l.macros.protein}g P
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-3">
                 {/* .touch-target-critical (48px): globals.css reserves the
@@ -375,15 +399,28 @@ export function AlacarteDetails({
                 // unobservable. This stays clickable so a genuine attempt
                 // produces the inline error and moves focus to the control
                 // that needs it (§16.1 error-focus), instead of the customer
-                // discovering it only after the server's 422.
+                // discovering it only after the server's 422. Checked before
+                // the submit lock below — a blocked-on-ack tap is not a
+                // submit attempt and must not consume the one-shot lock.
                 if (allergenAckRequired && !allergenAck) {
                   setAllergenAckTouched(true);
                   allergenAckRef.current?.focus();
                   return;
                 }
+                // Synchronous first — see submitLockRef's comment above.
+                if (submitLockRef.current) return;
+                submitLockRef.current = true;
                 onSubmit({ line1: line1.trim(), city: city.trim(), pincode: pinDigits }, allergenAck);
               }}
-              shape="pill" size="fluid" className="px-8 py-3.5 text-center font-semibold disabled:opacity-40"
+              shape="pill" size="fluid"
+              // min-w-64: sized to the longest of the three CTA states
+              // ("Confirming your payment…") so the button never resizes as
+              // the label changes across them — "stable dimensions during
+              // loading" (the run of Continue to payment → Opening payment…
+              // → Confirming your payment… would otherwise shrink then grow
+              // the button, a visible shift right where a customer's thumb
+              // already is).
+              className="min-w-64 px-8 py-3.5 text-center font-semibold disabled:opacity-40"
             >
               {/* Once the modal resolves, money is already captured — "Opening
                   payment…" would read as a hung or failed button on a charge

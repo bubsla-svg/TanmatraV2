@@ -1,18 +1,22 @@
 /**
- * Quick Setup wizard draft (Journey 3 / SF-0x). The 3-step survey lived in
- * plain component state with no persistence — a refresh, an accidental back
- * gesture, or a tab switch mid-wizard silently discarded every answer, with
- * no confirmation and no way back. sessionStorage mirrors postCheckout.ts's
- * shape: same-tab, dies with the tab, storage failures never break the
- * wizard (private-mode Safari throws on access).
+ * Quick Setup wizard draft (Journey 3 / SF-0x, D-04B contract). The 3-step
+ * survey lived in plain component state with no persistence — a refresh, an
+ * accidental back gesture, or a tab switch mid-wizard silently discarded
+ * every answer, with no confirmation and no way back. sessionStorage mirrors
+ * postCheckout.ts's shape: same-tab, dies with the tab, storage failures
+ * never break the wizard (private-mode Safari throws on access).
+ *
+ * `conditions` (local-only PCOS/diabetes checkboxes) was dropped under D-04B:
+ * the contract is exactly three one-question viewports (goal, dietary style,
+ * allergens) — a condition signal now arrives only via the incoming
+ * `?condition=` query param from /care, never a fourth in-wizard question.
  */
 
 export interface QuickSetupDraft {
   step: 1 | 2 | 3;
   goal: string;
-  allergens: string[];
   dietaryStyle: string;
-  conditions: string[];
+  allergens: string[];
 }
 
 export type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -62,10 +66,9 @@ export function readQuickSetupDraft(
     const p = parsed as Record<string, unknown>;
     if (!isStep(p.step)) return null;
     if (typeof p.goal !== "string") return null;
-    if (!isStringArray(p.allergens)) return null;
     if (typeof p.dietaryStyle !== "string") return null;
-    if (!isStringArray(p.conditions)) return null;
-    return { step: p.step, goal: p.goal, allergens: p.allergens, dietaryStyle: p.dietaryStyle, conditions: p.conditions };
+    if (!isStringArray(p.allergens)) return null;
+    return { step: p.step, goal: p.goal, dietaryStyle: p.dietaryStyle, allergens: p.allergens };
   } catch {
     return null;
   }

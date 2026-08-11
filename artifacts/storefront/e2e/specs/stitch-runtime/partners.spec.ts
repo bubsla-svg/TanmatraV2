@@ -58,6 +58,17 @@ test.describe("stitch-runtime: partners & B2B (12.x)", () => {
     await evidenceShot(page, "12.1");
   });
 
+  test("12.1 corporate invite error state heading is a real h1 (D-12)", async ({ page }) => {
+    // Tag-only fix: the "Invite unavailable" heading used to be a <p>, not a
+    // heading at all. No flipbook — this asserts markup, not appearance.
+    await page.route(`**/api/companies/invites/${INVITE_TOKEN}`, (route) =>
+      route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: "not_found" }) }),
+    );
+    await page.goto(`/corporate/invite/${INVITE_TOKEN}`);
+    await expect(page.getByRole("heading", { name: "Invite unavailable", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+  });
+
   test("12.2 corporate wellness lander is wired", async ({ page }) => {
     await page.goto("/corporate-wellness");
     await expect(

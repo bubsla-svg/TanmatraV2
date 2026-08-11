@@ -12,7 +12,7 @@ instructions §12.
 | DEF-6.2-MEALTIME-001 | 6.2 | missing source | Mealtime/delivery-context sheet on /plans never built |
 | DEF-6.5-CHANGEDISH-001 | 6.5 | missing source | Pre-checkout Change Dish sheet missing (server candidates endpoint exists: `planDraftLineup.ts`) |
 | DEF-6.6-ACCOMP-001 | 6.6 | missing source | Accompaniment editor missing (server schema exists) |
-| DEF-6.9.3-CADENCE-001 | 6.9.3 | wrong content | Quick-setup step 3 ships Diet Profile; approved step is Cadence/Schedule |
+| DEF-6.9.3-CADENCE-001 | 6.9.3 | wrong content | **RESOLVED — superseded by TNM-CRO-01 D-04B owner ruling (2026-08-11).** Was: quick-setup step 3 ships Diet Profile; approved step was Cadence/Schedule. The ruling redefines the whole contract to exactly three one-question viewports (goal → dietary style → allergens) with deterministic exit routing — step 3 is now Allergens by design, not a Cadence/Schedule gap. |
 | DEF-8.2-QUOTEEXPIRY-001 | 8.2 | missing source | No server-driven 409 QUOTE_EXPIRED recovery; client freshness timer only (Pattern E violation) |
 | DEF-9.2-DELIVERY-ROUTE-001 | 9.2 | wrong route | ManageDeliverySheet reachable from /account/subscriptions, not the approved /meal-planner overlay |
 | DEF-9.2-ACTIONS-001 | 9.2 | partial stub | Sheet lacks pause / add / address actions from the approved contract |

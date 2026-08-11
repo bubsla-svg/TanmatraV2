@@ -185,6 +185,13 @@ async function seedActiveSubscription(user: TestUser, mealsPerDelivery: number):
       deliveryWindow: "12:00-14:00",
       startDate: futureISO(2),
       planType: "standard",
+      // `planId` became required for new signups ("legacy pricing is disabled")
+      // after this file was written. Without it every create here 400s, and
+      // because this suite runs in no workflow that went unnoticed — the whole
+      // change-plan reauth contract was being asserted against a subscription
+      // that never got created.
+      planId: "desk_fuel",
+      track: "veg",
       members: [{ name: "Primary", diet: "any", allergens: [], spiceLevel: "medium" }],
       defaultItems: [],
     },

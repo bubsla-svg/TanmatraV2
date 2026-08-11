@@ -2,7 +2,7 @@
 // One-tap add. Normally mutates the LOCAL cart (§4.1 conversion lever). But when
 // the URL carries ?group=CODE (an invitee arriving from a group order), the add
 // POSTs the pick to the shared group instead — the host pays at close.
-import type { DishData } from "@workspace/menu-catalog";
+import type { DishData, DishMacros } from "@workspace/menu-catalog";
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -11,7 +11,15 @@ import { useCart } from "@/components/cart/CartProvider";
 import { ApiError } from "@/lib/apiClient";
 import { addItem } from "@/lib/groupOrdersApi";
 
-type Dish = Pick<DishData, "id" | "slug" | "name" | "price">;
+// macros/macrosEstimated optional (not Pick'd straight off DishData, which
+// declares macros as required) — D-14's capture is best-effort: a caller
+// that builds a narrower literal (InstantPlanPreview) still type-checks and
+// simply adds a line with no macro chip, same as any cart written before
+// this field existed.
+type Dish = Pick<DishData, "id" | "slug" | "name" | "price"> & {
+  macros?: DishMacros;
+  macrosEstimated?: boolean;
+};
 const GROUP_CODE = /^[0-9A-Za-z]{6,8}$/;
 
 export function AddToCart({ dish }: { dish: Dish }) {
@@ -55,11 +63,14 @@ function GroupAdd({ code, dish }: { code: string; dish: Dish }) {
   }
   return (
     <div className="flex flex-col items-end gap-0.5">
+      {/* D-08: Secondary CTA styling — frosted surface, visible border, same
+          neutral language CartAdd's own qty stepper below already uses. Gold
+          stays reserved for the drawer's Checkout / the mini-cart bar. */}
       <button
         type="button"
         onClick={(e) => { e.preventDefault(); void add(); }}
         disabled={status === "adding"}
-        className="min-h-11 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-60"
+        className="min-h-11 rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-ink transition-transform active:scale-[0.98] disabled:opacity-60"
       >
         {status === "adding" ? "Adding…" : status === "added" ? "Added ✓" : "Add to group"}
       </button>
@@ -72,17 +83,33 @@ function GroupAdd({ code, dish }: { code: string; dish: Dish }) {
 function CartAdd({ dish }: { dish: Dish }) {
   const { cart, setCart } = useCart();
   const qty = qtyOf(cart, dish.id, "dish");
-  const line = { dishId: dish.id, kind: "dish" as const, slug: dish.slug, name: dish.name, pricePaise: dish.price };
+  const line = {
+    dishId: dish.id,
+    kind: "dish" as const,
+    slug: dish.slug,
+    name: dish.name,
+    pricePaise: dish.price,
+    // D-14: same figures the menu card already shows. Omitted entirely when
+    // the dish has no macros to offer, rather than a fabricated {0,0}.
+    ...(dish.macros
+      ? { macros: { calories: dish.macros.calories, protein: dish.macros.protein, estimated: dish.macrosEstimated } }
+      : {}),
+  };
 
   if (qty === 0) {
     return (
+      // D-08: Secondary CTA styling — every card on the grid renders one of
+      // these, so a solid gold fill here is the "3 Add per viewport"
+      // violation the runbook names. Gold stays reserved for the single
+      // action that actually moves the customer onward (mini-cart bar,
+      // drawer Checkout, PDP Add to cart).
       <button
         type="button"
         onClick={(e) => {
           e.stopPropagation();
           setCart(addLine(cart, line));
         }}
-        className="min-h-11 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98]"
+        className="min-h-11 rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-ink transition-transform active:scale-[0.98]"
       >
         Add
       </button>

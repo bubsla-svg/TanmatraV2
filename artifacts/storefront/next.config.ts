@@ -91,6 +91,14 @@ const nextConfig: NextConfig = {
       // P0 §7: health-connections canonical home is /account/connections; the
       // legacy wearables name permanently redirects there.
       { source: "/account/wearables", destination: "/account/connections", permanent: true },
+      // D-04A/D-05A (TNM-CRO-01 owner ruling 2026-08-11): compat aliases for
+      // the D-04B quick-setup rebuild and the login route. Next forwards the
+      // incoming query string to a fixed-path destination automatically —
+      // verified against the ruled param set (condition, goal, origin,
+      // acquisitionContextId, returnTo) rather than assumed; see
+      // e2e/specs/compat-aliases.spec.ts.
+      { source: "/quiz", destination: "/quick-setup", permanent: true },
+      { source: "/auth", destination: "/login", permanent: true },
     ];
   },
   // next/image through a custom loader (lib/imageLoader.ts — the WHY is

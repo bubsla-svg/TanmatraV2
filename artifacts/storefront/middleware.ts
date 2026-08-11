@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { REF_COOKIE_NAME, REF_COOKIE_MAX_AGE_SEC, extractRefFromQuery } from "./lib/refCookie";
 import { PLAN_CATALOG, planIsSelfServiceLaunchable, type PlanId } from "@workspace/subscription-rules";
+import { checkMenuSource } from "./lib/catalog";
 
 function withRefCookie(response: NextResponse, ref: string | null): NextResponse {
   if (ref) {
@@ -41,6 +42,12 @@ function checkoutPlanRedirect(request: NextRequest): NextResponse | null {
   return null;
 }
 
+/** D-06(c): true for the two routes that render fetchMenu() output — the
+ *  only place middleware needs to spend a fetch on checkMenuSource(). */
+function rendersMenuData(pathname: string): boolean {
+  return pathname === "/menu" || pathname.startsWith("/dish/");
+}
+
 /**
  * Next.js App Router middleware (L-1 & L-7).
  * Checks incoming requests for attribution ref query parameters and persists
@@ -48,15 +55,27 @@ function checkoutPlanRedirect(request: NextRequest): NextResponse | null {
  * and lead/checkout workflows can read them reliably. Also short-circuits
  * /checkout's invalid-plan bounce before it ever reaches React — see
  * checkoutPlanRedirect above.
+ *
+ * On /menu and /dish/[slug] it also stamps `x-menu-source` for ops (D-06c).
+ * This has to live here, not in the page: Server Components cannot set
+ * outgoing response headers (`next/headers`'s `headers()` is read-only), and
+ * middleware is the only App Router layer that can. checkMenuSource() hits
+ * the exact URL + revalidate window fetchMenu() itself uses, so it shares
+ * Next's fetch cache with the page's own call — a real network round-trip
+ * only on a true cache-miss, a cache read otherwise.
  */
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const url = request.nextUrl;
   const ref = extractRefFromQuery(url.searchParams);
 
   const planRedirect = checkoutPlanRedirect(request);
   if (planRedirect) return withRefCookie(planRedirect, ref);
 
-  return withRefCookie(NextResponse.next(), ref);
+  const response = NextResponse.next();
+  if (rendersMenuData(url.pathname)) {
+    response.headers.set("x-menu-source", await checkMenuSource());
+  }
+  return withRefCookie(response, ref);
 }
 
 export const config = {

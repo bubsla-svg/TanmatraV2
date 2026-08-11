@@ -4,13 +4,48 @@
 // over light and dark routes alike; data-stitch sits on the bar root, not a page
 // wrapper) — see lib/themes/stitch.css, same pattern as MiniCartBar/CartDrawer.
 import "@/lib/themes/stitch.css";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { COMPANY_LINKS, LEGAL_LINKS, SITE } from "@/lib/nav";
 import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 
-export type CoreTab = "home" | "menu" | "plans" | "account";
+export type CoreTab = "home" | "menu" | "care" | "account";
+
+/** Ignore scroll movement under this many px — small-movement hysteresis so
+ *  the bar doesn't flicker on sub-pixel/rubber-band jitter (D-17). */
+const SCROLL_HYSTERESIS_PX = 12;
+
+/** Hide on scroll-down, reveal on scroll-up, past the hysteresis threshold.
+ *  Always revealed at the top of the page and whenever `disabled` (an
+ *  overlay is open — scroll state shouldn't fight the overlay). */
+function useScrollHide(disabled: boolean): boolean {
+  const [hidden, setHidden] = useState(false);
+  const lastYRef = useRef(0);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    lastYRef.current = window.scrollY;
+
+    function onScroll() {
+      const y = window.scrollY;
+      const delta = y - lastYRef.current;
+      if (y <= 0) {
+        setHidden(false);
+        lastYRef.current = y;
+        return;
+      }
+      if (Math.abs(delta) < SCROLL_HYSTERESIS_PX) return;
+      setHidden(delta > 0);
+      lastYRef.current = y;
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return disabled ? false : hidden;
+}
 
 interface TabConfig {
   key: CoreTab;
@@ -41,9 +76,9 @@ const TABS: TabConfig[] = [
     ),
   },
   {
-    key: "plans",
-    label: "Plan",
-    href: "/plans",
+    key: "care",
+    label: "Care",
+    href: "/care",
     icon: (
       <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
         <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -63,9 +98,23 @@ const TABS: TabConfig[] = [
   },
 ];
 
+/** Care matches /care, /care/*, and /clinical — never /plans (D-17 ruling:
+ *  no misleading active states now that Plan -> Care no longer owns /plans). */
+function isTabActive(tab: TabConfig, pathname: string): boolean {
+  if (tab.key === "care") {
+    return pathname === "/care" || pathname.startsWith("/care/") || pathname === "/clinical" || pathname.startsWith("/clinical/");
+  }
+  if (tab.href === "/") return pathname === "/";
+  return pathname === tab.href || pathname.startsWith(`${tab.href}/`);
+}
+
 export function MobileBottomNav() {
   const pathname = usePathname();
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
+  const scrollHidden = useScrollHide(accountSheetOpen);
+  // The bar hides for two independent reasons: scrolled away, or the account
+  // sheet covers where it sits — either one hides and inerts it.
+  const barHidden = scrollHidden || accountSheetOpen;
 
   // Back gesture closes the account sheet, not the page.
   useOverlayHistory(accountSheetOpen, () => setAccountSheetOpen(false));
@@ -91,14 +140,14 @@ export function MobileBottomNav() {
       <nav
         data-stitch="dark"
         aria-label="Native Mobile Navigation"
-        className="fixed bottom-0 inset-x-0 z-50 border-t border-line bg-[color-mix(in_srgb,var(--surface)_90%,transparent)] backdrop-blur-xl pb-[env(safe-area-inset-bottom)] md:hidden select-none-ui"
+        inert={barHidden || undefined}
+        className={`fixed bottom-0 inset-x-0 z-50 border-t border-line bg-[color-mix(in_srgb,var(--surface)_90%,transparent)] backdrop-blur-xl pb-[env(safe-area-inset-bottom)] md:hidden select-none-ui transition-transform duration-200 ${
+          barHidden ? "translate-y-full" : "translate-y-0"
+        }`}
       >
         <ul className="flex h-16 items-stretch justify-around">
           {TABS.map((tab) => {
-            const isActive =
-              tab.href === "/"
-                ? pathname === "/"
-                : pathname === tab.href || pathname.startsWith(`${tab.href}/`);
+            const isActive = isTabActive(tab, pathname);
 
             if (tab.key === "account") {
               return (
