@@ -1,4 +1,5 @@
 import React from "react";
+import { ScrubbingText } from "./ScrubbingText";
 
 /**
  * §3: "The 'healthy' bowl problem" Dark Agitation Panel.
@@ -30,9 +31,10 @@ export function Section03AgitationPanel() {
           <h2 className="mt-3 text-2xl font-bold tracking-tight text-ink sm:text-4xl">
             The Truth About &ldquo;Healthy&rdquo; Takeout
           </h2>
-          <p className="mt-3 text-sm leading-relaxed text-ink-muted sm:text-base">
-            Not all health bowls are created equal. Hidden sugars and low-quality oils can derail your goals and leave you tired. Here is how we are different.
-          </p>
+          <ScrubbingText 
+            className="mt-3 text-sm leading-relaxed text-ink-muted sm:text-base"
+            text="Not all health bowls are created equal. Hidden sugars and low-quality oils can derail your goals and leave you tired. Here is how we are different." 
+          />
         </div>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2 md:gap-8">

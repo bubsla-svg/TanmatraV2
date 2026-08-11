@@ -56,9 +56,9 @@ export function Section04ProtocolsGrid() {
        *    at all and sat inert next to CTAs that do respond. --surface-raised
        *    is the house hover for a bordered control on a card (AccountHub,
        *    BillingPanel, VoucherRedeem, …). */}
-      <div className="mt-12 grid gap-8 lg:grid-cols-3">
+      <div className="mt-12 grid grid-flow-dense gap-8 lg:grid-cols-3">
         {/* Card 1: Weight-Loss Jumpstart */}
-        <div className="flex flex-col justify-between rounded-2xl border border-line bg-surface p-6 shadow-sm">
+        <div className="group flex flex-col justify-between rounded-2xl border border-line bg-surface p-6 shadow-sm overflow-hidden transition-transform duration-700 ease-out hover:scale-105 hover:shadow-xl hover:border-gold/30">
           <div>
             <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-ink-faint">
@@ -99,7 +99,7 @@ export function Section04ProtocolsGrid() {
         </div>
 
         {/* Card 2: PCOS Hormone Balance */}
-        <div className="flex flex-col justify-between rounded-2xl border-2 border-gold-text bg-surface p-6 shadow-md">
+        <div className="group flex flex-col justify-between rounded-2xl border-2 border-gold-text bg-surface p-6 shadow-md overflow-hidden transition-transform duration-700 ease-out hover:scale-105 hover:shadow-xl hover:border-gold/80">
           <div>
             <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-gold-text">
@@ -141,7 +141,7 @@ export function Section04ProtocolsGrid() {
         </div>
 
         {/* Card 3: Lean Muscle Builder */}
-        <div className="flex flex-col justify-between rounded-2xl border border-line bg-surface-raised p-6 shadow-sm">
+        <div className="group flex flex-col justify-between rounded-2xl border border-line bg-surface-raised p-6 shadow-sm overflow-hidden transition-transform duration-700 ease-out hover:scale-105 hover:shadow-xl hover:border-gold/30">
           <div>
             <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-ink-faint">

@@ -2,6 +2,7 @@
 
 import React from "react";
 import { SafeImage } from "@/components/ui/SafeImage";
+import { GsapScrollImage } from "./GsapScrollImage";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { emitLpEvent } from "@/lib/lpEvents";
@@ -112,7 +113,7 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
         </div>
 
         {/* Photo area — centered below text */}
-        <div className="relative mt-12 w-full max-w-2xl mx-auto">
+        <GsapScrollImage className="relative mt-12 w-full max-w-2xl mx-auto">
           {hero.badge && (
             <span className="absolute left-4 top-4 z-10 rounded-full border border-gold bg-[var(--glass)] px-3 py-1 text-xs font-bold text-gold-text backdrop-blur-md">
               {hero.badge}
@@ -140,7 +141,7 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
               </div>
             </div>
           </div>
-        </div>
+        </GsapScrollImage>
     </section>
   );
 }

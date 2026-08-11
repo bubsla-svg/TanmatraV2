@@ -21,7 +21,7 @@ export function Section05LogisticsMoat() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 sm:grid-cols-3">
+        <div className="mt-10 grid grid-flow-dense gap-6 sm:grid-cols-3">
           {/* Feature 1: Thermometer IoT Telemetry */}
           <div className="flex flex-col items-start rounded-2xl border border-line bg-surface p-6 shadow-xs">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gold/10 text-2xl">
