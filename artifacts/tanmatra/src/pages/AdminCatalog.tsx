@@ -23,6 +23,7 @@ interface MenuItem {
   rdVerified: boolean;
   glycaemicIndex: string | null;
   allergenReviewState: string | null;
+  isAvailable: boolean;
   unavailableUntil: string | null;
 }
 
@@ -38,6 +39,7 @@ export default function AdminCatalog() {
   );
   const [items, setItems] = useState<MenuItem[]>([]);
   const [busy, setBusy] = useState(false);
+  const [unpausing, setUnpausing] = useState(false);
   const [q, setQ] = useState("");
   
   // Editor state
@@ -68,6 +70,38 @@ export default function AdminCatalog() {
     }
   }
 
+  async function unpauseAll() {
+    if (
+      !window.confirm(
+        "Unpause the entire menu? Every paused dish will become orderable again.",
+      )
+    ) {
+      return;
+    }
+    setUnpausing(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/menu/items/bulk/availability`, {
+        method: "POST",
+        headers: {
+          "x-admin-token": adminToken,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ filter: {}, available: true }),
+      });
+      const body = await res.json();
+      if (res.ok) {
+        alert(`Unpaused ${body.updated} of ${body.matched} dish(es).`);
+        loadItems();
+      } else {
+        alert("Error: " + body.error);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUnpausing(false);
+    }
+  }
+
   function handleEdit(item: MenuItem) {
     setEditItem(item);
     setFormData(item);
@@ -86,6 +120,7 @@ export default function AdminCatalog() {
       rdVerified: false,
       glycaemicIndex: null,
       allergenReviewState: "pending_review",
+      isAvailable: true,
       unavailableUntil: null
     });
     setFormData({
@@ -157,6 +192,8 @@ export default function AdminCatalog() {
     }
   }
 
+  const pausedCount = items.filter((item) => !item.isAvailable).length;
+
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -164,7 +201,20 @@ export default function AdminCatalog() {
           <h1 className="text-2xl font-bold tracking-tight">Menu Catalog</h1>
           <p className="text-zinc-500">Manage SKUs, categories, and availability.</p>
         </div>
-        <Button onClick={handleCreate}>+ Add Item</Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={unpauseAll}
+            disabled={unpausing || busy || items.length === 0}
+          >
+            {unpausing
+              ? "Unpausing…"
+              : pausedCount > 0
+                ? `Unpause All (${pausedCount})`
+                : "Unpause All"}
+          </Button>
+          <Button onClick={handleCreate}>+ Add Item</Button>
+        </div>
       </div>
 
       <Card>
@@ -223,6 +273,8 @@ export default function AdminCatalog() {
                   <TableCell>
                     {item.allergenReviewState === "pending_review" ? (
                       <Badge variant="destructive">Allergen Pending</Badge>
+                    ) : !item.isAvailable ? (
+                      <Badge variant="secondary" className="bg-red-100 text-red-800">Paused</Badge>
                     ) : item.unavailableUntil && new Date(item.unavailableUntil) > new Date() ? (
                       <Badge variant="secondary" className="bg-amber-100 text-amber-800">Snoozed</Badge>
                     ) : (
