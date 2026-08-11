@@ -1,5 +1,5 @@
-@import "tailwindcss";
 @import url('https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400&display=swap');
+@import "tailwindcss";
 
 /*
  * Map the raw design tokens (from @workspace/tokens/tokens.css, imported in the
