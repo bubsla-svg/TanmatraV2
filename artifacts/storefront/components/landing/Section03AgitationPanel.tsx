@@ -1,4 +1,6 @@
 import React from "react";
+import { ScrubbingText } from "./ScrubbingText";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 /**
  * §3: "The 'healthy' bowl problem" Dark Agitation Panel.
@@ -21,8 +23,15 @@ export function Section03AgitationPanel() {
   ];
 
   return (
-    <section className="bg-surface-raised py-16 sm:py-20">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+    <section className="relative bg-surface-raised py-section-py overflow-hidden">
+      <div className="absolute inset-0 z-0 opacity-5">
+        <SafeImage
+          src="https://picsum.photos/seed/darkkitchen/1920/1080"
+          alt="Kitchen Background"
+          className="w-full h-full object-cover mix-blend-luminosity grayscale"
+        />
+      </div>
+      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-3xl text-center">
           <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
             The Tanmatra Difference
@@ -30,9 +39,10 @@ export function Section03AgitationPanel() {
           <h2 className="mt-3 text-2xl font-bold tracking-tight text-ink sm:text-4xl">
             The Truth About &ldquo;Healthy&rdquo; Takeout
           </h2>
-          <p className="mt-3 text-sm leading-relaxed text-ink-muted sm:text-base">
-            Not all health bowls are created equal. Hidden sugars and low-quality oils can derail your goals and leave you tired. Here is how we are different.
-          </p>
+          <ScrubbingText 
+            className="mt-3 text-sm leading-relaxed text-ink-muted sm:text-base"
+            text="Not all health bowls are created equal. Hidden sugars and low-quality oils can derail your goals and leave you tired. Here is how we are different." 
+          />
         </div>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2 md:gap-8">

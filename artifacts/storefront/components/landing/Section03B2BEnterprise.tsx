@@ -14,7 +14,7 @@ export function Section03B2BEnterprise() {
   };
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+    <section className="mx-auto max-w-6xl px-4 py-section-py sm:px-6">
       <div className="rounded-3xl border-2 border-gold/30 bg-surface-raised p-8 shadow-sm lg:p-12">
         {/* min-w-0 on both grid items: a CSS grid item's default min-width is
             `auto` (its content's min-content size), not 0 — so on narrow
