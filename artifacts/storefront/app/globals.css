@@ -86,6 +86,17 @@
  * neutrals, and whichever layer lands last silently wins. */
 
 @theme inline {
+  /* Fluid Typography Architecture (Phase 2) */
+  --text-3xl: clamp(1.75rem, 4vw, 1.875rem);
+  --text-4xl: clamp(2rem, 5vw, 2.25rem);
+  --text-5xl: clamp(2.5rem, 6vw, 3rem);
+  --text-6xl: clamp(3rem, 8vw, 3.75rem);
+  --text-7xl: clamp(3.75rem, 10vw, 4.5rem);
+  
+  /* Fluid Spacing (Phase 2) */
+  --spacing-section-py: clamp(4rem, 8vw, 8rem);
+  --spacing-section-gap: clamp(2rem, 5vw, 4rem);
+  
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);

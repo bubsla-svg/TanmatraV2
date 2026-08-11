@@ -49,7 +49,7 @@ export function DrawerContent({
       <DrawerOverlay />
       <VaulDrawer.Content
         {...props}
-        className="fixed inset-x-0 bottom-0 z-[var(--z-modal)] mx-auto flex max-h-[92dvh] w-full max-w-2xl flex-col rounded-t-2xl border border-line bg-[var(--glass)] backdrop-blur-[12px] shadow-[var(--shadow-card)] outline-none"
+        className="fixed inset-x-0 bottom-0 z-[var(--z-modal)] mx-auto flex max-h-[100dvh] w-full max-w-2xl flex-col rounded-t-2xl border border-line bg-[var(--glass)] backdrop-blur-[12px] shadow-[var(--shadow-card)] outline-none pb-[env(safe-area-inset-bottom)]"
       >
         {/* Drag handle — always visible per §6. */}
         <div aria-hidden className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-line-strong" />

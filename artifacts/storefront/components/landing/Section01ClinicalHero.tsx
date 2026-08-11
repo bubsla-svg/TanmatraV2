@@ -53,7 +53,7 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
     <section 
       data-ui-generation="stitch-74" 
       data-screen-id="MOB-10-Home-Dark"
-      className="mx-auto w-full max-w-screen-xl px-4 pt-16 pb-16 sm:px-6 sm:pt-24 sm:pb-20"
+      className="mx-auto w-full max-w-screen-xl px-4 py-section-py sm:px-6"
     >
       <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
         {/* Centered Hero Architecture */}

@@ -14,7 +14,7 @@ export function Section04TelehealthTracking() {
   };
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+    <section className="mx-auto max-w-6xl px-4 py-section-py sm:px-6">
       <div className="rounded-3xl border border-line bg-surface p-8 shadow-sm lg:p-12">
         {/* min-w-0 on both grid items: a CSS grid item's default min-width is
             `auto` (its content's min-content size), not 0 — so on narrow

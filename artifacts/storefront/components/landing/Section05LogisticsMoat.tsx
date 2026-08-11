@@ -7,7 +7,7 @@ import React from "react";
  */
 export function Section05LogisticsMoat() {
   return (
-    <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+    <section className="mx-auto max-w-6xl px-4 py-section-py sm:px-6">
       <div className="rounded-3xl border border-line bg-surface-raised p-8 shadow-sm lg:p-12">
         <div className="mx-auto max-w-3xl text-center">
           <span className="text-xs font-bold uppercase tracking-wider text-gold-text">

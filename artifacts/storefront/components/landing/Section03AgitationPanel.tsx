@@ -21,7 +21,7 @@ export function Section03AgitationPanel() {
   ];
 
   return (
-    <section className="bg-surface-raised py-16 sm:py-20">
+    <section className="bg-surface-raised py-section-py">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-3xl text-center">
           <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
