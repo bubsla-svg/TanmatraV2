@@ -713,3 +713,115 @@ truth, and nothing was listening.
 *Report generated 2026-08-11 · commit `e16684e` · 19 parallel verification agents,
 2.75M tokens, 1,038 tool calls · local production runtime + Playwright + unit-suite execution.*
 *No code was modified during this audit.*
+
+---
+
+# ADDENDUM — Production verification (2026-08-11, later same day)
+
+The original audit above was conducted at `e16684e` with no deployed target, no backend, and
+no credentials. All three gaps have since been closed. This addendum records what changed.
+**The original assessment is left intact above; corrections are stated here explicitly.**
+
+## A1. Environment finally achieved
+
+| Input | Resolution |
+|---|---|
+| Runtime URL | **Both.** Full stack stood up locally (native PostgreSQL 16 — no Docker daemon in the sandbox), *and* the deployed site tested via `e2e-remote.yml` |
+| Credentials | **Never needed and never read.** GitHub Actions secrets are write-only by design; `deploy.yml:913-923` bakes `NEXT_PUBLIC_FIREBASE_*` in as build args, so the deployed build already carries them |
+| Feature flags | Recovered from `deploy.yml:498,905-923` |
+| Design reference | Still **MISSING** — no approved architecture doc, no committed VRT baselines |
+
+Local stack: `initdb` → `pnpm --filter @workspace/db run push` → api-server:3000 + production
+storefront:3001 with `API_UPSTREAM` baked in. Result: **106 passed / 25 failed / 7 skipped**.
+Of the 25, ~21 were environment (no Firebase config → phone-auth UI cannot render, per
+`lib/firebase.ts:22-25`; no seeded accounts; desktop project running mobile-only specs; no VRT
+baselines). Only the ghost-ui failures were real.
+
+Production run (`e2e-remote.yml` → `https://tanmatra.food`, `E2E_LIVE_CHECKOUT=1`, run
+[31465762750](https://github.com/tanmatra6-wq/Wellness-Foods/actions/runs/31465762750)):
+**123 passed / 8 failed / 10 skipped.**
+
+**No deploy lag.** `curl https://tanmatra.food/api/build` → `sha c842289…`, built `05:56:57Z`,
+identical to `main` tip. Every production failure below is against fully-current code.
+
+## A2. Corrections to the original report
+
+**CORRECTION 1 — BLK-02 (allergen ack) is FIXED and DEPLOYED.**
+Commit `5f5502a` (merged after the audit commit) adds `lib/allergenAck.ts` + test, a labeled
+checkbox `data-testid="allergen-ack"` at `AlacarteDetails.tsx:280-289`, and threads
+`allergenAck: true` into the order payload at `AlacarteCheckout.tsx:228`. Proven live: the
+production run's `checkout-allergen` failure is a *strict-mode violation* because
+`getByText('Avocado Toast')` matched both the cart line **and the live ack text
+"This order has Gluten in …"** — the ack is rendering in production. **BLK-02 is closed.**
+The spec's selector is too loose; that is a test bug, not a product bug.
+
+**CORRECTION 2 — `PLAN_CHECKOUT_DISABLED=1` is not a defect.**
+The original report flagged this as MAJOR. `lib/flags.ts:25-35` documents it as a deliberate
+owner containment gate (`docs/MONEY-PATH-VERIFICATION.md §5`) returning a typed 503, mounted
+*before* `idempotencyMiddleware` specifically so a gated 503 is not cached against the
+customer's key for 24 h after the gate reopens. That is careful engineering. **Reclassified:
+intentional gate, not a defect.** Same for `ORDER_FINALIZE_DISABLED`.
+
+**CORRECTION 3 — the "missing input: runtime URL" finding was partly my error.**
+`run_e2e.sh` exists at the **repository root** and stands the whole stack up. The original
+report should have found it. Its only defect is a hardcoded `/usr/bin/google-chrome`.
+
+**CORRECTION 4 — the unavailability MAJOR is fixed in code.**
+Commit `b1ac202` propagates `isAvailable` to menu cards, PDP ledger, and `cartStore.addLine`.
+
+## A3. CONFIRMED in production
+
+**CRT-28 stands — all 8 statutory routes 404 on the live domain**, verified by direct request:
+
+```
+/about 404 · /faq 404 · /legal/terms 404 · /legal/privacy 404
+/legal/refunds 404 · /legal/shipping 404 · /legal/disclaimer 404 · /legal/grievance 404
+```
+
+Note the production `ghost-ui` sweep **passed** on `/`, `/plans`, `/account` — because on the
+mobile viewport those links live inside the bottom-nav account sheet, which the sweep never
+opens. **The guard test has a coverage hole on the exact defect it exists to catch.** Fixing
+the sweep to open the account sheet is a one-line change and worth doing alongside the routes.
+
+## A4. NEW — production-only findings the code audit could not have seen
+
+**PROD-01 · 76 of 145 menu dishes (52%) cannot be added to cart in production.**
+Severity **CRITICAL** (commercial). `cuj-01-menu-cart.spec.ts:107` against the live domain:
+`Expected: 145, Received: 69`. Commit `b1ac202`'s own message confirms the root cause —
+*"76/145 live dishes are `isAvailable:false` yet fully sellable"*. The UI fix is deployed and
+correctly renders "Back soon", so this is no longer a checkout-time surprise — but the
+underlying fact is that **more than half the catalogue is unbuyable right now**. That is an
+operations/data question (is the kitchen really paused on 76 dishes?), not a UI bug, and it is
+invisible to any purely static audit.
+
+**PROD-02 · `availability.spec.ts:62` fails against the deployment of its own fix.**
+Severity **MAJOR**. "an available dish still adds normally from both surfaces" times out waiting
+for an enabled `add to cart` on an *available* dish's PDP. The fix's own regression test does not
+pass in production — either the gate over-applies, or the PDP CTA label diverges from the spec's
+selector. Needs triage before the availability work is considered done.
+
+**PROD-03 · `checkout-doubletap.spec.ts:31` fails in production.**
+Severity **MAJOR** (money path). The "opening payment" busy-state button never appears, so the
+single-`POST /api/orders` guarantee under a fast double-tap is **unproven in production**. The
+underlying idempotency key and the disabled-while-pending state are both verified present in
+source; what is unverified is the deployed behaviour.
+
+**PROD-04 · Two further signed-out surfaces fail in production**: `cuj-account-orders`
+("Your orders" heading absent) and `cuj-onboarding-audit` (ServiceabilityBar pin input absent
+on `/menu`). Both are signed-out paths that should not need credentials.
+
+**PROD-05 · `cuj-01-menu-cart.spec.ts:107` is now a stale spec.** `b1ac202` deliberately made
+some cards non-orderable but did not update the spec asserting *every* card is orderable. It
+will fail on every future run until reconciled.
+
+## A5. Net effect on the verdict
+
+The **NOT CERTIFIED** verdict stands, and the score is unchanged at **61/100** — one blocker
+closed (BLK-02) is offset by one new critical (PROD-01) and two new majors (PROD-02, PROD-03).
+What has changed is *confidence*: the audit is no longer repo-only. Three of the five score caps
+(no runtime inspection, only-one-viewport for the funnel specs, checkout integrity unverified)
+were driven by missing environment, and two of those are now closed. The remaining caps —
+missing design references and absent accessibility tooling — are unchanged.
+
+The most important shift is that the **highest-value finding is now an operations question, not
+an engineering one**: 52% of the live menu cannot be bought today, and no code change fixes that.
