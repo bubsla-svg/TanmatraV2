@@ -160,7 +160,18 @@ export function AlacarteDetails({
   const valid = blockedReason === null;
 
   return (
-    <div className="flex flex-col gap-4">
+    // Stitch 14.6 payment-processing, à-la-carte leg — parity with
+    // PlanCheckout.tsx:214, which already marks the same state on the plan leg.
+    // `verifying` is set the instant Razorpay captures and cleared only when
+    // verify resolves, so this marks exactly the window in which the pack
+    // requires no active payment control (the CTA is disabled on `busy`).
+    <div
+      className="flex flex-col gap-4"
+      data-ui-generation={verifying ? "stitch-74" : undefined}
+      data-screen-id={verifying ? "14.6" : undefined}
+      data-screen-state={verifying ? "payment-processing" : undefined}
+      data-testid={verifying ? "checkout-payment-processing" : undefined}
+    >
       <div className="rounded-3xl border border-line bg-surface p-5">
         <p className="mb-1 text-xs font-bold uppercase tracking-[0.2em] text-ink-muted">Current order</p>
         <ul className="divide-y divide-line">
@@ -212,8 +223,26 @@ export function AlacarteDetails({
               </Button>
             </div>
           )}
+          {/* Stitch 8.2 — quote-expired recovery. The pack's contract is met by
+              the surrounding markup rather than a separate screen: the plan
+              summary above stays rendered (the customer's work is visibly
+              intact), the payable line falls back to "est." instead of quoting
+              a stale authoritative figure, and `blockedReason` above disables
+              the pay CTA while this state holds — "do not display payment
+              controls until the quote is active".
+              This is the à-la-carte leg only, and deliberately so: the plan
+              quote carries no expiresAt at all (see lib/usePlanQuote.ts) — it
+              clears and refetches on every input change, so a stale plan quote
+              can never reach the CTA and has no expiry state to recover from. */}
           {quoteState === "expired" && (
-            <div role="status" className="flex flex-col gap-2 py-1">
+            <div
+              role="status"
+              data-ui-generation="stitch-74"
+              data-screen-id="8.2"
+              data-screen-state="quote-expired"
+              data-testid="checkout-quote-expired"
+              className="flex flex-col gap-2 py-1"
+            >
               <p className="text-sm text-ink-muted">This price snapshot has expired — prices may have changed.</p>
               <Button type="button" variant="outline" shape="pill" size="fluid" onClick={onRefreshQuote} className="self-start bg-surface px-4 py-2 text-sm font-semibold">
                 Refresh quote

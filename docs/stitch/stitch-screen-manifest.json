@@ -2302,7 +2302,7 @@
       "width": 390,
       "height": 844
     },
-    "implementationComponent": null,
+    "implementationComponent": "artifacts/storefront/components/checkout/AlacarteDetails.tsx",
     "routeEntryPoint": "artifacts/storefront/app/(focus)/checkout/page.tsx",
     "controllerComponent": null,
     "trigger": {
@@ -2326,9 +2326,9 @@
     "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/checkout.spec.ts",
     "proof": {
       "declared": "verified",
-      "sourceDefinition": "missing",
-      "renderChain": "missing",
-      "triggerDefinition": "missing",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
       "transitionDefinition": "missing",
       "localRuntime": "pending",
       "containerRuntime": "pending",
@@ -2339,9 +2339,7 @@
     },
     "evidence": [],
     "evidenceSha": null,
-    "defectIds": [
-      "DEF-8.2-QUOTEEXPIRY-001"
-    ],
+    "defectIds": [],
     "designDisposition": "original"
   },
   {
@@ -4651,9 +4649,9 @@
     "testFile": "artifacts/storefront/e2e/specs/stitch-runtime/checkout.spec.ts",
     "proof": {
       "declared": "verified",
-      "sourceDefinition": "partial",
-      "renderChain": "partial",
-      "triggerDefinition": "partial",
+      "sourceDefinition": "verified",
+      "renderChain": "verified",
+      "triggerDefinition": "verified",
       "transitionDefinition": "verified",
       "localRuntime": "verified",
       "containerRuntime": "pending",
@@ -4676,9 +4674,7 @@
       }
     ],
     "evidenceSha": "6e75fada581d4b94419c7c6f937000e0d5793d00",
-    "defectIds": [
-      "DEF-14.6-PAYPROCESSING-001"
-    ],
+    "defectIds": [],
     "designDisposition": "original"
   },
   {
