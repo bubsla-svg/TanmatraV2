@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 /**
  * Section 5: The "Noida-Proof" Logistics Moat (Overcoming Local Friction).
@@ -8,8 +9,15 @@ import React from "react";
 export function Section05LogisticsMoat() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-section-py sm:px-6">
-      <div className="rounded-3xl border border-line bg-surface-raised p-8 shadow-sm lg:p-12">
-        <div className="mx-auto max-w-3xl text-center">
+      <div className="relative overflow-hidden rounded-3xl border border-line bg-surface-raised p-8 shadow-sm lg:p-12">
+        <div className="absolute inset-0 z-0 opacity-[0.03]">
+          <SafeImage
+            src="https://picsum.photos/seed/delivery/1920/1080"
+            alt="Delivery"
+            className="w-full h-full object-cover mix-blend-luminosity grayscale"
+          />
+        </div>
+        <div className="relative z-10 mx-auto max-w-3xl text-center">
           <span className="text-xs font-bold uppercase tracking-wider text-gold-text">
             Smart Delivery · Noida
           </span>
@@ -21,7 +29,7 @@ export function Section05LogisticsMoat() {
           </p>
         </div>
 
-        <div className="mt-10 grid grid-flow-dense gap-6 sm:grid-cols-3">
+        <div className="relative z-10 mt-10 grid grid-flow-dense gap-6 sm:grid-cols-3">
           {/* Feature 1: Thermometer IoT Telemetry */}
           <div className="flex flex-col items-start rounded-2xl border border-line bg-surface p-6 shadow-xs">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gold/10 text-2xl">

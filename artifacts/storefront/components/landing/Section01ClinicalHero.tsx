@@ -77,7 +77,7 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
           </p>
 
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3.5 sm:mt-9">
-            <Button asChild shape="pill" size="fluid" className="px-8 py-3.5 font-bold shadow-lg shadow-gold/10">
+            <Button asChild shape="pill" size="fluid" className="px-8 py-3.5 font-bold shadow-lg shadow-gold/20 transition-transform duration-300 hover:scale-105 hover:shadow-gold/40 active:scale-95">
               <Link
                 href="/menu"
                 onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "Explore Today's Menu" })}
@@ -85,7 +85,7 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
                 Explore menu
               </Link>
             </Button>
-            <Button asChild variant="outline" shape="pill" size="fluid" className="border-line-strong px-7 py-3.5 font-semibold hover:bg-surface">
+            <Button asChild variant="outline" shape="pill" size="fluid" className="border-line-strong px-7 py-3.5 font-semibold transition-transform duration-300 hover:bg-surface hover:scale-105 active:scale-95">
               <Link
                 href="/plans"
                 onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "Find a Therapeutic Plan" })}
@@ -104,6 +104,15 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
 
           {/* Clinical authority trust bar */}
           <div className="mt-9 flex flex-wrap justify-center items-center gap-x-3 gap-y-1.5 border-t border-line pt-5 text-xs font-medium text-ink-muted">
+            <span className="flex items-center gap-1 text-gold-text">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <svg key={i} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+                  <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
+                </svg>
+              ))}
+              <span className="ml-1 text-ink">4.9/5</span>
+            </span>
+            <span aria-hidden className="text-line-strong">·</span>
             <span>ISO 22000 Certified</span>
             <span aria-hidden className="text-line-strong">·</span>
             <span>FSSAI Verified</span>

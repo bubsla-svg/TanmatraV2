@@ -3,6 +3,7 @@ import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { emitLpEvent } from "@/lib/lpEvents";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 /**
  * Section 4: Telehealth & Clinical Tracking (Revenue Stream 3 - Consultations & Tech).
@@ -15,13 +16,22 @@ export function Section04TelehealthTracking() {
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-section-py sm:px-6">
-      <div className="rounded-3xl border border-line bg-surface p-8 shadow-sm lg:p-12">
+      <div className="relative overflow-hidden rounded-3xl border border-line bg-surface p-8 shadow-sm lg:p-12">
+        <div className="absolute inset-0 z-0 opacity-[0.03] mix-blend-luminosity grayscale pointer-events-none">
+          <SafeImage
+            src="https://picsum.photos/seed/medical-dashboard/1920/1080"
+            alt="Biomarker tracking UI"
+            
+            className="object-cover"
+          />
+        </div>
+        
         {/* min-w-0 on both grid items: a CSS grid item's default min-width is
             `auto` (its content's min-content size), not 0 — so on narrow
             viewports the track refused to shrink below the dashboard-preview
             card's intrinsic width and pushed this whole section past the
             viewport edge. min-w-0 lets the track actually shrink to fit. */}
-        <div className="grid items-center gap-8 lg:grid-cols-2">
+        <div className="relative z-10 grid items-center gap-8 lg:grid-cols-2">
           {/* Visual: Dashboard Preview */}
           <div className="order-2 lg:order-1 min-w-0 rounded-2xl border border-line bg-surface-raised p-6 shadow-xs">
             <div className="flex items-center justify-between border-b border-line pb-3 text-xs font-semibold text-ink">

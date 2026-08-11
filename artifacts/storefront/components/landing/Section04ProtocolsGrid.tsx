@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { SafeImage } from "@/components/ui/SafeImage";
 import { formatPaise } from "@/lib/format";
 import { emitLpEvent } from "@/lib/lpEvents";
 import { TRIAL_PRICE_PAISE } from "@/lib/trial";
@@ -34,6 +35,13 @@ export function Section04ProtocolsGrid() {
         <p className="mt-3 text-sm text-ink-muted sm:text-base">
           Choose a plan tailored to your health goals, whether it's sustainable weight loss, hormone balance, or building strength.
         </p>
+        <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/5 px-4 py-1.5 text-xs font-semibold text-gold-text">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-gold"></span>
+          </span>
+          Only 14 trial slots left this week
+        </div>
       </div>
 
       {/* Two rules this grid used to break, both fixed in place:
@@ -65,6 +73,13 @@ export function Section04ProtocolsGrid() {
                 Plan 1 · Weight Loss
               </span>
               <span className="tabular text-xs font-bold text-ink-muted">{deskFuelMonthly}/mo</span>
+            </div>
+            <div className="mt-4 mb-2 aspect-[4/3] w-full overflow-hidden rounded-xl border border-line">
+              <SafeImage
+                src="https://picsum.photos/seed/weightloss/800/600"
+                alt="Weight Loss Meal"
+                className="w-full h-full object-cover mix-blend-luminosity opacity-90 transition-transform duration-700 ease-out group-hover:scale-105 group-hover:mix-blend-normal group-hover:opacity-100"
+              />
             </div>
             <h3 className="mt-2 text-xl font-bold text-ink">Weight-Loss Jumpstart</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
@@ -107,6 +122,13 @@ export function Section04ProtocolsGrid() {
               </span>
               <span className="tabular text-xs font-bold text-ink">{steadyMonthly}/mo</span>
             </div>
+            <div className="mt-4 mb-2 aspect-[4/3] w-full overflow-hidden rounded-xl border border-line">
+              <SafeImage
+                src="https://picsum.photos/seed/hormone/800/600"
+                alt="Hormone Balance Meal"
+                className="w-full h-full object-cover mix-blend-luminosity opacity-90 transition-transform duration-700 ease-out group-hover:scale-105 group-hover:mix-blend-normal group-hover:opacity-100"
+              />
+            </div>
             <h3 className="mt-2 text-xl font-bold text-ink">PCOS Hormone Balance</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
               Focus: Supports hormone balance and manages energy levels naturally. Approved by experts.
@@ -148,6 +170,13 @@ export function Section04ProtocolsGrid() {
                 Plan 3 · Strength &amp; Recovery
               </span>
               <span className="tabular text-xs font-bold text-ink-muted">{proteinMonthly}/mo</span>
+            </div>
+            <div className="mt-4 mb-2 aspect-[4/3] w-full overflow-hidden rounded-xl border border-line">
+              <SafeImage
+                src="https://picsum.photos/seed/muscle/800/600"
+                alt="Muscle Building Meal"
+                className="w-full h-full object-cover mix-blend-luminosity opacity-90 transition-transform duration-700 ease-out group-hover:scale-105 group-hover:mix-blend-normal group-hover:opacity-100"
+              />
             </div>
             <h3 className="mt-2 text-xl font-bold text-ink">Lean Muscle Builder</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
