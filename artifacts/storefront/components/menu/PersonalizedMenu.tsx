@@ -24,6 +24,14 @@ import {
   DIET_CHIP_OPTIONS,
   type DietFilterChip,
 } from "@/lib/dietFilter";
+import {
+  EMPTY_FILTERS,
+  activeFilterLabels,
+  countActiveFilters,
+  filterDishes,
+  type MenuFilterState,
+} from "@/lib/menuFilters";
+import { MenuFilterSheet } from "@/components/menu/MenuFilterSheet";
 
 interface PrefsRow {
   allergens?: string[];
@@ -57,6 +65,8 @@ export function PersonalizedMenu({
 }) {
   const [prefs, setPrefs] = useState<PreferencesForMatch | null>(null);
   const [chip, setChip] = useState<DietFilterChip>("all");
+  const [filters, setFilters] = useState<MenuFilterState>(EMPTY_FILTERS);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -91,6 +101,18 @@ export function PersonalizedMenu({
     [dishes, ranked, chip],
   );
 
+  // The 5.3 sheet narrows on top of the diet chip rather than replacing it:
+  // `visibleIds` already reflects the chip, so intersecting keeps both filters
+  // honest and leaves the server-rendered rows/order untouched.
+  const filteredIds = useMemo(() => {
+    if (!countActiveFilters(filters)) return visibleIds;
+    const survivors = new Set(filterDishes(dishes, filters).map((d) => d.id));
+    return new Set([...visibleIds].filter((id) => survivors.has(id)));
+  }, [dishes, filters, visibleIds]);
+
+  const activeLabels = activeFilterLabels(filters);
+  const noMatch = countActiveFilters(filters) > 0 && filteredIds.size === 0;
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
@@ -117,18 +139,86 @@ export function PersonalizedMenu({
             );
           })}
         </div>
-        {ranked && (
-          <p className="text-xs text-ink-muted">
-            Sorted for your preferences.{" "}
-            <Link href="/account/preferences" className="font-medium text-gold-text hover:underline">
-              Edit
-            </Link>
-          </p>
-        )}
+        <div className="flex items-center gap-3">
+          {ranked && (
+            <p className="text-xs text-ink-muted">
+              Sorted for your preferences.{" "}
+              <Link href="/account/preferences" className="font-medium text-gold-text hover:underline">
+                Edit
+              </Link>
+            </p>
+          )}
+          {/* Frosted, not gold — the mini-cart bar is this screen's one gold action. */}
+          <button
+            type="button"
+            onClick={() => setFilterOpen(true)}
+            data-testid="menu-filter-trigger"
+            className="min-h-[44px] rounded-full border border-line bg-surface-raised px-4 text-xs font-semibold text-ink transition-transform active:scale-95"
+          >
+            Filter
+            {activeLabels.length > 0 && (
+              <span className="ml-1.5 text-gold-text">· {activeLabels.length}</span>
+            )}
+          </button>
+        </div>
       </div>
-      <DishFitProvider fits={fits}>
-        <MenuGrid rows={rows} order={order} visibleIds={visibleIds} />
-      </DishFitProvider>
+
+      {activeLabels.length > 0 && (
+        <p className="text-xs text-ink-muted" data-testid="menu-active-filters">
+          Filtering by {activeLabels.join(" · ")}
+        </p>
+      )}
+
+      {noMatch ? (
+        <div
+          data-ui-generation="stitch-74"
+          data-screen-id="14.2"
+          data-screen-state="no-match"
+          data-testid="menu-no-match-empty"
+          className="rounded-2xl border border-line bg-surface-raised px-6 py-12 text-center"
+        >
+          <h3 className="text-base font-semibold text-ink">Nothing matches every filter yet</h3>
+          <p className="mx-auto mt-2 max-w-md text-sm text-ink-muted">
+            You asked for {activeLabels.join(" · ")}. No dish on today&apos;s menu meets all of
+            those at once.
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => setFilters(EMPTY_FILTERS)}
+              data-testid="menu-no-match-clear"
+              className="min-h-[48px] rounded-full bg-gold px-6 text-sm font-bold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+            >
+              Clear filters
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterOpen(true)}
+              className="min-h-[44px] rounded-full border border-line bg-surface px-5 text-sm font-semibold text-ink transition-transform active:scale-95"
+            >
+              Adjust filters
+            </button>
+          </div>
+        </div>
+      ) : (
+        <DishFitProvider fits={fits}>
+          <MenuGrid rows={rows} order={order} visibleIds={filteredIds} />
+        </DishFitProvider>
+      )}
+
+      <MenuFilterSheet
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        filters={filters}
+        onApply={setFilters}
+        matchCount={(draft) =>
+          new Set(
+            filterDishes(dishes, draft)
+              .map((d) => d.id)
+              .filter((id) => visibleIds.has(id)),
+          ).size
+        }
+      />
     </div>
   );
 }

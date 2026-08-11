@@ -188,7 +188,18 @@ export function AlacarteDetails({
   const valid = blockedReason === null;
 
   return (
-    <div className="flex flex-col gap-4">
+    // Stitch 14.6 payment-processing, à-la-carte leg — parity with
+    // PlanCheckout.tsx:214, which already marks the same state on the plan leg.
+    // `verifying` is set the instant Razorpay captures and cleared only when
+    // verify resolves, so this marks exactly the window in which the pack
+    // requires no active payment control (the CTA is disabled on `busy`).
+    <div
+      className="flex flex-col gap-4"
+      data-ui-generation={verifying ? "stitch-74" : undefined}
+      data-screen-id={verifying ? "14.6" : undefined}
+      data-screen-state={verifying ? "payment-processing" : undefined}
+      data-testid={verifying ? "checkout-payment-processing" : undefined}
+    >
       <div className="rounded-3xl border border-line bg-surface p-5">
         <p className="mb-1 text-xs font-bold uppercase tracking-[0.2em] text-ink-muted">Current order</p>
         <ul className="divide-y divide-line">

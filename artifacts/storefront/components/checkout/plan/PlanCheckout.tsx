@@ -211,7 +211,7 @@ export function PlanCheckout({
   }
 
   return (
-    <div className="flex flex-col gap-5" data-ui-generation={verifying ? "stitch-74" : undefined} data-screen-id={verifying ? "14.6" : undefined} data-screen-state={verifying ? "payment-processing" : undefined}>
+    <div className="flex flex-col gap-5" data-ui-generation={verifying ? "stitch-74" : undefined} data-screen-id={verifying ? "14.6" : undefined} data-screen-state={verifying ? "payment-processing" : undefined} data-testid={verifying ? "checkout-payment-processing" : undefined}>
       <h1 className="text-2xl font-semibold tracking-tight text-ink">{planName}</h1>
       <PlanDetails
         servedTracks={servedTracks}

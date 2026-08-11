@@ -31,8 +31,26 @@ export function QuoteBreakdown({
           </Button>
         </div>
       )}
+      {/* Stitch 8.2 — quote-expired recovery. The pack's contract is met by the
+          surrounding checkout markup rather than a separate screen: the order
+          summary above stays rendered so the customer's work is visibly intact,
+          the payable line falls back to "est." instead of quoting a stale
+          authoritative figure, and AlacarteDetails' `blockedReason` disables the
+          pay CTA while this state holds — the pack's "do not display payment
+          controls until the quote is active".
+          À-la-carte leg only, deliberately: PlanQuoteState carries no expiresAt
+          (lib/usePlanQuote.ts). The plan leg clears and refetches its quote on
+          every input change, so a stale plan quote can never reach the CTA and
+          there is no expiry state to recover from. */}
       {quoteState === "expired" && (
-        <div role="status" className="flex flex-col gap-2 py-1">
+        <div
+          role="status"
+          data-ui-generation="stitch-74"
+          data-screen-id="8.2"
+          data-screen-state="quote-expired"
+          data-testid="checkout-quote-expired"
+          className="flex flex-col gap-2 py-1"
+        >
           <p className="text-sm text-ink-muted">This price snapshot has expired — prices may have changed.</p>
           <Button type="button" variant="outline" shape="pill" size="fluid" onClick={onRefreshQuote} className="self-start bg-surface px-4 py-2 text-sm font-semibold">
             Refresh quote
