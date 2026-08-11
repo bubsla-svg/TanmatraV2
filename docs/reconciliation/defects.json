@@ -112,7 +112,9 @@
     "impact": "Partial revenue journey is exposed: a join link can be sent and acted on, but the group cart/close/pay screen doesn't exist.",
     "reuseDecision": "REUSE_AS_IS for the lifecycle functions — build the /group/[code] screen against them; do not leave AddToCart's join entry point live on its own until the destination exists.",
     "stitchIds": [],
-    "phase": 4
+    "phase": 4,
+    "status": "RESOLVED",
+    "resolution": "Fixed (2026-08-11): another pre-Stitch-74 quarantined asset (quarantine/components/group/GroupOrderView.tsx + quarantine/app/group/[code]/page.tsx) already had the full get/removeLine/closeGroup flow, grounded and already token-compliant with the current design system — ported nearly verbatim to app/(focus)/group/[code]/page.tsx + components/group/GroupOrderView.tsx, replacing the PlaceholderPage. One real bug surfaced by e2e testing during the port: the quarantined version's closeAndCheckout() routed to bare /checkout, which now redirects to /plans (the checkout route gained a mode=alacarte query requirement after this snapshot was quarantined) — fixed to /checkout?mode=alacarte, matching CartDrawer's own Checkout link. Group CREATION has no client entry point anywhere in the app (lib/groupOrdersApi.ts's own doc comment already documents that as deferred, not a regression this fix introduces) — left out of scope; a code reaching this screen still requires one to exist by some other means. Because this view fetches client-side (unlike the marketplace PDP's server-fetched catalog), it was fully testable with mocked API responses: e2e/specs/group-order.spec.ts covers the joiner view, the host close-&-checkout flow (asserting the group's items land in the local cart with the right dishId/qty and the browser lands on /checkout?mode=alacarte), and the not-found state for an unknown code."
   },
   {
     "id": "DEF-RECON-TRIALCTA-001",

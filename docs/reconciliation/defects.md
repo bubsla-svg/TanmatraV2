@@ -1,7 +1,8 @@
 # Defect register
 
 17 defects: 7 CRITICAL, 5 MAJOR, 3 MODERATE, 2 MINOR — 3 CRITICAL now RESOLVED
-(the Phase 3 decision gates). Machine-readable form: `defects.json`. IDs
+(the Phase 3 decision gates), plus 1 MAJOR (DEF-RECON-GROUPORDER-001, Phase
+4.4). Machine-readable form: `defects.json`. IDs
 prefixed `DEF-RECON-` are new findings from this sweep; IDs without that
 prefix are carried forward from `docs/stitch/stitch-defect-register.md`
 (already tracked against the Stitch manifest) and included here only for
@@ -25,7 +26,7 @@ completeness of the Phase-ordered plan in `implementation-plan.md`.
 |---|---|---|
 | DEF-RECON-PLACEHOLDERS-001 | Routes | 4 remaining live routes are `PlaceholderPage` stubs (`/corporate/[slug]`, `/team`, `/group/[code]`, `/office-lunch/[id]`) — `/corporate` itself resolved above. `/team` is in general nav. |
 | DEF-RECON-MARKETPLACE-001 | Marketplace | `payForMarketplace()` + `POST /marketplace/checkout` are complete and tested; zero active callers. |
-| DEF-RECON-GROUPORDER-001 | Group orders | Full lifecycle exists client+server; the only hosting screen (`/group/[code]`) is a placeholder, exposing a partial revenue journey (join works, cart/close/pay doesn't). |
+| DEF-RECON-GROUPORDER-001 | Group orders | Full lifecycle exists client+server; the only hosting screen (`/group/[code]`) is a placeholder, exposing a partial revenue journey (join works, cart/close/pay doesn't). | **RESOLVED** — restored a grounded, already-token-compliant `GroupOrderView` from quarantine; fixed a stale `/checkout` route target (now needs `?mode=alacarte`) surfaced during e2e testing. Group creation itself has no UI entry point anywhere (a pre-existing, documented deferral, not new scope). |
 | DEF-RECON-PANTRY-001 | Wellness / pantry scan | "Add to Subscription" button has no `onClick` at all. |
 | DEF-RECON-5.5-REVIEWS-001 | Dish PDP | Complete, tested dish-review feature (client + server + AI digest) has zero importers from the live PDP. |
 
