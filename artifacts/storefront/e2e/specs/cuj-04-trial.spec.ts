@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { collectErrors } from "../fixtures";
+import { MenuPage } from "../support/pages/MenuPage";
 
 /**
  * SF-09 / CUJ-04 — the 3-Day Taste Test. The offer surface runs everywhere
@@ -25,6 +26,23 @@ test("start hands off to checkout carrying the trial plan + chosen track", async
   await page.getByRole("button", { name: "Non-veg" }).click();
   await page.getByRole("button", { name: /start the taste test/i }).click();
   await page.waitForURL(/\/checkout\?plan=trial_3day&track=nonveg/);
+});
+
+// DEF-RECON-TRIALCTA-001 (docs/reconciliation/defects.md): the Start CTA used
+// to hide once the cart held an item, on the assumption that MiniCartBar
+// would take over the bottom edge — but /trial lives under app/(focus)/,
+// whose FocusLayout never mounts one. A customer who added a dish from /menu
+// first, then came to /trial, saw no way to start the trial at all.
+test("the start CTA stays visible and clickable even with items already in cart", async ({ page }) => {
+  const menu = new MenuPage(page);
+  await page.goto("/menu");
+  await menu.addToCart();
+
+  await page.goto("/trial");
+  const startCta = page.getByRole("button", { name: /start the taste test/i });
+  await expect(startCta).toBeVisible();
+  await startCta.click();
+  await page.waitForURL(/\/checkout\?plan=trial_3day&track=veg/);
 });
 
 // Deployed-only (E2E_LIVE_CHECKOUT=1): the local PR-gate build is flag-dark,

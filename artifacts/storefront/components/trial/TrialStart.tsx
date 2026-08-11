@@ -7,7 +7,6 @@ import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { useCart } from "@/components/cart/CartProvider";
 import { emitFunnel } from "@/lib/funnel";
 import { formatPaise } from "@/lib/format";
 import { TRIAL_COPY } from "@/lib/trial";
@@ -39,7 +38,6 @@ export function TrialStart({
   pricePaise: number;
 }) {
   const router = useRouter();
-  const { cart } = useCart();
   const [track, setTrack] = useState<TrialTrack>("veg");
   const trio = trios[track];
 
@@ -112,27 +110,24 @@ export function TrialStart({
       {/* Glass sticky footer (checkout vocabulary, BATCH-4-BRIEFS.md) — the ONE
           money-bearing CTA on this screen, since starting the trial IS the
           commitment moment, same treatment as CheckoutPay's Pay button.
-          Renders only while the cart is EMPTY: MiniCartBar occupies the same
-          `bottom-16 z-30` band and layout.tsx renders it AFTER <main>, so with
-          equal z-index the later sibling wins and would paint over this button
-          — a silently unclickable ₹399 purchase. Same guard DishBuyBar ships;
-          once a line exists, MiniCartBar owns the bottom edge. */}
-      {cart.lines.length === 0 && (
-        <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
-          <div className="mx-auto max-w-md px-4 py-3">
-            <Button
-              type="button"
-              onClick={start}
-              shape="pill"
-              size="fluid"
-              className="w-full px-8 py-4 text-center text-base font-semibold"
-            >
-              Start the taste test · {formatPaise(pricePaise)}
-            </Button>
-            <p className="mt-2 text-center text-xs text-ink-muted">{TRIAL_COPY.noAutoConvert}</p>
-          </div>
+          Always rendered: /trial lives under app/(focus)/, and FocusLayout
+          mounts no MiniCartBar to hand the bottom edge to (unlike the global
+          shell DishBuyBar shares it with) — so there is nothing else that
+          could ever occupy `bottom-16`, cart state or not. */}
+      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
+        <div className="mx-auto max-w-md px-4 py-3">
+          <Button
+            type="button"
+            onClick={start}
+            shape="pill"
+            size="fluid"
+            className="w-full px-8 py-4 text-center text-base font-semibold"
+          >
+            Start the taste test · {formatPaise(pricePaise)}
+          </Button>
+          <p className="mt-2 text-center text-xs text-ink-muted">{TRIAL_COPY.noAutoConvert}</p>
         </div>
-      )}
+      </div>
     </section>
   );
 }

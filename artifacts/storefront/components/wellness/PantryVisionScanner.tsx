@@ -1,13 +1,17 @@
 "use client";
 import React, { useState } from 'react';
 import { Camera, Sparkles, ShoppingCart, CheckCircle2, Utensils, RefreshCw, ChefHat } from 'lucide-react';
-import { scanPantryVision, type PantryScanResult } from '@/lib/wellnessApi';
+import { scanPantryVision, type PantryScanResult, type SuggestedAddOnProduct } from '@/lib/wellnessApi';
+import { addLine } from '@/lib/cartStore';
+import { useCart } from '@/components/cart/CartProvider';
 
 export const PantryVisionScanner: React.FC = () => {
+  const { cart, setCart } = useCart();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<PantryScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [addedIds, setAddedIds] = useState<Set<number>>(new Set());
 
   const handleScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -28,6 +32,22 @@ export const PantryVisionScanner: React.FC = () => {
     } finally {
       setScanning(false);
     }
+  };
+
+  // These suggestions are catalogue dishes (see pantryVisionScanner.ts on the
+  // server), not a subscription add-on — same shape CustomBuildHub's cart
+  // button already uses, so this mirrors that pattern rather than inventing one.
+  const handleAddToCart = (addon: SuggestedAddOnProduct) => {
+    setCart(
+      addLine(cart, {
+        dishId: addon.id,
+        kind: "dish",
+        slug: addon.slug,
+        name: addon.name,
+        pricePaise: addon.pricePaise,
+      }),
+    );
+    setAddedIds((prev) => new Set(prev).add(addon.id));
   };
 
   return (
@@ -101,9 +121,23 @@ export const PantryVisionScanner: React.FC = () => {
                     <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">₹{Math.round(addon.pricePaise / 100)}</span>
                   </div>
                   <p className="text-xs text-slate-500 font-medium leading-relaxed">{addon.rationale}</p>
-                  <button type="button" className="w-full py-2 rounded-xl bg-sky-900 hover:bg-sky-950 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all">
-                    <ShoppingCart className="w-3.5 h-3.5" />
-                    <span>Add to Subscription</span>
+                  <button
+                    type="button"
+                    onClick={() => handleAddToCart(addon)}
+                    disabled={addedIds.has(addon.id)}
+                    className="w-full py-2 rounded-xl bg-sky-900 hover:bg-sky-950 disabled:opacity-70 disabled:hover:bg-sky-900 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                  >
+                    {addedIds.has(addon.id) ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Added to cart</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="w-3.5 h-3.5" />
+                        <span>Add to cart</span>
+                      </>
+                    )}
                   </button>
                 </div>
               ))}
