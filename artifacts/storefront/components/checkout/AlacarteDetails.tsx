@@ -1,14 +1,20 @@
 "use client";
 // Client: controlled address/consent inputs for the guest money path.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import type { DishData } from "@workspace/menu-catalog";
 import { Button } from "@/components/ui/button";
 import { formatPaise } from "@/lib/format";
 import { qtyOf, setQty, subtotalPaise, type CartState } from "@/lib/cartStore";
 import { useCart } from "@/components/cart/CartProvider";
 import { DPDP_CONSENT_COPY, DPDP_SCOPE_NOTE } from "@/lib/consent";
+import { apiGet } from "@/lib/apiClient";
+import { flagCartAllergens } from "@/lib/allergenAck";
 import type { QuoteSnapshot } from "@/lib/quoteApi";
 import type { QuoteUiState } from "./AlacarteCheckout";
 import { ADDRESS_DRAFT_KEY } from "./AlacarteCheckout";
+import { AllergenAckControl } from "./AllergenAckControl";
+import { QuoteBreakdown } from "./QuoteBreakdown";
 
 export interface AlacarteAddress {
   line1: string;
@@ -57,7 +63,9 @@ export function AlacarteDetails({
    *  reads as a stuck/failed button on money the customer already paid. */
   verifying?: boolean;
   error: string | null;
-  onSubmit: (address: AlacarteAddress) => void;
+  /** `allergenAck` is true only when the guest explicitly checked the ack
+   *  control below — see the allergen-flagged-cart branch under `blockedReason`. */
+  onSubmit: (address: AlacarteAddress, allergenAck?: boolean) => void;
   /** Server QuoteSnapshot + lifecycle (parent owns fetching). */
   quote: QuoteSnapshot | null;
   quoteState: QuoteUiState;
@@ -69,6 +77,13 @@ export function AlacarteDetails({
   const [city, setCity] = useState(initialAddress?.city ?? "");
   const [pincode, setPincode] = useState(initialAddress?.pincode ?? "");
   const [consent, setConsent] = useState(false);
+  // A2 / D-19 audit G1: an explicit pre-submit ack for allergen-flagged carts.
+  // `touched` gates the inline error — it only appears after a submit attempt
+  // finds the box unchecked, never on first render (§16.1 error-focus: show
+  // the error at the moment of the failed action, not proactively).
+  const [allergenAck, setAllergenAck] = useState(false);
+  const [allergenAckTouched, setAllergenAckTouched] = useState(false);
+  const allergenAckRef = useRef<HTMLInputElement>(null);
   const prefilled = useRef(false);
 
   // D-22: a synchronous, non-React-state guard against multi-tap. `busy`
@@ -89,6 +104,19 @@ export function AlacarteDetails({
   }, [busy]);
 
   const { setCart } = useCart();
+
+  // Same public menu the rest of the app reads client-side (ReorderButton,
+  // ManageDeliverySheet — shared cache key). Read-only lookup: this never
+  // gates the order, only what the ack control shows before submit.
+  const menuQuery = useQuery({
+    queryKey: ["menu", "public"],
+    queryFn: () => apiGet<{ dishes: DishData[] }>("/menu/public"),
+  });
+  const flaggedAllergens = useMemo(
+    () => flagCartAllergens(cart.lines.map((l) => l.dishId), menuQuery.data?.dishes ?? []),
+    [cart.lines, menuQuery.data],
+  );
+  const allergenAckRequired = flaggedAllergens.dishes.length > 0;
 
   // Draft restore: back/forward navigation must not eat a typed address.
   // Runs once, only into still-empty fields (a saved-address prefill or the
@@ -198,64 +226,7 @@ export function AlacarteDetails({
           ))}
         </ul>
 
-        {/* Server-owned totals. Never client arithmetic: the QuoteSnapshot is
-            priced by the exact code POST /orders bills from. */}
-        <div className="mt-2 border-t border-line pt-3">
-          {quoteState === "loading" && (
-            <p role="status" className="py-1 text-sm text-ink-muted">Pricing your order…</p>
-          )}
-          {quoteState === "error" && (
-            <div role="status" className="flex flex-col gap-2 py-1">
-              <p className="text-sm text-ink-muted">{quoteError ?? "We couldn't price your order just now."}</p>
-              <Button type="button" variant="outline" shape="pill" size="fluid" onClick={onRefreshQuote} className="self-start bg-surface px-4 py-2 text-sm font-semibold">
-                Retry pricing
-              </Button>
-            </div>
-          )}
-          {quoteState === "expired" && (
-            <div role="status" className="flex flex-col gap-2 py-1">
-              <p className="text-sm text-ink-muted">This price snapshot has expired — prices may have changed.</p>
-              <Button type="button" variant="outline" shape="pill" size="fluid" onClick={onRefreshQuote} className="self-start bg-surface px-4 py-2 text-sm font-semibold">
-                Refresh quote
-              </Button>
-            </div>
-          )}
-          {quoteState === "active" && quote && (
-            <dl className="flex flex-col gap-1.5 text-sm">
-              <div className="flex justify-between gap-3">
-                <dt className="text-ink-muted">Item subtotal</dt>
-                <dd className="tabular text-ink">{formatPaise(quote.subtotalPaise)}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-ink-muted">Delivery</dt>
-                <dd className="tabular text-ink">
-                  {quote.deliveryFeePaise === 0 ? "Free" : formatPaise(quote.deliveryFeePaise)}
-                </dd>
-              </div>
-              {quote.deliveryFeePaise > 0 && quote.amountToFreeDeliveryPaise > 0 && (
-                <p className="text-xs text-ink-faint">
-                  Add {formatPaise(quote.amountToFreeDeliveryPaise)} more for free delivery.
-                </p>
-              )}
-              <div className="flex justify-between gap-3">
-                <dt className="text-ink-muted">Packaging</dt>
-                <dd className="tabular text-ink">{quote.packagingPaise === 0 ? "Included" : formatPaise(quote.packagingPaise)}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-ink-muted">Discount</dt>
-                <dd className="tabular text-ink">{quote.discountPaise === 0 ? "—" : `−${formatPaise(quote.discountPaise)}`}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-ink-muted">GST (5% food · 18% delivery)</dt>
-                <dd className="tabular text-ink">{formatPaise(quote.taxPaise)}</dd>
-              </div>
-              <div className="mt-1 flex justify-between gap-3 border-t border-line pt-2">
-                <dt className="font-semibold text-ink">Amount payable now</dt>
-                <dd className="tabular font-semibold text-gold-text">{formatPaise(quote.payableNowPaise)}</dd>
-              </div>
-            </dl>
-          )}
-        </div>
+        <QuoteBreakdown quote={quote} quoteState={quoteState} quoteError={quoteError} onRefreshQuote={onRefreshQuote} />
       </div>
 
       <div>
@@ -295,13 +266,30 @@ export function AlacarteDetails({
         </p>
       )}
 
-      <label className="flex items-start gap-3 text-sm text-ink-muted">
-        <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 size-4 shrink-0" />
-        <span>
-          {DPDP_CONSENT_COPY}
-          <span className="mt-1 block text-xs text-ink-faint">{DPDP_SCOPE_NOTE}</span>
-        </span>
-      </label>
+      {/* Consent block — DPDP first (unchanged), the allergen ack beside it
+          when the cart actually needs one. Both sit above the sticky ledger. */}
+      <div className="flex flex-col gap-3">
+        <label className="flex items-start gap-3 text-sm text-ink-muted">
+          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 size-4 shrink-0" />
+          <span>
+            {DPDP_CONSENT_COPY}
+            <span className="mt-1 block text-xs text-ink-faint">{DPDP_SCOPE_NOTE}</span>
+          </span>
+        </label>
+
+        {allergenAckRequired && (
+          <AllergenAckControl
+            flagged={flaggedAllergens}
+            checked={allergenAck}
+            onCheckedChange={(checked) => {
+              setAllergenAck(checked);
+              if (checked) setAllergenAckTouched(false);
+            }}
+            touched={allergenAckTouched}
+            inputRef={allergenAckRef}
+          />
+        )}
+      </div>
 
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
 
@@ -328,10 +316,24 @@ export function AlacarteDetails({
             <Button
               type="button" disabled={!valid || busy}
               onClick={() => {
+                // Client-side catch for the allergen ack — deliberately NOT
+                // folded into `blockedReason`/`valid` above: those disable
+                // the button outright, which would make "attempt to submit"
+                // unobservable. This stays clickable so a genuine attempt
+                // produces the inline error and moves focus to the control
+                // that needs it (§16.1 error-focus), instead of the customer
+                // discovering it only after the server's 422. Checked before
+                // the submit lock below — a blocked-on-ack tap is not a
+                // submit attempt and must not consume the one-shot lock.
+                if (allergenAckRequired && !allergenAck) {
+                  setAllergenAckTouched(true);
+                  allergenAckRef.current?.focus();
+                  return;
+                }
                 // Synchronous first — see submitLockRef's comment above.
                 if (submitLockRef.current) return;
                 submitLockRef.current = true;
-                onSubmit({ line1: line1.trim(), city: city.trim(), pincode: pinDigits });
+                onSubmit({ line1: line1.trim(), city: city.trim(), pincode: pinDigits }, allergenAck);
               }}
               shape="pill" size="fluid"
               // min-w-64: sized to the longest of the three CTA states
