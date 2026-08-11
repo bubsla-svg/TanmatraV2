@@ -2302,7 +2302,7 @@
       "width": 390,
       "height": 844
     },
-    "implementationComponent": "artifacts/storefront/components/checkout/AlacarteDetails.tsx",
+    "implementationComponent": "artifacts/storefront/components/checkout/QuoteBreakdown.tsx",
     "routeEntryPoint": "artifacts/storefront/app/(focus)/checkout/page.tsx",
     "controllerComponent": null,
     "trigger": {

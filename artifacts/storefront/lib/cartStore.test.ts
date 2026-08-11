@@ -66,6 +66,26 @@ test("parseStoredCart survives garbage, wrong shapes, and hostile values", () =>
   assert.equal(s.lines[0]?.dishId, 7);
 });
 
+// ── D-19: availability defense-in-depth ─────────────────────────────────────
+
+test("addLine refuses a line explicitly marked unavailable", () => {
+  const s = addLine(EMPTY_CART, dish, { isAvailable: false });
+  assert.deepEqual(s, EMPTY_CART, "an unavailable dish must not enter the cart");
+});
+
+test("addLine still adds when isAvailable is true or omitted", () => {
+  let s = addLine(EMPTY_CART, dish, { isAvailable: true });
+  assert.equal(itemCount(s), 1);
+  s = addLine(EMPTY_CART, dish); // no opts at all — every pre-existing call site
+  assert.equal(itemCount(s), 1);
+});
+
+test("an unavailable re-add does not bump the qty of an already-present line", () => {
+  let s = addLine(EMPTY_CART, dish); // legitimately added while available
+  s = addLine(s, dish, { isAvailable: false }); // dish paused before the next tap
+  assert.equal(qtyOf(s, 7, "dish"), 1, "a refused add must not touch the existing line");
+});
+
 // ── D-14: display-only macro snapshot ───────────────────────────────────────
 
 test("addLine carries a macros snapshot through when the caller supplies one", () => {
