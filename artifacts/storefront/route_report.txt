@@ -1,0 +1,60 @@
+[REACHABLE / FUNCTIONAL] app/(b2b)/corporate/[slug]/lunch-planner/page.tsx
+[DEFINED (Placeholder)] app/(b2b)/corporate/[slug]/page.tsx
+[DEFINED (Placeholder)] app/(b2b)/corporate/page.tsx
+[REACHABLE / FUNCTIONAL] app/(b2b)/corporate-wellness/page.tsx
+[PRESENT (Structure only)] app/(b2b)/partners/dietitians/page.tsx
+[REACHABLE / FUNCTIONAL] app/(b2b)/partners/fitness-clubs/page.tsx
+[REACHABLE / FUNCTIONAL] app/(b2b)/partners/gyms/page.tsx
+[REACHABLE / FUNCTIONAL] app/(b2b)/rd-partners/apply/page.tsx
+[PRESENT (Structure only)] app/(b2b)/rd-partners/page.tsx
+[REACHABLE / FUNCTIONAL] app/(focus)/checkout/page.tsx
+[REACHABLE / FUNCTIONAL] app/(focus)/corporate/invite/[token]/page.tsx
+[REACHABLE / FUNCTIONAL] app/(focus)/custom-build/page.tsx
+[REACHABLE / FUNCTIONAL] app/(focus)/dish/[slug]/page.tsx
+[DEFINED (Placeholder)] app/(focus)/group/[code]/page.tsx
+[REACHABLE / FUNCTIONAL] app/(focus)/login/page.tsx
+[REACHABLE / FUNCTIONAL] app/(focus)/marketplace/[slug]/page.tsx
+[DEFINED (Placeholder)] app/(focus)/office-lunch/[id]/page.tsx
+[REACHABLE / FUNCTIONAL] app/(focus)/order/confirmed/[orderId]/page.tsx
+[REACHABLE / FUNCTIONAL] app/(focus)/plan/[planId]/page.tsx
+[REACHABLE / FUNCTIONAL] app/(focus)/quick-setup/page.tsx
+[REACHABLE / FUNCTIONAL] app/(focus)/trial/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/account/addresses/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/account/appointments/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/account/billing/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/account/connections/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/account/favorites/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/account/history/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/account/loyalty/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/account/orders/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/account/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/account/preferences/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/account/subscriptions/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/account/symptoms/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/account/wellness/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/care/[condition]/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/care/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/challenges/[slug]/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/challenges/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/challenges/tracker/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/clinical/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/coach/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/marketplace/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/meal-deals/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/meal-guides/[dishSlug]/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/meal-planner/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/meal-recommendations/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/menu/page.tsx
+[DEFINED (Placeholder)] app/(global)/metabolic/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/performance/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/plans/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/premium/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/qa/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/rd/[slug]/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/rd/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/recipes/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/styleguide/page.tsx
+[DEFINED (Placeholder)] app/(global)/team/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/track/[orderId]/page.tsx
+[REACHABLE / FUNCTIONAL] app/(global)/vouchers/page.tsx

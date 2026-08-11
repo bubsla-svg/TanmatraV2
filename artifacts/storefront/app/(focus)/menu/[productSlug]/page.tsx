@@ -8,18 +8,18 @@ import { formatPaise } from "@/lib/format";
 import { PdpBuyLedger } from "@/components/menu/PdpBuyLedger";
 import { FallbackMenuBanner } from "@/components/menu/FallbackMenuBanner";
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ productSlug: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
   const { dishes } = await fetchMenu();
-  const dish = findDish(resolvedParams.slug, dishes);
+  const dish = findDish(resolvedParams.productSlug, dishes);
   if (!dish) return { title: "Not Found | Tanmatra" };
   return { title: `${dish.name} | Tanmatra` };
 }
 
-export default async function DishPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function DishPage({ params }: { params: Promise<{ productSlug: string }> }) {
   const resolvedParams = await params;
   const { dishes, source } = await fetchMenu();
-  const dish = findDish(resolvedParams.slug, dishes);
+  const dish = findDish(resolvedParams.productSlug, dishes);
   if (!dish) notFound();
 
   const est = dish.macrosEstimated ? "~" : "";

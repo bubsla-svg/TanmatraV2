@@ -395,7 +395,7 @@
     "stitchScreenId": "ef20a9487d414d8aaa48ab69e4b1f22d",
     "designName": "Dish PDP: Full Clinical Detail",
     "artifactType": "route",
-    "canonicalRoute": "/dish/[slug]",
+    "canonicalRoute": "/menu/[productSlug]",
     "state": "default",
     "layout": "FocusLayout",
     "themes": [
@@ -406,7 +406,7 @@
       "height": 844
     },
     "implementationComponent": null,
-    "routeEntryPoint": "artifacts/storefront/app/(focus)/dish/[slug]/page.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(focus)/menu/[productSlug]/page.tsx",
     "controllerComponent": "artifacts/storefront/components/menu/PdpBuyLedger.tsx",
     "trigger": {
       "type": "link",
@@ -3747,7 +3747,7 @@
     "stitchScreenId": "43952f75a4c649be9f2e947d011b6bc0-corp-well",
     "designName": "B2B Corporate Wellness Acquisition",
     "artifactType": "route",
-    "canonicalRoute": "/corporate-wellness",
+    "canonicalRoute": "/corporate",
     "state": "default",
     "layout": "B2BLayout",
     "themes": [
@@ -3758,7 +3758,7 @@
       "height": 844
     },
     "implementationComponent": null,
-    "routeEntryPoint": "artifacts/storefront/app/(b2b)/corporate-wellness/page.tsx",
+    "routeEntryPoint": "artifacts/storefront/app/(b2b)/corporate/page.tsx",
     "controllerComponent": "artifacts/storefront/components/corporate/CorporateLeadForm.tsx",
     "trigger": {
       "type": "route-navigation",

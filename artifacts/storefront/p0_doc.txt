@@ -1,0 +1,11165 @@
+﻿P0
+
+
+Tanmatra UX/UI Implementation Plan — P0: Clean-State Reset, Legacy Isolation, and Architecture Baseline
+P0 is the prerequisite phase that comes before the Phase 4–13 implementation plan. Its purpose is to establish one authoritative application, one route contract, one design-system boundary, and one deployment path before new UX/UI implementation begins.
+The governing principle is:
+
+
+Do not refactor on top of ambiguity.
+First:
+identify the authoritative application
+→ isolate legacy implementation
+→ freeze the approved architecture
+→ establish clean build and deployment provenance
+→ then begin product implementation
+
+
+
+
+
+
+First:identify the authoritative application→ isolate legacy implementation→ freeze the approved architecture→ establish clean build and deployment provenance→ then begin product implementation
+
+
+
+
+P0 — Clean State, Legacy Quarantine, and Production Baseline
+Objective
+Create a clean and verifiable starting point for the Tanmatra storefront by:
+
+
+- Identifying the authoritative customer-facing application
+- Separating production code from legacy code
+- Preserving reusable business logic without preserving legacy UX
+- Establishing canonical routes and layout contracts
+- Establishing one design-system source of truth
+- Establishing deterministic build and deployment provenance
+- Preventing old application code from silently re-entering the new storefront
+- Creating a reliable baseline for all later phases
+P0 is not a visual redesign phase.
+P0 is the architecture and governance phase that makes the redesign possible.
+
+
+
+
+1. Authoritative Application Ownership
+Customer application
+The intended customer-facing application must be:
+
+
+artifacts/storefront
+
+
+
+
+This is the Next.js storefront responsible for:
+
+
+Customer routes
+App Router layouts
+Commerce journeys
+Subscription journeys
+Account journeys
+Clinical journeys
+Partner acquisition
+Theme system
+Accessibility
+Production rendering
+
+
+
+
+API application
+The authoritative backend should be:
+
+
+artifacts/api-server
+
+
+
+
+The API owns:
+
+
+Authentication
+Customer state
+Addresses
+Preferences
+Plans
+Quotes
+Pricing
+Inventory
+Delivery capacity
+Orders
+Payments
+Subscriptions
+Entitlements
+Partner eligibility
+Health-data connection state
+
+
+
+
+Legacy application
+Any prior SPA or alternate customer application, including:
+
+
+artifacts/tanmatra
+
+
+
+
+must be classified explicitly as one of:
+
+
+Quarantined legacy source
+Image-only upstream
+Migration reference
+Retired application
+Separate non-customer tool
+
+
+
+
+It must not remain ambiguously deployable as a competing customer storefront.
+Exit requirement
+P0 requires one definitive statement:
+
+
+The production customer application is artifacts/storefront.
+No other application may serve customer-facing HTML routes.
+
+
+
+
+
+
+
+
+2. Legacy Quarantine
+Objective
+Preserve useful reference material without allowing legacy UX, routing, styling, or state management to control the new application.
+Quarantine location
+Use a clearly isolated path such as:
+
+
+artifacts/storefront/quarantine/
+
+
+
+
+or retain the legacy application in its own package while enforcing a hard dependency boundary.
+Legacy content that may be retained temporarily
+
+
+Business-rule references
+API-client examples
+Data mappings
+Copy references
+Historical route behavior
+Existing tests that describe valid domain behavior
+Image assets with verified rights
+Migration notes
+
+
+
+
+Legacy content that must not be reused automatically
+
+
+Legacy page composition
+Legacy navigation
+Legacy component hierarchy
+Legacy theme classes
+Legacy inline visual styles
+Legacy route guards
+Legacy checkout logic
+Legacy payment orchestration
+Legacy subscription state
+Legacy health-data behavior
+Legacy clinical claims
+Legacy analytics payloads
+
+
+
+
+Import prohibition
+Active storefront code must not import from quarantine.
+Prohibited example:
+
+
+import { LegacyCheckout } from "@/quarantine/checkout";
+
+
+
+
+Prohibited indirect paths include:
+
+
+Barrel exports
+Dynamic imports
+Alias mapping
+Provider-level imports
+Build-time generated imports
+Copied compiled output
+
+
+
+
+Required checks
+Verify:
+
+
+Quarantine source imports: 0
+Quarantine alias references: 0
+Quarantine production-bundle references: 0
+Quarantine customer-route ownership: 0
+
+
+
+
+Exit criteria
+Legacy quarantine passes only when:
+
+
+Legacy source can remain in the repository
+but cannot enter the active route tree,
+production bundle, runtime application,
+or public customer journey.
+
+
+
+
+
+
+
+
+3. Image-Upstream Boundary
+If the legacy service remains temporarily available as an image source, the boundary must be explicit.
+Allowed role
+
+
+/images/:path*
+
+
+
+
+may proxy to an approved image upstream when required.
+Prohibited roles
+The image upstream must not serve:
+
+
+Customer HTML
+Next.js route responses
+JavaScript bundles
+Authentication pages
+Checkout pages
+API responses
+Fallback application shells
+Arbitrary remote URLs
+
+
+
+
+Required controls
+
+
+Image-only path restriction
+Allowed content types
+Maximum file size
+Timeout
+Cache policy
+Origin allowlist
+No open-proxy behavior
+No HTML fallback
+No script content
+
+
+
+
+Exit criteria
+The legacy service may remain only if:
+
+
+It is demonstrably image-only
+and cannot become an alternate customer application.
+
+
+
+
+
+
+
+
+4. Clean Repository Baseline
+Objective
+Ensure all implementation work begins from a deterministic source state.
+Required baseline record
+Create:
+
+
+docs/architecture/p0-baseline.json
+
+
+
+
+It should include:
+
+
+{
+"candidateSha": "<GIT_SHA>",
+"branch": "<BRANCH>",
+"repository": "scigazetteofficial-beep/Wellness-Foods",
+"nodeVersion": "<VERSION>",
+"pnpmVersion": "9.15.5",
+"lockfileSha256": "<CHECKSUM>",
+"storefrontDockerfileSha256": "<CHECKSUM>",
+"deployWorkflowSha256": "<CHECKSUM>",
+"manifestSha256": "<CHECKSUM>",
+"createdAt": "<ISO-8601>"
+}
+
+
+
+
+Clean-state checks
+Run:
+
+
+git status --short
+git rev-parse HEAD
+git branch --show-current
+git remote -v
+node --version
+pnpm --version
+sha256sum pnpm-lock.yaml
+sha256sum artifacts/storefront/Dockerfile
+sha256sum .github/workflows/deploy.yml
+
+
+
+
+
+
+sha256sum pnpm-lock.yamlsha256sum artifacts/storefront/Dockerfilesha256sum .github/workflows/deploy.yml
+The working tree must be clean before the baseline is recorded.
+Dependency installation
+Use:
+
+
+pnpm install --frozen-lockfile
+
+
+
+
+Do not use:
+
+
+pnpm install --no-frozen-lockfile
+
+
+
+
+inside CI or production builds to conceal lockfile drift.
+Exit criteria
+
+
+Clean working tree
+Pinned package manager
+Frozen lockfile succeeds
+Baseline checksums recorded
+Candidate SHA immutable for the audit cycle
+
+
+
+
+
+
+
+
+5. Workspace and Build Ownership
+Objective
+Ensure the root workspace builds the intended packages and does not accidentally bundle the wrong application.
+Required package inventory
+Identify every:
+
+
+package.json
+pnpm workspace package
+Next.js app
+Express service
+Dockerfile
+Cloud Build configuration
+Deployment workflow
+Generated artifact directory
+
+
+
+
+Required ownership map
+Document:
+
+
+Repository root
+→ pnpm workspace
+→ artifacts/storefront
+→ storefront Dockerfile
+→ Cloud Build
+→ Artifact Registry image
+→ Cloud Run storefront service
+→ tanmatra.food
+
+
+
+
+Document the API independently:
+
+
+Repository root
+→ artifacts/api-server
+→ API Dockerfile or Cloud Build definition
+→ Artifact Registry image
+→ Cloud Run API service
+→ storefront API origin
+
+
+
+
+Build-context rule
+The storefront Docker build context should include the root workspace if required for monorepo dependencies:
+
+
+Build context: .
+Dockerfile: artifacts/storefront/Dockerfile
+
+
+
+
+The Dockerfile must still build the intended storefront package—not another application.
+Exit criteria
+
+
+One build target
+One authoritative Dockerfile
+One reproducible build command
+One production storefront image
+
+
+
+
+
+
+
+
+6. Runtime and Package-Manager Baseline
+Node version
+Use one Node major consistently across:
+
+
+Local development
+GitHub Actions
+Cloud Build
+Docker builder
+Docker runtime
+
+
+
+
+If native dependencies such as better-sqlite3 are used, prefer a version with validated compatibility.
+Recommended baseline:
+
+
+Node 22 LTS
+
+
+
+
+unless a documented product requirement mandates a different version.
+pnpm version
+The root package must declare:
+
+
+{
+"packageManager": "pnpm@9.15.5"
+}
+
+
+
+
+Docker and CI must activate that exact version.
+Docker package-manager setup
+
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="${PNPM_HOME}:${PATH}"
+ARG PNPM_VERSION=9.15.5
+RUN npm install --global corepack@latest 
+
+
+&& corepack enable 
+
+
+&& corepack prepare "pnpm@${PNPM_VERSION}" --activate 
+
+
+&& pnpm --version
+
+
+ 
+
+
+RUN npm install --global corepack@latest 
+&& corepack enable 
+&& corepack prepare "pnpm@${PNPM_VERSION}" --activate 
+&& pnpm --version 
+
+
+
+
+Native build requirements
+If native dependencies compile during installation, the builder image must contain:
+
+
+Python 3
+make
+g++
+
+
+
+
+These should remain in the builder stage rather than the final runtime image.
+Exit criteria
+
+
+Node version aligned
+pnpm version aligned
+Frozen installation succeeds
+Native modules compile or use compatible prebuilds
+Builder and runtime ABI remain compatible
+
+
+
+
+
+
+
+
+7. Canonical Route Contract
+Objective
+Freeze the customer route architecture before refactoring screens.
+Routes must not drift independently across:
+
+
+Navigation
+Footer
+Marketing links
+App Router
+Manifest
+Tests
+Stitch prompts
+Deployment smoke tests
+
+
+
+
+Global commerce routes
+
+
+/
+/menu
+/marketplace
+/meal-deals
+/meal-recommendations
+/meal-guides/[dishSlug]
+/recipes
+
+
+
+
+Subscription routes
+
+
+/plans
+/plan/[planId]
+/trial
+/quick-setup
+/custom-build
+/checkout
+/order/confirmed/[orderId]
+/meal-planner
+/account/subscriptions
+
+
+
+
+Account routes
+
+
+/account
+/account/orders
+/account/appointments
+/account/billing
+/account/addresses
+/account/preferences
+/account/favorites
+/account/history
+/account/symptoms
+/account/wellness
+/account/loyalty
+/account/connections
+/vouchers
+/premium
+
+
+
+
+Clinical and support routes
+
+
+/metabolic
+/performance
+/clinical
+/care/[condition]
+/rd
+/coach
+/qa
+/team
+/challenges
+/challenges/[slug]
+/challenges/tracker
+
+
+
+
+Corporate and partner routes
+
+
+/corporate
+/corporate/[slug]
+/corporate/[slug]/lunch-planner
+/corporate/invite/[token]
+/corporate-wellness
+/partners/gyms
+/partners/fitness-clubs
+/partners/dietitians
+/rd-partners
+
+
+
+
+Collaborative-commerce routes
+When enabled:
+
+
+/group/[code]
+/office-lunch/[id]
+
+
+
+
+Authentication route
+Select one canonical strategy.
+Recommended:
+
+
+/login?step=phone
+/login?step=otp
+/login?step=account-conflict
+
+
+
+
+
+
+Any legacy /auth route should redirect to the canonical login route.
+Health-connections redirect
+
+
+/account/wearables
+→ permanent redirect
+→ /account/connections
+
+
+
+
+Prohibited duplicate route engines
+Do not keep parallel authoritative journeys such as:
+
+
+/plans and /subscription-plans
+/checkout and /cart-checkout
+/custom-build and /plan-builder-v2
+/login and /auth as equal canonical routes
+
+
+
+
+Exit criteria
+Every route must have:
+
+
+Canonical path
+Purpose
+Layout
+Owner
+Authentication requirement
+Feature-flag state
+Implementation entry point
+Manifest coverage
+
+
+
+
+
+
+
+
+8. Navigation Baseline
+Mobile bottom navigation
+The approved four-tab contract is:
+
+
+Home    → /
+Menu    → /menu
+Plan    → /plans
+Account → /account
+
+
+
+
+Prohibited mobile-tab variants
+Do not ship:
+
+
+Home / Menu / Care / Account
+Eat / Plan / Track / Account
+Eat / Plan / Orders / Community / Account
+Home / Menu / Community / Account
+
+
+
+
+Mobile behavior
+The tab bar must:
+
+
+- Contain exactly four tabs
+- Show the active route
+- Respect mobile safe areas
+- Use minimum 44px targets
+- Disappear on FocusLayout routes
+- Disappear when required for keyboard or overlay ergonomics
+- Avoid colliding with sticky ledgers
+- Preserve route and scroll state appropriately
+Desktop navigation
+Desktop navigation may expose more destinations, but route naming must remain consistent with the canonical route contract.
+Exit criteria
+
+
+One approved mobile navigation definition
+No legacy navigation variants
+Correct route destinations
+Correct shell visibility
+
+
+
+
+
+
+
+
+9. Layout Contracts
+P0 must establish three layouts.
+
+
+
+
+GlobalLayout
+Purpose
+Used for browsing, discovery, account, and ongoing service management.
+Expected elements
+
+
+Global header
+Location context
+Optional search
+Four-tab mobile navigation
+Shared cart overlay
+Shared account control
+Desktop footer where appropriate
+
+
+
+
+Example routes
+
+
+/
+/menu
+/marketplace
+/plans
+/meal-planner
+/account
+/account/orders
+/account/connections
+/metabolic
+/performance
+/clinical
+/rd
+/qa
+/challenges
+
+
+
+
+
+
+
+
+FocusLayout
+Purpose
+Used for focused configuration, conversion, detail, authentication, and confirmation.
+Expected elements
+
+
+Compact route header
+Back action
+No global header
+No mobile bottom tabs
+No unrelated promotions
+One conversion ledger at most
+
+
+
+
+Example routes
+
+
+/dish/[slug]
+/marketplace/[slug]
+/plan/[planId]
+/trial
+/quick-setup
+/custom-build
+/checkout
+/order/confirmed/[orderId]
+/corporate/invite/[token]
+
+
+
+
+
+
+
+
+B2BLayout
+Purpose
+Used for enterprise and partner acquisition.
+Expected elements
+
+
+Tanmatra-led branding
+Secondary partner branding
+No consumer bottom tabs on mobile
+B2B lead or activation focus
+
+
+
+
+Example routes
+
+
+/corporate
+/corporate/[slug]
+/corporate/[slug]/lunch-planner
+/corporate-wellness
+/partners/gyms
+/partners/fitness-clubs
+/partners/dietitians
+/rd-partners
+
+
+
+
+Implementation preference
+Prefer Next.js route groups:
+
+
+app/(global)/
+app/(focus)/
+app/(b2b)/
+
+
+
+
+Avoid imperative scripts that inspect location.pathname and mutate body attributes to determine layout.
+Exit criteria
+Every route has exactly one approved layout assignment.
+
+
+
+
+10. Design-System Baseline
+Objective
+Establish one semantic component system before implementing route-specific screens.
+Typography
+Use approved font roles:
+
+
+Satoshi
+→ primary interface and display typography
+JetBrains Mono
+→ clinical numbers, prices, macros, timers, and technical values
+
+
+
+
+
+
+JetBrains Mono→ clinical numbers, prices, macros, timers, and technical values
+Core color roles
+Use semantic tokens rather than raw component values.
+Examples:
+
+
+--color-background
+--color-surface
+--color-surface-raised
+--color-surface-subtle
+--color-text
+--color-text-muted
+--color-border
+--color-border-strong
+--color-action-primary
+--color-action-primary-foreground
+--color-success
+--color-warning
+--color-danger
+--color-info
+
+
+
+
+Brand Gold
+The approved Gold should exist in the centralized token layer.
+Product components should consume:
+
+
+bg-action-primary
+text-action-primary-foreground
+border-action-primary
+
+
+
+
+rather than:
+
+
+bg-[#D4AF37]
+
+
+
+
+or an approximate palette substitute.
+Dark theme
+Use:
+
+
+Warm obsidian canvas
+Clearly layered surfaces
+Restrained gold
+Readable muted text
+Visible glass controls
+Food imagery as the main color source
+
+
+
+
+Light theme
+Use:
+
+
+Warm ivory or stone canvas
+Clearly separated cards
+Visible borders
+Readable muted text
+Gold primary CTAs
+Distinct selected and disabled states
+
+
+
+
+Component baseline
+Create and validate:
+
+
+Primary CTA
+Secondary CTA
+Icon button
+Input
+Textarea
+Select
+Chip
+Squircle option card
+Dish card
+Plan card
+Clinical badge
+Bottom sheet
+Drawer
+Dialog
+Sticky ledger
+Empty state
+Loading state
+Error state
+Success state
+Navigation
+SafeImage
+
+
+
+
+Exit criteria
+
+
+Dark design-system reference
+Light design-system reference
+Semantic tokens
+Shared components
+No raw route-level colors
+Theme hydration validated
+
+
+
+
+
+
+
+
+11. Image Contract
+Objective
+Ensure every customer-facing image has consistent behavior and fallback handling.
+Required abstraction
+Use:
+
+
+
+
+or an equivalent enforced image abstraction.
+Required behavior
+
+
+Defined aspect ratio
+Responsive sizing
+Object-fit rules
+Loading state
+Fallback state
+Error handling
+Accessible alt behavior
+Remote-origin allowlist
+Optimization
+
+
+
+
+Food-image principles
+
+
+Dish must remain recognizable
+No distorted crops
+No generic placeholder slop
+Consistent card ratios
+Premium but realistic food photography
+
+
+
+
+Exit criteria
+All product and dish imagery enters through the approved image contract.
+
+
+
+
+12. Domain Boundary Baseline
+P0 must freeze which layer owns authoritative decisions.
+Client owns
+
+
+Presentation state
+Local interaction state
+Non-authoritative draft input
+Current wizard position
+Temporary selections before validation
+
+
+
+
+Server owns
+
+
+Prices
+Taxes
+Delivery fees
+Discounts
+Entitlements
+Quote validity
+Inventory
+Delivery capacity
+Order status
+Payment status
+Subscription status
+Allergen-safe compatibility
+Restoration validity
+
+
+
+
+AI may assist
+
+
+Recommendation ranking
+Explanation
+Meal candidates
+Copy suggestions
+Ingredient alternatives
+
+
+
+
+AI may not author
+
+
+Authoritative price
+Payment result
+Order state
+Subscription state
+Hard allergen overrides
+Clinical diagnosis
+Silent meal changes
+Entitlement status
+
+
+
+
+Exit criteria
+Every major state transition has an identified authoritative owner.
+
+
+
+
+13. Core Domain Objects
+Establish the shared domain vocabulary before route implementation.
+Customer and preferences
+
+
+Customer
+CustomerProfile
+PreferenceProfile
+AllergenConstraint
+IngredientExclusion
+SoftDislike
+Address
+ServiceabilityResult
+
+
+
+
+Plan system
+
+
+PlanDefinition
+PlanConfiguration
+GeneratedPlan
+MealSlot
+MealCandidate
+LockedMeal
+PlanSnapshot
+DeliverySchedule
+
+
+
+
+Commerce
+
+
+Cart
+CartLine
+QuoteSnapshot
+QuoteDifference
+PaymentAttempt
+Order
+OrderLine
+
+
+
+
+Subscription
+
+
+Subscription
+SubscriptionCycle
+Delivery
+SubscriptionAction
+PauseRequest
+SkipRequest
+CancellationRequest
+
+
+
+
+Acquisition
+
+
+AcquisitionContext
+EligibilityResult
+Entitlement
+BenefitReservation
+PartnerProgram
+InviteToken
+
+
+
+
+Health data
+
+
+HealthConnection
+HealthPermission
+HealthDataCategory
+HealthSyncStatus
+FeatureInfluenceConsent
+
+
+
+
+Exit criteria
+Routes and services use shared domain concepts rather than creating route-specific copies.
+
+
+
+
+14. Constraint Precedence
+P0 must establish the precedence used by all planning and recommendation operations.
+Recommended order:
+
+
+1. Legal and safety restrictions
+2. Hard allergens
+3. Clinical exclusions
+4. Dietary pattern
+5. Availability and inventory
+6. Delivery capacity
+7. Plan rules
+8. Customer preferences
+9. Soft dislikes
+10. Variety preference
+11. Recommendation ranking
+
+
+
+
+A lower-level preference may never override a higher-level restriction.
+Example
+
+
+Customer likes paneer
++
+customer has a hard dairy exclusion
+→ paneer must never appear
+
+
+
+
+Exit criteria
+All plan generation, Shuffle, Undo, Change Dish, and recommendation services use the same precedence model.
+
+
+
+
+15. Initial Domain Invariants
+P0 should define the invariants later tested in Phase 13A.
+Mandatory invariants
+
+
+1. Hard allergens survive generation, Shuffle, Undo, and Change Dish.
+2. Keep prevents Shuffle from replacing a meal.
+3. Manual replacement clears plan-level Undo.
+4. Plan-defining changes invalidate active quotes.
+5. Checkout consumes only a server-owned active quote.
+6. Expired quotes cannot create payment attempts.
+7. One idempotency key creates at most one logical payment result.
+8. Fully sponsored activation avoids unnecessary payment.
+9. Entitlements are consumed exactly once.
+10. No silent meal substitution occurs.
+11. Wearables never automatically mutate scheduled meals.
+12. Active subscriptions require a confirmed order or verified sponsor activation.
+13. Authentication preserves a validated internal return route.
+14. Destructive actions disclose financial consequences.
+15. Client cannot author authoritative state.
+16. Sensitive health information stays out of general analytics.
+17. Relevant delivery or plan changes supersede the quote.
+18. Unavailable actions explain why.
+19. Checkout asks no plan-configuration questions.
+20. Restoration is revalidated against current server state.
+Exit criteria
+The invariants are documented with owner, service boundary, and planned test level.
+
+
+
+
+16. Authentication and Session Baseline
+Canonical authentication flow
+Recommended:
+
+
+/login?step=phone
+/login?step=otp
+/login?step=account-conflict
+
+
+
+
+Required behavior
+
+
+Safe internal returnTo
+OTP expiry
+OTP resend
+Incorrect-code handling
+Rate limiting
+Account conflict
+Session expiry
+Draft restoration
+Address restoration
+Wizard restoration
+
+
+
+
+Return-route security
+Reject:
+
+
+External URLs
+Protocol-relative URLs
+JavaScript URLs
+Encoded external redirects
+Unapproved internal paths
+
+
+
+
+Exit criteria
+Authentication can interrupt and resume a customer journey without losing validated state or permitting open redirects.
+
+
+
+
+17. Privacy and Analytics Baseline
+Analytics strategy
+Use an allowlist rather than attempting to remove prohibited fields after collection.
+General analytics may include
+
+
+Route
+Screen ID
+Action name
+Plan format
+Anonymous experiment group
+Generic error code
+Performance timing
+
+
+
+
+General analytics must exclude
+
+
+Allergens
+Symptoms
+Clinical condition
+RD notes
+Raw wearable data
+Authentication code
+Invite token
+Employee identifier
+Payment details
+Full address
+Medication information
+Health-record details
+
+
+
+
+Health-data logging
+Health-data connectivity must use separate security and privacy controls.
+Exit criteria
+
+
+Analytics schema allowlist exists
+Sensitive fields are tested
+No customer health details enter general analytics
+
+
+
+
+
+
+
+
+18. Clinical-Scope Baseline
+Approved initial health context
+
+
+Steps
+Workouts
+Active energy
+Sleep duration
+Optional weight trend
+
+
+
+
+Excluded initial scope
+
+
+CGM
+Blood-glucose-driven meal decisions
+EHR integration
+Medical-record ingestion
+Medication management
+Diagnosis
+Treatment recommendations
+Automatic biometric meal changes
+
+
+
+
+Clinical language rule
+Use:
+
+
+May support
+Designed for
+Can help customers follow
+Observed overlap
+Discuss with your RD
+
+
+
+
+Avoid:
+
+
+Treats
+Cures
+Reverses
+Guarantees
+Prevents disease
+Clinically proven
+Lab verified
+
+
+
+
+unless independently substantiated and approved for the exact claim.
+Exit criteria
+The production scope and prohibited claim list are documented before clinical routes are designed.
+
+
+
+
+19. Accessibility Baseline
+Required standards
+Establish at minimum:
+
+
+Keyboard navigation
+Visible focus
+Logical focus order
+Semantic headings
+Accessible names
+Dialog focus trapping
+Focus restoration
+Error association
+Live announcements
+200% text zoom
+Reduced motion
+Minimum 44×44px touch targets
+Selection independent of color
+
+
+
+
+Viewport policy
+Use:
+
+
+width=device-width, initial-scale=1, viewport-fit=cover
+
+
+
+
+Do not disable customer zoom with:
+
+
+maximum-scale=1
+user-scalable=0
+
+
+
+
+For iOS form zoom, use appropriately sized form-control text rather than disabling zoom.
+Exit criteria
+Shared components establish accessible behavior before route-level reuse.
+
+
+
+
+20. Testing Baseline
+Testing layers
+Define:
+
+
+Unit tests
+Domain-invariant tests
+Component tests
+Contract tests
+Integration tests
+Playwright E2E
+Visual regression
+Automated accessibility
+Manual accessibility
+Container smoke tests
+Production smoke tests
+
+
+
+
+Test identity
+Every critical test should identify:
+
+
+Route
+State
+Fixture
+Theme
+Viewport
+Expected action
+Expected result
+
+
+
+
+Reachability versus execution
+Report separately:
+
+
+Test files reachable
+Test files executed
+Test cases executed
+Passed
+Failed
+Skipped
+Focused
+Quarantined
+
+
+
+
+Exit criteria
+The repository has deterministic test commands and no ambiguity between “test exists” and “test passed.”
+
+
+
+
+21. Deployment Provenance Baseline
+Required build identity
+Every image should embed:
+
+
+Git SHA
+Branch or release source
+Build timestamp
+Application name
+UI generation
+
+
+
+
+Recommended public diagnostic endpoint:
+
+
+/api/build
+
+
+
+
+The SHA must come from the build environment—not a hard-coded source value.
+Immutable deployment
+Deploy:
+
+
+
+
+or an immutable SHA tag tied to a verified digest.
+Avoid relying on:
+
+
+storefront:latest
+
+
+
+
+Required deployment chain
+
+
+Git SHA
+→ GitHub workflow
+→ Cloud Build ID
+→ Docker image
+→ Image digest
+→ Cloud Run revision
+→ Traffic allocation
+→ Domain mapping
+→ Public response
+
+
+
+
+Exit criteria
+The team can prove exactly which commit serves tanmatra.food.
+
+
+
+
+22. Public UI Generation Markers
+To distinguish the new implementation from legacy content, critical routes should expose non-visual diagnostic markers.
+Example:
+
+
+<main
+id="main"
+data-ui-generation="stitch-74"
+data-screen-id="MOB-10-Home-Dark"
+>
+
+
+
+
+These markers are supporting evidence—not substitutes for runtime or visual verification.
+Required production assertions
+
+
+Expected build SHA present
+Expected UI generation present
+Expected screen ID present
+Expected route content present
+Legacy route content absent
+
+
+
+
+Exit criteria
+Production smoke tests can distinguish the approved implementation from legacy or alternate customer interfaces.
+
+
+
+
+23. P0 Quality Gates
+Run:
+
+
+pnpm install --frozen-lockfile
+pnpm run typecheck
+pnpm run lint:test-reach
+pnpm --filter @workspace/storefront run lint:filecap
+pnpm --filter @workspace/storefront run lint:tokens
+pnpm --filter @workspace/storefront run test
+pnpm --filter @workspace/storefront run build
+
+
+
+
+Build the production image:
+
+
+docker build 
+
+
+--progress=plain 
+
+
+-f artifacts/storefront/Dockerfile 
+
+
+-t tanmatra-storefront:<candidate-sha> 
+
+
+.
+
+
+
+
+Run the container and verify:
+
+
+Homepage
+Menu
+Plans
+Login
+Build-info endpoint
+Health endpoint
+Static assets
+API connectivity
+
+
+
+
+Gate interpretation
+A gate is PASS only when its actual process exits successfully.
+If a scoped file check passes while the repository gate fails, report:
+
+
+Scoped check: PASS
+Repository gate: FAIL
+
+
+
+
+Do not collapse both into PASS.
+
+
+
+
+24. P0 Deliverables
+Create:
+
+
+docs/architecture/p0-baseline.json
+docs/architecture/application-ownership.md
+docs/architecture/route-contract.md
+docs/architecture/layout-contracts.md
+docs/architecture/domain-boundaries.md
+docs/architecture/domain-invariants.md
+docs/architecture/clinical-scope.md
+docs/architecture/privacy-analytics-contract.md
+docs/architecture/deployment-provenance.md
+docs/architecture/legacy-quarantine.md
+
+
+
+
+Also create machine-readable inventories:
+
+
+docs/architecture/routes.json
+docs/architecture/layout-assignments.json
+docs/architecture/domain-invariants.json
+
+
+
+
+
+
+
+
+25. P0 Exit Criteria
+P0 is complete only when all of the following are true:
+
+
+[ ] One authoritative customer application exists
+[ ] One authoritative API application exists
+[ ] Legacy application cannot serve customer HTML
+[ ] Active code imports no quarantine modules
+[ ] Production bundle contains no quarantine code
+[ ] Build context and Dockerfile are unambiguous
+[ ] Node and pnpm versions are pinned
+[ ] Frozen install succeeds
+[ ] Canonical route contract is approved
+[ ] Four-tab navigation contract is approved
+[ ] Every route has one layout assignment
+[ ] Semantic theme system is established
+[ ] Shared component baseline is established
+[ ] SafeImage contract is established
+[ ] Domain authority boundaries are documented
+[ ] Constraint precedence is documented
+[ ] Twenty domain invariants are documented
+[ ] Authentication and safe-return behavior are documented
+[ ] Analytics allowlist exists
+[ ] Clinical scope and exclusions are documented
+[ ] Accessibility baseline is documented
+[ ] Testing layers are configured
+[ ] Build identity is embedded
+[ ] Immutable deployment provenance is available
+[ ] Container smoke test passes
+[ ] No unresolved P0 architecture defect remains
+
+
+
+
+
+
+
+
+P0 Go/No-Go Gate
+GO
+P0 may be marked GO when:
+
+
+Repository truth
+→ build truth
+→ container truth
+→ deployment truth
+
+
+
+
+all identify the same authoritative storefront and baseline architecture.
+NO-GO
+P0 remains NO-GO if:
+
+
+Multiple customer applications remain authoritative
+Legacy routes can still render publicly
+Quarantine enters the production bundle
+Canonical routes remain disputed
+Layout ownership remains imperative or ambiguous
+Candidate and deployed SHAs are conflated
+Build identity is hard-coded
+Deployment digest is unknown
+Domain invariants are undefined
+Clinical scope remains open-ended
+
+
+
+
+
+
+
+
+P0 Final Status Format
+Use:
+
+
+P0 — CLEAN-STATE AND ARCHITECTURE BASELINE
+Application ownership:       PASS / FAIL
+Legacy isolation:            PASS / FAIL
+Repository baseline:         PASS / FAIL
+Build ownership:             PASS / FAIL
+Runtime alignment:           PASS / FAIL
+Route contract:              PASS / FAIL
+Navigation contract:         PASS / FAIL
+Layout contracts:            PASS / FAIL
+Design-system baseline:      PASS / FAIL
+Domain boundaries:           PASS / FAIL
+Domain invariants:           PASS / FAIL
+Authentication baseline:     PASS / FAIL
+Privacy and analytics:       PASS / FAIL
+Clinical scope:              PASS / FAIL
+Accessibility baseline:      PASS / FAIL
+Testing baseline:            PASS / FAIL
+Deployment provenance:       PASS / FAIL
+Container smoke test:        PASS / FAIL
+P0 VERDICT: GO / NO-GO
+
+
+
+
+
+
+P0 VERDICT: GO / NO-GO
+Phase Sequence With P0 Included
+
+
+P0
+Establish one authoritative application, route contract,
+design system, domain model, and deployment path
+Phase 4
+Discover the right Tanmatra plan
+Phase 5
+Configure and review exact meals
+Phase 6
+Build a custom plan from customer-defined rules
+Phase 7
+Create an authoritative quote, payment, and order
+Phase 8
+Operate the active meal subscription
+Phase 9
+Manage account, preferences, feedback, and wellness context
+Phase 10
+Connect optional health data safely
+Phase 11
+Support corporate, partner, and entitlement acquisition
+Phase 12
+Deliver clinical, RD, Coach, and challenge experiences safely
+Phase 13A
+Prove implementation, runtime, and deployment traceability
+Phase 13B
+Complete human visual and accessibility acceptance
+
+
+
+
+
+
+Phase 13BComplete human visual and accessibility acceptance
+P0 creates the foundation on which every later phase depends. If P0 remains ambiguous, later screen generation, route wiring, testing, and deployment can all appear complete while the wrong application continues to reach customers.
+
+
+Tanmatra UX/UI Architecture Document
+
+
+
+
+Tanmatra UX/UI Architecture Document
+Phase 1 Revised: Foundation, Global Wrappers & Route-Shell System
+1. Revised Product Architecture Principle
+
+
+Tanmatra now spans seven route families:
+
+
+Plain Text
+1
+1. Homepage, food commerce, and marketplace
+2
+2. Subscription plans and clinical care
+3
+3. Account and health telemetry
+4
+4. Dietitian consultations and AI care
+5
+5. Checkout and order flow
+6
+6. Corporate and partnerships
+7
+7. Community and challenges
+Show more lines
+
+
+The frontend architecture must therefore support three different user modes:
+
+
+Plain Text
+1
+Commerce Mode
+2
+User wants to browse, add, reorder, discover, and checkout quickly.
+3
+ 
+4
+Clinical Mode
+5
+User wants guidance, transformation, protocols, recommendations, and personalization.
+6
+ 
+7
+Account / Telemetry Mode
+8
+User wants to track, manage, pause, resume, edit, redeem, log, or book.
+Show more lines
+
+
+The UI must not expose this complexity all at once. The global navigation remains simple and mobile-first.
+
+
+2. Revised Global Layout System
+
+
+Tanmatra uses three primary layout wrappers:
+
+
+Plain Text
+1
+<GlobalLayout />
+2
+<FocusLayout />
+3
+<B2BLayout />
+Show more lines
+
+
+Optional nested route shells may exist inside these, but they must not violate the global design rules.
+
+
+2.1 GlobalLayout
+Purpose
+
+
+<GlobalLayout /> is the default shell for browseable, repeat-visit, low-to-medium intent routes.
+
+
+It includes:
+
+
+Plain Text
+1
+<GlobalHeader />
+2
+<main>
+3
+{route content}
+4
+</main>
+5
+<BottomTabBar />
+Show more lines
+2.2 GlobalLayout Applies To
+Plain Text
+1
+/
+2
+/menu
+3
+/marketplace
+4
+/meal-deals
+5
+/meal-recommendations
+6
+/recipes
+7
+/plans
+8
+/meal-planner
+9
+/metabolic
+10
+/performance
+11
+/clinical
+12
+/care/[condition]
+13
+/account
+14
+/account/orders
+15
+/account/subscriptions
+16
+/account/appointments
+17
+/account/billing
+18
+/account/addresses
+19
+/account/preferences
+20
+/account/favorites
+21
+/account/history
+22
+/account/symptoms
+23
+/account/wellness
+24
+/account/loyalty
+25
+/vouchers
+26
+/premium
+27
+/coach
+28
+/rd
+29
+/qa
+30
+/challenges
+31
+/challenges/[slug]
+32
+/challenges/tracker
+33
+/team
+Show more lines
+
+
+Exception: if any of these routes launch a conversion-critical step, payment step, plan builder step, or product commitment view, that step must push into <FocusLayout />.
+
+
+3. Revised Mobile Bottom Tab Bar
+3.1 Core Rule
+
+
+The mobile bottom tab bar must remain simple and must not mirror the full route tree.
+
+
+Tanmatra has many routes, but mobile navigation must expose only the four highest-frequency consumer destinations.
+
+
+3.2 Exact 4 Mobile Tabs
+Plain Text
+1
+1. Home
+2
+2. Menu
+3
+3. Plan
+4
+4. Account
+Show more lines
+
+
+This replaces the previous tab set of:
+
+
+Plain Text
+1
+Menu
+2
+Care
+3
+Planner
+4
+Account
+Show more lines
+
+
+The revised structure is stronger because /plans, /meal-planner, /quick-setup, clinical programs, and care routes all now sit under a broader Plan mental model.
+
+
+3.3 Bottom Tab Routing Map
+1. Home
+Plain Text
+1
+Label: Home
+2
+Route: /
+3
+Purpose: Clinical hero, curated dishes, personalized entry points
+4
+[Action: Pushes to /]
+Show more lines
+
+
+Home serves as the top-level clinical commerce entry point.
+
+
+It may include curated links to:
+
+
+Plain Text
+1
+/menu
+2
+/marketplace
+3
+/meal-deals
+4
+/plans
+5
+/meal-recommendations
+6
+/care/[condition]
+Show more lines
+
+
+But it must not become a SaaS landing page.
+
+
+2. Menu
+Plain Text
+1
+Label: Menu
+2
+Route: /menu
+3
+Purpose: Daily à-la-carte food commerce and instant craving funnel
+4
+[Action: Pushes to /menu]
+Show more lines
+
+
+Menu owns the fast food-commerce journey:
+
+
+Plain Text
+1
+/menu
+2
+/dish/[slug]
+3
+Cart Drawer
+4
+/checkout
+Show more lines
+
+
+Related commerce discovery routes may be surfaced inside Menu as horizontal rails, not as bottom-nav tabs:
+
+
+Plain Text
+1
+/meal-deals
+2
+/marketplace
+3
+/recipes
+Show more lines
+3. Plan
+Plain Text
+1
+Label: Plan
+2
+Route: /plans
+3
+Purpose: Therapeutic subscriptions, metabolic programs, personalization, planner
+4
+[Action: Pushes to /plans]
+Show more lines
+
+
+Plan owns the therapeutic transformation funnel:
+
+
+Plain Text
+1
+/plans
+2
+/plan/[planId]
+3
+/trial
+4
+/custom-build
+5
+/quick-setup
+6
+/meal-planner
+7
+/metabolic
+8
+/performance
+9
+/clinical
+10
+/care/[condition]
+Show more lines
+
+
+Plan is the correct umbrella because it combines subscription intent, health goals, care programs, and weekly planning.
+
+
+4. Account
+Plain Text
+1
+Label: Account
+2
+Route: /account
+3
+Purpose: Profile, orders, subscriptions, telemetry, billing, preferences, loyalty
+4
+[Action: Pushes to /account]
+Show more lines
+
+
+Account owns:
+
+
+Plain Text
+1
+/account/orders
+2
+/account/subscriptions
+3
+/account/appointments
+4
+/account/billing
+5
+/account/addresses
+6
+/account/preferences
+7
+/account/favorites
+8
+/account/history
+9
+/account/symptoms
+10
+/account/wellness
+11
+/account/loyalty
+12
+/vouchers
+13
+/premium
+Show more lines
+3.4 Routes Explicitly Excluded from Mobile Bottom Tabs
+
+
+These routes must never appear directly in the mobile bottom tab bar:
+
+
+Plain Text
+1
+/marketplace
+2
+/meal-deals
+3
+/meal-recommendations
+4
+/recipes
+5
+/meal-guides/[dishSlug]
+6
+/dish/[slug]
+7
+/marketplace/[slug]
+8
+/meal-planner
+9
+/metabolic
+10
+/performance
+11
+/clinical
+12
+/care/[condition]
+13
+/coach
+14
+/rd
+15
+/qa
+16
+/checkout
+17
+/order/confirmed/[orderId]
+18
+/group/[code]
+19
+/office-lunch/[id]
+20
+/corporate
+21
+/corporate/[slug]
+22
+/corporate/[slug]/lunch-planner
+23
+/corporate/invite/[token]
+24
+/corporate-wellness
+25
+/rd-partners
+26
+/partners/dietitians
+27
+/partners/gyms
+28
+/partners/fitness-clubs
+29
+/challenges
+30
+/challenges/[slug]
+31
+/challenges/tracker
+32
+/team
+Show more lines
+
+
+Reason:
+
+
+Bottom tabs are for repeat consumer behaviors only.
+Corporate, partnerships, RD partners, gyms, and clubs are B2B or partnership routes.
+Checkout, PDPs, builders, onboarding, and payment routes require focus.
+Challenges and community routes should be discovered from Home, Account, or Plan, not permanent bottom navigation.
+4. Global Header
+4.1 Purpose
+
+
+The global header provides location, trust, and account access without adding navigational complexity.
+
+
+It must feel like premium mobile commerce, not a website navbar.
+
+
+4.2 Mobile Header Structure
+Plain Text
+1
+<GlobalHeader>
+2
+<LocationCluster />
+3
+<ClinicalTrustBadge />
+4
+<AccountAvatarButton />
+5
+</GlobalHeader>
+Show more lines
+4.3 Mobile Header Height
+Plain Text
+1
+Default height: 56px
+2
+Maximum height: 64px
+3
+Sticky viewport budget: under 10% of mobile viewport height
+Show more lines
+4.4 LocationCluster
+Display
+Plain Text
+1
+Delivering to
+2
+DLF Phase 3 ▼
+Show more lines
+Action
+Plain Text
+1
+[Action: Opens Location Bottom Sheet]
+Show more lines
+Bottom Sheet Actions
+Plain Text
+1
+Use current location
+2
+[Action: Requests geolocation permission]
+3
+ 
+4
+Saved address
+5
+[Action: Sets selected address and closes bottom sheet]
+6
+ 
+7
+Add new address
+8
+[Action: Pushes to /account/addresses]
+9
+ 
+10
+Change delivery slot
+11
+[Action: Opens Delivery Slot Picker Bottom Sheet]
+Show more lines
+4.5 ClinicalTrustBadge
+Examples
+Plain Text
+1
+RD-reviewed
+2
+Metabolic-safe
+3
+Low-GI mapped
+4
+Clean macros
+Show more lines
+Action
+Plain Text
+1
+[Action: Opens Trust Explainer Bottom Sheet]
+Show more lines
+Trust Explainer Content
+Plain Text
+1
+Title: Why this matters
+2
+ 
+3
+Body:
+4
+Tanmatra meals and plans are designed around clinical nutrition rules, ingredient quality, metabolic goals, and registered dietitian oversight.
+5
+ 
+6
+CTA:
+7
+Got it
+8
+[Action: Closes Bottom Sheet]
+Show more lines
+4.6 AccountAvatarButton
+Action
+Plain Text
+1
+[Action: Opens Account Drawer]
+Show more lines
+
+
+The Account Drawer must include grouped navigation:
+
+
+Plain Text
+1
+Account Hub
+2
+[Action: Pushes to /account]
+3
+ 
+4
+Orders
+5
+[Action: Pushes to /account/orders]
+6
+ 
+7
+Subscriptions
+8
+[Action: Pushes to /account/subscriptions]
+9
+ 
+10
+Meal Planner
+11
+[Action: Pushes to /meal-planner]
+12
+ 
+13
+Appointments
+14
+[Action: Pushes to /account/appointments]
+15
+ 
+16
+Billing & Wallet
+17
+[Action: Pushes to /account/billing]
+18
+ 
+19
+Preferences
+20
+[Action: Pushes to /account/preferences]
+21
+ 
+22
+Favorites
+23
+[Action: Pushes to /account/favorites]
+24
+ 
+25
+Wellness Tracker
+26
+[Action: Pushes to /account/wellness]
+27
+ 
+28
+Symptoms
+29
+[Action: Pushes to /account/symptoms]
+30
+ 
+31
+Vouchers
+32
+[Action: Pushes to /vouchers]
+33
+ 
+34
+Premium
+35
+[Action: Pushes to /premium]
+36
+ 
+37
+Corporate Wellness
+38
+[Action: Pushes to /corporate-wellness]
+39
+ 
+40
+Corporate Portal
+41
+[Action: Pushes to /corporate]
+42
+ 
+43
+Help / Q&A
+44
+[Action: Pushes to /qa]
+Show more lines
+
+
+Important:
+
+
+Plain Text
+1
+Corporate routes may appear in the Account Drawer.
+2
+Corporate routes must never appear in the mobile BottomTabBar.
+Show more lines
+5. Desktop Header
+5.1 Purpose
+
+
+Desktop may expose more surface area because viewport pressure is lower.
+
+
+However, desktop still must avoid becoming a generic SaaS navbar.
+
+
+5.2 Desktop Header Primary Navigation
+Plain Text
+1
+Home
+2
+[Action: Pushes to /]
+3
+ 
+4
+Menu
+5
+[Action: Pushes to /menu]
+6
+ 
+7
+Plans
+8
+[Action: Pushes to /plans]
+9
+ 
+10
+Marketplace
+11
+[Action: Pushes to /marketplace]
+12
+ 
+13
+Coach
+14
+[Action: Pushes to /coach]
+15
+ 
+16
+Corporate
+17
+[Action: Pushes to /corporate]
+Show more lines
+5.3 Desktop Header Secondary Access
+
+
+These should appear in account menu or secondary dropdowns, not as primary top-level nav unless route analytics prove frequent usage:
+
+
+Plain Text
+1
+/meal-deals
+2
+/meal-recommendations
+3
+/recipes
+4
+/rd
+5
+/qa
+6
+/challenges
+7
+/team
+8
+/premium
+9
+/vouchers
+10
+/partners/dietitians
+11
+/partners/gyms
+12
+/partners/fitness-clubs
+Show more lines
+6. Revised FocusLayout
+6.1 Purpose
+
+
+<FocusLayout /> is the zero-distraction shell for high-intent flows.
+
+
+It strips away global navigation to prevent abandonment, viewport collisions, and CTA competition.
+
+
+6.2 FocusLayout Structure
+Plain Text
+1
+<FocusLayout>
+2
+<FocusHeader />
+3
+<main>
+4
+{route content}
+5
+</main>
+6
+{optional route-specific sticky element}
+7
+</FocusLayout>
+Show more lines
+6.3 What FocusLayout Removes
+Plain Text
+1
+GlobalHeader
+2
+BottomTabBar
+3
+Desktop global navigation
+4
+Location header
+5
+Promotional banners
+6
+Floating support widgets
+7
+Cross-sell overlays unrelated to the current funnel
+8
+Newsletter prompts
+9
+Corporate nav links
+10
+Competing primary CTAs
+Show more lines
+6.4 What FocusLayout May Keep
+Plain Text
+1
+Back button
+2
+Step indicator
+3
+Secure checkout indicator
+4
+Delivery address summary
+5
+Sticky bottom ledger
+6
+Single primary CTA
+7
+Clinical trust microcopy
+Show more lines
+6.5 Routes That Must Use FocusLayout
+Plain Text
+1
+/dish/[slug]
+2
+/marketplace/[slug]
+3
+/plan/[planId]
+4
+/trial
+5
+/custom-build
+6
+/quick-setup
+7
+/checkout
+8
+/group/[code]
+9
+/office-lunch/[id]
+10
+/corporate/invite/[token]
+Show more lines
+6.6 Routes That May Use FocusLayout Conditionally
+
+
+Use FocusLayout only when the route enters a high-intent sub-flow:
+
+
+Plain Text
+1
+/meal-recommendations
+2
+Condition: when user starts accepting a meal recommendation set
+3
+ 
+4
+/meal-guides/[dishSlug]
+5
+Condition: if guide contains reorder or add-to-plan commitment flow
+6
+ 
+7
+/meal-planner
+8
+Condition: when editing, swapping, confirming, or rescheduling meals
+9
+ 
+10
+/account/subscriptions
+11
+Condition: when pausing, resuming, upgrading, or changing subscription
+12
+ 
+13
+/account/billing
+14
+Condition: when adding money, applying voucher, or initiating payment
+15
+ 
+16
+/account/addresses
+17
+Condition: when adding or editing delivery address
+18
+ 
+19
+/account/appointments
+20
+Condition: when booking or paying for RD consult
+21
+ 
+22
+/rd
+23
+Condition: when selecting consult slot or booking appointment
+24
+ 
+25
+/challenges/[slug]
+26
+Condition: when registering for a challenge
+27
+ 
+28
+/premium
+29
+Condition: when purchasing or upgrading to Premium
+Show more lines
+6.7 FocusHeader
+Plain Text
+1
+<FocusHeader>
+2
+<BackButton />
+3
+<FocusTitle />
+4
+<OptionalTrustSignal />
+5
+</FocusHeader>
+Show more lines
+Back Button
+Plain Text
+1
+Visual: Left chevron inside 36px touch target
+2
+[Action: Goes back to previous route if history exists]
+3
+[Fallback Action: Pushes to /]
+Show more lines
+Focus Titles by Route Type
+Plain Text
+1
+/dish/[slug] Dish Details
+2
+/marketplace/[slug] Product Details
+3
+/plan/[planId] Customize Plan
+4
+/trial 3-Day Trial
+5
+/custom-build Build Your Plan
+6
+/quick-setup Quick Setup
+7
+/checkout Checkout
+8
+/group/[code] Group Order
+9
+/office-lunch/[id] Office Lunch
+10
+/corporate/invite/[token] Activate Invite
+Show more lines
+7. B2BLayout
+7.1 Purpose
+
+
+<B2BLayout /> supports corporate and partnership routes without contaminating the consumer mobile navigation model.
+
+
+7.2 B2BLayout Applies To
+Plain Text
+1
+/corporate
+2
+/corporate/[slug]
+3
+/corporate/[slug]/lunch-planner
+4
+/corporate-wellness
+5
+/rd-partners
+6
+/partners/dietitians
+7
+/partners/gyms
+8
+/partners/fitness-clubs
+Show more lines
+7.3 B2BLayout Mobile Behavior
+
+
+On mobile:
+
+
+Plain Text
+1
+No BottomTabBar
+2
+No consumer GlobalHeader
+3
+Use simplified B2B header
+4
+Primary CTA limited to one per viewport
+Show more lines
+7.4 B2BLayout Desktop Behavior
+
+
+On desktop:
+
+
+Plain Text
+1
+Use desktop header
+2
+Allow Corporate primary nav
+3
+Use wider content grid
+4
+Preserve dark clinical premium style
+Show more lines
+7.5 Corporate Invite Exception
+Plain Text
+1
+/corporate/invite/[token]
+2
+Layout: FocusLayout
+Show more lines
+
+
+Reason:
+
+
+Invite activation is a high-intent onboarding step and must not include distracting corporate navigation.
+
+
+8. Route Shell Assignment Map
+8.1 Commerce Routes
+Plain Text
+1
+/
+2
+Layout: GlobalLayout
+3
+Purpose: Homepage, clinical hero, curated dishes
+4
+ 
+5
+/menu
+6
+Layout: GlobalLayout
+7
+Purpose: Daily à-la-carte menu grid and dish bottom sheet drawer
+8
+ 
+9
+/dish/[slug]
+10
+Layout: FocusLayout
+11
+Purpose: Dish PDP
+12
+ 
+13
+/marketplace
+14
+Layout: GlobalLayout
+15
+Purpose: RD-curated pantry, snacks, supplements catalog
+16
+ 
+17
+/marketplace/[slug]
+18
+Layout: FocusLayout
+19
+Purpose: Marketplace PDP
+20
+ 
+21
+/meal-deals
+22
+Layout: GlobalLayout
+23
+Purpose: Value combos and macro-density deals
+24
+ 
+25
+/meal-recommendations
+26
+Layout: GlobalLayout
+27
+Conditional FocusLayout for confirmation flow
+28
+ 
+29
+/meal-guides/[dishSlug]
+30
+Layout: GlobalLayout
+31
+Conditional FocusLayout for reorder or plan-add flow
+32
+ 
+33
+/recipes
+34
+Layout: GlobalLayout
+35
+Purpose: RD-designed recipe library
+Show more lines
+8.2 Subscription Plans & Clinical Care Routes
+Plain Text
+1
+/plans
+2
+Layout: GlobalLayout
+3
+Purpose: Therapeutic subscription plans catalog
+4
+ 
+5
+/plan/[planId]
+6
+Layout: FocusLayout
+7
+Purpose: Plan customization and schedule selector
+8
+ 
+9
+/trial
+10
+Layout: FocusLayout
+11
+Purpose: 3-day trial onboarding and checkout
+12
+ 
+13
+/custom-build
+14
+Layout: FocusLayout
+15
+Purpose: Custom macro and therapeutic boost builder
+16
+ 
+17
+/quick-setup
+18
+Layout: FocusLayout
+19
+Purpose: 3-step clinical personalization wizard
+20
+ 
+21
+/meal-planner
+22
+Layout: GlobalLayout
+23
+Conditional FocusLayout for swap/edit/confirm flows
+24
+ 
+25
+/metabolic
+26
+Layout: GlobalLayout
+27
+Purpose: Fat-loss and lean-muscle metabolic care program
+28
+ 
+29
+/performance
+30
+Layout: GlobalLayout
+31
+Purpose: High-protein athletic performance protocol
+32
+ 
+33
+/clinical
+34
+Layout: GlobalLayout
+35
+Purpose: RD-supervised therapeutic protocol
+36
+ 
+37
+/care/[condition]
+38
+Layout: GlobalLayout
+39
+Purpose: Condition-specific care lander
+Show more lines
+8.3 Account & Health Telemetry Routes
+Plain Text
+1
+/account
+2
+Layout: GlobalLayout
+3
+Purpose: Account hub
+4
+ 
+5
+/account/orders
+6
+Layout: GlobalLayout
+7
+Purpose: Order history and live tracking
+8
+ 
+9
+/account/subscriptions
+10
+Layout: GlobalLayout
+11
+Conditional FocusLayout for pause/resume/edit flows
+12
+ 
+13
+/account/appointments
+14
+Layout: GlobalLayout
+15
+Conditional FocusLayout for booking flow
+16
+ 
+17
+/account/billing
+18
+Layout: GlobalLayout
+19
+Conditional FocusLayout for wallet/payment flow
+20
+ 
+21
+/account/addresses
+22
+Layout: GlobalLayout
+23
+Conditional FocusLayout for address form
+24
+ 
+25
+/account/preferences
+26
+Layout: GlobalLayout
+27
+Purpose: Dietary restrictions, allergens, taste preferences
+28
+ 
+29
+/account/favorites
+30
+Layout: GlobalLayout
+31
+Purpose: Protocol vault and favorite meals
+32
+ 
+33
+/account/history
+34
+Layout: GlobalLayout
+35
+Purpose: Consumed macro adherence dashboard
+36
+ 
+37
+/account/symptoms
+38
+Layout: GlobalLayout
+39
+Purpose: Symptom log and food reaction correlation
+40
+ 
+41
+/account/wellness
+42
+Layout: GlobalLayout
+43
+Purpose: Daily food/water telemetry and streak tracker
+44
+ 
+45
+/account/loyalty
+46
+Layout: GlobalLayout
+47
+Purpose: Rewards and referral credits
+48
+ 
+49
+/vouchers
+50
+Layout: GlobalLayout
+51
+Conditional FocusLayout for redeem confirmation
+52
+ 
+53
+/premium
+54
+Layout: GlobalLayout
+55
+Conditional FocusLayout for upgrade checkout
+Show more lines
+8.4 Dietitian Consultations & AI Care Routes
+Plain Text
+1
+/coach
+2
+Layout: GlobalLayout
+3
+Purpose: AI Nutrition Coach conversational assistant
+4
+ 
+5
+/rd
+6
+Layout: GlobalLayout
+7
+Conditional FocusLayout for consult booking
+8
+ 
+9
+/qa
+10
+Layout: GlobalLayout
+11
+Purpose: Community Q&A with dietitian responses
+Show more lines
+8.5 Checkout & Order Flow Routes
+Plain Text
+1
+/checkout
+2
+Layout: FocusLayout
+3
+Purpose: One-page checkout and Razorpay payment gateway
+4
+ 
+5
+/order/confirmed/[orderId]
+6
+Layout: FocusLayout
+7
+Purpose: Post-checkout order status and ETA tracking
+8
+ 
+9
+/group/[code]
+10
+Layout: FocusLayout
+11
+Purpose: Group ordering join and shared cart
+12
+ 
+13
+/office-lunch/[id]
+14
+Layout: FocusLayout
+15
+Purpose: Shared corporate lunch order cart
+Show more lines
+8.6 Corporate & Partnerships Routes
+Plain Text
+1
+/corporate
+2
+Layout: B2BLayout
+3
+Purpose: Corporate team lunch portal
+4
+ 
+5
+/corporate/[slug]
+6
+Layout: B2BLayout
+7
+Purpose: Company corporate dashboard
+8
+ 
+9
+/corporate/[slug]/lunch-planner
+10
+Layout: B2BLayout
+11
+Purpose: Team lunch planner
+12
+ 
+13
+/corporate/invite/[token]
+14
+Layout: FocusLayout
+15
+Purpose: Employee corporate invite activation
+16
+ 
+17
+/corporate-wellness
+18
+Layout: B2BLayout
+19
+Purpose: Corporate wellness program lander
+20
+ 
+21
+/rd-partners
+22
+Layout: B2BLayout
+23
+Purpose: Partner portal for clinical dietitians and nutritionists
+24
+ 
+25
+/partners/dietitians
+26
+Layout: B2BLayout
+27
+Purpose: Partner portal for clinical dietitians and nutritionists
+28
+ 
+29
+/partners/gyms
+30
+Layout: B2BLayout
+31
+Purpose: Gym membership partnership lander
+32
+ 
+33
+/partners/fitness-clubs
+34
+Layout: B2BLayout
+35
+Purpose: Running and cycling club partnership lander
+Show more lines
+8.7 Community & Challenges Routes
+Plain Text
+1
+/challenges
+2
+Layout: GlobalLayout
+3
+Purpose: RD-led cohort programs and challenges
+4
+ 
+5
+/challenges/[slug]
+6
+Layout: GlobalLayout
+7
+Conditional FocusLayout for registration
+8
+ 
+9
+/challenges/tracker
+10
+Layout: GlobalLayout
+11
+Purpose: Challenge regimen telemetry and streak tracker
+12
+ 
+13
+/team
+14
+Layout: GlobalLayout
+15
+Purpose: Culinary and clinical team showcase
+Show more lines
+9. Component Dictionary
+9.1 Color Tokens
+
+
+Tanmatra remains dark mode native.
+
+
+Plain Text
+1
+bg-app: bg-neutral-950
+2
+bg-surface: bg-neutral-900
+3
+bg-surface-raised: bg-neutral-900/80
+4
+bg-card: bg-white/[0.06]
+5
+bg-card-hover: bg-white/[0.09]
+6
+bg-sheet: bg-neutral-950
+7
+ 
+8
+border-subtle: border-white/10
+9
+border-medium: border-white/20
+10
+border-active: border-gold-500/70
+11
+ 
+12
+text-primary: text-white
+13
+text-secondary: text-white/70
+14
+text-muted: text-white/45
+15
+text-disabled: text-white/30
+16
+ 
+17
+primary-cta-bg: bg-gold-500
+18
+primary-cta-text: text-black
+19
+focus-ring: ring-gold-500/40
+Show more lines
+
+
+No additional brand colors may be invented unless the brand system formally defines them.
+
+
+9.2 Typography Scale
+Plain Text
+1
+Display
+2
+Size: 32px
+3
+Line-height: 38px
+4
+Weight: 650-700
+5
+Usage: Homepage hero, major care landers
+6
+ 
+7
+H1
+8
+Size: 28px
+9
+Line-height: 34px
+10
+Weight: 650
+11
+Usage: Route-level headings
+12
+ 
+13
+H2
+14
+Size: 22px
+15
+Line-height: 28px
+16
+Weight: 650
+17
+Usage: Rail headers, section headings
+18
+ 
+19
+H3
+20
+Size: 18px
+21
+Line-height: 24px
+22
+Weight: 600
+23
+Usage: Card titles, PDP title blocks, quiz prompts
+24
+ 
+25
+Body
+26
+Size: 15px
+27
+Line-height: 22px
+28
+Weight: 400
+29
+Usage: Default content
+30
+ 
+31
+Body Small
+32
+Size: 13px
+33
+Line-height: 18px
+34
+Weight: 400
+35
+Usage: Meta text, nutrition explanations, disclaimers
+36
+ 
+37
+Caption
+38
+Size: 11px
+39
+Line-height: 14px
+40
+Weight: 500
+41
+Usage: Badges, chips, telemetry labels
+42
+ 
+43
+Button
+44
+Size: 15px
+45
+Line-height: 20px
+46
+Weight: 650
+47
+Usage: CTA labels
+Show more lines
+9.3 Spacing Tokens
+Plain Text
+1
+space-1: 4px
+2
+space-2: 8px
+3
+space-3: 12px
+4
+space-4: 16px
+5
+space-5: 20px
+6
+space-6: 24px
+7
+space-8: 32px
+8
+space-10: 40px
+9
+space-12: 48px
+Show more lines
+Mobile Defaults
+Plain Text
+1
+Horizontal page padding: 16px
+2
+Section vertical gap: 24px
+3
+Rail gap: 12px
+4
+Card internal padding: 12px-16px
+5
+Sticky footer padding: 12px-16px plus safe-area inset
+Show more lines
+Desktop Defaults
+Plain Text
+1
+Max content width: 1180px
+2
+Horizontal padding: 32px-48px
+3
+Section vertical gap: 48px
+Show more lines
+9.4 Radius Tokens
+Plain Text
+1
+radius-sm: 8px
+2
+radius-md: 12px
+3
+radius-lg: 16px
+4
+radius-xl: 20px
+5
+radius-2xl: 24px
+6
+radius-full: 999px
+Show more lines
+
+
+Preferred usage:
+
+
+Plain Text
+1
+Cards: radius-xl or radius-2xl
+2
+Bottom sheets: radius-2xl top corners
+3
+Quiz cards: radius-2xl
+4
+CTAs: radius-full or radius-xl
+Show more lines
+10. CTA System
+10.1 Primary CTA
+
+
+Primary CTA is always Brand Gold.
+
+
+Plain Text
+1
+Background: bg-gold-500
+2
+Text: text-black
+3
+Height: 48px minimum on mobile
+4
+Radius: radius-full or radius-xl
+5
+Font: text-button
+Show more lines
+States
+Plain Text
+1
+Default:
+2
+bg-gold-500 text-black
+3
+ 
+4
+Pressed:
+5
+bg-gold-600 text-black scale-[0.98]
+6
+ 
+7
+Disabled:
+8
+bg-white/10 text-white/30 pointer-events-none
+9
+ 
+10
+Loading:
+11
+Spinner plus action-progress label
+Show more lines
+Required Action Examples
+Plain Text
+1
+[Action: Pushes to /checkout]
+2
+[Action: Adds dish to cart]
+3
+[Action: Advances to next setup step]
+4
+[Action: Starts 3-day trial]
+5
+[Action: Submits Razorpay payment]
+6
+[Action: Confirms meal swap]
+7
+[Action: Books RD consult]
+8
+[Action: Activates corporate invite]
+9
+[Action: Registers for challenge]
+Show more lines
+10.2 Secondary CTA
+
+
+Secondary CTA must be frosted glass.
+
+
+Plain Text
+1
+Background: bg-white/10
+2
+Border: border-white/20
+3
+Text: text-white
+4
+Height: 44px minimum on mobile
+5
+Radius: radius-full or radius-xl
+6
+Font: text-button
+Show more lines
+States
+Plain Text
+1
+Default:
+2
+bg-white/10 border-white/20 text-white
+3
+ 
+4
+Pressed:
+5
+bg-white/15 scale-[0.98]
+6
+ 
+7
+Disabled:
+8
+bg-white/[0.04] border-white/10 text-white/30 pointer-events-none
+9
+ 
+10
+Loading:
+11
+Spinner plus action-progress label
+Show more lines
+10.3 CTA Rules
+Plain Text
+1
+Maximum one primary CTA visible per viewport.
+2
+ 
+3
+No ghost buttons.
+4
+ 
+5
+No text-only CTAs for revenue-critical actions.
+6
+ 
+7
+If sticky primary CTA exists, in-card actions must not visually compete with it.
+8
+ 
+9
+Every button must define a route push, state mutation, sheet open, drawer open, or modal close.
+Show more lines
+11. SafeImage Component Contract
+
+
+All imagery must use <SafeImage />.
+
+
+No exceptions.
+
+
+11.1 Base Specification
+Plain Text
+1
+object-fit: cover
+2
+object-position: center
+3
+overflow: hidden
+4
+background: bg-white/[0.04]
+5
+border-radius: inherited from parent
+6
+loading state: shimmer skeleton
+7
+error state: neutral culinary placeholder
+Show more lines
+11.2 Locked Aspect Ratios
+Plain Text
+1
+Homepage curated dish card:
+2
+Aspect ratio: 4 / 3
+3
+ 
+4
+Menu dish card:
+5
+Aspect ratio: 4 / 3
+6
+ 
+7
+Dish PDP hero:
+8
+Aspect ratio: 16 / 9
+9
+ 
+10
+Marketplace product card:
+11
+Aspect ratio: 1 / 1
+12
+ 
+13
+Marketplace PDP hero:
+14
+Aspect ratio: 4 / 3
+15
+ 
+16
+Meal deal card:
+17
+Aspect ratio: 3 / 2
+18
+ 
+19
+Plan card:
+20
+Aspect ratio: 3 / 2
+21
+ 
+22
+Condition care image:
+23
+Aspect ratio: 5 / 4
+24
+ 
+25
+Recipe card:
+26
+Aspect ratio: 4 / 3
+27
+ 
+28
+RD profile image:
+29
+Aspect ratio: 1 / 1
+30
+ 
+31
+Challenge hero:
+32
+Aspect ratio: 16 / 9
+33
+ 
+34
+Team profile image:
+35
+Aspect ratio: 1 / 1
+Show more lines
+11.3 SafeImage Loading State
+Plain Text
+1
+State: loading
+2
+ 
+3
+Visual:
+4
+bg-white/[0.04]
+5
+shimmer gradient
+6
+radius preserved
+7
+layout height locked before image load
+Show more lines
+11.4 SafeImage Error State
+Plain Text
+1
+State: error
+2
+ 
+3
+Visual:
+4
+neutral plate/bowl placeholder icon
+5
+text: Image unavailable
+6
+ 
+7
+[Action: None]
+Show more lines
+12. Global Overlay System
+12.1 Bottom Sheets
+
+
+Bottom sheets are the default progressive-disclosure pattern for mobile.
+
+
+Used for:
+
+
+Plain Text
+1
+Dish quick-view
+2
+Cart drawer
+3
+Location selector
+4
+Delivery slot selector
+5
+Trust explanation
+6
+Nutrition detail
+7
+Meal swap
+8
+Plan schedule selector
+9
+Macro detail
+10
+Symptom correlation detail
+11
+Voucher redemption
+12
+Add-ons and upsells
+Show more lines
+12.2 Bottom Sheet Visual Spec
+Plain Text
+1
+Position: fixed bottom
+2
+Background: bg-neutral-950
+3
+Border-top: border-white/10
+4
+Radius: 24px top-left and top-right
+5
+Backdrop: bg-black/60
+6
+Max height: 85vh
+7
+Drag handle: bg-white/20, 36px x 4px
+Show more lines
+12.3 Bottom Sheet Behavior
+Plain Text
+1
+Open:
+2
+Body scroll locks
+3
+BottomTabBar hides
+4
+GlobalHeader dims behind overlay
+5
+ 
+6
+Close:
+7
+Swipe down
+8
+Tap backdrop
+9
+Tap close button
+10
+ 
+11
+Close Button:
+12
+[Action: Closes Bottom Sheet]
+Show more lines
+13. Global Scroll Ergonomics
+13.1 Header
+Plain Text
+1
+On scroll down:
+2
+Hide GlobalHeader after 24px vertical scroll
+3
+ 
+4
+On scroll up:
+5
+Reveal GlobalHeader immediately
+6
+ 
+7
+At scroll position 0:
+8
+GlobalHeader remains visible
+Show more lines
+13.2 Bottom Tab Bar
+Plain Text
+1
+On scroll down:
+2
+Hide BottomTabBar after 32px vertical scroll
+3
+ 
+4
+On scroll up:
+5
+Reveal BottomTabBar immediately
+6
+ 
+7
+When keyboard is open:
+8
+Hide BottomTabBar
+9
+ 
+10
+When any bottom sheet is open:
+11
+Hide BottomTabBar
+12
+ 
+13
+When FocusLayout is active:
+14
+Do not render BottomTabBar
+15
+ 
+16
+When B2BLayout is active on mobile:
+17
+Do not render BottomTabBar
+Show more lines
+14. Revised Non-Negotiable Engineering Rules
+Plain Text
+1
+1. Mobile BottomTabBar contains exactly:
+2
+Home, Menu, Plan, Account.
+3
+ 
+4
+2. No image may render outside <SafeImage />.
+5
+ 
+6
+3. High-intent routes must render in <FocusLayout />.
+7
+ 
+8
+4. FocusLayout must not render GlobalHeader, BottomTabBar, or global promotional surfaces.
+9
+ 
+10
+5. B2B and partnership routes must not appear in the mobile BottomTabBar.
+11
+ 
+12
+6. Corporate routes are accessible from desktop navigation or Account Drawer only.
+13
+ 
+14
+7. Maximum one primary gold CTA per viewport.
+15
+ 
+16
+8. Secondary CTAs must use frosted glass styling.
+17
+ 
+18
+9. Ghost buttons are prohibited.
+19
+ 
+20
+10. Every interactive component must declare its action.
+21
+ 
+22
+11. Sticky UI must not consume more than 10% of mobile viewport height.
+23
+ 
+24
+12. Header and BottomTabBar must hide on scroll down and reveal on scroll up.
+25
+ 
+26
+13. PDPs, checkout, plan customization, quick setup, custom build, group order, and office lunch routes must use FocusLayout.
+27
+ 
+28
+14. Cart Drawer must hide BottomTabBar and preserve only one primary checkout CTA.
+29
+ 
+30
+15. Clinical information must be progressively disclosed through cards, sheets, accordions, and tap-to-expand states, never dumped on first view.
+Show more lines
+Phase 1 Revised Complete
+
+
+I will halt here as instructed.
+ Awaiting your authorization to proceed to Phase 2.
+
+
+Provide your feedback on BizChat
+You said:
+Proceed to Phase 2
+Copilot said:
+Copilot
+Reasoning completed in 1 step
+
+
+Proceeding to Phase 2. I will keep this scoped to the next architectural layer and will not move into Phase 3 until you authorize it.
+
+
+Tanmatra UX/UI Architecture Document
+Phase 2: Commerce, Discovery & Instant Craving Funnel
+1. Phase 2 Scope
+
+
+This phase defines the UX/UI architecture for Tanmatra’s food-commerce and discovery routes.
+
+
+It covers:
+
+
+Plain Text
+1
+/
+2
+/menu
+3
+/dish/[slug]
+4
+/marketplace
+5
+/marketplace/[slug]
+6
+/meal-deals
+7
+/meal-recommendations
+8
+/meal-guides/[dishSlug]
+9
+/recipes
+Show more lines
+
+
+Primary commercial objective:
+
+
+Plain Text
+1
+Convert food intent into cart additions and checkout without overwhelming the user with clinical complexity.
+Show more lines
+
+
+Primary UX principle:
+
+
+Plain Text
+1
+Users scan horizontally first, then commit vertically.
+Show more lines
+
+
+The experience should behave like a premium food-commerce feed, not a static marketing website.
+
+
+2. Commerce Funnel Model
+2.1 Funnel Name
+Plain Text
+1
+Funnel 1: Instant Craving
+Show more lines
+2.2 Primary Route Path
+Plain Text
+1
+/menu
+2
+→ Dish Bottom Sheet or /dish/[slug]
+3
+→ Cart Drawer
+4
+→ /checkout
+Show more lines
+2.3 Secondary Commerce Paths
+Plain Text
+1
+/
+2
+→ /menu
+3
+→ Cart Drawer
+4
+→ /checkout
+5
+ 
+6
+/
+7
+→ /marketplace
+8
+→ /marketplace/[slug]
+9
+→ Cart Drawer
+10
+→ /checkout
+11
+ 
+12
+/
+13
+→ /meal-deals
+14
+→ Cart Drawer
+15
+→ /checkout
+16
+ 
+17
+/meal-recommendations
+18
+→ Accept recommendation set
+19
+→ Cart Drawer or /checkout
+20
+ 
+21
+/recipes
+22
+→ Recipe detail preview
+23
+→ Add ingredients or related meals
+24
+→ Cart Drawer
+Show more lines
+3. Route: / Homepage
+3.1 Purpose
+
+
+The homepage is not a traditional landing page. It is a clinical commerce feed.
+
+
+It must quickly communicate:
+
+
+Plain Text
+1
+Tanmatra is premium.
+2
+Tanmatra is clinically intelligent.
+3
+Tanmatra has food available now.
+4
+Tanmatra can become a therapeutic habit.
+Show more lines
+
+
+The homepage should drive users into:
+
+
+Plain Text
+1
+/menu
+2
+/plans
+3
+/meal-recommendations
+4
+/marketplace
+5
+/meal-deals
+6
+/care/[condition]
+Show more lines
+3.2 Layout Wrapper
+Plain Text
+1
+Layout: GlobalLayout
+Show more lines
+
+
+Global elements rendered:
+
+
+Plain Text
+1
+GlobalHeader
+2
+BottomTabBar
+Show more lines
+3.3 Homepage Structure
+Plain Text
+1
+<HomePage>
+2
+<ClinicalCommerceHero />
+3
+<TodayCuratedRail />
+4
+<NeedStateRail />
+5
+<MealDealsRail />
+6
+<TherapeuticPlansRail />
+7
+<MarketplaceRail />
+8
+<RecommendationPromptCard />
+9
+</HomePage>
+Show more lines
+3.4 <ClinicalCommerceHero />
+Purpose
+
+
+The hero must establish high trust and immediate food relevance.
+
+
+It should not feel like a SaaS sales hero.
+
+
+Visual Structure
+Plain Text
+1
+<ClinicalCommerceHero>
+2
+<HeroCopyCluster />
+3
+<HeroFoodImage />
+4
+<HeroPrimaryCTA />
+5
+<HeroSecondaryCTA />
+6
+</ClinicalCommerceHero>
+Show more lines
+Mobile Layout
+Plain Text
+1
+┌────────────────────────────────────┐
+2
+│ Your metabolic kitchen, │
+3
+│ ready today. │
+4
+│ │
+5
+│ RD-reviewed meals built for │
+6
+│ energy, glucose balance and taste. │
+7
+│ │
+8
+│ [Order today] │
+9
+│ [Find my meals] │
+10
+│ │
+11
+│ ┌────────────────────────────────┐ │
+12
+│ │ SafeImage food hero │ │
+13
+│ └────────────────────────────────┘ │
+14
+└────────────────────────────────────┘
+Show more lines
+Content Rules
+Headline
+
+
+Recommended:
+
+
+Plain Text
+1
+Your metabolic kitchen, ready today.
+Show more lines
+
+
+Alternative:
+
+
+Plain Text
+1
+Clinical nutrition that eats like comfort food.
+Show more lines
+Body
+Plain Text
+1
+RD-reviewed meals, pantry picks and care plans built around your goals.
+Show more lines
+CTA Rules
+Primary CTA
+Plain Text
+1
+Label: Order today
+2
+Style: Primary CTA
+3
+[Action: Pushes to /menu]
+Show more lines
+Secondary CTA
+Plain Text
+1
+Label: Find my meals
+2
+Style: Secondary CTA
+3
+[Action: Pushes to /meal-recommendations]
+Show more lines
+
+
+Important:
+
+
+Plain Text
+1
+Only one primary CTA appears in the hero viewport.
+Show more lines
+SafeImage Contract
+Plain Text
+1
+Component: <SafeImage />
+2
+Aspect ratio: 16 / 9
+3
+Object fit: cover
+4
+Image type: plated premium therapeutic meal
+Show more lines
+3.5 <TodayCuratedRail />
+Purpose
+
+
+Immediate conversion rail for ready-to-order dishes.
+
+
+Structure
+Plain Text
+1
+<TodayCuratedRail>
+2
+<RailHeader />
+3
+<HorizontalSnapRail>
+4
+<DishCard />
+5
+<DishCard />
+6
+<DishCard />
+7
+</HorizontalSnapRail>
+8
+</TodayCuratedRail>
+Show more lines
+Rail Header
+Plain Text
+1
+Title: Curated for today
+2
+Subtitle: Fresh, RD-reviewed and ready to deliver
+3
+Action link: See all
+4
+[Action: Pushes to /menu]
+Show more lines
+
+
+The “See all” element must use secondary/frosted styling if presented as a button. If inline text is used, it must be non-revenue-critical and visually subtle.
+
+
+Dish Card Structure
+Plain Text
+1
+<DishCard>
+2
+<SafeImage />
+3
+<ClinicalBadgeRow />
+4
+<DishName />
+5
+<DishMetaRow />
+6
+<PriceAddRow />
+7
+</DishCard>
+Show more lines
+Dish Card Visual Spec
+Plain Text
+1
+Width mobile: 72vw max, 260px recommended
+2
+Background: bg-white/[0.06]
+3
+Border: border-white/10
+4
+Radius: radius-2xl
+5
+Image aspect: 4 / 3
+6
+Padding: 12px
+7
+Snap behavior: snap-start
+Show more lines
+Dish Card Actions
+Image / Card Tap
+Plain Text
+1
+[Action: Opens Dish Bottom Sheet Drawer]
+Show more lines
+
+
+The homepage should prefer bottom-sheet quick view over full PDP to maintain feed velocity.
+
+
+Add Button
+Plain Text
+1
+Label: + Add
+2
+Style: Secondary compact CTA
+3
+[Action: Adds dish to cart and opens mini cart confirmation state]
+Show more lines
+
+
+Important:
+
+
+Plain Text
+1
+The + Add button must not use primary gold if a primary CTA is already visible in the viewport.
+Show more lines
+3.6 <NeedStateRail />
+Purpose
+
+
+Let users self-select without exposing overwhelming medical jargon.
+
+
+Content Examples
+Plain Text
+1
+Fat loss
+2
+Glucose control
+3
+PCOS support
+4
+High protein
+5
+Gut light
+6
+Low carb
+Show more lines
+Structure
+Plain Text
+1
+<NeedStateRail>
+2
+<RailHeader />
+3
+<HorizontalSnapRail>
+4
+<NeedStateCard />
+5
+</HorizontalSnapRail>
+6
+</NeedStateRail>
+Show more lines
+Need State Card
+Plain Text
+1
+<NeedStateCard>
+2
+<IconOrSafeImage />
+3
+<Title />
+4
+<ShortBenefit />
+5
+</NeedStateCard>
+Show more lines
+Action Mapping
+Plain Text
+1
+Fat loss
+2
+[Action: Pushes to /metabolic]
+3
+ 
+4
+Glucose control
+5
+[Action: Pushes to /care/diabetes]
+6
+ 
+7
+PCOS support
+8
+[Action: Pushes to /care/pcos]
+9
+ 
+10
+High protein
+11
+[Action: Pushes to /performance]
+12
+ 
+13
+Gut light
+14
+[Action: Pushes to /meal-recommendations?goal=gut-light]
+15
+ 
+16
+Low carb
+17
+[Action: Pushes to /meal-recommendations?goal=low-carb]
+Show more lines
+3.7 <MealDealsRail />
+Purpose
+
+
+AOV booster for value combos and macro-density bundles.
+
+
+CTA
+Plain Text
+1
+Primary card action:
+2
+[Action: Opens Meal Deal Bottom Sheet]
+3
+ 
+4
+Rail action:
+5
+[Action: Pushes to /meal-deals]
+Show more lines
+3.8 <TherapeuticPlansRail />
+Purpose
+
+
+Soft entry into subscriptions without forcing a clinical commitment.
+
+
+Structure
+Plain Text
+1
+<TherapeuticPlansRail>
+2
+<RailHeader title="Built for longer goals" />
+3
+<HorizontalSnapRail>
+4
+<PlanPreviewCard />
+5
+</HorizontalSnapRail>
+6
+</TherapeuticPlansRail>
+Show more lines
+Card Actions
+Plain Text
+1
+Metabolic Reset
+2
+[Action: Pushes to /metabolic]
+3
+ 
+4
+Performance Protein
+5
+[Action: Pushes to /performance]
+6
+ 
+7
+Clinical Protocol
+8
+[Action: Pushes to /clinical]
+9
+ 
+10
+3-Day Trial
+11
+[Action: Pushes to /trial]
+Show more lines
+3.9 <MarketplaceRail />
+Purpose
+
+
+Introduce RD-curated pantry, snacks, supplements and CPG upsells.
+
+
+Action Mapping
+Plain Text
+1
+Card tap
+2
+[Action: Pushes to /marketplace/[slug]]
+3
+ 
+4
+Rail header action
+5
+[Action: Pushes to /marketplace]
+Show more lines
+3.10 <RecommendationPromptCard />
+Purpose
+
+
+Entry point into AI therapeutic meal recommendations.
+
+
+Visual
+Plain Text
+1
+Card background: bg-white/[0.06]
+2
+Border: border-white/10
+3
+Radius: radius-2xl
+Show more lines
+Copy
+Plain Text
+1
+Title: Not sure what fits your body today?
+2
+Body: Get AI meal recommendations based on your goal, appetite and restrictions.
+Show more lines
+CTA
+Plain Text
+1
+Label: Get recommendations
+2
+Style: Primary CTA only if no other primary CTA visible in viewport
+3
+[Action: Pushes to /meal-recommendations]
+Show more lines
+
+
+If another primary CTA is visible:
+
+
+Plain Text
+1
+Label: Get recommendations
+2
+Style: Secondary CTA
+3
+[Action: Pushes to /meal-recommendations]
+Show more lines
+4. Route: /menu
+4.1 Purpose
+
+
+The /menu route is the main Instant Craving commerce surface.
+
+
+It must prioritize:
+
+
+Plain Text
+1
+Fast scanning
+2
+Category switching
+3
+Food photography
+4
+Quick add
+5
+Cart visibility
+6
+AOV expansion
+Show more lines
+
+
+It must avoid:
+
+
+Plain Text
+1
+Long vertical menus
+2
+Dense nutrition tables
+3
+Medical overload
+4
+Multiple primary CTAs
+Show more lines
+4.2 Layout Wrapper
+Plain Text
+1
+Layout: GlobalLayout
+Show more lines
+4.3 Page Structure
+Plain Text
+1
+<MenuPage>
+2
+<MenuTopSearch />
+3
+<CategorySnapRail />
+4
+<FeaturedTodayRail />
+5
+<MenuSectionRail category="High Protein" />
+6
+<MenuSectionRail category="Low GI" />
+7
+<MenuSectionRail category="Comfort Bowls" />
+8
+<MenuSectionRail category="Light Dinners" />
+9
+<StickyCartNudge />
+10
+<CartDrawer />
+11
+</MenuPage>
+Show more lines
+4.4 <MenuTopSearch />
+Purpose
+
+
+Search and filtering without overwhelming the page.
+
+
+Visual Structure
+Plain Text
+1
+<MenuTopSearch>
+2
+<SearchInput />
+3
+<FilterButton />
+4
+</MenuTopSearch>
+Show more lines
+Search Input
+Plain Text
+1
+Placeholder: Search meals, ingredients, goals
+Show more lines
+Interaction
+Plain Text
+1
+[Action: Focuses input and opens search result overlay]
+Show more lines
+Search Result Overlay
+Plain Text
+1
+<SearchOverlay>
+2
+<RecentSearches />
+3
+<SuggestedGoals />
+4
+<DishResults />
+5
+<MarketplaceResults />
+6
+</SearchOverlay>
+Show more lines
+Result Tap Actions
+Plain Text
+1
+Dish result
+2
+[Action: Opens Dish Bottom Sheet Drawer]
+3
+ 
+4
+Marketplace result
+5
+[Action: Pushes to /marketplace/[slug]]
+6
+ 
+7
+Goal chip
+8
+[Action: Applies menu filter state]
+Show more lines
+Filter Button
+Plain Text
+1
+Label/Icon: Sliders
+2
+Style: Secondary frosted icon button
+3
+[Action: Opens Filter Bottom Sheet]
+Show more lines
+4.5 Filter Bottom Sheet
+Purpose
+
+
+Progressively disclose dietary rules, allergens and clinical filters.
+
+
+Structure
+Plain Text
+1
+<FilterBottomSheet>
+2
+<GoalChips />
+3
+<DietaryPreferenceChips />
+4
+<AllergenExclusionChips />
+5
+<MacroIntentChips />
+6
+<ApplyButton />
+7
+<ClearButton />
+8
+</FilterBottomSheet>
+Show more lines
+Filter Groups
+Plain Text
+1
+Goal:
+2
+Fat loss
+3
+Glucose steady
+4
+High protein
+5
+Gut light
+6
+Energy stable
+7
+ 
+8
+Dietary:
+9
+Vegetarian
+10
+Eggetarian
+11
+Chicken
+12
+Fish
+13
+No dairy
+14
+ 
+15
+Allergens:
+16
+Peanut-free
+17
+Gluten-free
+18
+Soy-free
+19
+ 
+20
+Macro Intent:
+21
+Under 400 kcal
+22
+30g+ protein
+23
+Low carb
+24
+High fiber
+Show more lines
+Actions
+Plain Text
+1
+Goal chip
+2
+[Action: Toggles filter state]
+3
+ 
+4
+Dietary chip
+5
+[Action: Toggles filter state]
+6
+ 
+7
+Allergen chip
+8
+[Action: Toggles exclusion state]
+9
+ 
+10
+Apply
+11
+[Action: Applies selected filters and closes bottom sheet]
+12
+ 
+13
+Clear
+14
+[Action: Clears all selected filters]
+Show more lines
+
+
+Apply button:
+
+
+Plain Text
+1
+Style: Primary CTA
+Show more lines
+
+
+Clear button:
+
+
+Plain Text
+1
+Style: Secondary CTA
+Show more lines
+4.6 <CategorySnapRail />
+Purpose
+
+
+Primary category navigation for menu scanning.
+
+
+Layout
+Plain Text
+1
+<CategorySnapRail>
+2
+<CategoryPill />
+3
+<CategoryPill />
+4
+<CategoryPill />
+5
+</CategorySnapRail>
+Show more lines
+Category Examples
+Plain Text
+1
+All
+2
+Bowls
+3
+Wraps
+4
+Breakfast
+5
+High Protein
+6
+Low GI
+7
+Diabetic Friendly
+8
+PCOS Friendly
+9
+Snacks
+10
+Drinks
+Show more lines
+Visual Spec
+Plain Text
+1
+Horizontal scroll
+2
+snap-x
+3
+gap: 8px
+4
+padding-x: 16px
+5
+sticky below header where needed
+6
+background: bg-neutral-950/90
+7
+backdrop-blur-xl
+Show more lines
+
+
+Sticky budget:
+
+
+Plain Text
+1
+Category rail max height: 44px
+2
+Must not combine with header in a way that exceeds 10% viewport sticky budget.
+Show more lines
+
+
+If both header and category rail are sticky:
+
+
+Plain Text
+1
+On scroll down:
+2
+Hide GlobalHeader
+3
+Keep CategorySnapRail sticky
+4
+ 
+5
+On scroll up:
+6
+Reveal GlobalHeader
+Show more lines
+Category Pill States
+Default
+Plain Text
+1
+bg-white/[0.06]
+2
+border-white/10
+3
+text-white/70
+Show more lines
+Active
+Plain Text
+1
+bg-gold-500
+2
+text-black
+3
+border-gold-500
+Show more lines
+Pressed
+Plain Text
+1
+scale-[0.98]
+Show more lines
+Actions
+Plain Text
+1
+Tap category pill
+2
+[Action: Sets active category and horizontally scrolls associated rail into view]
+Show more lines
+4.7 <MenuSectionRail />
+Purpose
+
+
+Every major menu group is presented as a horizontal commerce rail.
+
+
+No long vertical grid on mobile.
+
+
+Structure
+Plain Text
+1
+<MenuSectionRail>
+2
+<SectionHeader />
+3
+<HorizontalSnapRail>
+4
+<DishCard />
+5
+</HorizontalSnapRail>
+6
+</MenuSectionRail>
+Show more lines
+Section Header
+Plain Text
+1
+Title: High Protein
+2
+Subtitle: 30g+ protein, balanced calories
+Show more lines
+
+
+Optional action:
+
+
+Plain Text
+1
+See all
+2
+[Action: Opens category-filtered full-screen menu state]
+Show more lines
+Horizontal Rail Behavior
+Plain Text
+1
+overflow-x: auto
+2
+snap-x: mandatory
+3
+scrollbar hidden
+4
+gap: 12px
+5
+padding-left: 16px
+6
+padding-right: 16px
+Show more lines
+4.8 Dish Card on /menu
+Structure
+Plain Text
+1
+<DishCard>
+2
+<SafeImage />
+3
+<BadgeOverlay />
+4
+<DishInfo />
+5
+<MacroTeaserRow />
+6
+<PriceAddRow />
+7
+</DishCard>
+Show more lines
+Dish Card Visual Spec
+Plain Text
+1
+Width: 68vw mobile
+2
+Max width: 260px
+3
+Background: bg-white/[0.06]
+4
+Border: border-white/10
+5
+Radius: radius-2xl
+6
+Image aspect: 4 / 3
+Show more lines
+Badge Overlay
+
+
+Maximum two badges visible.
+
+
+Plain Text
+1
+Examples:
+2
+RD-reviewed
+3
+Low GI
+4
+30g protein
+5
+New
+Show more lines
+
+
+Do not show more than two badges because it creates clinical noise.
+
+
+Macro Teaser Row
+
+
+Display only 2 to 3 lightweight metrics.
+
+
+Plain Text
+1
+Protein 32g
+2
+420 kcal
+3
+Low GI
+Show more lines
+
+
+Do not expose full nutrition table on card.
+
+
+Price Add Row
+Plain Text
+1
+₹299 + Add
+Show more lines
+Price
+Plain Text
+1
+Text: text-white
+2
+Weight: 650
+Show more lines
+Add Button
+Plain Text
+1
+Style: Secondary compact CTA
+2
+[Action: Adds dish to cart]
+Show more lines
+
+
+If item has required customization:
+
+
+Plain Text
+1
++ Add
+2
+[Action: Opens Dish Bottom Sheet Drawer with customization section]
+Show more lines
+4.9 Dish Bottom Sheet Drawer
+Purpose
+
+
+Quick commerce decision without route transition.
+
+
+Used from:
+
+
+Plain Text
+1
+/menu
+2
+/
+3
+/meal-deals
+4
+/meal-recommendations
+Show more lines
+Structure
+Plain Text
+1
+<DishBottomSheet>
+2
+<SafeImage />
+3
+<DishTitleBlock />
+4
+<ClinicalTeaserStrip />
+5
+<PortionSelector />
+6
+<AddOnSelector />
+7
+<NutritionAccordion />
+8
+<StickyAddToCartBar />
+9
+</DishBottomSheet>
+Show more lines
+SafeImage
+Plain Text
+1
+Aspect ratio: 16 / 9
+2
+Object-fit: cover
+Show more lines
+Dish Title Block
+Plain Text
+1
+Dish name
+2
+Short culinary description
+3
+Price
+Show more lines
+Clinical Teaser Strip
+
+
+Maximum 3 chips:
+
+
+Plain Text
+1
+Low GI
+2
+32g protein
+3
+RD-reviewed
+Show more lines
+
+
+Each chip action:
+
+
+Plain Text
+1
+[Action: Opens Clinical Detail Bottom Sheet nested view]
+Show more lines
+
+
+Nested clinical sheet must explain selected attribute only, not dump full nutrition.
+
+
+Portion Selector
+Plain Text
+1
+Regular
+2
+Large
+3
+Lean cut
+Show more lines
+Action
+Plain Text
+1
+[Action: Updates selected portion and recalculates price/macros]
+Show more lines
+Add-On Selector
+
+
+Examples:
+
+
+Plain Text
+1
+Add protein
+2
+Add soup
+3
+Add probiotic drink
+4
+Add millet crackers
+Show more lines
+Action
+Plain Text
+1
+[Action: Toggles add-on in selected dish configuration]
+Show more lines
+
+
+Add-ons use checkbox or segmented cards, not primary CTAs.
+
+
+Nutrition Accordion
+
+
+Collapsed by default.
+
+
+Plain Text
+1
+Label: Nutrition details
+2
+[Action: Expands accordion]
+Show more lines
+
+
+Expanded content:
+
+
+Plain Text
+1
+Calories
+2
+Protein
+3
+Carbs
+4
+Fat
+5
+Fiber
+6
+Allergens
+7
+Ingredients
+Show more lines
+Sticky Add-To-Cart Bar
+Plain Text
+1
+<StickyAddToCartBar>
+2
+<PriceSummary />
+3
+<PrimaryCTA />
+4
+</StickyAddToCartBar>
+Show more lines
+Primary CTA
+Plain Text
+1
+Label: Add to cart
+2
+Style: Primary CTA
+3
+[Action: Adds configured dish to cart and opens Cart Drawer]
+Show more lines
+
+
+Sticky height:
+
+
+Plain Text
+1
+Max 68px including safe area
+Show more lines
+5. Cart Drawer
+5.1 Purpose
+
+
+Cart Drawer is the bridge between browse and checkout.
+
+
+It must:
+
+
+Plain Text
+1
+Confirm selected items
+2
+Allow quantity editing
+3
+Upsell Complete Your Meal
+4
+Push to checkout
+Show more lines
+
+
+It must not:
+
+
+Plain Text
+1
+Become a full checkout
+2
+Show multiple gold CTAs
+3
+Show unrelated promotional clutter
+Show more lines
+5.2 Trigger Sources
+Plain Text
+1
+Add dish from /menu
+2
+Add dish from Dish Bottom Sheet
+3
+Add product from /marketplace
+4
+Add deal from /meal-deals
+5
+Tap cart nudge
+Show more lines
+5.3 Layout
+Plain Text
+1
+<CartDrawer>
+2
+<DrawerHeader />
+3
+<CartItemList />
+4
+<CompleteYourMealRail />
+5
+<CartSummary />
+6
+<StickyCheckoutCTA />
+7
+</CartDrawer>
+Show more lines
+5.4 Drawer Header
+Plain Text
+1
+Title: Your cart
+2
+Subtitle: Delivery in 30-45 min
+3
+Close button
+4
+[Action: Closes Cart Drawer]
+Show more lines
+5.5 Cart Item List
+Plain Text
+1
+<CartItem>
+2
+<SafeImage />
+3
+<ItemName />
+4
+<ConfigSummary />
+5
+<QuantityStepper />
+6
+<Price />
+7
+</CartItem>
+Show more lines
+Quantity Stepper
+Plain Text
+1
+Minus
+2
+[Action: Decreases quantity by 1]
+3
+ 
+4
+Plus
+5
+[Action: Increases quantity by 1]
+6
+ 
+7
+If quantity becomes 0:
+8
+[Action: Removes item from cart]
+Show more lines
+Config Summary
+
+
+Examples:
+
+
+Plain Text
+1
+Large · Add protein
+2
+Regular · No dairy
+3
+Lean cut · Millet crackers
+Show more lines
+
+
+Tap behavior:
+
+
+Plain Text
+1
+[Action: Opens Edit Item Bottom Sheet]
+Show more lines
+5.6 Complete Your Meal Rail
+Purpose
+
+
+Mandatory AOV booster for high-margin CPGs, drinks, snacks and supplements.
+
+
+This rail is required before checkout.
+
+
+Structure
+Plain Text
+1
+<CompleteYourMealRail>
+2
+<RailHeader />
+3
+<HorizontalSnapRail>
+4
+<UpsellProductCard />
+5
+</HorizontalSnapRail>
+6
+</CompleteYourMealRail>
+Show more lines
+Header Copy
+Plain Text
+1
+Title: Complete your meal
+2
+Subtitle: RD-curated add-ons that pair well
+Show more lines
+Upsell Categories
+Plain Text
+1
+Protein drinks
+2
+Probiotic beverages
+3
+Low-GI snacks
+4
+Electrolytes
+5
+Fiber boosters
+6
+Millet crackers
+Show more lines
+Upsell Product Card
+Plain Text
+1
+<UpsellProductCard>
+2
+<SafeImage />
+3
+<ProductName />
+4
+<ShortBenefit />
+5
+<PriceAddButton />
+6
+</UpsellProductCard>
+Show more lines
+SafeImage
+Plain Text
+1
+Aspect ratio: 1 / 1
+Show more lines
+Add Button
+Plain Text
+1
+Label: + Add
+2
+Style: Secondary compact CTA
+3
+[Action: Adds marketplace product to cart]
+Show more lines
+
+
+Important:
+
+
+Plain Text
+1
+Do not use primary gold for upsell add buttons because the Cart Drawer already has one primary checkout CTA.
+Show more lines
+5.7 Cart Summary
+Plain Text
+1
+<CartSummary>
+2
+<Subtotal />
+3
+<DeliveryFee />
+4
+<Discount />
+5
+<WalletCredit />
+6
+<Total />
+7
+</CartSummary>
+Show more lines
+
+
+Each row must be non-interactive except:
+
+
+Plain Text
+1
+Discount / voucher row
+2
+[Action: Opens Voucher Bottom Sheet]
+Show more lines
+5.8 Sticky Checkout CTA
+Plain Text
+1
+<StickyCheckoutCTA>
+2
+<TotalPreview />
+3
+<PrimaryCTA />
+4
+</StickyCheckoutCTA>
+Show more lines
+Total Preview
+Plain Text
+1
+₹742 total
+Show more lines
+Primary CTA
+Plain Text
+1
+Label: Checkout
+2
+Style: Primary CTA
+3
+[Action: Pushes to /checkout]
+Show more lines
+
+
+Sticky budget:
+
+
+Plain Text
+1
+Max height: 72px including safe-area padding
+Show more lines
+
+
+BottomTabBar behavior:
+
+
+Plain Text
+1
+Cart Drawer open → BottomTabBar hidden
+Show more lines
+6. Route: /dish/[slug]
+6.1 Purpose
+
+
+The dish PDP is a high-intent detail route.
+
+
+It is used when the user demonstrates deeper consideration or arrives from external/internal deep links.
+
+
+6.2 Layout Wrapper
+Plain Text
+1
+Layout: FocusLayout
+Show more lines
+
+
+This route must not render:
+
+
+Plain Text
+1
+GlobalHeader
+2
+BottomTabBar
+Show more lines
+6.3 Page Structure
+Plain Text
+1
+<DishPDP>
+2
+<DishHero />
+3
+<DishTitleBlock />
+4
+<TrustAndMacroStrip />
+5
+<PortionAndCustomization />
+6
+<PairingRail />
+7
+<NutritionProgressiveDisclosure />
+8
+<IngredientQualityBlock />
+9
+<StickyAddToCartLedger />
+10
+</DishPDP>
+Show more lines
+6.4 Dish Hero
+Plain Text
+1
+<SafeImage />
+2
+Aspect ratio: 16 / 9
+Show more lines
+
+
+Optional overlay:
+
+
+Plain Text
+1
+RD-reviewed
+2
+Low GI
+Show more lines
+
+
+No more than two overlays.
+
+
+6.5 Dish Title Block
+Plain Text
+1
+Dish name
+2
+Culinary description
+3
+Starting price
+Show more lines
+
+
+Example:
+
+
+Plain Text
+1
+Tandoori Chicken Quinoa Bowl
+2
+Smoky chicken, quinoa, charred vegetables and cooling hung curd.
+3
+₹349
+Show more lines
+6.6 Trust And Macro Strip
+Plain Text
+1
+Protein 38g
+2
+420 kcal
+3
+Low GI
+4
+RD-reviewed
+Show more lines
+
+
+Each chip:
+
+
+Plain Text
+1
+[Action: Opens Clinical Detail Bottom Sheet]
+Show more lines
+6.7 Portion And Customization
+Portion
+Plain Text
+1
+Regular
+2
+Large
+3
+Lean cut
+Show more lines
+
+
+Action:
+
+
+Plain Text
+1
+[Action: Updates selected portion, price and macro state]
+Show more lines
+Therapeutic Adjustments
+
+
+Examples:
+
+
+Plain Text
+1
+Lower carb
+2
+Extra protein
+3
+No dairy
+4
+Low spice
+Show more lines
+
+
+Action:
+
+
+Plain Text
+1
+[Action: Toggles customization state and recalculates macros if applicable]
+Show more lines
+6.8 Pairing Rail
+Purpose
+
+
+Upsell complementary marketplace or food items.
+
+
+Plain Text
+1
+<PairingRail title="Pairs well with">
+2
+<HorizontalSnapRail>
+3
+<PairingCard />
+4
+</HorizontalSnapRail>
+5
+</PairingRail>
+Show more lines
+
+
+Pairing card action:
+
+
+Plain Text
+1
+[Action: Adds item to cart]
+Show more lines
+
+
+Must use secondary CTA only.
+
+
+6.9 Nutrition Progressive Disclosure
+
+
+Collapsed by default.
+
+
+Plain Text
+1
+Accordion: Nutrition details
+2
+[Action: Expands accordion]
+Show more lines
+
+
+Expanded sections:
+
+
+Plain Text
+1
+Macros
+2
+Ingredients
+3
+Allergens
+4
+Why it fits
+Show more lines
+
+
+“Why it fits” must be short and clinically calm.
+
+
+Example:
+
+
+Plain Text
+1
+Balanced protein and fiber support slower glucose response and longer satiety.
+Show more lines
+6.10 Sticky Add-To-Cart Ledger
+Plain Text
+1
+<StickyAddToCartLedger>
+2
+<ConfiguredPrice />
+3
+<PrimaryCTA />
+4
+</StickyAddToCartLedger>
+Show more lines
+
+
+CTA:
+
+
+Plain Text
+1
+Label: Add to cart
+2
+[Action: Adds configured dish to cart and opens Cart Drawer]
+Show more lines
+7. Route: /marketplace
+7.1 Purpose
+
+
+RD-curated pantry, snacks and supplements catalog.
+
+
+It supports AOV expansion and repeat purchase.
+
+
+7.2 Layout Wrapper
+Plain Text
+1
+Layout: GlobalLayout
+Show more lines
+7.3 Structure
+Plain Text
+1
+<MarketplacePage>
+2
+<MarketplaceHeroStrip />
+3
+<MarketplaceCategoryRail />
+4
+<FeaturedProductRail />
+5
+<ProductGridOrRails />
+6
+<EducationSnippetRail />
+7
+</MarketplacePage>
+Show more lines
+7.4 Marketplace Category Rail
+Plain Text
+1
+Protein
+2
+Gut health
+3
+Low-GI snacks
+4
+Supplements
+5
+Hydration
+6
+Pantry staples
+Show more lines
+
+
+Action:
+
+
+Plain Text
+1
+[Action: Sets category filter state]
+Show more lines
+7.5 Product Card
+Plain Text
+1
+<ProductCard>
+2
+<SafeImage />
+3
+<BadgeRow />
+4
+<ProductName />
+5
+<BenefitLine />
+6
+<PriceAddRow />
+7
+</ProductCard>
+Show more lines
+
+
+SafeImage:
+
+
+Plain Text
+1
+Aspect ratio: 1 / 1
+Show more lines
+
+
+Add button:
+
+
+Plain Text
+1
+Label: + Add
+2
+Style: Secondary compact CTA
+3
+[Action: Adds product to cart]
+Show more lines
+
+
+Card tap:
+
+
+Plain Text
+1
+[Action: Pushes to /marketplace/[slug]]
+Show more lines
+8. Route: /marketplace/[slug]
+8.1 Purpose
+
+
+Marketplace PDP for pantry, snacks and supplements.
+
+
+8.2 Layout Wrapper
+Plain Text
+1
+Layout: FocusLayout
+Show more lines
+8.3 Structure
+Plain Text
+1
+<MarketplacePDP>
+2
+<ProductHero />
+3
+<ProductTitleBlock />
+4
+<BenefitChips />
+5
+<VariantSelector />
+6
+<UsageGuidanceAccordion />
+7
+<PairsWithRail />
+8
+<StickyAddToCartLedger />
+9
+</MarketplacePDP>
+Show more lines
+8.4 CTA
+Plain Text
+1
+Label: Add to cart
+2
+Style: Primary CTA
+3
+[Action: Adds marketplace product to cart and opens Cart Drawer]
+Show more lines
+9. Route: /meal-deals
+9.1 Purpose
+
+
+Value combos and macro-density deals.
+
+
+This route increases AOV while still feeling clinically curated.
+
+
+9.2 Layout Wrapper
+Plain Text
+1
+Layout: GlobalLayout
+Show more lines
+9.3 Structure
+Plain Text
+1
+<MealDealsPage>
+2
+<DealsHeroStrip />
+3
+<DealTypeRail />
+4
+<HorizontalDealRails />
+5
+</MealDealsPage>
+Show more lines
+Deal Types
+Plain Text
+1
+High protein combos
+2
+Office lunch combos
+3
+Low-GI lunch sets
+4
+Family packs
+5
+Trial bundles
+Show more lines
+Deal Card
+Plain Text
+1
+<DealCard>
+2
+<SafeImage />
+3
+<DealTitle />
+4
+<IncludedItems />
+5
+<MacroDensityLine />
+6
+<PriceSavingsLine />
+7
+<AddDealButton />
+8
+</DealCard>
+Show more lines
+Actions
+Plain Text
+1
+Deal card tap
+2
+[Action: Opens Deal Bottom Sheet]
+3
+ 
+4
+Add deal
+5
+[Action: Adds full combo to cart and opens Cart Drawer]
+Show more lines
+10. Route: /meal-recommendations
+10.1 Purpose
+
+
+AI therapeutic meal recommendations.
+
+
+This is not the full clinical quiz. It is a lighter intent route for food discovery.
+
+
+10.2 Layout Wrapper
+Plain Text
+1
+Layout: GlobalLayout
+2
+Conditional FocusLayout when user confirms recommendation set
+Show more lines
+10.3 Structure
+Plain Text
+1
+<MealRecommendationsPage>
+2
+<RecommendationIntroCard />
+3
+<GoalSelector />
+4
+<PreferenceChips />
+5
+<RecommendationResults />
+6
+<StickyAcceptRecommendations />
+7
+</MealRecommendationsPage>
+Show more lines
+Goal Selector
+Plain Text
+1
+Glucose steady
+2
+Fat loss
+3
+High protein
+4
+PCOS support
+5
+Gut light
+6
+Clean comfort
+Show more lines
+
+
+Action:
+
+
+Plain Text
+1
+[Action: Sets recommendation goal state]
+Show more lines
+Preference Chips
+Plain Text
+1
+Vegetarian
+2
+Chicken
+3
+No dairy
+4
+Low spice
+5
+Under 500 kcal
+6
+30g+ protein
+Show more lines
+
+
+Action:
+
+
+Plain Text
+1
+[Action: Toggles preference state]
+Show more lines
+Recommendation Results
+Plain Text
+1
+<RecommendationSet>
+2
+<RecommendedDishCard />
+3
+<RecommendedDishCard />
+4
+<RecommendedMarketplaceAddOn />
+5
+</RecommendationSet>
+Show more lines
+
+
+Card tap:
+
+
+Plain Text
+1
+[Action: Opens Dish Bottom Sheet Drawer]
+Show more lines
+Sticky Accept Recommendations CTA
+
+
+Only visible after recommendations are generated.
+
+
+Plain Text
+1
+Label: Add recommended set
+2
+Style: Primary CTA
+3
+[Action: Adds recommendation set to cart and opens Cart Drawer]
+Show more lines
+11. Route: /meal-guides/[dishSlug]
+11.1 Purpose
+
+
+Reheating and macro guide per dish.
+
+
+This route serves post-purchase education and reorder behavior.
+
+
+11.2 Layout Wrapper
+Plain Text
+1
+Layout: GlobalLayout
+2
+Conditional FocusLayout for reorder confirmation
+Show more lines
+11.3 Structure
+Plain Text
+1
+<MealGuidePage>
+2
+<GuideHero />
+3
+<ReheatingSteps />
+4
+<MacroGuideCard />
+5
+<StorageGuidance />
+6
+<ReorderCard />
+7
+</MealGuidePage>
+Show more lines
+Reheating Steps
+Plain Text
+1
+Step 1: Remove lid
+2
+Step 2: Heat for recommended time
+3
+Step 3: Rest for one minute
+4
+Step 4: Mix sauce after heating
+Show more lines
+
+
+Each step is static instructional content unless enhanced later.
+
+
+Reorder Card
+Plain Text
+1
+Title: Want this again?
+2
+CTA: Reorder meal
+3
+Style: Primary CTA only if no other primary CTA visible
+4
+[Action: Adds dish to cart and opens Cart Drawer]
+Show more lines
+12. Route: /recipes
+12.1 Purpose
+
+
+RD-designed recipe library.
+
+
+This is a trust and retention surface, not the primary conversion engine.
+
+
+12.2 Layout Wrapper
+Plain Text
+1
+Layout: GlobalLayout
+Show more lines
+12.3 Structure
+Plain Text
+1
+<RecipesPage>
+2
+<RecipeSearch />
+3
+<RecipeGoalRail />
+4
+<FeaturedRecipeRail />
+5
+<RecipeCardGrid />
+6
+</RecipesPage>
+Show more lines
+Recipe Goal Rail
+Plain Text
+1
+High protein
+2
+Low GI
+3
+PCOS friendly
+4
+Gut light
+5
+Family friendly
+6
+Quick meals
+Show more lines
+
+
+Action:
+
+
+Plain Text
+1
+[Action: Applies recipe filter state]
+Show more lines
+Recipe Card
+Plain Text
+1
+<RecipeCard>
+2
+<SafeImage />
+3
+<RecipeTitle />
+4
+<TimeAndDifficulty />
+5
+<ClinicalFitBadge />
+6
+</RecipeCard>
+Show more lines
+
+
+Card tap:
+
+
+Plain Text
+1
+[Action: Opens Recipe Detail Bottom Sheet]
+Show more lines
+
+
+If recipe detail supports related store items:
+
+
+Plain Text
+1
+Add ingredients
+2
+[Action: Adds mapped marketplace products to cart]
+Show more lines
+13. Shared Commerce Components
+13.1 <HorizontalSnapRail />
+
+
+Used across:
+
+
+Plain Text
+1
+Homepage
+2
+Menu
+3
+Marketplace
+4
+Meal deals
+5
+Recommendations
+6
+Recipes
+7
+Cart drawer upsells
+Show more lines
+Spec
+Plain Text
+1
+overflow-x: auto
+2
+scroll-snap-type: x mandatory
+3
+scrollbar hidden
+4
+gap: 12px
+5
+padding-left: 16px
+6
+padding-right: 16px
+Show more lines
+
+
+Children:
+
+
+Plain Text
+1
+scroll-snap-align: start
+Show more lines
+13.2 <CompactAddButton />
+
+
+Used when a primary CTA already exists elsewhere in the viewport.
+
+
+Plain Text
+1
+Label: + Add
+2
+Style: Secondary compact CTA
+3
+Height: 34px-38px
+4
+Radius: radius-full
+5
+[Action: Adds item to cart]
+Show more lines
+
+
+If customization is required:
+
+
+Plain Text
+1
+[Action: Opens customization bottom sheet]
+Show more lines
+13.3 <ClinicalBadge />
+
+
+Used for lightweight trust signals.
+
+
+Examples:
+
+
+Plain Text
+1
+RD-reviewed
+2
+Low GI
+3
+High protein
+4
+No refined sugar
+5
+Diabetic friendly
+6
+PCOS friendly
+Show more lines
+
+
+Rules:
+
+
+Plain Text
+1
+Maximum 2 badges on compact cards
+2
+Maximum 4 badges on PDPs
+3
+Each badge may open explanatory bottom sheet if interactive
+Show more lines
+
+
+Interactive badge:
+
+
+Plain Text
+1
+[Action: Opens Clinical Detail Bottom Sheet]
+Show more lines
+
+
+Non-interactive badge:
+
+
+Plain Text
+1
+[Action: None]
+Show more lines
+
+
+If non-interactive, it must not have hover/tap styling.
+
+
+13.4 <PriceAddRow />
+Plain Text
+1
+<PriceAddRow>
+2
+<Price />
+3
+<CompactAddButton />
+4
+</PriceAddRow>
+Show more lines
+
+
+Required action:
+
+
+Plain Text
+1
+CompactAddButton
+2
+[Action: Adds item to cart or opens customization bottom sheet]
+Show more lines
+14. Commerce State Model
+14.1 Cart States
+Plain Text
+1
+cart.empty
+2
+cart.hasItems
+3
+cart.updating
+4
+cart.error
+Show more lines
+Empty Cart Drawer
+Plain Text
+1
+Title: Your cart is empty
+2
+Body: Add a meal or RD-curated snack to get started.
+3
+CTA: Browse menu
+4
+Style: Primary CTA
+5
+[Action: Pushes to /menu]
+Show more lines
+Has Items State
+
+
+Render:
+
+
+Plain Text
+1
+CartItemList
+2
+CompleteYourMealRail
+3
+CartSummary
+4
+StickyCheckoutCTA
+Show more lines
+Updating State
+
+
+Used when item is being added or quantity is changing.
+
+
+Plain Text
+1
+Affected item shows loading spinner
+2
+Price summary skeleton updates
+3
+Primary checkout CTA remains visible but disabled if totals are recalculating
+Show more lines
+Error State
+Plain Text
+1
+Message: Couldn’t update cart. Try again.
+2
+CTA: Retry
+3
+Style: Secondary CTA
+4
+[Action: Re-attempts last cart mutation]
+Show more lines
+15. Empty, Loading & Error States
+15.1 Menu Loading
+Plain Text
+1
+Skeleton category pills
+2
+Skeleton horizontal dish cards
+3
+No layout shift
+Show more lines
+15.2 Menu Empty Filter State
+Plain Text
+1
+Title: Nothing matches this filter yet
+2
+Body: Try removing one preference or explore today’s curated meals.
+3
+Primary CTA: Clear filters
+4
+[Action: Clears selected filters]
+5
+Secondary CTA: View curated meals
+6
+[Action: Sets category to All]
+Show more lines
+
+
+Only one primary CTA is allowed. If both are visible, “Clear filters” is primary and “View curated meals” is secondary.
+
+
+15.3 Marketplace Empty State
+Plain Text
+1
+Title: No products found
+2
+Body: Try another category or clear your filters.
+3
+CTA: Clear filters
+4
+[Action: Clears selected filters]
+Show more lines
+15.4 Recommendation Empty State
+Plain Text
+1
+Title: We need one more signal
+2
+Body: Select a goal or preference so we can recommend better meals.
+3
+CTA: Select goal
+4
+[Action: Scrolls to GoalSelector]
+Show more lines
+16. Analytics & Event Hooks
+
+
+Frontend must expose event hooks for CRO measurement.
+
+
+16.1 Homepage Events
+Plain Text
+1
+home_hero_order_today_clicked
+2
+home_find_my_meals_clicked
+3
+home_curated_dish_opened
+4
+home_curated_dish_added
+5
+home_plan_preview_clicked
+6
+home_marketplace_product_clicked
+Show more lines
+16.2 Menu Events
+Plain Text
+1
+menu_category_selected
+2
+menu_filter_opened
+3
+menu_filter_applied
+4
+menu_search_focused
+5
+menu_search_result_clicked
+6
+menu_dish_quickview_opened
+7
+menu_dish_added
+Show more lines
+16.3 Cart Events
+Plain Text
+1
+cart_drawer_opened
+2
+cart_quantity_increased
+3
+cart_quantity_decreased
+4
+cart_item_removed
+5
+cart_complete_your_meal_added
+6
+cart_voucher_opened
+7
+cart_checkout_clicked
+Show more lines
+16.4 PDP Events
+Plain Text
+1
+dish_pdp_viewed
+2
+dish_portion_changed
+3
+dish_customization_toggled
+4
+dish_pairing_added
+5
+dish_nutrition_expanded
+6
+dish_add_to_cart_clicked
+Show more lines
+17. Phase 2 Non-Negotiable Rules
+Plain Text
+1
+1. /menu must use horizontal snap rails, not a long vertical food grid on mobile.
+2
+ 
+3
+2. Dish cards must use <SafeImage /> with a locked 4 / 3 aspect ratio.
+4
+ 
+5
+3. Dish quick view must use a bottom sheet from browsing surfaces.
+6
+ 
+7
+4. /dish/[slug] and /marketplace/[slug] must use FocusLayout.
+8
+ 
+9
+5. Cart Drawer must hide BottomTabBar.
+10
+ 
+11
+6. Cart Drawer must include Complete Your Meal horizontal upsell rail before checkout.
+12
+ 
+13
+7. Cart Drawer may show only one primary CTA: Checkout.
+14
+ 
+15
+8. Full nutrition detail must be collapsed by default.
+16
+ 
+17
+9. Clinical badges must be limited and progressively disclosed.
+18
+ 
+19
+10. Marketplace add-ons inside Cart Drawer must use secondary compact CTAs, not primary gold.
+20
+ 
+21
+11. Every interactive card, chip, button, sheet, and CTA must declare a route push or state mutation.
+22
+ 
+23
+12. Search, filters, nutrition, customization, and trust explanations must be bottom-sheet or overlay driven on mobile.
+24
+ 
+25
+13. Sticky checkout or add-to-cart elements must remain under 10% of viewport height.
+26
+ 
+27
+14. No ghost buttons are allowed.
+28
+ 
+29
+15. No food image may render outside <SafeImage />.
+Show more lines
+Phase 2 Complete
+
+
+I will halt here.
+ Awaiting your authorization to proceed to Phase 3.
+
+
+Provide your feedback on BizChat
+You said:
+Proceed to Phase 3
+Copilot said:
+Copilot
+Reasoning completed in 1 step
+
+
+Proceeding to Phase 3. This phase defines Tanmatra’s Subscription Plans & Clinical Care architecture, where users move from browsing intent into therapeutic commitment, personalization, trial, and weekly habit formation.
+
+
+Tanmatra UX/UI Architecture Document
+Phase 3: Subscription Plans, Clinical Care & Therapeutic Transformation Funnel
+1. Phase 3 Scope
+
+
+This phase defines UX/UI architecture for the subscription and clinical transformation routes:
+
+
+Primary business objective:
+
+
+Primary UX objective:
+
+
+Primary design principle:
+
+
+2. Therapeutic Transformation Funnel
+2.1 Funnel Name
+2.2 Primary Route Paths
+2.3 Secondary Route Paths
+3. Clinical UX Principles for Phase 3
+3.1 Outcome First, Data Second
+
+
+The first viewport of any clinical or subscription route must communicate:
+
+
+It must not lead with:
+
+
+3.2 The 3-Layer Clinical Disclosure Model
+
+
+Every clinical page should reveal information in this order:
+
+
+Layer 3 should appear inside:
+
+
+3.3 No Fear-Based Conversion
+
+
+Tanmatra must not rely on fear, guilt, or medical anxiety.
+
+
+Avoid:
+
+
+Use:
+
+
+4. Route: /plans
+4.1 Purpose
+
+
+The /plans route is the primary subscription catalog.
+
+
+It helps users compare therapeutic meal subscriptions without overwhelming them.
+
+
+4.2 Layout Wrapper
+
+
+Rendered global elements:
+
+
+4.3 Page Structure
+4.4 <PlansHero />
+Purpose
+
+
+Communicate that Tanmatra plans are clinically guided but food-first.
+
+
+Mobile Layout
+CTA Rules
+Primary CTA
+Secondary CTA
+
+
+Only one primary CTA appears in the viewport.
+
+
+4.5 <GoalSegmentRail />
+Purpose
+
+
+Allow users to self-select their subscription need state.
+
+
+Structure
+Goal Segment Cards
+Visual Spec
+
+
+Each card may include:
+
+
+Example:
+
+
+4.6 <RecommendedPlanRail />
+Purpose
+
+
+Show selected or default recommended plans based on user state.
+
+
+If no user preferences exist, show neutral plans.
+
+
+States
+Anonymous Default State
+Personalized State
+Plan Preview Card Structure
+SafeImage
+Card Actions
+Card Tap
+CTA
+
+
+Do not use primary gold inside plan cards if a sticky or hero primary CTA is visible in the same viewport.
+
+
+4.7 <PlanCatalogRail />
+Purpose
+
+
+Horizontally showcase plan categories.
+
+
+Plan Categories
+Plan Card Badges
+
+
+Maximum three visible badges:
+
+
+If more badges exist:
+
+
+4.8 <TrialEntryCard />
+Purpose
+
+
+Lower the psychological barrier to subscription.
+
+
+Copy
+CTA
+
+
+If another primary CTA is visible:
+
+
+4.9 <HowPlansWorkAccordion />
+Purpose
+
+
+Progressively explain subscription mechanics.
+
+
+Accordion Items
+
+
+Each accordion must be collapsed by default.
+
+
+5. Route: /plan/[planId]
+5.1 Purpose
+
+
+The plan detail route is a high-intent customization and schedule-selection route.
+
+
+It must help the user configure:
+
+
+5.2 Layout Wrapper
+
+
+Must not render:
+
+
+5.3 Page Structure
+5.4 <PlanHero />
+Structure
+SafeImage
+Example Copy
+5.5 <PlanOutcomeStrip />
+Purpose
+
+
+Show lightweight trust and fit signals.
+
+
+Example Chips
+
+
+Each chip action:
+
+
+5.6 <ScheduleSelector />
+Purpose
+
+
+Let users choose plan cadence without typing.
+
+
+Structure
+Options
+Action
+Visual State
+Default
+Selected
+Disabled
+5.7 <MealSlotSelector />
+Purpose
+
+
+Select which meals are included.
+
+
+Options
+Action
+Interaction Rule
+
+
+Use squircle cards or segmented cards.
+ Do not use dropdowns on mobile unless the option count exceeds six.
+
+
+5.8 <PreferenceSelector />
+Purpose
+
+
+Capture dietary and taste preferences without full clinical quiz friction.
+
+
+Preference Chips
+Action
+Allergen Warning
+
+
+If a user selects an allergen exclusion:
+
+
+Bottom sheet CTA:
+
+
+5.9 <SampleWeekPreview />
+Purpose
+
+
+Make the subscription tangible through food.
+
+
+Structure
+Day Tabs
+Action
+Meal Cards
+Card Tap
+Important
+
+
+This section is preview-only unless the user enters /meal-planner.
+
+
+Meal cards must not expose primary add buttons.
+
+
+5.10 <ClinicalDisclosureAccordion />
+Purpose
+
+
+Explain clinical relevance without overwhelming the customization flow.
+
+
+Accordion Items
+
+
+Collapsed by default.
+
+
+5.11 <StickyPlanLedger />
+Purpose
+
+
+Keep price and commitment action visible.
+
+
+Structure
+Price Summary
+Primary CTA
+
+
+Sticky height:
+
+
+6. Route: /trial
+6.1 Purpose
+
+
+The /trial route supports a low-friction 3-day therapeutic plan onboarding and checkout path.
+
+
+6.2 Layout Wrapper
+6.3 Page Structure
+6.4 <TrialHero />
+Copy
+Primary CTA
+
+
+If hero includes a CTA:
+
+
+If sticky ledger is visible in the same viewport, this hero CTA should be omitted to preserve the one-primary-CTA rule.
+
+
+6.5 <TrialIncludes />
+Content
+
+
+Each item is informational.
+
+
+6.6 <TrialDayPreview />
+Structure
+
+
+Day tab action:
+
+
+Meal card action:
+
+
+6.7 <PreferenceQuickPick />
+Purpose
+
+
+Capture a minimal personalization state before checkout.
+
+
+Required Options
+Interaction
+
+
+All inputs must use tapping, not typing.
+
+
+6.8 <StickyTrialLedger />
+Structure
+CTA
+
+
+Disabled state:
+
+
+7. Route: /quick-setup
+7.1 Purpose
+
+
+The /quick-setup route is Tanmatra’s 3-step clinical personalization wizard.
+
+
+It replaces a long medical quiz with a kinetic, iOS-style tapping flow.
+
+
+7.2 Layout Wrapper
+7.3 UX Mandate
+7.4 Page Structure
+7.5 <StepperHeader />
+Structure
+Step Indicator
+Progress Bar
+
+
+Visual:
+
+
+7.6 Step 1: Goal
+Prompt
+Options
+Structure
+Action
+
+
+Single select by default.
+
+
+7.7 Step 2: Food Pattern
+Prompt
+Options
+Action
+
+
+Single select for primary pattern.
+ Optional exclusions can be multi-select chips.
+
+
+7.8 Step 3: Schedule
+Prompt
+Options
+Action
+7.9 Sticky Step CTA
+Step 1 CTA
+
+
+Disabled until one goal is selected.
+
+
+Step 2 CTA
+
+
+Disabled until food pattern is selected.
+
+
+Step 3 CTA Logic
+
+
+If user selects Trial first:
+
+
+If user selects 3, 5, or 6 days:
+
+
+Alternative direct plan routing if recommendation engine is available:
+
+
+7.10 Back Behavior
+8. Route: /custom-build
+8.1 Purpose
+
+
+Custom macro and therapeutic boost plan builder.
+
+
+This is for high-intent users who want more control than preset plans offer.
+
+
+8.2 Layout Wrapper
+8.3 Page Structure
+8.4 Builder Intro
+8.5 Macro Density Selector
+Options
+Action
+8.6 Therapeutic Boost Selector
+Options
+Action
+
+
+Maximum recommended selections:
+
+
+If user selects more than 3:
+
+
+Message:
+
+
+8.7 Sticky Build Ledger
+
+
+CTA:
+
+
+9. Route: /meal-planner
+9.1 Purpose
+
+
+The weekly meal planner is a retention and subscription control surface.
+
+
+It helps users:
+
+
+9.2 Layout Wrapper
+9.3 Page Structure
+9.4 <PlannerStatusCard />
+Purpose
+
+
+Summarize the user’s active plan and week state.
+
+
+Content
+Example
+Actions
+9.5 <WeekSelector />
+Layout
+Action
+9.6 <WeeklyMealGrid />
+Mobile Structure
+
+
+Mobile should use stacked day cards, not desktop-style dense grids.
+
+
+Day Meal Card
+Meal Slot Card
+SafeImage
+Swap Button
+9.7 Swap Bottom Sheet
+Purpose
+
+
+Allow 1-tap meal swaps without leaving the planner.
+
+
+Structure
+Recommended Swap Rail
+Swap Meal Card Action
+
+
+Selected state:
+
+
+Confirm Swap CTA
+
+
+Disabled until a replacement meal is selected.
+
+
+9.8 Delivery Control Sheet
+
+
+Used for delivery schedule changes.
+
+
+Sheet actions:
+
+
+9.9 Planner Telemetry Strip
+Purpose
+
+
+Lightweight habit feedback.
+
+
+Content
+
+
+Each telemetry chip:
+
+
+10. Route: /metabolic
+10.1 Purpose
+
+
+Fat-loss and lean-muscle metabolic care program lander.
+
+
+10.2 Layout Wrapper
+10.3 Page Structure
+Primary CTA
+
+
+Secondary CTA:
+
+
+11. Route: /performance
+11.1 Purpose
+
+
+High-protein athletic performance protocol.
+
+
+Primary CTA
+
+
+Secondary CTA:
+
+
+Required Sections
+12. Route: /clinical
+12.1 Purpose
+
+
+RD-supervised therapeutic protocol route.
+
+
+This page should feel the most clinically precise, but still not intimidating.
+
+
+Primary CTA
+
+
+Secondary CTA:
+
+
+Required Sections
+Protocol Card Actions
+13. Route: /care/[condition]
+13.1 Purpose
+
+
+Condition-specific care landers.
+
+
+Examples:
+
+
+13.2 Layout Wrapper
+
+
+The page can push users into FocusLayout routes:
+
+
+13.3 Page Structure
+13.4 <ConditionHero />
+Example for PCOS
+Primary CTA
+Secondary CTA
+13.5 Outcome Explanation Cards
+Purpose
+
+
+Explain condition support in human language.
+
+
+Card Examples for PCOS
+
+
+Each card:
+
+
+13.6 Food Strategy Rail
+Purpose
+
+
+Show the food principles behind the condition plan.
+
+
+Examples
+
+
+Each chip or card:
+
+
+13.7 Sample Meals Rail
+
+
+Dish card tap:
+
+
+Add button:
+
+
+Use secondary compact CTA unless no primary CTA is visible.
+
+
+13.8 Plan Match Card
+
+
+If primary CTA already visible:
+
+
+14. Shared Clinical Components
+14.1 <SquircleOptionCard />
+
+
+Used in:
+
+
+Spec
+States
+Default
+Selected
+Pressed
+Disabled
+Action
+14.2 <ClinicalExplainerSheet />
+
+
+Used when a user taps:
+
+
+Structure
+CTA
+
+
+If another primary CTA is visible behind the sheet context:
+
+
+14.3 <StickyLedger />
+
+
+Used in:
+
+
+Structure
+Rules
+15. Clinical State Model
+15.1 Quick Setup State
+15.2 Plan Configuration State
+15.3 Trial State
+15.4 Meal Planner State
+16. Loading, Empty & Error States
+16.1 Plans Loading State
+16.2 Plans Empty State
+16.3 Quick Setup Error State
+16.4 Meal Planner Empty State
+
+
+If no active plan:
+
+
+If active plan but no meals generated:
+
+
+16.5 Swap Error State
+17. Analytics & CRO Event Hooks
+
+
+Frontend must expose events for funnel analysis and optimization.
+
+
+17.1 Plans Events
+17.2 Plan Detail Events
+17.3 Trial Events
+17.4 Quick Setup Events
+17.5 Meal Planner Events
+17.6 Condition Care Events
+18. Phase 3 Non-Negotiable Rules
+Phase 3 Complete
+
+
+
+
+Tanmatra UX/UI Implementation Plan — Phases 4–13
+
+
+Tanmatra UX/UI Implementation Plan — Phases 4–13
+Below is the Phase 4 through Phase 13 plan established toward the beginning of this thread. This is the product and UX/UI implementation sequence—not the later audit work-package structure.
+The governing principle is:
+
+
+One Tanmatra operating system
+→ one semantic design system
+→ one shared plan lifecycle
+→ progressively specialized customer journeys
+
+
+
+
+
+
+
+
+Phase 4 — Subscription Discovery
+Objective
+Create a sole-operator subscription-discovery experience that guides the customer toward the most suitable Tanmatra plan.
+Tanmatra must not look like:
+
+
+- A restaurant marketplace
+- A provider-comparison platform
+- A dietitian marketplace
+- A list of unrelated subscription sellers
+Primary route
+
+
+/plans
+
+
+
+
+Supporting state
+
+
+/plans → Mealtime Preference Sheet
+
+
+
+
+Information architecture
+The recommended sequence is:
+
+
+1. Delivery context
+2. Mealtime preference
+3. Primary health or lifestyle goal
+4. Dominant recommended Tanmatra plan
+5. Sample meals
+6. Alternative Tanmatra plan formats
+7. Three-day trial
+8. “How Tanmatra plans work” disclosure
+UX requirements
+Delivery context
+Show:
+
+
+Current delivery address
+Serviceability
+Available meal periods
+Any delivery limitations
+
+
+
+
+Mealtime preference
+Use a bottom sheet with:
+
+
+Lunch
+Dinner
+Lunch + Dinner
+
+
+
+
+Each option should show its available delivery window.
+Goal selection
+Use large tactile option cards:
+
+
+Everyday healthy
+Fat loss
+High protein
+Glucose steady
+PCOS support
+Clinical care
+
+
+
+
+Recommendation hierarchy
+One plan must be visually dominant:
+
+
+Recommended for your goal
+
+
+
+
+Secondary plans should appear under:
+
+
+Other plans that may fit
+
+
+
+
+Avoid equal-weight comparison grids as the primary discovery pattern.
+Primary CTA
+
+
+Build my plan
+
+
+
+
+Secondary entry
+
+
+Try 3 days
+
+
+
+
+Exit criteria
+Phase 4 is complete when the customer can:
+
+
+Select mealtime
+→ Select goal
+→ Understand the recommendation
+→ Preview representative meals
+→ Enter /plan/[planId]
+
+
+
+
+
+
+
+
+Phase 5 — Recommended Plan Configuration
+Objective
+Let customers see and configure the exact day-by-day meal lineup before checkout.
+Primary route
+
+
+/plan/[planId]
+
+
+
+
+Required states
+
+
+Initial Configuration
+Day-by-Day Meal Lineup
+Change Dish Sheet
+Accompaniment Editor
+Delivery Schedule
+Plan Generation Loading
+Plan Generation Error
+
+
+
+
+Initial configuration
+Show duration options with:
+
+
+Number of days
+Number of meals
+Total price
+Original price
+Savings percentage
+Effective price per meal
+
+
+
+
+Example duration formats:
+
+
+3 days
+5 days
+15 days
+
+
+
+
+Also show:
+
+
+Mealtime
+Dietary pattern
+Applied restrictions
+Spice preference
+
+
+
+
+Generated lineup
+Use vertical chronological day cards.
+Each card includes:
+
+
+Day and date
+Meal image
+Dish name
+Clinical-fit signal
+Calories and protein
+Plan price
+Individual price
+Keep control
+Change Dish
+Edit accompaniment
+Why This Meal?
+
+
+
+
+Keep
+
+
+Keep
+
+
+
+
+locks the selected meal so that Shuffle cannot replace it.
+Shuffle
+
+
+Shuffle
+
+
+
+
+regenerates unlocked meals only.
+Shuffle must preserve:
+
+
+- Hard allergens
+- Dietary pattern
+- Meal compatibility
+- Delivery availability
+- Plan constraints
+- Inventory rules
+Undo
+Support one plan-level Undo snapshot.
+Undo is cleared when:
+
+
+- A dish is manually replaced
+- A plan-defining answer changes
+- Inventory makes the previous state invalid
+Undo must be server-validated before restoration.
+Change Dish
+The replacement sheet should show only compatible, currently available meals.
+Each option includes:
+
+
+Dish image
+Dish name
+Macro teaser
+Fit reason
+Included / +₹X / –₹X
+Selection marker
+
+
+
+
+Accompaniment Editor
+Keep this separate from Change Dish.
+It edits:
+
+
+Dip
+Bread or grain
+Side
+Optional removal
+Permitted add-on
+
+
+
+
+Delivery schedule
+Show:
+
+
+Selected plan summary
+Eligible dates
+Available time slots
+Delivery address
+Change cutoff
+Pause and skip policy
+Price and savings
+
+
+
+
+Primary CTA
+
+
+Continue to checkout
+
+
+
+
+Exit criteria
+Phase 5 is complete when:
+
+
+Every meal is visible
+Every meal is valid
+Meal edits obey constraints
+Delivery is scheduled
+Plan is ready for a server quote
+
+
+
+
+
+
+
+
+Phase 6 — Build Your Own Plan
+Objective
+Allow customers to define plan rules while Tanmatra generates the actual meal lineup.
+This is not a manual “pick every meal” builder.
+Primary route
+
+
+/custom-build
+
+
+
+
+Wizard stages
+Step 1 — Goal
+Prompt:
+
+
+What should your meals support?
+
+
+
+
+Options:
+
+
+Everyday healthy eating
+Fat loss
+Lean muscle
+High-protein performance
+Steadier glucose
+PCOS support
+Gut-friendly eating
+Clinical care
+
+
+
+
+Step 2 — Routine
+Collect:
+
+
+Delivery address
+Meal format
+Days per week
+Serving profile
+
+
+
+
+Optional wearable interstitial
+Offer:
+
+
+Connect health data
+Continue without connecting
+
+
+
+
+Wearable data remains optional and may rank recommendations only.
+Step 3 — Food Preferences
+Separate:
+
+
+Dietary pattern
+Hard allergens
+Hard ingredient exclusions
+Soft dislikes
+Spice preference
+Variety preference
+
+
+
+
+Hard restrictions must never be inferred from a dislike.
+Step 4 — Plan Intensity
+Collect:
+
+
+Portion profile
+Protein direction
+Carbohydrate direction
+Up to three nutritional priorities
+Optional specific targets
+
+
+
+
+Step 5 — Duration and Renewal
+Show:
+
+
+3 days
+5 days
+15 days
+
+
+
+
+For each:
+
+
+Total meals
+Price
+Savings
+Price per meal
+
+
+
+
+Renewal must be explicit:
+
+
+Renew automatically
+End after this plan
+Decide later
+
+
+
+
+Step 6 — Configuration Review
+Summarize:
+
+
+Goal
+Routine
+Food preferences
+Plan intensity
+Duration
+Renewal
+Connected-data influence
+
+
+
+
+Primary action:
+
+
+Build my meal plan
+
+
+
+
+Generated Plan Review
+After generation, show:
+
+
+Plan summary
+Vertical day cards
+Keep
+Shuffle
+Undo
+Change Dish
+Edit
+Why This Meal?
+
+
+
+
+This should reuse the Phase 5 plan-review system.
+Questions Before Checkout
+Cover:
+
+
+What is included?
+Is delivery included?
+Are packaging and taxes included?
+Can meals be changed later?
+What is the cutoff?
+Can the plan be paused?
+Can the plan be cancelled?
+How are allergens handled?
+Are macros exact?
+What happens if a meal becomes unavailable?
+Is RD support included?
+What is the renewal status?
+
+
+
+
+Required resilience
+The wizard must support:
+
+
+Back without data loss
+Save and exit
+Resume
+Refresh restoration
+Edit an earlier answer
+Invalidate affected downstream answers
+Generation loading
+Generation failure
+Retry
+
+
+
+
+Exit criteria
+Phase 6 is complete when:
+
+
+Rules are captured
+→ Plan is generated
+→ Meals are reviewed
+→ Schedule is selected
+→ Policies are understood
+→ Plan is ready for checkout
+
+
+
+
+
+
+
+
+Phase 7 — Checkout and Order Creation
+Objective
+Convert a fully configured cart or plan into a valid order without asking further configuration questions.
+Primary routes
+
+
+/checkout
+/order/confirmed/[orderId]
+
+
+
+
+Checkout content
+Show:
+
+
+1. Contact verification
+2. Delivery address
+3. Delivery schedule
+4. Cart or plan summary
+5. Applied preferences
+6. Voucher or entitlement
+7. Payment method
+8. Full price breakdown
+9. Amount payable today
+10. Future renewal amount
+11. Renewal status
+12. Terms and cancellation links
+Checkout must not ask
+
+
+Health goal
+Dietary pattern
+Allergens
+Meal slots
+Plan duration
+Plan intensity
+Dish selection
+Meal swapping
+
+
+
+
+Those decisions belong before checkout.
+Quote model
+Checkout must consume an immutable server-owned:
+
+
+QuoteSnapshot
+
+
+
+
+The quote contains:
+
+
+Items
+Configuration
+Schedule
+Delivery fee
+Packaging
+Tax
+Discount
+Entitlement
+Wallet credit
+Amount payable
+Renewal amount
+expiresAt
+Status
+Version
+
+
+
+
+Quote expiry recovery
+If a quote expires or becomes superseded:
+
+
+Block payment
+Preserve the configured plan
+Refresh the quote
+Show the server-calculated difference
+Require acceptance where necessary
+
+
+
+
+Payment processing
+During processing:
+
+
+Disable duplicate submission
+Show the exact amount
+Show payment method
+Do not present another payment CTA
+
+
+
+
+Payment timeout
+A timeout means:
+
+
+Unresolved
+
+
+
+
+—not failed.
+Show:
+
+
+We’re checking your payment
+Do not pay again yet
+Check payment status
+Get help
+
+
+
+
+Reconcile the existing server-side PaymentAttempt.
+Idempotency
+The server must ensure:
+
+
+One logical attempt
+→ one PaymentAttempt
+→ at most one provider charge
+→ at most one order
+→ at most one subscription
+→ entitlement consumed once
+
+
+
+
+Fully sponsored activation
+If amount payable is zero:
+
+
+Do not create an unnecessary payment attempt
+
+
+
+
+Proceed through verified sponsor activation.
+Confirmation
+Show:
+
+
+Order reference
+First delivery
+Address
+First meals
+Payment status
+Plan total
+Renewal status
+View Meal Plan
+Track Order
+
+
+
+
+Exit criteria
+Phase 7 is complete when payment, sponsor activation, quote recovery, and order confirmation are server-authoritative and idempotent.
+
+
+
+
+Phase 8 — Meal Planner and Active Subscription Management
+Objective
+Provide one operational location for managing an active meal subscription.
+Primary routes
+
+
+/meal-planner
+/account/subscriptions
+
+
+
+
+Meal Planner structure
+Show:
+
+
+Plan Health
+Current week
+Change cutoff
+Vertical delivery-day cards
+Meal slots
+Delivery statuses
+Contextual recommendations
+Manage Plan
+
+
+
+
+Day and meal cards
+Include:
+
+
+Date
+Delivery slot
+Dish image
+Dish name
+Macro teaser
+Delivery status
+Swap
+Additional actions
+
+
+
+
+Manage Delivery
+Use a bottom sheet with:
+
+
+Change meal
+Change delivery time
+Skip delivery
+Pause plan
+Add another meal
+Change address
+Get help
+
+
+
+
+If an action is unavailable, explain:
+
+
+What is unavailable
+Why it is unavailable
+What the customer can do next
+
+
+
+
+Subscription management
+Show:
+
+
+Active plan
+Current cycle
+Next charge
+Renewal status
+Partner benefit
+Action-required notice
+Pause
+Resume
+Change renewal
+Upgrade
+Billing
+Cancel
+Lifecycle history
+
+
+
+
+Financial disclosure
+Before:
+
+
+Pause
+Skip
+Cancel
+Renewal change
+
+
+
+
+show exact:
+
+
+Refund
+Credit
+Wallet impact
+Future-charge effect
+Delivery impact
+
+
+
+
+Exit criteria
+Phase 8 is complete when customers can safely manage meal and subscription changes within operational cutoffs.
+
+
+
+
+Phase 9 — Account, Telemetry, Preferences, and Feedback
+Objective
+Create a status-first Account Hub that supports ongoing retention and customer control.
+Primary routes
+
+
+/account
+/account/orders
+/account/appointments
+/account/billing
+/account/addresses
+/account/preferences
+/account/favorites
+/account/history
+/account/symptoms
+/account/wellness
+/account/loyalty
+/vouchers
+/premium
+
+
+
+
+Account Hub
+Prioritize:
+
+
+Action required
+Active subscription
+Next delivery
+Live order
+Wallet or partner benefit
+RD appointment
+Wellness summary
+
+
+
+
+Then provide structured navigation.
+Orders
+Clearly distinguish:
+
+
+À-la-carte orders
+Subscription deliveries
+Cancelled orders
+
+
+
+
+Addresses
+Support:
+
+
+Home
+Work
+Other
+Default address
+Serviceability
+Subscription-linked address
+Cutoff warning
+Add or edit address
+
+
+
+
+Preferences
+Separate:
+
+
+Profile-level preferences
+Plan-only choices
+Dietary pattern
+Allergens
+Hard exclusions
+Soft dislikes
+Spice
+Variety
+Notifications
+Theme
+
+
+
+
+Wellness
+Show carefully worded observational insights:
+
+
+Shorter sleep appeared alongside lower afternoon energy on two days.
+
+
+
+
+Do not claim causation or diagnosis.
+History
+Show:
+
+
+Consumed meals
+Adherence
+Protein trend
+Fiber trend
+Optional activity context
+Source labels
+
+
+
+
+Symptoms
+Support:
+
+
+Symptom
+Severity
+Timing
+Nearby meals
+Optional activity or sleep context
+
+
+
+
+Always label associations as:
+
+
+Observed overlap — not a diagnosis
+
+
+
+
+Meal Feedback
+Use a bottom sheet:
+
+
+Loved it
+It was okay
+Not for me
+
+
+
+
+If “Not for me” is selected, reveal reasons:
+
+
+Taste
+Portion
+Spice
+Texture
+Too heavy
+Too light
+Ingredient
+Packaging
+
+
+
+
+One negative rating must not silently become a permanent exclusion.
+Exit criteria
+Phase 9 is complete when the account helps customers understand and control current service status without overstating health interpretations.
+
+
+
+
+Phase 10 — Health and Wearable Connections
+Objective
+Allow customers to connect permitted health-data sources with explicit consent and feature-level control.
+Canonical route
+
+
+/account/connections
+
+
+
+
+Optional legacy redirect:
+
+
+/account/wearables
+→ 308
+→ /account/connections
+
+
+
+
+Approved scope
+
+
+Apple Health
+Android Health Connect
+Steps
+Workouts
+Active energy
+Sleep duration
+Optional weight trend
+
+
+
+
+Explicitly excluded
+
+
+CGM
+Continuous glucose telemetry
+EHR integration
+Clinical-record ingestion
+Automatic biometric meal adaptation
+Silent meal replacement
+Diagnosis
+
+
+
+
+Required states
+
+
+Not connected
+Permission primer
+Partially connected
+Connected
+No data
+Stale data
+Sync failure
+Permission revoked
+Disconnected
+
+
+
+
+Feature-level influence controls
+Customers choose whether data can influence:
+
+
+Custom plan ranking
+Meal Planner suggestions
+Wellness insights
+Coach context
+Challenge tracking
+
+
+
+
+Core rule
+
+
+Health data may rank or explain recommendations.
+Health data may never silently modify scheduled meals.
+
+
+
+
+Any meal change requires explicit customer review and confirmation.
+Exit criteria
+Phase 10 is complete when connection, consent, sync health, feature influence, and disconnection are understandable and reversible.
+
+
+
+
+Phase 11 — Acquisition, Corporate, Partner, and Entitlement Journeys
+Objective
+Support multiple acquisition channels while preserving one shared Tanmatra lifecycle.
+Routes
+
+
+/corporate
+/corporate/[slug]
+/corporate/[slug]/lunch-planner
+/corporate/invite/[token]
+/corporate-wellness
+/partners/gyms
+/partners/fitness-clubs
+/partners/dietitians
+/rd-partners
+/challenges/[slug]
+
+
+
+
+Shared model
+Every acquisition path should establish:
+
+
+AcquisitionContext
+Eligibility
+Entitlement
+Partner identity
+Customer contribution
+Program restrictions
+Expiry
+
+
+
+
+Then converge into the shared:
+
+
+Plan
+→ Quote
+→ Checkout
+→ Order
+→ Subscription
+
+
+
+
+Do not create a separate checkout engine for every partner.
+Corporate invite
+Show:
+
+
+Tanmatra × Company
+Benefit amount
+Customer contribution
+Eligibility
+Usage modes
+Validity
+Terms
+Activate my benefit
+
+
+
+
+Corporate wellness
+Public B2B acquisition experience:
+
+
+Team lunches
+Metabolic wellness
+Performance
+Challenges
+RD consultation
+Team size
+Workforce model
+Operational trust
+Lead capture
+
+
+
+
+Gym journey
+Support:
+
+
+Membership benefit
+Goal selection
+Verification method
+Member pricing
+Continue without benefit
+Privacy note
+
+
+
+
+Fitness-club journey
+Support:
+
+
+Running
+Cycling
+Endurance
+Recovery
+Event preparation
+Optional challenge
+Optional health-data connection
+
+
+
+
+Dietitian referral
+Separate:
+
+
+Verified RD recommendation
+Customer preferences
+Locked safety constraints
+Guided recommendations
+Follow-up consultation
+
+
+
+
+Entitlement lifecycle
+Differentiate:
+
+
+Invite token
+Single-use voucher
+Wallet balance
+Gift card
+Corporate allowance
+Recurring subsidy
+
+
+
+
+Correct lifecycle:
+
+
+Reserve where appropriate
+→ consume on successful order/activation
+→ release on failure
+
+
+
+
+Exit criteria
+Phase 11 is complete when partner context changes pricing or eligibility without creating parallel commercial infrastructure.
+
+
+
+
+Phase 12 — Clinical Care, RD, Coach, and Community
+Objective
+Present clinically credible food and support journeys without medical overreach.
+Routes
+
+
+/metabolic
+/performance
+/clinical
+/care/[condition]
+/rd
+/coach
+/qa
+/team
+/challenges
+/challenges/[slug]
+/challenges/tracker
+
+
+
+
+Metabolic landing
+Focus on:
+
+
+Steadier energy
+Satiety
+Food quality
+Longer-term routine
+
+
+
+
+Avoid guaranteed weight-loss claims.
+Performance landing
+Focus on:
+
+
+High protein
+Training-day meals
+Recovery
+Optional activity context
+
+
+
+
+Avoid aggressive bodybuilding clichés.
+Clinical landing
+Focus on:
+
+
+RD-supervised support
+Food-first clinical care
+Eligibility
+Safety boundaries
+Consultation
+
+
+
+
+Condition-care pages
+Use:
+
+
+Outcome-focused hero
+Food strategy
+Sample meals
+Matched plan
+RD trust
+Clinical FAQ
+
+
+
+
+Avoid:
+
+
+Disease reversal
+Guaranteed outcomes
+Fear-based language
+Medication substitution
+
+
+
+
+RD directory
+Show:
+
+
+Verified professional identity
+Credential
+Specialties
+Languages
+Consultation type
+Availability
+Fee or included benefit
+
+
+
+
+Do not use fabricated ratings.
+RD booking
+Use FocusLayout:
+
+
+RD summary
+Consultation purpose
+Date
+Time
+Format
+Fee or benefit
+Reschedule/cancellation policy
+Book consultation
+
+
+
+
+Coach
+The Coach may:
+
+
+Explain current plan
+Suggest meals
+Show compatible swaps
+Explain recommendations
+
+
+
+
+The Coach may not:
+
+
+Diagnose
+Prescribe
+Silently modify plans
+Override allergens
+Create authoritative pricing
+
+
+
+
+Q&A
+Use verified professional attribution and avoid popularity-driven social mechanics.
+Challenges
+Show:
+
+
+Outcome
+Duration
+RD-led status
+Regimen
+Meal support
+Wearable requirement or optionality
+Eligibility
+Benefits
+Registration options
+
+
+
+
+The tracker may use:
+
+
+Steps
+Workouts
+Manual completions
+Meal adherence
+Streaks
+Milestones
+
+
+
+
+No guaranteed performance or health outcome.
+Claims governance
+Every public claim requires:
+
+
+Claim text
+Evidence
+Owner
+Approval
+Review date
+Expiry or review cycle
+
+
+
+
+This includes:
+
+
+Clinical claims
+Certifications
+Professional credentials
+Kitchen standards
+Macro precision
+Service areas
+Delivery guarantees
+Named profiles
+
+
+
+
+Exit criteria
+Phase 12 is complete when all clinical, professional, operational, and food-quality claims are evidence-backed and safely presented.
+
+
+
+
+Phase 13 — Production Hardening and Acceptance
+Phase 13 has two distinct sub-phases.
+
+
+
+
+Phase 13A — Stitch Traceability and Automated Acceptance
+Objective
+Prove that every promised Stitch screen or state is represented by implementation evidence.
+Required manifest
+
+
+docs/stitch/stitch-screen-manifest.json
+
+
+
+
+Each of the 74 entries needs:
+
+
+Prompt ID
+Stitch screen ID
+Design name
+Artifact type
+Canonical route
+State
+Trigger
+Layout
+Theme
+Implementation component
+Route entry point
+Expected primary action
+Reference artifact
+Implementation artifact
+Test ID
+Test file
+Source status
+Runtime status
+Interaction status
+Visual status
+Accessibility status
+Evidence SHA
+Defects
+
+
+
+
+Artifact types
+
+
+Route
+Overlay
+Drawer
+Wizard stage
+Component state
+Loading state
+Empty state
+Error state
+Recovery state
+Design-system reference
+
+
+
+
+Proof chain
+Each critical entry should be traceable through:
+
+
+Approved Stitch reference
+→ Source component
+→ Route/render chain
+→ User trigger
+→ Runtime state
+→ Container
+→ Staging
+→ Production
+
+
+
+
+Automated gates
+Run:
+
+
+TypeScript
+Unit tests
+Component tests
+Integration tests
+Contract tests
+Playwright E2E
+Token lint
+File-cap lint
+Test-reachability
+Production build
+Docker build
+Stitch manifest validation
+Security scan
+Privacy checks
+
+
+
+
+Domain invariants
+All 20 non-negotiable invariants must be tested or formally approved through an applicable manual method.
+Key invariants include:
+
+
+Hard allergens survive every operation
+Keep prevents Shuffle
+Manual replacement clears Undo
+Rule changes invalidate quote
+Checkout uses an active server quote
+Expired quote blocks payment
+Payment is idempotent
+Sponsored activation avoids payment
+Entitlement is consumed once
+No silent meal substitution
+Wearables never mutate meals automatically
+Subscription begins only after valid order/activation
+Safe return route
+Financial disclosure
+Client cannot author authority
+Sensitive analytics exclusion
+Quote supersession
+Unavailable-action rationale
+No configuration questions at checkout
+Server-validated restoration
+
+
+
+
+Exit criteria
+Phase 13A passes when source, route/state wiring, runtime evidence, tests, container output, and deployment identity reconcile.
+
+
+
+
+Phase 13B — Human Visual and Accessibility Acceptance
+Objective
+Confirm that the implementation not only exists, but preserves the approved Tanmatra UX/UI and remains usable with assistive technology.
+Dark visual priority set
+Review 20 priority screens:
+
+
+1. Homepage
+2. Menu
+3. Dish Quick View
+4. Dish PDP
+5. Cart Drawer
+6. Plans
+7. Plan Configuration
+8. Day Meal Lineup
+9. Change Dish
+10. Delivery Schedule
+11. Custom Build Goal
+12. Custom Build Food Preferences
+13. Generated Custom Plan
+14. Questions Before Checkout
+15. Checkout
+16. Quote Expired
+17. Order Confirmation
+18. Meal Planner
+19. Account Hub
+20. Corporate Invite
+Light visual priority set
+Review:
+
+
+Homepage
+Menu
+Dish Quick View
+Dish PDP
+Cart Drawer
+Plans
+Plan Configuration
+Custom Build Preferences
+Generated Custom Plan
+Checkout
+Quote Expired
+Meal Planner
+Account Hub
+Health Connections
+Corporate Invite
+
+
+
+
+Twelve-dimension rubric
+Review each screen for:
+
+
+1. Information hierarchy
+2. Layout composition
+3. Section spacing
+4. Typography hierarchy
+5. Food imagery and crop
+6. Primary CTA hierarchy
+7. Secondary-action treatment
+8. Clinical-information density
+9. Interaction affordance
+10. Sticky-element ergonomics
+11. Theme fidelity
+12. Accessibility visibility
+Statuses
+
+
+Pending
+In review
+Corrections required
+Approved
+Rejected
+
+
+
+
+Manual accessibility
+Audit at least:
+
+
+Menu Filter
+Dish Quick View
+Cart Drawer
+Mealtime Sheet
+Change Dish
+Accompaniment Editor
+Manage Delivery
+Meal Feedback
+Gym Verification or RD Booking
+
+
+
+
+Verify:
+
+
+Keyboard completion
+Logical focus order
+Visible focus
+Focus trap
+Escape behavior
+Focus restoration
+Accessible names
+Selected-state announcements
+Disabled-state announcements
+Error announcements
+Dynamic price announcements
+200% text zoom
+Reduced motion
+44px touch targets
+Real mobile behavior
+
+
+
+
+Production acceptance gate
+Final production approval requires:
+
+
+74/74 manifest entries reconciled
+74/74 required states reachable
+20/20 domain invariants passed
+Dark visual acceptance passed
+Light visual acceptance passed
+Manual accessibility passed
+Security and privacy passed
+Clinical scope passed
+Correct image digest deployed
+Correct Cloud Run revision serving traffic
+No P0
+No P1
+No unwaived P2
+
+
+
+
+Final status
+
+
+PRODUCTION MERGE: GO
+
+
+
+
+is permitted only after every mandatory gate passes.
+
+
+
+
+Phase Sequence Summary
+
+
+Phase 4
+Discover the right Tanmatra plan
+Phase 5
+Configure and review exact meals
+Phase 6
+Build a custom plan from customer-defined rules
+Phase 7
+Create an authoritative quote, payment and order
+Phase 8
+Operate the active meal subscription
+Phase 9
+Manage account, preferences, feedback and wellness context
+Phase 10
+Connect optional health data safely
+Phase 11
+Support corporate, partner and entitlement acquisition
+Phase 12
+Deliver clinical, RD, Coach and challenge experiences safely
+Phase 13A
+Prove implementation, runtime and deployment traceability
+Phase 13B
+Complete human visual and accessibility acceptance
+
+
+
+
+
+
+Phase 13BComplete human visual and accessibility acceptance
+This is the intended UX/UI delivery sequence: discovery → configuration → custom planning → checkout → active service → retention → optional context → acquisition → clinical support → production acceptance.
+
+
+
+
+Stitch Screens
+https://github.com/scigazetteofficial-beep/Wellness-Foods/tree/main/docs/stitch
+
+
+Route-to-Stitch Screen Wiring Instructions
+
+
+Route-to-Stitch Screen Wiring Instructions
+Use these instructions alongside the P0 through Phase 13 implementation plan. The purpose is to ensure every Stitch design is connected to a real application route, overlay trigger, wizard transition, recovery condition, or component state—not merely stored as an unused source file or screenshot.
+
+
+
+
+1. Core Wiring Principle
+A Stitch screen is not considered implemented merely because:
+
+
+A component file exists
+A route file exists
+A screenshot exists
+The manifest contains an entry
+The component is imported somewhere
+A test file mentions the screen
+
+
+
+
+A Stitch screen is wired only when the complete chain exists:
+
+
+Stitch prompt
+→ Manifest entry
+→ Canonical route
+→ Correct layout
+→ Route entry point
+→ Render chain
+→ Trigger or transition
+→ Reachable runtime state
+→ Required interaction
+→ Evidence
+
+
+
+
+For route screens:
+
+
+Stitch screen
+→ app/**/page.tsx
+→ production render
+
+
+
+
+For overlays:
+
+
+Stitch screen
+→ parent route
+→ visible user trigger
+→ overlay controller
+→ dialog/drawer/sheet
+→ close and focus restoration
+
+
+
+
+For wizard stages:
+
+
+Stitch screen
+→ canonical wizard route
+→ state machine stage
+→ transition guard
+→ rendered stage
+
+
+
+
+For loading, error, empty, and recovery states:
+
+
+Stitch screen
+→ actual domain condition
+→ state transition
+→ rendered recovery UI
+→ recovery action
+
+
+
+
+
+
+
+
+2. Required Manifest Contract
+Every Stitch output must have one machine-readable entry in:
+
+
+docs/stitch/stitch-screen-manifest.json
+
+
+
+
+Recommended schema:
+
+
+{
+  "promptId": "6.5",
+  "stitchScreenId": "<STITCH_SCREEN_ID>",
+  "designName": "Plan Change Dish Bottom Sheet",
+  "artifactType": "overlay",
+  "canonicalRoute": "/plan/[planId]",
+  "state": "change-dish-sheet-open",
+  "layout": "FocusLayout",
+  "themes": [
+    "dark",
+    "light"
+  ],
+  "implementationComponent": "artifacts/storefront/components/plan/ChangeDishSheet.tsx",
+  "routeEntryPoint": "artifacts/storefront/app/plan/[planId]/page.tsx",
+  "controllerComponent": "artifacts/storefront/app/plan/[planId]/PlanConfigClient.tsx",
+  "trigger": {
+    "type": "button",
+    "accessibleName": "Change dish",
+    "sourceState": "lineup-active"
+  },
+  "transition": {
+    "from": "lineup-active",
+    "action": "OPEN_CHANGE_DISH",
+    "to": "change-dish-sheet-open"
+  },
+  "expectedPrimaryAction": "Replace Day 2 meal",
+  "expectedCloseBehavior": [
+    "Close button",
+    "Escape",
+    "Safe backdrop dismissal"
+  ],
+  "referenceArtifact": "artifacts/stitch/reference/6.5-dark.png",
+  "implementationArtifact": null,
+  "testId": "stitch-6.5-change-dish",
+  "testFile": "artifacts/storefront/e2e/stitch/plan-change-dish.spec.ts",
+  "sourceStatus": "pending",
+  "wiringStatus": "pending",
+  "runtimeStatus": "pending",
+  "interactionStatus": "pending",
+  "visualStatus": "pending",
+  "accessibilityStatus": "pending",
+  "evidenceSha": null,
+  "defectIds": []
+}
+
+
+
+
+
+
+
+
+3. Controlled Artifact Types
+Use exactly one of these for each entry:
+
+
+route
+overlay
+drawer
+wizard-stage
+component-state
+loading-state
+empty-state
+error-state
+recovery-state
+design-system-reference
+
+
+
+
+Do not describe every prompt as a route.
+Route
+Has a canonical URL and an App Router entry point.
+Example:
+
+
+/menu
+
+
+
+
+Overlay
+Appears above a parent route without replacing the route.
+Example:
+
+
+/menu
+→ Filter button
+→ Menu Filter Sheet
+
+
+
+
+Drawer
+A route-preserving side or bottom application surface.
+Example:
+
+
+Any commerce route
+→ MiniCartBar
+→ Cart Drawer
+
+
+
+
+Wizard stage
+A stage inside one canonical route.
+Example:
+
+
+/custom-build
+→ Goal
+→ Routine
+→ Preferences
+
+
+
+
+Component state
+A meaningful runtime state within a route.
+Example:
+
+
+/checkout
+→ payment-processing
+
+
+
+
+Loading state
+Produced while a real operation remains pending.
+Empty state
+Produced by valid data with zero applicable records.
+Error state
+Produced by a failed operation.
+Recovery state
+Contains an action that restores or safely continues the journey.
+
+
+
+
+4. Route Wiring Patterns
+Pattern A — Direct Route Screen
+Use for screens with their own canonical URL.
+
+
+// app/plans/page.tsx
+import { PlansDiscovery } from "@/components/plans/PlansDiscovery";
+export default function PlansPage() {
+return (
+<main
+id="main"
+data-ui-generation="stitch-74"
+data-screen-id="6.1"
+data-screen-state="default"
+>
+<PlansDiscovery />
+</main>
+);
+}
+
+
+
+
+
+
+export default function PlansPage() {return (<mainid="main"data-ui-generation="stitch-74"data-screen-id="6.1"data-screen-state="default"><PlansDiscovery /></main>);}
+Required proof:
+
+
+page.tsx exists
+Correct component renders
+Correct layout applies
+URL returns successfully
+Main heading appears
+Primary action works
+
+
+
+
+
+
+
+
+Pattern B — Route With Client Controller
+Use when one route owns multiple interactive states.
+
+
+// app/custom-build/page.tsx
+import { CustomBuildClient } from "./CustomBuildClient";
+export default function CustomBuildPage() {
+return <CustomBuildClient />;
+}
+
+
+
+
+
+
+export default function CustomBuildPage() {return <CustomBuildClient />;}
+The controller owns the state machine:
+
+
+type CustomBuildStage =
+| "goal"
+| "routine"
+| "wearable"
+| "preferences"
+| "intensity"
+| "duration"
+| "review"
+| "generating"
+| "generated-plan"
+| "pre-checkout";
+
+
+
+
+Render stages explicitly:
+
+
+switch (stage) {
+case "goal":
+return <GoalStage />;
+case "routine":
+return <RoutineStage />;
+case "wearable":
+return <WearableInterstitial />;
+case "preferences":
+return <FoodPreferencesStage />;
+case "intensity":
+return <IntensityStage />;
+case "duration":
+return <DurationStage />;
+case "review":
+return <ConfigurationReview />;
+case "generating":
+return <PlanGenerationLoading />;
+case "generated-plan":
+return <GeneratedPlanReview />;
+case "pre-checkout":
+return <PreCheckoutQuestions />;
+}
+
+
+
+
+
+
+case "pre-checkout":return <PreCheckoutQuestions />;}
+A distinct route is not required for every stage, but every stage must have:
+
+
+Entry condition
+Forward transition
+Backward transition
+Validation
+Persistence
+Runtime evidence
+
+
+
+
+
+
+
+
+Pattern C — Route-Preserving Overlay
+Use for Filter, Quick View, Change Dish, Manage Delivery, and Feedback.
+
+
+const [filterOpen, setFilterOpen] = useState(false);
+return (
+<>
+<button
+type="button"
+onClick={() => setFilterOpen(true)}
+aria-haspopup="dialog"
+aria-expanded={filterOpen}
+>
+Filter
+</button>
+&lt;MenuFilterSheet
+  open={filterOpen}
+  onOpenChange={setFilterOpen}
+/&gt;
+</>
+);
+
+
+
+
+
+
+</>);
+The overlay must:
+
+
+Remain on the parent route
+Receive focus on open
+Expose an accessible title
+Trap focus
+Close safely
+Restore focus to the trigger
+Preserve unsaved state according to contract
+
+
+
+
+Do not implement an overlay as:
+
+
+/menu#filters
+
+
+
+
+unless the hash is only optional deep-link state and the interaction remains a real accessible overlay.
+
+
+
+
+Pattern D — Global Overlay
+Use for Cart Drawer and other application-level surfaces.
+Recommended render chain:
+
+
+Root layout
+→ CartProvider
+→ GlobalOverlayHost
+→ MiniCartBar
+→ CartDrawer
+
+
+
+
+Example:
+
+
+<CartProvider>
+{children}
+<MiniCartBar />
+<GlobalOverlayHost />
+
+
+
+
+
+
+The Cart Drawer must not require every route to import it directly.
+Required commerce surfaces:
+
+
+/
+/menu
+/dish/[slug]
+/marketplace
+/marketplace/[slug]
+/meal-deals
+/meal-recommendations
+
+
+
+
+Opening the drawer must preserve:
+
+
+Current route
+Route parameters
+Scroll position where practical
+Cart state
+Configured options
+
+
+
+
+
+
+
+
+Pattern E — Server-Driven Recovery State
+Use for quote expiry, inventory failure, payment timeout, and unserviceable addresses.
+Do not render these only through client timers or fake local state.
+Example transition:
+
+
+Checkout active
+→ Server returns QUOTE_EXPIRED
+→ Quote Expired Recovery renders
+→ User requests refresh
+→ Server returns refreshed quote and difference
+→ Customer accepts
+→ Checkout becomes active
+
+
+
+
+Client rendering:
+
+
+switch (checkoutState.status) {
+case "quote-expired":
+return (
+<QuoteExpiredRecovery
+quote={checkoutState.quote}
+onRefresh={refreshQuote}
+/>
+);
+case "payment-processing":
+return <PaymentProcessing attempt={checkoutState.attempt} />;
+case "payment-unresolved":
+return (
+<PaymentTimeoutRecovery
+attempt={checkoutState.attempt}
+onCheckStatus={recheckAttempt}
+/>
+);
+}
+
+
+
+
+
+
+case "payment-unresolved":return (<PaymentTimeoutRecoveryattempt={checkoutState.attempt}onCheckStatus={recheckAttempt}/>);}
+The runtime test must trigger the actual contract response, usually through an approved mock server or Playwright interception.
+
+
+
+
+5. Layout Wiring
+Every route must map to exactly one shell.
+GlobalLayout
+Use for browse, account, ongoing service, and most clinical discovery routes.
+Typical routes:
+
+
+/
+/menu
+/marketplace
+/plans
+/meal-planner
+/account
+/account/orders
+/account/connections
+/metabolic
+/performance
+/clinical
+/rd
+/qa
+/challenges
+
+
+
+
+Expected shell:
+
+
+Global header
+Location context
+Four-tab mobile navigation
+Shared Cart Drawer
+Desktop footer where appropriate
+
+
+
+
+FocusLayout
+Use for focused detail, configuration, checkout, and confirmation.
+Typical routes:
+
+
+/dish/[slug]
+/marketplace/[slug]
+/plan/[planId]
+/trial
+/quick-setup
+/custom-build
+/checkout
+/order/confirmed/[orderId]
+/corporate/invite/[token]
+
+
+
+
+Expected shell:
+
+
+Compact route header
+Back action
+No global header
+No mobile bottom tabs
+One conversion ledger at most
+
+
+
+
+B2BLayout
+Use for corporate and partner acquisition.
+Typical routes:
+
+
+/corporate
+/corporate/[slug]
+/corporate/[slug]/lunch-planner
+/corporate-wellness
+/partners/gyms
+/partners/fitness-clubs
+/partners/dietitians
+/rd-partners
+
+
+
+
+Expected shell:
+
+
+Tanmatra-led branding
+Secondary partner brand
+No consumer bottom navigation
+Lead, eligibility, or activation focus
+
+
+
+
+Preferred implementation
+Use route groups:
+
+
+app/
+(global)/
+(focus)/
+(b2b)/
+
+
+
+
+Avoid maintaining route arrays in browser scripts to decide which chrome to hide.
+
+
+
+
+6. Route-to-Screen Wiring Matrix
+The canonical wiring should use the following structure.
+Design-system references
+
+
+4.1
+Route: /styleguide?theme=dark
+Type: design-system-reference
+Layout: GlobalLayout or reference-only shell
+State: dark
+4.2
+Route: /styleguide?theme=light
+Type: design-system-reference
+Layout: GlobalLayout or reference-only shell
+State: light
+
+
+
+
+
+
+4.2Route: /styleguide?theme=lightType: design-system-referenceLayout: GlobalLayout or reference-only shellState: light
+
+
+
+
+Core commerce
+
+
+5.1
+/
+Tanmatra Home
+route
+GlobalLayout
+5.2
+/menu
+Daily Menu
+route
+GlobalLayout
+5.3
+/menu
+Menu Filter Sheet
+overlay
+Trigger: Filter
+5.4
+/menu
+Dish Quick View
+overlay
+Trigger: Dish-card quick action
+5.5
+/dish/[slug]
+Dish PDP
+route
+FocusLayout
+5.6
+Global commerce overlay
+Cart Drawer
+drawer
+Trigger: MiniCartBar / Cart control
+5.7
+/marketplace
+Marketplace
+route
+GlobalLayout
+5.8
+/marketplace/[slug]
+Marketplace Product PDP
+route
+FocusLayout
+5.9
+/meal-deals
+Meal Deals
+route
+GlobalLayout
+5.10
+/meal-recommendations
+Meal Recommendations
+route
+GlobalLayout
+5.11
+/meal-guides/[dishSlug]
+Meal Guide
+route
+GlobalLayout or FocusLayout according to approved manifest
+5.12
+/recipes
+Recipe Library
+route
+GlobalLayout
+
+
+
+
+
+
+5.12/recipesRecipe LibraryrouteGlobalLayout
+
+
+
+
+Subscription discovery and configuration
+
+
+6.1
+/plans
+Plans Discovery
+route
+GlobalLayout
+6.2
+/plans
+Mealtime Preference
+overlay
+Trigger: Select mealtime
+6.3
+/plan/[planId]
+Initial Configuration
+component-state
+FocusLayout
+6.4
+/plan/[planId]
+Day Meal Lineup
+component-state
+FocusLayout
+6.5
+/plan/[planId]
+Change Dish
+overlay
+Trigger: Change dish
+6.6
+/plan/[planId]
+Accompaniment Editor
+overlay
+Trigger: Edit accompaniment
+6.7
+/plan/[planId]
+Delivery Schedule
+component-state
+FocusLayout
+6.8
+/trial
+Three-Day Trial
+route
+FocusLayout
+6.9.1
+/quick-setup
+Goal
+wizard-stage
+FocusLayout
+6.9.2
+/quick-setup
+Food Pattern
+wizard-stage
+FocusLayout
+6.9.3
+/quick-setup
+Cadence
+wizard-stage
+FocusLayout
+
+
+
+
+
+
+6.9.3/quick-setupCadencewizard-stageFocusLayout
+
+
+
+
+Custom Build
+
+
+7.2
+/custom-build
+Goal
+wizard-stage
+7.3
+/custom-build
+Routine
+wizard-stage
+7.4
+/custom-build
+Wearable Interstitial
+component-state
+7.5
+/custom-build
+Food Preferences
+wizard-stage
+7.6
+/custom-build
+Plan Intensity
+wizard-stage
+7.7
+/custom-build
+Duration and Renewal
+wizard-stage
+7.8
+/custom-build
+Configuration Review
+wizard-stage
+7.9
+/custom-build
+Generated Plan Review
+component-state
+7.10
+/custom-build
+Pre-Checkout Questions
+component-state
+
+
+
+
+
+
+7.10/custom-buildPre-Checkout Questionscomponent-state
+All use:
+
+
+FocusLayout
+
+
+
+
+
+
+
+
+Checkout and confirmation
+
+
+8.1
+/checkout
+Checkout
+route
+FocusLayout
+8.2
+/checkout
+Quote Expired Recovery
+recovery-state
+Trigger: server quote expired or superseded
+8.3
+/order/confirmed/[orderId]
+Order Confirmed
+route
+FocusLayout
+
+
+
+
+
+
+8.3/order/confirmed/[orderId]Order ConfirmedrouteFocusLayout
+
+
+
+
+Active service
+
+
+9.1
+/meal-planner
+Meal Planner
+route
+GlobalLayout
+9.2
+/meal-planner
+Manage Delivery
+overlay
+Trigger: Manage delivery
+9.3
+/account/subscriptions
+Subscription Management
+route
+GlobalLayout
+
+
+
+
+
+
+9.3/account/subscriptionsSubscription ManagementrouteGlobalLayout
+
+
+
+
+Account and telemetry
+
+
+10.1
+/account
+Account Hub
+route
+10.2
+/account/orders
+Order History
+route
+10.3
+/account/addresses
+Addresses
+route
+10.4
+/account/preferences
+Preferences
+route
+10.5
+/account/wellness
+Wellness
+route
+10.6
+/account/history
+Consumption History
+route
+10.7
+/account/symptoms
+Symptoms and Reactions
+route
+10.8
+/account/connections
+Health Connections
+route
+10.9
+/account or /meal-planner
+Post-Meal Feedback
+overlay
+Trigger: Rate meal
+
+
+
+
+
+
+10.9/account or /meal-plannerPost-Meal FeedbackoverlayTrigger: Rate meal
+Account routes generally use:
+
+
+GlobalLayout
+
+
+
+
+
+
+
+
+Clinical and RD
+
+
+11.1
+/metabolic
+Metabolic Program
+route
+11.2
+/performance
+Performance Nutrition
+route
+11.3
+/clinical
+Clinical Hub
+route
+11.4
+/care/[condition]
+Condition Care
+route
+11.5
+/rd
+RD Directory
+route
+11.6
+/rd
+RD Consultation Booking
+component-state or overlay
+Trigger: Book slot
+11.7
+/coach
+AI Nutrition Coach
+route
+11.8
+/qa
+Dietitian Q&A
+route
+
+
+
+
+
+
+11.8/qaDietitian Q&Aroute
+The RD booking state must use FocusLayout behavior even if the directory uses GlobalLayout.
+
+
+
+
+Corporate and partners
+
+
+12.1
+/corporate/invite/[token]
+Corporate Invite
+route
+FocusLayout
+12.2
+/corporate-wellness
+Corporate Wellness
+route
+B2BLayout
+12.3
+/partners/gyms
+Gym Partner
+route
+B2BLayout
+12.4
+/partners/gyms
+Gym Membership Verification
+component-state or overlay
+Trigger: Check my member benefit
+12.5
+/partners/fitness-clubs
+Fitness Club Portal
+route
+B2BLayout
+12.6
+/partners/dietitians
+Dietitian Referral Activation
+route
+B2BLayout
+12.7
+/rd-partners
+RD Partner Network
+route
+B2BLayout
+
+
+
+
+
+
+12.7/rd-partnersRD Partner NetworkrouteB2BLayout
+
+
+
+
+Challenges
+
+
+13.1
+/challenges
+Challenge Discovery
+route
+GlobalLayout
+13.2
+/challenges/[slug]
+Challenge Detail and Registration
+route
+GlobalLayout or FocusLayout according to approved manifest
+13.3
+/challenges/tracker
+Active Challenge Tracker
+route
+GlobalLayout
+
+
+
+
+
+
+13.3/challenges/trackerActive Challenge TrackerrouteGlobalLayout
+
+
+
+
+Utility and recovery states
+
+
+14.1
+Global Cart Drawer
+Empty Cart
+empty-state
+14.2
+/menu
+No Matching Meals
+empty-state
+14.3
+/plan/[planId] or /custom-build
+Plan Generation Loading
+loading-state
+14.4
+/plan/[planId] or /custom-build
+Plan Generation Error Recovery
+error-state / recovery-state
+14.5
+/account/addresses or checkout address context
+Unserviceable Address
+component-state / recovery-state
+14.6
+/checkout
+Payment Processing
+component-state
+14.7
+/checkout
+Payment Timeout Recovery
+recovery-state
+
+
+
+
+
+
+14.7/checkoutPayment Timeout Recoveryrecovery-state
+
+
+
+
+7. Trigger-Wiring Requirements
+Every non-route screen must have a defined trigger.
+Trigger record
+
+
+{
+"type": "button",
+"accessibleName": "Change dish",
+"sourceRoute": "/plan/[planId]",
+"sourceState": "lineup-active",
+"requiredConditions": [
+"meal slot is editable",
+"cutoff has not passed"
+],
+"blockedBehavior": {
+"message": "Changes close four hours before preparation.",
+"nextAction": "Contact support"
+}
+}
+
+
+
+
+Valid trigger types
+
+
+button
+link
+route navigation
+wizard transition
+server response
+empty-data condition
+error response
+timeout
+permission result
+inventory result
+serviceability result
+
+
+
+
+Invalid triggers
+
+
+Source file exists
+Component can be rendered manually
+Developer query parameter only
+Hidden debug control
+Test-only direct component mount
+Manifest claim
+
+
+
+
+
+
+
+
+8. State-Machine Wiring
+Complex flows must use explicit states and transitions.
+Plan configuration
+
+
+initial-configuration
+→ generating
+→ lineup-active
+→ change-dish-open
+→ lineup-active
+→ accompaniment-editor-open
+→ lineup-active
+→ delivery-schedule
+→ ready-for-quote
+
+
+
+
+Quick Setup
+
+
+goal
+→ food-pattern
+→ cadence
+→ complete
+
+
+
+
+Custom Build
+
+
+goal
+→ routine
+→ wearable-interstitial
+→ preferences
+→ intensity
+→ duration
+→ review
+→ generating
+→ generated-plan
+→ pre-checkout
+→ ready-for-quote
+
+
+
+
+Checkout
+
+
+quote-loading
+→ quote-active
+→ payment-creating
+→ payment-processing
+→ payment-succeeded
+quote-active
+→ quote-expired
+→ quote-refreshing
+→ quote-changed
+→ quote-active
+payment-processing
+→ payment-unresolved
+→ status-rechecking
+→ payment-succeeded | payment-failed | payment-unresolved
+
+
+
+
+
+
+payment-processing→ payment-unresolved→ status-rechecking→ payment-succeeded | payment-failed | payment-unresolved
+Subscription management
+
+
+active
+→ pause-preview
+→ paused
+→ resume-preview
+→ active
+active
+→ skip-preview
+→ skipped
+active
+→ cancel-preview
+→ cancelled
+
+
+
+
+
+
+active→ cancel-preview→ cancelled
+Every transition must identify:
+
+
+Action
+Validation
+Server authority
+Loading state
+Success state
+Failure state
+Recovery action
+
+
+
+
+
+
+
+
+9. Production Diagnostic Markers
+Every critical screen or state should expose non-visual test markers.
+Example route:
+
+
+<main
+id="main"
+data-ui-generation="stitch-74"
+data-screen-id="6.1"
+data-screen-state="default"
+>
+
+
+
+
+Example overlay:
+
+
+<DialogContent
+data-ui-generation="stitch-74"
+data-screen-id="6.5"
+data-screen-state="change-dish-sheet-open"
+>
+
+
+
+
+Example wizard stage:
+
+
+<section
+data-screen-id="7.5"
+data-screen-state="step-3-preferences"
+>
+
+
+
+
+These markers support automated verification but do not replace semantic roles.
+Tests should still prefer:
+
+
+role
+accessible name
+visible heading
+expected action
+
+
+
+
+
+
+
+
+10. Runtime Verification Requirements
+Each wired entry must have a runtime test.
+Route example
+
+
+test("6.1 plans discovery is reachable", async ({ page }) => {
+await page.goto("/plans");
+await expect(
+page.getByRole("heading", {
+name: /choose your meal plan/i,
+}),
+).toBeVisible();
+await expect(
+page.locator('[data-screen-id="6.1"]'),
+).toBeVisible();
+});
+
+
+
+
+
+
+await expect(page.locator('[data-screen-id="6.1"]'),).toBeVisible();});
+Overlay example
+
+
+test("6.5 change dish sheet is wired", async ({ page }) => {
+await page.goto("/plan/metabolic-balance");
+await page.getByRole("button", {
+name: /change dish/i,
+}).first().click();
+const dialog = page.getByRole("dialog", {
+name: /change dish/i,
+});
+await expect(dialog).toBeVisible();
+await expect(
+dialog.locator('[data-screen-id="6.5"]'),
+).toBeVisible();
+});
+
+
+
+
+
+
+await expect(dialog).toBeVisible();await expect(dialog.locator('[data-screen-id="6.5"]'),).toBeVisible();});
+Wizard example
+
+
+test("custom build goal advances to routine", async ({ page }) => {
+await page.goto("/custom-build");
+await expect(
+page.locator('[data-screen-id="7.2"]'),
+).toBeVisible();
+await page.getByText("Everyday healthy eating", {
+exact: true,
+}).click();
+await page.getByRole("button", {
+name: /next.*routine/i,
+}).click();
+await expect(
+page.locator('[data-screen-id="7.3"]'),
+).toBeVisible();
+});
+
+
+
+
+
+
+await expect(page.locator('[data-screen-id="7.3"]'),).toBeVisible();});
+Recovery example
+
+
+test("8.2 expired quote recovery is wired", async ({ page }) => {
+await page.route("/api/quotes/", async (route) => {
+await route.fulfill({
+status: 409,
+contentType: "application/json",
+body: JSON.stringify({
+code: "QUOTE_EXPIRED",
+}),
+});
+});
+await page.goto("/checkout");
+await expect(
+page.locator('[data-screen-id="8.2"]'),
+).toBeVisible();
+await expect(
+page.getByRole("button", {
+name: /refresh quote|refresh plan/i,
+}),
+).toBeVisible();
+});
+
+
+
+
+
+
+await expect(page.getByRole("button", {name: /refresh quote|refresh plan/i,}),).toBeVisible();});
+
+
+
+
+11. Wiring Status Model
+Every entry should progress through:
+
+
+declared
+→ source-defined
+→ render-chain-wired
+→ trigger-wired
+→ transition-wired
+→ locally-reachable
+→ container-reachable
+→ staging-reachable
+→ production-reachable
+→ visually-approved
+→ accessibility-approved
+
+
+
+
+Recommended status fields
+
+
+{
+"declared": "verified",
+"sourceDefinition": "verified",
+"renderChain": "verified",
+"triggerDefinition": "verified",
+"transitionDefinition": "verified",
+"localRuntime": "verified",
+"containerRuntime": "pending",
+"stagingRuntime": "pending",
+"productionRuntime": "pending",
+"visualApproval": "pending",
+"accessibilityApproval": "pending"
+}
+
+
+
+
+Allowed values:
+
+
+pending
+verified
+missing
+partial
+broken
+blocked
+not-applicable
+
+
+
+
+
+
+
+
+12. Wiring Defect Classification
+Missing source
+
+
+No implementation definition exists.
+
+
+
+
+Unwired source
+
+
+Implementation exists but is absent from the render chain.
+
+
+
+
+Missing trigger
+
+
+Rendered implementation exists but no customer action reaches it.
+
+
+
+
+Broken transition
+
+
+Trigger exists but target state does not render correctly.
+
+
+
+
+Wrong route
+
+
+State is reachable only from an unapproved route.
+
+
+
+
+Partial stub
+
+
+Visual shell renders without required interaction or domain behavior.
+
+
+
+
+Domain-disconnected UI
+
+
+UI state exists but is driven only by local mock state rather than the correct server lifecycle.
+
+
+
+
+Layout mismatch
+
+
+Screen renders under the wrong application shell.
+
+
+
+
+
+
+
+
+13. Wiring Quality Gate
+A screen or state passes wiring only when:
+
+
+[ ] Manifest entry exists
+[ ] Artifact type is correct
+[ ] Canonical route is correct
+[ ] Layout is correct
+[ ] Source implementation exists
+[ ] Route/render chain includes it
+[ ] Trigger exists
+[ ] Transition exists
+[ ] State is runtime-reachable
+[ ] Required action works
+[ ] Back/close behavior works
+[ ] Loading and error behavior exists where applicable
+[ ] Domain service owns authoritative state
+[ ] Screenshot is attached
+[ ] Trace is attached
+[ ] Automated test passes
+[ ] Evidence SHA is recorded
+
+
+
+
+
+
+
+
+14. Route-Wiring Verification Command
+Create:
+
+
+tools/verify-stitch-wiring.mjs
+
+
+
+
+The verifier should validate static requirements:
+
+
+74 unique prompt IDs
+Valid canonical routes
+Valid artifact types
+Implementation files exist
+Route entry points exist
+Test files exist
+Evidence fields use allowed statuses
+No duplicate screen IDs
+No invented layout names
+No route/overlay classification conflicts
+
+
+
+
+It must not claim runtime reachability from static evidence.
+Recommended scripts:
+
+
+{
+"scripts": {
+"verify:stitch-manifest": "node tools/verify-stitch-manifest.mjs",
+"verify:stitch-wiring": "node tools/verify-stitch-wiring.mjs",
+"test:stitch-runtime": "playwright test e2e/stitch-runtime"
+}
+}
+
+
+
+
+Report separately:
+
+
+Manifest validation
+Static wiring validation
+Runtime reachability
+Visual approval
+Accessibility approval
+
+
+
+
+
+
+
+
+15. Wiring Completion Report
+Use:
+
+
+STITCH ROUTE AND STATE WIRING
+Manifest entries:                  X/74
+Source definitions:                X/74
+Render chains:                     X/74
+Triggers:                          X/74
+Transitions:                       X/74
+Locally reachable:                 X/74
+Container reachable:               X/74
+Staging reachable:                 X/74
+Production reachable:              X/74
+Visual approvals:                  X/74
+Accessibility approvals:           X/74
+Missing source:
+Unwired source:
+Missing triggers:
+Broken transitions:
+Wrong-route states:
+Partial stubs:
+Domain-disconnected states:
+Layout mismatches:
+WIRING VERDICT: PASS / FAIL
+
+
+
+
+
+
+WIRING VERDICT: PASS / FAIL
+Final Wiring Rule
+The implementation is complete only when each Stitch screen can answer:
+
+
+Where does the customer enter?
+What action triggers the screen?
+Which route owns the screen?
+Which layout surrounds it?
+Which state transition produces it?
+Which service owns its authoritative data?
+How does the customer leave or continue?
+Which automated test proves it?
+Which screenshot and trace prove it?
+Which SHA produced the evidence?
+
+
+
+
+If any answer is missing, the Stitch output is not fully wired—even when the component file, route file, screenshot, and manifest entry already exist.

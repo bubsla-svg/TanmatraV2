@@ -1,7 +1,7 @@
 "use client"; // Interactive hero CTA clicks and assessment trigger event emission
 
 import React from "react";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/SafeImage";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { emitLpEvent } from "@/lib/lpEvents";
@@ -67,7 +67,7 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
             {headStart}{" "}
             <span className="inline-block align-middle mx-1.5 w-12 h-10 sm:w-16 sm:h-12 rounded-2xl overflow-hidden border border-line translate-y-[-2px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <SafeImage
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTXgMAoQYxN5p3zcei43W83rQfIoGOdQIO50IXWQyIhBz5qZE3bZ49KT7w1hQmkMVfz9MXWxiPKiegmpAqtWbxDBHxl0ef-8j-NGzOrqsz4XffWPew40F1JHL4h-OejaOjZc6ghvxRhoaseR4F8xrQprNkxz7yPyq8l7BxubvT41I0uW_7RUl4wYQ-c8EyjkcbmTS-iCXT8JY93CjsazBM-FnaNe91ByEkXEjDeN4gSRIq1LBRkNvzifaunvZYeSiBgpjFbIKtA1I"
                 alt=""
                 aria-hidden
@@ -127,7 +127,7 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
           <div className="overflow-hidden rounded-3xl border border-line bg-surface-raised shadow-2xl shadow-black/40">
             <div className="relative aspect-[4/5] w-full">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <SafeImage
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkXUatAbp7GpnFbDf0BTpJCPRd2FRuRIoRlbyoRY_B4NGgShl6G32eTYQQ1uxUSny6sOye9Rpm3Xe7cKS4wizt7QZgR72SoEfWc7C02yvSId2aujwgQ8RFWMZVmOfN4ckkE81T7Rkli2yA5Z-tVzDrRcgOmFT5r8klXpPd2k8EuassiZLq5821La5aJB_rvWSK_UQUdLuk5qZwIYRIVhJ85beF2yu9DY9gqtx9XAGuHIN_-stMpiWveI18_bU9E1qUpqZ9a_hlIrE"
                 alt="Chef-plated clinical meal, photographed from above"
                 className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"

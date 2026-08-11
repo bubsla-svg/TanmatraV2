@@ -1,4 +1,5 @@
 import React from "react";
+import { SafeImage } from "@/components/ui/SafeImage";
 import { PrimaryCTA } from "./CTA";
 
 interface InlineErrorProps {
@@ -39,7 +40,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     <div className={`flex flex-col items-center justify-center text-center p-8 max-w-md mx-auto ${className}`}>
       {imageUrl && (
         <div className="w-48 h-48 mb-6 rounded-full overflow-hidden bg-surface border border-white/5 relative">
-          <img src={imageUrl} alt="" className="w-full h-full object-cover opacity-80" />
+          <SafeImage src={imageUrl} alt="" className="w-full h-full object-cover opacity-80" />
         </div>
       )}
       <h3 className="text-xl font-bold text-ink mb-2">{title}</h3>
