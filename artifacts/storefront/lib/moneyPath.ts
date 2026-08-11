@@ -78,6 +78,11 @@ export interface PlanOrderRef {
    *  so a caller resuming payment with a bare {orderId, subscriptionId} still
    *  type-checks. */
   creditAppliedPaise?: number;
+  /** True when the server settled the first cycle entirely from credit at
+   *  creation (chargePaise === 0) — see finishPlanPayment. Absent/false is
+   *  the safe default: always pay via the gateway unless the server
+   *  explicitly says otherwise. */
+  settled?: boolean;
 }
 
 export async function runCheckout(
@@ -108,6 +113,7 @@ export async function runCheckout(
     orderId: created.subscription.externalOrderId ?? `sub-${created.subscription.id}`,
     subscriptionId: created.subscription.id,
     creditAppliedPaise: created.creditAppliedPaise ?? 0,
+    settled: created.settled === true,
   };
   params.onCreated?.(ref);
   return finishPlanPayment(ref, params.razorpay, deps, {
@@ -139,6 +145,19 @@ export async function finishPlanPayment(
     onCaptured?: (facts: PaidFacts) => void;
   },
 ): Promise<CheckoutResult> {
+  // §12 (docs/reconciliation): a verified zero-charge settlement must never
+  // create a Razorpay order — POST /payments/razorpay/order 409s outright
+  // for one (DEF-RECON-ZEROPAYABLE-001). ref.settled is server-computed
+  // (moneyPath's createSubscription call, above) and only ever true when
+  // credit fully covered the first cycle at creation, so this order's
+  // status is already "preparing" — nothing left to verify against the
+  // gateway. The confirmation page (goToConfirmation → /order/confirmed)
+  // fetches the order's authoritative status itself; no need to duplicate
+  // that fetch here.
+  if (ref.settled) {
+    return { orderId: ref.orderId, status: "preparing" };
+  }
+
   const order = await deps.createRazorpayOrder({
     orderId: ref.orderId,
     subscriptionId: ref.subscriptionId,
