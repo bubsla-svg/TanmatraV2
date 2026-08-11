@@ -127,7 +127,9 @@
     "impact": "Dead-end on a revenue CTA, §15.",
     "reuseDecision": "REUSE_WITH_REFACTOR — TrialStart needs its own always-visible sticky bar regardless of cart state (the FocusLayout convention every other focus-route CTA already follows), not a MiniCartBar handoff that doesn't exist in this shell.",
     "stitchIds": ["6.8"],
-    "phase": 4
+    "phase": 4,
+    "status": "RESOLVED",
+    "resolution": "Fixed (2026-08-11): removed the cart.lines.length === 0 guard — the sticky Start bar in components/trial/TrialStart.tsx now always renders, since FocusLayout mounts no MiniCartBar to ever hand the bottom edge to (cart state or not, nothing else can occupy it). Regression coverage added in e2e/specs/cuj-04-trial.spec.ts ('the start CTA stays visible and clickable even with items already in cart')."
   },
   {
     "id": "DEF-RECON-PANTRY-001",
@@ -139,7 +141,9 @@
     "impact": "Terminal CTA on a real, wired AI feature does nothing when pressed.",
     "reuseDecision": "REUSE_WITH_REFACTOR — wire to the existing addons/cart mutation path; also flagged for a design-token pass (raw Tailwind palette classes, not the token system the rest of the storefront uses).",
     "stitchIds": [],
-    "phase": 4
+    "phase": 4,
+    "status": "RESOLVED",
+    "resolution": "Fixed (2026-08-11): the server's suggestedTanmatraAddOns (lib/pantryVisionScanner.ts) are catalogue dishes sliced off the menu, not a subscription add-on (AddOnId is a fixed 2-value enum with an incompatible shape) — so the cart mutation path was the correct one, not the addons API. Wired the button to lib/cartStore.ts's addLine via useCart(), the same mechanism CustomBuildHub already uses, and relabeled it 'Add to cart' (was 'Add to Subscription', which no longer matched the actual mutation). Regression coverage added in e2e/specs/stitch-runtime/account.spec.ts ('pantry scan suggestion Add to cart adds a real cart line'). The raw-Tailwind design-token cleanup flagged in reuseDecision is intentionally NOT part of this fix — out of scope for a CTA-wiring defect; still open as a follow-up."
   },
   {
     "id": "DEF-RECON-5.5-REVIEWS-001",
