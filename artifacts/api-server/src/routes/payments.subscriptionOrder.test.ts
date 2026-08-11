@@ -330,6 +330,42 @@ async function createSubscription(
   return { subId };
 }
 
+let trialPhoneSeq = 0;
+/** Unique per-call so the one-per-phone trial redemption check never
+ *  collides between test runs (mirrors subscriptions.planV2Trial.test.ts). */
+function freshTrialPhone(): string {
+  trialPhoneSeq += 1;
+  return `9944${String(100000 + trialPhoneSeq).slice(-6)}`;
+}
+
+/** Create a LIVE 3-Day Taste Test trial subscription — cadence "weekly" (the
+ *  same cadence value a real recurring plan uses; trials reuse it purely for
+ *  delivery-window scheduling, see payments.ts's isRecurring gate) but with
+ *  planId "trial_3day" so the server persists `trialState: "trial_purchased"`. */
+async function createTrialSubscription(user: TestUser): Promise<{ subId: number }> {
+  const res = await api(
+    "POST",
+    "/subscriptions",
+    {
+      planId: "trial_3day",
+      track: "veg",
+      phone: freshTrialPhone(),
+      cadence: "weekly",
+      mealsPerDelivery: 3,
+      deliveryWindow: "12:00-14:00",
+      startDate: futureISO(2),
+      members: [{ name: "Primary", diet: "any", allergens: [], spiceLevel: "medium" }],
+      defaultItems: [],
+    },
+    user,
+  );
+  assert.equal(res.status, 201, JSON.stringify(res.json));
+  assert.equal(res.json.subscription.trialState, "trial_purchased", "fixture must be a live trial");
+  const subId = res.json.subscription.id as number;
+  CREATED_SUB_IDS.push(subId);
+  return { subId };
+}
+
 /**
  * Seed an order directly via drizzle. On `main` today, POST /subscriptions
  * does not yet create the first-cycle order row itself (that's a separate,
@@ -556,6 +592,60 @@ test("quarterly cadence never mints a recurring token even with a correctly-owne
   assert.ok(rzpCall);
   assert.equal(rzpCall!.body.customer_id, undefined);
   assert.equal(rzpCall!.body.token, undefined);
+});
+
+// ---------------------------------------------------------------------------
+// 2b. TrialState gate — a LIVE trial must never mint a recurring token, even
+//     though it reuses cadence "weekly" (the same value a real recurring
+//     plan uses) purely for delivery-window scheduling. Pins the
+//     `!isLiveTrialState(sub.trialState) &&` clause in payments.ts's
+//     `isRecurring` check — see docs/audit/P0-9-TRIAL-LIFECYCLE.md. Before
+//     this test, that clause was exercised only incidentally, and a stale
+//     comment elsewhere in the codebase (trialLifecycleScheduler.ts) claimed
+//     it did not exist at all.
+// ---------------------------------------------------------------------------
+
+test("a live trial (weekly cadence) never mints a recurring token, and verify writes no mandate", async () => {
+  const user = await makeUser("trial");
+  const { subId } = await createTrialSubscription(user);
+  const externalOrderId = `sub-${subId}`;
+  // POST /subscriptions already created and linked the first-cycle order —
+  // see the weekly (non-trial) test above for why manual seeding is skipped.
+
+  const customerCallsBefore = rzpCustomerCalls.length;
+
+  const orderRes = await api(
+    "POST",
+    "/payments/razorpay/order",
+    { orderId: externalOrderId, subscriptionId: subId },
+    user,
+  );
+  assert.equal(orderRes.status, 200, JSON.stringify(orderRes.json));
+  const razorpayOrderId = orderRes.json.razorpayOrderId as string;
+
+  assert.equal(
+    rzpCustomerCalls.length,
+    customerCallsBefore,
+    "a live trial must never create a Razorpay customer, despite its weekly cadence",
+  );
+  const rzpCall = rzpOrderCalls.find((c) => c.id === razorpayOrderId);
+  assert.ok(rzpCall);
+  assert.equal(rzpCall!.body.customer_id, undefined);
+  assert.equal(rzpCall!.body.token, undefined);
+
+  // paymentId intentionally left unregistered in paymentToOrder — a genuine
+  // non-recurring capture from Razorpay carries no customer_id/token_id
+  // either, which is exactly what the mock returns by default.
+  const paymentId = `pay_${razorpayOrderId}`;
+  const verifyRes = await postVerify({
+    orderId: externalOrderId,
+    razorpayPaymentId: paymentId,
+    razorpayOrderId,
+    razorpaySignature: verifySignature(razorpayOrderId, paymentId),
+  });
+  assert.equal(verifyRes.status, 200, JSON.stringify(verifyRes.json));
+  assert.equal(verifyRes.json.autopayDisclaimer, undefined, "no mandate ⇒ no autopay disclaimer");
+  assert.equal(await mandateRow(subId), null, "no mandate row for a live trial subscription");
 });
 
 // ---------------------------------------------------------------------------

@@ -113,19 +113,24 @@ async function findTrialCompletionAnchor(
  * revoke the autopay mandate) intentionally mirror it exactly.
  *
  * Trial subscriptions never get a Razorpay autopay mandate in the intended
- * flow (a trial's one-off charge doesn't need one) — but the /payments
- * create-order `isRecurring` gate only checks `cadence === "weekly" ||
- * "fortnightly"`, with no trialState exclusion (confirmed by reading
- * routes/payments.ts), and the trial fixtures in this codebase do use
- * cadence "weekly" (see subscriptions.trial.test.ts). So a trial *can*, in
- * an edge case, end up with a live mandate row exactly like a standard
- * subscription. cancelAutopayMandate is documented idempotent/safe to call
- * on a subscription with zero mandate rows (the common case) and correctly
- * revokes billing in the rare case one exists anyway — so it's called
- * unconditionally here, same as the real /subscriptions/:id/cancel route.
- * Its own DB step is wrapped separately so a mandate-revocation failure
- * never rolls back the (more important) abandonment flip, and never
- * counts this row as a sweep error.
+ * flow (a trial's one-off charge doesn't need one), and — corrected 2026-08-11,
+ * see docs/audit/P0-9-TRIAL-LIFECYCLE.md — that is what the current code
+ * actually does: the /payments create-order `isRecurring` gate is
+ * `!isLiveTrialState(sub.trialState) && (cadence === "weekly" ||
+ * "fortnightly")`, so a live trial is excluded even though it reuses cadence
+ * "weekly" for scheduling (see subscriptions.trial.test.ts), and the
+ * post-payment mandate-registration step independently re-checks
+ * `isLiveTrialState` before ever writing a mandate row, whether confirmation
+ * came from verify or the webhook. This comment previously (and wrongly)
+ * claimed the create-order gate had no trialState exclusion at all.
+ * cancelAutopayMandate is still called unconditionally below regardless: it
+ * is documented idempotent/safe to call on a subscription with zero mandate
+ * rows (the common case, and now the *only* case for a trial that stayed on
+ * the intended path), so this is defense-in-depth against a future
+ * regression in either gate above, not a known live gap. Its own DB step is
+ * wrapped separately so a mandate-revocation failure never rolls back the
+ * (more important) abandonment flip, and never counts this row as a sweep
+ * error.
  */
 async function abandonTrial(sub: Subscription): Promise<void> {
   await db
