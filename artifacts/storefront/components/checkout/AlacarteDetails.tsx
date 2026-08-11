@@ -13,6 +13,8 @@ import { flagCartAllergens } from "@/lib/allergenAck";
 import type { QuoteSnapshot } from "@/lib/quoteApi";
 import type { QuoteUiState } from "./AlacarteCheckout";
 import { ADDRESS_DRAFT_KEY } from "./AlacarteCheckout";
+import { AllergenAckControl } from "./AllergenAckControl";
+import { QuoteBreakdown } from "./QuoteBreakdown";
 
 export interface AlacarteAddress {
   line1: string;
@@ -224,64 +226,7 @@ export function AlacarteDetails({
           ))}
         </ul>
 
-        {/* Server-owned totals. Never client arithmetic: the QuoteSnapshot is
-            priced by the exact code POST /orders bills from. */}
-        <div className="mt-2 border-t border-line pt-3">
-          {quoteState === "loading" && (
-            <p role="status" className="py-1 text-sm text-ink-muted">Pricing your order…</p>
-          )}
-          {quoteState === "error" && (
-            <div role="status" className="flex flex-col gap-2 py-1">
-              <p className="text-sm text-ink-muted">{quoteError ?? "We couldn't price your order just now."}</p>
-              <Button type="button" variant="outline" shape="pill" size="fluid" onClick={onRefreshQuote} className="self-start bg-surface px-4 py-2 text-sm font-semibold">
-                Retry pricing
-              </Button>
-            </div>
-          )}
-          {quoteState === "expired" && (
-            <div role="status" className="flex flex-col gap-2 py-1">
-              <p className="text-sm text-ink-muted">This price snapshot has expired — prices may have changed.</p>
-              <Button type="button" variant="outline" shape="pill" size="fluid" onClick={onRefreshQuote} className="self-start bg-surface px-4 py-2 text-sm font-semibold">
-                Refresh quote
-              </Button>
-            </div>
-          )}
-          {quoteState === "active" && quote && (
-            <dl className="flex flex-col gap-1.5 text-sm">
-              <div className="flex justify-between gap-3">
-                <dt className="text-ink-muted">Item subtotal</dt>
-                <dd className="tabular text-ink">{formatPaise(quote.subtotalPaise)}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-ink-muted">Delivery</dt>
-                <dd className="tabular text-ink">
-                  {quote.deliveryFeePaise === 0 ? "Free" : formatPaise(quote.deliveryFeePaise)}
-                </dd>
-              </div>
-              {quote.deliveryFeePaise > 0 && quote.amountToFreeDeliveryPaise > 0 && (
-                <p className="text-xs text-ink-faint">
-                  Add {formatPaise(quote.amountToFreeDeliveryPaise)} more for free delivery.
-                </p>
-              )}
-              <div className="flex justify-between gap-3">
-                <dt className="text-ink-muted">Packaging</dt>
-                <dd className="tabular text-ink">{quote.packagingPaise === 0 ? "Included" : formatPaise(quote.packagingPaise)}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-ink-muted">Discount</dt>
-                <dd className="tabular text-ink">{quote.discountPaise === 0 ? "—" : `−${formatPaise(quote.discountPaise)}`}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-ink-muted">GST (5% food · 18% delivery)</dt>
-                <dd className="tabular text-ink">{formatPaise(quote.taxPaise)}</dd>
-              </div>
-              <div className="mt-1 flex justify-between gap-3 border-t border-line pt-2">
-                <dt className="font-semibold text-ink">Amount payable now</dt>
-                <dd className="tabular font-semibold text-gold-text">{formatPaise(quote.payableNowPaise)}</dd>
-              </div>
-            </dl>
-          )}
-        </div>
+        <QuoteBreakdown quote={quote} quoteState={quoteState} quoteError={quoteError} onRefreshQuote={onRefreshQuote} />
       </div>
 
       <div>
@@ -332,39 +277,17 @@ export function AlacarteDetails({
           </span>
         </label>
 
-        {/* A2 / D-19 audit G1: surfaced BEFORE submit — previously the same
-            server gate (checkoutSafety.ts assessAllergenAck) only fired as a
-            422 after Continue to payment, so every allergen-cart guest ate
-            one failed submit. Named from the same predicate the server uses
-            (allergens.length>0 || contraindications.length>0), so the dishes
-            and allergens listed here are exactly what the server will check. */}
         {allergenAckRequired && (
-          <label className="flex items-start gap-3 rounded-2xl border border-line bg-surface-raised p-3 text-sm text-ink-muted">
-            <input
-              ref={allergenAckRef}
-              type="checkbox"
-              data-testid="allergen-ack"
-              checked={allergenAck}
-              onChange={(e) => {
-                setAllergenAck(e.target.checked);
-                if (e.target.checked) setAllergenAckTouched(false);
-              }}
-              aria-invalid={allergenAckTouched && !allergenAck}
-              aria-describedby={allergenAckTouched && !allergenAck ? "allergen-ack-error" : undefined}
-              className="mt-1 size-4 shrink-0"
-            />
-            <span>
-              <span className="font-medium text-ink">
-                This order has {flaggedAllergens.allergens.length > 0 ? flaggedAllergens.allergens.join(", ") : "declared contraindications"}
-              </span>{" "}
-              in {flaggedAllergens.dishes.map((d) => d.name).join(", ")}. I&rsquo;ve reviewed the allergen information for this order.
-              {allergenAckTouched && !allergenAck && (
-                <span id="allergen-ack-error" role="alert" className="mt-1 block text-xs font-medium text-[var(--danger)]">
-                  Please confirm you&rsquo;ve reviewed the allergen information for this order.
-                </span>
-              )}
-            </span>
-          </label>
+          <AllergenAckControl
+            flagged={flaggedAllergens}
+            checked={allergenAck}
+            onCheckedChange={(checked) => {
+              setAllergenAck(checked);
+              if (checked) setAllergenAckTouched(false);
+            }}
+            touched={allergenAckTouched}
+            inputRef={allergenAckRef}
+          />
         )}
       </div>
 
