@@ -56,11 +56,18 @@ export default async function ConfirmedPage({
     );
   }
 
-  const { status, etaMinutes } = result.status;
+  const { status, timing, etaMinutes, scheduledFor, deliveryWindow } = result.status;
   const tone = statusTone(status);
   // Allowlist, fails safe — see TRACKABLE_STATUSES in lib/orderStatus. A
   // delivered or cancelled order gets no dead Track CTA.
   const trackable = TRACKABLE_STATUSES.has(status);
+  const scheduledLabel = scheduledFor
+    ? new Date(scheduledFor).toLocaleDateString("en-IN", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      })
+    : null;
   return (
     <div data-ui-generation="stitch-74" data-screen-id="8.3" data-screen-state="default" className="min-h-dvh">
       <section className="mx-auto max-w-md px-4 py-10">
@@ -85,11 +92,21 @@ export default async function ConfirmedPage({
           <p className="tabular mt-3 text-xs uppercase tracking-widest text-ink-faint">
             #{orderId}
           </p>
-          {trackable && (
+          {trackable && timing === "on_demand" && (
             <p className="mt-2 text-sm text-ink-muted">
               Estimated arrival in{" "}
               <span className="tabular font-semibold text-ink">{etaMinutes} min</span>
             </p>
+          )}
+          {trackable && timing === "scheduled" && (
+            <p className="mt-2 text-sm text-ink-muted">
+              Scheduled for{" "}
+              <span className="font-semibold text-ink">{scheduledLabel}</span>
+              {deliveryWindow && <span className="tabular"> · {deliveryWindow}</span>}
+            </p>
+          )}
+          {trackable && timing === "pending" && (
+            <p className="mt-2 text-sm text-ink-muted">Confirming your delivery time.</p>
           )}
           {tone === "failed" && (
             <p className="mt-3 text-sm font-semibold text-[var(--danger)]">

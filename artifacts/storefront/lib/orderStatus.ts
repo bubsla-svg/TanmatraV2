@@ -3,8 +3,22 @@
  * confirmed screen and the tracker:
  *
  *   GET /api/orders/:externalOrderId/status   (guest — no auth; checkout.ts)
- *   → 200 {orderId, status, etaMinutes}       ETA counts down a 25-min SLA
+ *   → 200 {orderId, status, timing, etaMinutes, scheduledFor, deliveryWindow}
  *   → 404 {error:"order not found"}
+ *
+ * `timing` (P0-3, docs/audit/P0-3-SCHEDULE-NOT-COUNTDOWN.md) says which of the
+ * other three fields is meaningful — an on-demand order never had a "when",
+ * and a scheduled subscription delivery never had a live countdown, so the
+ * two must not be conflated the way a single always-present etaMinutes once
+ * was:
+ *   - "on_demand"  → etaMinutes counts down a 25-min SLA; scheduledFor/
+ *                    deliveryWindow are null.
+ *   - "scheduled"  → scheduledFor + deliveryWindow are the confirmed delivery
+ *                    time; etaMinutes is null — there is nothing to count
+ *                    down, the meal has an appointment, not an SLA.
+ *   - "pending"    → none of the above are known yet (a scheduled order whose
+ *                    schedule hasn't landed). A controlled "we're confirming
+ *                    your delivery time" state, never a fabricated countdown.
  *
  * Server components call the api directly (API_BASE_URL); the client island
  * polls same-origin /api via the proxy. Every failure mode maps to an HONEST
@@ -12,11 +26,23 @@
  * status (§6: degradation is graceful and truthful).
  */
 
+export type OrderTiming = "on_demand" | "scheduled" | "pending";
+
 export interface OrderStatus {
   orderId: string;
   status: string;
-  etaMinutes: number;
+  timing: OrderTiming;
+  /** Minutes remaining in the on-demand SLA window. Only meaningful when
+   *  `timing === "on_demand"`. */
+  etaMinutes: number | null;
+  /** ISO timestamp of the confirmed delivery. Only meaningful when
+   *  `timing === "scheduled"`. */
+  scheduledFor: string | null;
+  /** e.g. "12:00-14:00". Only meaningful when `timing === "scheduled"`. */
+  deliveryWindow: string | null;
 }
+
+const ORDER_TIMINGS: ReadonlySet<string> = new Set(["on_demand", "scheduled", "pending"]);
 
 export type OrderStatusResult =
   | { kind: "ok"; status: OrderStatus }
@@ -99,12 +125,28 @@ export async function fetchOrderStatus(
     if (typeof body.orderId !== "string" || typeof body.status !== "string") {
       return { kind: "unavailable" };
     }
+    // An unrecognised/missing timing falls back to on_demand with whatever
+    // etaMinutes came through (or 0) — the well-understood case, never a
+    // guessed schedule.
+    const timing: OrderTiming =
+      typeof body.timing === "string" && ORDER_TIMINGS.has(body.timing)
+        ? (body.timing as OrderTiming)
+        : "on_demand";
     return {
       kind: "ok",
       status: {
         orderId: body.orderId,
         status: body.status,
-        etaMinutes: typeof body.etaMinutes === "number" ? body.etaMinutes : 0,
+        timing,
+        etaMinutes: timing === "on_demand"
+          ? (typeof body.etaMinutes === "number" ? body.etaMinutes : 0)
+          : null,
+        scheduledFor: timing === "scheduled" && typeof body.scheduledFor === "string"
+          ? body.scheduledFor
+          : null,
+        deliveryWindow: timing === "scheduled" && typeof body.deliveryWindow === "string"
+          ? body.deliveryWindow
+          : null,
       },
     };
   } catch {
