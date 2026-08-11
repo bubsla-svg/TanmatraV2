@@ -916,3 +916,83 @@ added (RUL-01, RUL-02) and three prior findings closed (the `/quiz` and `/auth` 
 findings and the stale Plan-tab baseline); no score cap moves. Route-registry compliance is now
 measured against the *approved* contract rather than inferred from the tree: **3 of 5 rulings
 hold in production, 2 do not.**
+
+---
+
+# ADDENDUM 3 — Stitch wiring reconciliation (2026-08-11)
+
+> `pnpm run verify:stitch` was executed live at current HEAD. It is the authoritative
+> per-screen gap baseline for implementing the Stitch Prompt Pack.
+
+## Two corrections to this report
+
+**CORRECTION 5 — `verify:stitch` DOES run in CI.** §J/CRT-24 inherited a claim from
+BUILD-GAP-ANALYSIS that it "runs in no workflow." False at current HEAD: it is wired at
+`.github/workflows/storefront.yml:150,153` (both `verify-stitch-manifest.mjs` and
+`verify-stitch-wiring.mjs`), with the tools in the `paths:` trigger at lines 29-30, 43-44.
+
+**CORRECTION 6 — it PASSES, but "pass" means consistency, not completeness.**
+`verify:stitch-manifest PASS — 74 entries schema-valid`;
+`verify:stitch-wiring PASS — manifest claims consistent with the repository (honest gaps
+declared, no contradictions)`. The prior "fails 71/74" figure is stale. The tool validates that
+the manifest's *declared* gaps match reality — it does not assert the screens are built.
+
+## Live reconciliation output
+
+```
+Manifest entries:                  74/74      Container reachable:    0/74
+Source definitions:                50/74      Staging reachable:      0/74
+Render chains:                     49/74      Production reachable:   0/74
+Triggers:                          50/74      Visual approvals:       0/74
+Locally reachable:                 50/74      Accessibility approvals: 0/74
+Reference artifacts absent:        74/74 (warn-only)
+
+Missing source:      6.2, 6.5, 6.6, 8.2, 12.4, 14.2, 14.3, 14.4   (8)
+Unwired source:      10.9                                          (1)
+Partial stubs:       5.3, 9.2, 11.1, 14.6                          (4)
+Rebuild-required:    6.3, 6.4, 6.7, 7.2–7.10                      (12)
+```
+
+**Gap to a fully-wired 74: 25 screens.**
+
+## This refutes the Stitch Generation & Route Wiring Report
+
+That report claims *"All corresponding customer-facing routes and bottom-sheet components are
+fully wired, tested, and passing all CI quality gates."* The repository's own tool reports
+**49/74 render chains and 0/74 production reachable**. The report's own verification line is
+self-limiting and confirms the conflation: *"16/16 core Stitch App Router screen mappings
+validated"* — and its cited commit `98836cce` (2026-08-04) is titled *"generate and wire
+**16 core screens**"*. 74 is the count of prompts executed in Stitch; 16 was the count wired in
+the app at that commit. The report presents the former as the latter.
+
+Its stated gate numbers have also drifted: filecap `453 files` → **678** today; test-reach
+`213 reachable` → **244/300**. Two of its route mappings contradict approved rulings or the
+manifest: `10.8 → /account/wearables` (manifest and production both canonicalise
+`/account/connections`), and `5.5 → /dish/[slug]` (ruling RUL-01 makes `/menu/[productSlug]`
+canonical).
+
+**The tool independently corroborates this audit** at nine points: 5.3 (no menu filter sheet),
+9.2 (Manage Delivery missing), 11.1 (`/metabolic` stub), 14.6 (payment processing), 6.5/6.6
+(Change Dish / Accompaniment editors absent), 8.2 (quote-expired recovery absent — the state
+whose handling §G marks NOT VERIFIED), 12.4 (gym verification absent), 10.9 (`MealFeedback.tsx`
+built, zero importers), and 7.2–7.10 (Custom Build wizard replaced).
+
+## Prompt-pack conflicts with approved rulings
+
+Per the precedence rule (*later written ruling supersedes a Stitch screen*), three pack
+instructions are **superseded** and must not be implemented literally:
+
+| Pack instruction | Superseded by | Implement instead |
+|---|---|---|
+| Master Context: tabs `Home / Menu / Plan / Account` | Approved ruling 5 | `Home / Menu / Care / Account` |
+| 5.5 PDP at `/dish/[slug]` | RUL-01 | `/menu/[productSlug]` canonical |
+| 12.2 lander at `/corporate-wellness` | RUL-02 | `/corporate` canonical |
+
+All 74 screens were generated under the superseded `Plan`-tab Master Context, so every screen
+showing the tab bar needs the APPROVED WITH NOTES annotation the precedence rule requires.
+
+A fourth conflict is **not** resolvable by precedence: screens 6.3, 6.4, 6.7 and 7.2–7.10 (12
+"rebuild-required") describe the multi-stage wizard / lineup model that the repository
+**deliberately replaced** with the `docs/spec` 02-series goal-router model. Implementing the pack
+literally would reverse a recorded architectural decision. That requires an explicit owner ruling,
+not an engineering judgement.
