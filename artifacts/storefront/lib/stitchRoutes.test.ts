@@ -2,11 +2,35 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   isStitchRoute,
+  stitchCanvasForced,
   STITCH_EXACT_ROUTES,
   STITCH_PREFIX_ROUTES,
   STITCH_SCREEN_REGISTRY,
   getStitchScreenForRoute,
 } from "./stitchRoutes";
+
+// ── stitchCanvasForced: the toggle-vs-canvas contract (2026-08-11 report:
+//    "light and dark theme toggle in nav bar is dead") ─────────────────────
+
+test("with no stored choice, Stitch routes force the dark canvas", () => {
+  assert.equal(stitchCanvasForced("/menu", null), true);
+  assert.equal(stitchCanvasForced("/menu", "system"), true);
+  assert.equal(stitchCanvasForced("/dish/quinoa-khichdi", null), true);
+});
+
+test("an explicit stored choice always wins over the canvas", () => {
+  // "light" is the case that used to lose: data-stitch beat next-themes.
+  assert.equal(stitchCanvasForced("/menu", "light"), false);
+  // "dark" also unforces — data-theme paints dark anyway, and unforcing
+  // keeps exactly one mechanism in charge once the user has chosen.
+  assert.equal(stitchCanvasForced("/menu", "dark"), false);
+});
+
+test("non-Stitch routes are never forced regardless of choice", () => {
+  assert.equal(stitchCanvasForced("/account", null), false);
+  assert.equal(stitchCanvasForced("/account", "light"), false);
+  assert.equal(stitchCanvasForced("/legal/terms", null), false);
+});
 
 test("exact routes render on the dark canvas", () => {
   for (const route of STITCH_EXACT_ROUTES) {

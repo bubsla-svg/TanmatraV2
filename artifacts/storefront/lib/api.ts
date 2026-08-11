@@ -121,10 +121,10 @@ export interface CreateSubscriptionResponse {
   subscription: { id: number; externalOrderId?: string; [k: string]: unknown };
   deliveries: unknown[];
   bridgeCreditPaise: number;
-  /** General credit-ledger balance (referral/trial-creditback/loyalty — see
-   *  getCreditBalance) the server redeemed against THIS bill, net of any
-   *  bridgeCreditPaise already applied. */
-  creditAppliedPaise?: number;
+  creditAppliedPaise?: number; // credit-ledger balance redeemed, net of bridgeCreditPaise
+  /** First-cycle bill net of both credits; settled=true iff 0 — never call the gateway then (409s), see moneyPath.ts. Absent/false is safe. */
+  chargePaise?: number;
+  settled?: boolean;
 }
 
 /** POST /subscriptions. `idempotencyKey` is optional only until the server

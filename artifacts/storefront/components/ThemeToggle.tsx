@@ -5,12 +5,22 @@
 // is the missing UI half. `theme` is next-themes' user CHOICE ("system" until
 // they pick), `resolvedTheme` is what's actually painted — the icon and label
 // must reflect the latter, or a system-dark user sees a sun on a dark page.
+//
+// "What's actually painted" includes the Stitch canvas: on a redesigned route
+// with no stored choice the page is forced dark by data-stitch, not by
+// data-theme, and the icon must say dark or the control lies (a moon on a
+// near-black page). Tapping it then stores an explicit choice, which
+// stitchCanvasForced() yields to — StitchScope drops the forced attribute and
+// the whole canvas follows the toggle from that moment on.
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
+import { stitchCanvasForced } from "@/lib/stitchRoutes";
 
 export function ThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme();
+  const pathname = usePathname();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   // next-themes resolves after mount (it reads localStorage/matchMedia
   // client-side); render a stable, theme-agnostic placeholder until then so
   // hydration never has to guess which icon the server didn't know either.
@@ -21,7 +31,9 @@ export function ThemeToggle() {
     return <span className="inline-block h-8 w-8" aria-hidden />;
   }
 
-  const isDark = resolvedTheme === "dark";
+  const stored = theme === "light" || theme === "dark" ? theme : null;
+  const isDark =
+    resolvedTheme === "dark" || stitchCanvasForced(pathname ?? "", stored);
 
   return (
     <button

@@ -1,13 +1,17 @@
 /**
  * Legal/Policy CMS client wire contract (injected fetch, no network).
  * Verifies the endpoint URLs, the {documents,company}/{document,company}
- * unwrapping, the 404 -> not_found path, and the empty-on-error resilience
- * the /legal pages rely on.
+ * unwrapping, the 404 -> not_found path — and, since the CRT-28 repair, the
+ * STATIC FALLBACK: production 2026-08-11 served `{"documents":[],"company":
+ * null}` (unseeded table) while every footer/account-sheet legal link 404'd,
+ * so a CMS with nothing to say must degrade to the bundled content/legal
+ * registry, never to an empty index or a 404 on a statutory page.
  * Run: node --test --import tsx ./lib/legalApi.test.ts
  */
 import test from "node:test";
 import assert from "node:assert/strict";
 import { getLegalDocuments, getLegalDocument, getCompanyProfile } from "./legalApi";
+import { LEGAL_DOCS } from "../content/legal/index";
 
 const SAMPLE_COMPANY = {
   legalName: "Trending Media Service Private Limited",
@@ -51,6 +55,10 @@ function jsonFetch(calls: Call[], body: unknown, status = 200): typeof fetch {
   }) as unknown as typeof fetch;
 }
 
+const failingFetch = (async () => {
+  throw new Error("network down");
+}) as unknown as typeof fetch;
+
 test("getLegalDocuments: GETs /api/legal-documents and unwraps {documents, company}", async () => {
   const calls: Call[] = [];
   const out = await getLegalDocuments(
@@ -68,30 +76,32 @@ test("getLegalDocuments: formats effectiveFrom into a human 'updated' label", as
   assert.equal(out.documents[0]!.updated, "24 July 2026");
 });
 
-test("getLegalDocuments: a failed fetch resolves to {documents:[], company:null} (page renders empty, not error)", async () => {
-  const failing = (async () => {
-    throw new Error("network down");
-  }) as unknown as typeof fetch;
-  assert.deepEqual(await getLegalDocuments(failing), { documents: [], company: null });
+test("getLegalDocuments: an unseeded CMS (empty documents) serves the bundled registry", async () => {
+  const { documents, company } = await getLegalDocuments(
+    jsonFetch([], { documents: [], company: null }),
+  );
+  assert.equal(documents.length, LEGAL_DOCS.length);
+  assert.ok(documents.some((d) => d.slug === "terms"));
+  assert.ok(company, "company/entity block must come from the bundle too");
+  assert.equal(company.fssaiLicenseNo, "22725926001018");
 });
 
-test("getLegalDocuments: a non-2xx also degrades to empty rather than throwing", async () => {
-  const out = await getLegalDocuments(jsonFetch([], { error: "boom" }, 500));
-  assert.deepEqual(out, { documents: [], company: null });
+test("getLegalDocuments: a failed fetch serves the bundled registry, not an empty index", async () => {
+  const { documents, company } = await getLegalDocuments(failingFetch);
+  assert.equal(documents.length, LEGAL_DOCS.length);
+  assert.equal(company?.brand, "Tanmatra");
 });
 
 test("getCompanyProfile: returns the company from the list endpoint", async () => {
   const calls: Call[] = [];
-  const out = await getCompanyProfile(jsonFetch(calls, { documents: [], company: SAMPLE_COMPANY }));
+  const out = await getCompanyProfile(jsonFetch(calls, { documents: [SAMPLE_SUMMARY], company: SAMPLE_COMPANY }));
   assert.match(calls[0]!.url, /\/api\/legal-documents$/);
   assert.equal(out?.brand, "Tanmatra");
 });
 
-test("getCompanyProfile: null when the api is unreachable", async () => {
-  const failing = (async () => {
-    throw new Error("down");
-  }) as unknown as typeof fetch;
-  assert.equal(await getCompanyProfile(failing), null);
+test("getCompanyProfile: bundled company when the api is unreachable", async () => {
+  const out = await getCompanyProfile(failingFetch);
+  assert.equal(out?.fssaiLicenseNo, "22725926001018");
 });
 
 test("getLegalDocument: GETs /api/legal-documents/:slug and unwraps {document, company} into sections", async () => {
@@ -115,22 +125,38 @@ test("getLegalDocument: GETs /api/legal-documents/:slug and unwraps {document, c
   });
 });
 
-test("getLegalDocument: 404 resolves to {ok:false, reason:'not_found'} — an unpublished draft is not reachable publicly", async () => {
+test("getLegalDocument: 404 resolves to {ok:false, reason:'not_found'} for a slug in neither the CMS nor the bundle", async () => {
   const out = await getLegalDocument("unpublished-slug", jsonFetch([], { error: "not found" }, 404));
   assert.deepEqual(out, { ok: false, reason: "not_found" });
 });
 
-test("getLegalDocument: a 500 is reason:'unavailable', distinct from not_found", async () => {
-  const out = await getLegalDocument("terms", jsonFetch([], { error: "boom" }, 500));
+test("getLegalDocument: a CMS 404 for a bundled slug serves the bundled document", async () => {
+  const out = await getLegalDocument("terms", jsonFetch([], { error: "not found" }, 404));
+  assert.ok(out.ok, "bundled statutory doc must render despite the CMS 404");
+  assert.equal(out.doc.slug, "terms");
+  assert.ok(out.doc.sections.length > 0);
+});
+
+test("getLegalDocument: a 500 for a bundled slug serves the bundled document", async () => {
+  const out = await getLegalDocument("privacy", jsonFetch([], { error: "boom" }, 500));
+  assert.ok(out.ok);
+  assert.equal(out.doc.slug, "privacy");
+});
+
+test("getLegalDocument: a 500 for a non-bundled slug is reason:'unavailable', distinct from not_found", async () => {
+  const out = await getLegalDocument("unpublished-slug", jsonFetch([], { error: "boom" }, 500));
   assert.deepEqual(out, { ok: false, reason: "unavailable" });
 });
 
-test("getLegalDocument: a thrown/network failure is reason:'unavailable', not not_found", async () => {
-  const failing = (async () => {
-    throw new Error("network down");
-  }) as unknown as typeof fetch;
-  const out = await getLegalDocument("terms", failing);
+test("getLegalDocument: a network failure for a non-bundled slug is reason:'unavailable', not not_found", async () => {
+  const out = await getLegalDocument("unpublished-slug", failingFetch);
   assert.deepEqual(out, { ok: false, reason: "unavailable" });
+});
+
+test("getLegalDocument: a network failure for a bundled slug serves the bundled document", async () => {
+  const out = await getLegalDocument("grievance", failingFetch);
+  assert.ok(out.ok);
+  assert.equal(out.doc.slug, "grievance");
 });
 
 test("getLegalDocument: slug is URL-encoded", async () => {
