@@ -4,6 +4,7 @@ import { fetchMarketplaceItemsServer } from "@/lib/marketplaceApi";
 import { SafeImage } from "@/components/ui/SafeImage";
 import { formatPaise } from "@/lib/format";
 import { MarketplaceAddToCart } from "@/components/cart/MarketplaceAddToCart";
+import { MarketplaceBuyNow } from "@/components/marketplace/MarketplaceBuyNow";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
@@ -48,12 +49,15 @@ export default async function MarketplaceItemPage({ params }: { params: Promise<
         </div>
 
         {/* Bottom CTA */}
-        <div className="sticky bottom-4 w-full bg-surface-canvas/95 backdrop-blur-md p-4 rounded-3xl border border-line flex items-center justify-between shadow-2xl mt-auto">
+        <div className="sticky bottom-4 w-full bg-surface-canvas/95 backdrop-blur-md p-4 rounded-3xl border border-line flex items-center justify-between gap-3 shadow-2xl mt-auto">
           <div className="flex flex-col">
             <span className="font-label-caps text-[10px] text-ink-muted uppercase tracking-widest">Price</span>
             <span className="font-clinical-data text-xl text-gold-text">{formatPaise(item.pricePaise)}</span>
           </div>
-          <MarketplaceAddToCart item={item} />
+          <div className="flex items-center gap-2">
+            <MarketplaceAddToCart item={item} />
+            <MarketplaceBuyNow item={item} />
+          </div>
         </div>
       </div>
     </div>
