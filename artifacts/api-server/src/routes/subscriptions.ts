@@ -495,27 +495,31 @@ export async function generateDeliveriesForSubscription(
  * been created with subscriptionId (see POST /payments/razorpay/order's
  * isRecurring branch) for a token to exist — that wiring is tracked
  * separately.
+ *
+ * Returns the {chargePaise, settled} this call computed so the route handler
+ * can hand it to the client — POST /payments/razorpay/order 409s outright
+ * for a zero-payable order (payments.ts), so the client needs this to know
+ * NOT to attempt one (DEF-RECON-ZEROPAYABLE-001).
  */
 async function createOrderForNewSubscription(
   tx: DbExecutor,
   sub: typeof subscriptionsTable.$inferSelect,
   deliveries: SubscriptionDelivery[],
   bridgeCreditPaise: number,
-): Promise<void> {
+): Promise<{ chargePaise: number; settled: boolean }> {
   // The order body itself lives in lib/subscriptionOrigination so the
   // plan-draft path (A2.4) bills through the same code rather than a second
   // copy of it. What stays here is this path's own pricing decision: the
   // catalog price less whatever credit was consumed in this transaction.
   const chargePaise = Math.max(0, sub.pricePerDeliveryPaise - bridgeCreditPaise);
-  await createFirstCycleOrder(tx, sub, deliveries, {
-    chargePaise,
-    // A first cycle the bridge/ledger credits fully covered is settled at
-    // creation (the credits are consumed in this same transaction) — born
-    // "preparing", exactly like a captured payment would leave it
-    // (lib/paidGate.ts). A payable order stays "placed" until payments.ts
-    // promotes it on capture.
-    settled: chargePaise === 0,
-  });
+  // A first cycle the bridge/ledger credits fully covered is settled at
+  // creation (the credits are consumed in this same transaction) — born
+  // "preparing", exactly like a captured payment would leave it
+  // (lib/paidGate.ts). A payable order stays "placed" until payments.ts
+  // promotes it on capture.
+  const settled = chargePaise === 0;
+  await createFirstCycleOrder(tx, sub, deliveries, { chargePaise, settled });
+  return { chargePaise, settled };
 }
 
 async function validateDishForSubscription(
@@ -996,7 +1000,7 @@ router.post("/subscriptions", planCheckoutGate, idempotencyMiddleware, async (re
   // order all commit atomically — a partial write here would either leave a
   // subscription with no billable order (the original bug) or an order
   // dangling with no subscription to attach a mandate to.
-  const { sub, deliveries, bridgeCreditPaise, ledgerCreditPaise } = await db.transaction(async (tx) => {
+  const { sub, deliveries, bridgeCreditPaise, ledgerCreditPaise, firstCycle } = await db.transaction(async (tx) => {
     const [sub] = await tx
       .insert(subscriptionsTable)
       .values({
@@ -1131,14 +1135,14 @@ router.post("/subscriptions", planCheckoutGate, idempotencyMiddleware, async (re
     // `POST /payments/razorpay/order` (looked up by externalOrderId
     // `sub-<id>`) and `registerAutopayMandate` (joined via
     // subscriptionDeliveriesTable.orderId) both work.
-    await createOrderForNewSubscription(
+    const firstCycle = await createOrderForNewSubscription(
       tx,
       sub,
       deliveries,
       bridgeCreditPaise + ledgerCreditPaise,
     );
 
-    return { sub, deliveries, bridgeCreditPaise, ledgerCreditPaise };
+    return { sub, deliveries, bridgeCreditPaise, ledgerCreditPaise, firstCycle };
   });
 
   // A day plan's first delivery may sit after the cycle start (e.g. a
@@ -1162,6 +1166,12 @@ router.post("/subscriptions", planCheckoutGate, idempotencyMiddleware, async (re
     deliveries,
     bridgeCreditPaise,
     creditAppliedPaise: ledgerCreditPaise,
+    // DEF-RECON-ZEROPAYABLE-001: chargePaise/settled from the first-cycle
+    // order this same transaction created — lets the client skip
+    // POST /payments/razorpay/order entirely when credits covered the bill,
+    // instead of calling it and hitting its "order has no payable amount" 409.
+    chargePaise: firstCycle.chargePaise,
+    settled: firstCycle.settled,
   });
 });
 
