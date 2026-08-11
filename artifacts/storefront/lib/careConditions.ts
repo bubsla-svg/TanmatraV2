@@ -20,3 +20,14 @@ export const CARE_CONDITIONS: readonly CareCondition[] = [
   { slug: "insulin-resistance", name: "Insulin Resistance" },
   { slug: "gerd", name: "GERD" },
 ];
+
+/**
+ * /care/[condition] stays a free-text catch-all per the ruling above (no
+ * notFound(), no new fetch surface) — this only decides whether that route's
+ * copy is allowed to sound clinical. An arbitrary slug must not render the
+ * same "RD-crafted therapeutic meal plan" framing a real condition gets.
+ */
+export function isCareConditionKnown(slug: string): boolean {
+  const key = slug.trim().toLowerCase();
+  return CARE_CONDITIONS.some((c) => c.slug === key);
+}

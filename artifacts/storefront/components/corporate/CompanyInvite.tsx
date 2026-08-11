@@ -76,7 +76,7 @@ export function CompanyInvite({ token }: { token: string }) {
             : "Something went wrong loading this invite. Please try again."}
         </p>
         {notFound ? (
-          <Link href="/corporate" className="mt-2 inline-block text-sm font-medium text-gold-text hover:underline">Back to Corporate</Link>
+          <Link href="/corporate-wellness" className="mt-2 inline-block text-sm font-medium text-gold-text hover:underline">Back to Corporate</Link>
         ) : (
           <button type="button" onClick={() => void inviteQuery.refetch()} className="mt-2 text-sm font-medium text-gold-text hover:underline">Try again</button>
         )}

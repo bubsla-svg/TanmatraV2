@@ -50,3 +50,15 @@ test("/quiz and /auth with no query string redirect cleanly, no dangling '?'", a
   expect(auth.status()).toBe(308);
   expect(auth.headers()["location"]).toBe("/login");
 });
+
+/**
+ * Reconciliation sweep decision gate (docs/reconciliation/, 2026-08-11):
+ * /corporate was a placeholder route wrongly declared canonical; the real
+ * B2B lander lives at /corporate-wellness. Flips canonical status via a
+ * permanent redirect instead of leaving the blank page live.
+ */
+test("/corporate -> /corporate-wellness, 308", async ({ request }) => {
+  const res = await request.get("/corporate", { maxRedirects: 0 });
+  expect(res.status()).toBe(308);
+  expect(res.headers()["location"]).toBe("/corporate-wellness");
+});

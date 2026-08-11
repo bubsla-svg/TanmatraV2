@@ -99,6 +99,11 @@ const nextConfig: NextConfig = {
       // e2e/specs/compat-aliases.spec.ts.
       { source: "/quiz", destination: "/quick-setup", permanent: true },
       { source: "/auth", destination: "/login", permanent: true },
+      // Reconciliation sweep decision gate (docs/reconciliation/, 2026-08-11):
+      // /corporate-wellness is the substantive B2B lander; /corporate was a
+      // placeholder route wrongly declared canonical by an earlier ruling.
+      // Flips canonical status onto the real page instead of the blank one.
+      { source: "/corporate", destination: "/corporate-wellness", permanent: true },
     ];
   },
   // next/image through a custom loader (lib/imageLoader.ts — the WHY is

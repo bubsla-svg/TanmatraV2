@@ -28,6 +28,8 @@
     ],
     "impact": "/care/asdfqwerty renders 'Asdfqwerty Protocol' with the same clinical-objectives boilerplate as an approved condition.",
     "reuseDecision": "BLOCKED_BY_PRODUCT_DECISION — this sweep's §13 and the prior TNM-CRO ruling conflict; needs clinical/product ownership to resolve, not a unilateral fix.",
+    "status": "RESOLVED",
+    "resolution": "Decision (2026-08-11): keep the free-text catch-all (no notFound(), no new fetch surface, respecting the prior ruling), but strip the clinical framing for unmapped slugs. isCareConditionKnown() (lib/careConditions.ts) now gates COPY only, not the route — a known condition still renders 'Clinical Objectives' / RD-protocol language; an unmapped slug gets a plain, non-clinical page instead. Implemented in app/(global)/care/[condition]/page.tsx; regression coverage added in e2e/specs/condition-assessment-entry.spec.ts and lib/careConditions.test.ts.",
     "stitchIds": ["11.4"],
     "phase": 3
   },
@@ -44,6 +46,8 @@
     ],
     "impact": "Production nav sends some clicks (COMPANY_LINKS 'Corporate') to a dead placeholder.",
     "reuseDecision": "Do not install the redirect as currently specified. Either migrate /corporate-wellness's content onto /corporate first, then redirect the alias — or formally flip which side is canonical.",
+    "status": "RESOLVED",
+    "resolution": "Decision (2026-08-11): flip canonical status onto the real page. Removed the app/(b2b)/corporate/page.tsx placeholder; added a permanent (308) redirect /corporate -> /corporate-wellness in next.config.ts's shared redirects() map (same mechanism as the existing /quiz and /auth aliases). Updated every internal link that pointed at /corporate (lib/nav.ts COMPANY_LINKS + Community group, app/(b2b)/layout.tsx, app/(global)/plans/page.tsx, components/corporate/CompanyInvite.tsx) to target /corporate-wellness directly, and removed the now-duplicate 'Corporate & partnerships' nav entry. Removed /corporate from app/sitemap.ts (only the canonical destination belongs there). Regression coverage added in e2e/specs/compat-aliases.spec.ts.",
     "stitchIds": [],
     "phase": 3
   },
@@ -163,6 +167,8 @@
     "evidence": ["lib/nav.ts Track group: { label: 'Wellness', href: '/wellness', desc: 'Preventive, everyday nutrition' }", "quarantine/app/wellness/page.tsx (42 lines) exists as a candidate but was not diffed against a confirmed intent"],
     "impact": "One more dead footer/nav link; low functional severity relative to the legal-docs cluster since it is not a compliance surface.",
     "reuseDecision": "BLOCKED_BY_PRODUCT_DECISION",
+    "status": "RESOLVED",
+    "resolution": "Decision (2026-08-11): remove the link rather than guess at intent. Deleted the 'Wellness' entry from lib/nav.ts's Track group and the matching /wellness entry from app/sitemap.ts. The quarantined app/wellness/page.tsx candidate is untouched — still available if a future decision wants a public landing page.",
     "stitchIds": [],
     "phase": 3
   },
@@ -189,6 +195,22 @@
     "reuseDecision": "REBUILD_MINIMALLY — reuse Journey 2's generated-plan-review/schedule/generation components once built (§11's explicit requirement to share them), and quick-setup's wizard shell pattern if compatible (components/wizard/QuickSetupWizard.tsx, quarantined, not yet assessed for reuse).",
     "stitchIds": ["7.2", "7.3", "7.4", "7.5", "7.6", "7.7", "7.8", "7.9", "7.10"],
     "phase": 6
+  },
+  {
+    "id": "DEF-RECON-LANDINGHERO-001",
+    "severity": "MINOR",
+    "class": "landmark duplication",
+    "area": "B2B landing pages",
+    "summary": "LandingHero.tsx renders its hero section as a semantic <header>, so any page that composes it inside a shell that already has its own chrome <header> (app/(b2b)/layout.tsx) ends up with two <header> elements in the DOM.",
+    "evidence": [
+      "artifacts/storefront/components/landing/LandingHero.tsx:33 — <header className=\"border-b border-line py-[var(--space-section)]\">",
+      "Surfaced by e2e/specs/single-chrome.spec.ts's b2b-shell test once it was pointed at the real /corporate-wellness page instead of the old placeholder — the placeholder never had a second header to catch this.",
+      "3 active pages compose LandingHero: /corporate-wellness, /partners/gyms, /partners/fitness-clubs — same issue likely on all three, only /corporate-wellness was directly re-verified this pass."
+    ],
+    "impact": "Two <header> landmarks on one page is an accessibility anti-pattern (ambiguous 'banner' landmark for screen-reader users) — not a functional break. The e2e test was scoped to the shell header specifically (filtered by the 'Business' nav it wraps) rather than asserting a bare header count, so this doesn't block the /corporate redirect work; recorded as a separate, pre-existing, unfixed finding.",
+    "reuseDecision": "REUSE_WITH_REFACTOR — change LandingHero's hero wrapper from <header> to <section>; it is page-body content, not a document/page-level introductory landmark.",
+    "stitchIds": [],
+    "phase": 7
   },
   {
     "id": "DEF-9.2-DELIVERY-ROUTE-001",

@@ -48,7 +48,7 @@ export default function PlansPage() {
           </p>
           <h2 className="text-lg font-semibold text-ink">Tanmatra for Teams</h2>
           <Link
-            href="/corporate"
+            href="/corporate-wellness"
             className="-m-2 mt-1 p-2 text-sm font-semibold text-gold-text underline-offset-4 hover:underline"
           >
             Talk to sales &rarr;

@@ -82,7 +82,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Challenge streak tracker", href: "/challenges/tracker", desc: "Regimen telemetry" },
       { label: "Nutrition tracker", href: "/account/wellness", desc: "Log food & water, track streaks" },
       { label: "Meal planner", href: "/meal-planner", desc: "Plan & swap your week" },
-      { label: "Wellness", href: "/wellness", desc: "Preventive, everyday nutrition" },
       { label: "Nutrition coach", href: "/coach", desc: "Chat with an AI nutrition coach" },
       { label: "Our dietitians", href: "/rd", desc: "Meet the registered dietitians" },
     ],
@@ -97,7 +96,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Our team", href: "/team", desc: "Chefs & dietitians" },
       { label: "Challenges", href: "/challenges", desc: "RD-led cohort programmes" },
       { label: "Corporate wellness", href: "/corporate-wellness", desc: "RD-designed team lunches for offices" },
-      { label: "Corporate & partnerships", href: "/corporate", desc: "Team lunches for your office" },
       { label: "Dietitian partner network", href: "/rd-partners", desc: "For clinical RDs & nutritionists" },
     ],
   },
@@ -139,7 +137,7 @@ export const PRIMARY_NAV: NavLink[] = [
 /** "Company" / help links (footer). */
 export const COMPANY_LINKS: NavLink[] = [
   { label: "About", href: "/about" },
-  { label: "Corporate", href: "/corporate" },
+  { label: "Corporate", href: "/corporate-wellness" },
   { label: "FAQ", href: "/faq" },
 ];
 
