@@ -289,6 +289,11 @@ test("POST /subscriptions creates a linked ordersTable row priced from pricePerD
   assert.equal(order!.totalPaise, sub.pricePerDeliveryPaise);
   assert.equal(order!.status, "placed");
   assert.equal(order!.addressLine, sub.addressLine ?? null);
+  // DEF-RECON-ZEROPAYABLE-001: the response must expose the same
+  // chargePaise/settled the order row was created with, so the client can
+  // decide whether to call POST /payments/razorpay/order at all.
+  assert.equal(created.json.chargePaise, sub.pricePerDeliveryPaise);
+  assert.equal(created.json.settled, false);
 
   const [firstDelivery] = await db
     .select()
@@ -343,6 +348,67 @@ test("a trial subscription's linked order is priced net of the server-computed b
     "order must be charged pricePerDeliveryPaise minus the bridge credit, not the full trial price",
   );
   assert.ok(expectedCharge < sub.pricePerDeliveryPaise, "sanity: the credit must actually discount something");
+});
+
+// ---------------------------------------------------------------------------
+// 2b. Zero-payable: a bridge credit that fully covers the trial (DEF-RECON-
+//     ZEROPAYABLE-001). Locks in both halves of the fix — the server's own
+//     409 for a zero-payable gateway order request, AND the response fields
+//     (chargePaise/settled) the client needs to avoid ever making that
+//     request in the first place.
+// ---------------------------------------------------------------------------
+
+test("a bridge credit covering every trial meal zeroes the charge — response says settled, and the gateway route refuses to bill it", async () => {
+  const user = await makeUser();
+  // trial_3day is a fixed 3-meal trio (bridgeCreditDiscountPaise clamps
+  // creditMeals to trialMeals) — crediting 3+ meals discounts 100% of the
+  // trial price, not a partial share.
+  await db.insert(mealCreditsTable).values({
+    userId: user.id,
+    amount: 10,
+    reason: "alacarte_bridge",
+  });
+
+  const created = await api(
+    "POST",
+    "/subscriptions",
+    baseBody({ planType: "trial", planId: "trial_3day", track: "veg", phone: freshPhone() }),
+    user,
+  );
+  assert.equal(created.status, 201, JSON.stringify(created.json));
+  const sub = created.json.subscription;
+
+  assert.equal(
+    created.json.bridgeCreditPaise,
+    sub.pricePerDeliveryPaise,
+    "the bridge credit must cover the full trial price when it credits every trial meal",
+  );
+  assert.equal(created.json.chargePaise, 0);
+  assert.equal(created.json.settled, true);
+
+  const [order] = await db
+    .select()
+    .from(ordersTable)
+    .where(eq(ordersTable.externalOrderId, `sub-${sub.id}`));
+  assert.ok(order);
+  assert.equal(order!.chargePaise, 0);
+  assert.equal(
+    order!.status,
+    "preparing",
+    "a fully-credited first cycle is born preparing, same as a captured payment would leave it",
+  );
+
+  // The other half of the bug this locks in: if a client ignored `settled`
+  // and called this route anyway, the server must refuse — never silently
+  // create a ₹0 gateway order.
+  const rzpRes = await api(
+    "POST",
+    "/payments/razorpay/order",
+    { orderId: `sub-${sub.id}` },
+    user,
+  );
+  assert.equal(rzpRes.status, 409, JSON.stringify(rzpRes.json));
+  assert.equal(rzpRes.json.error, "order has no payable amount");
 });
 
 // ---------------------------------------------------------------------------
