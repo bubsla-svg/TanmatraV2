@@ -7,6 +7,7 @@ import { AccordionItem } from "@/components/primitives/Accordion";
 import { formatPaise } from "@/lib/format";
 import { PdpBuyLedger } from "@/components/menu/PdpBuyLedger";
 import { FallbackMenuBanner } from "@/components/menu/FallbackMenuBanner";
+import { DishAllergens } from "@/components/menu/DishAllergens";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
@@ -96,18 +97,17 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
             </div>
           </AccordionItem>
           
-          <AccordionItem title="Ingredients & Allergens">
-            <div className="space-y-4">
-              <div>
-                <strong className="block text-ink-primary mb-1">Ingredients</strong>
-                <p>{dish.ingredients.join(", ") || "No ingredients listed."}</p>
-              </div>
-              <div>
-                <strong className="block text-ink-primary mb-1">Allergens</strong>
-                <p>{dish.allergens.length ? dish.allergens.join(", ") : "None declared."}</p>
-              </div>
-            </div>
+          <AccordionItem title="Ingredients">
+            <p>{dish.ingredients.join(", ") || "No ingredients listed."}</p>
           </AccordionItem>
+
+          {/* Never collapsed behind the accordion above: this preserves the
+              reviewed / auto-detected / under-review states from
+              lib/allergenCopy.ts (an unreviewed or auto-detected list must
+              never render as an affirmative "no allergens"), and a customer
+              with allergies needs it visible, not opt-in. Mirrors
+              DishDrawer.tsx, the drawer surface for this same dish. */}
+          <DishAllergens dish={dish} />
         </div>
 
         {/* Bottom CTA — the StickyAddToCartLedger (UX/UI Architecture Phase 2

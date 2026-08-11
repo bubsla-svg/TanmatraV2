@@ -110,6 +110,22 @@ test("the standalone PDP offers a way back out", async ({ page }) => {
   await expect(page).toHaveURL(/\/menu$/);
 });
 
+test("the standalone PDP never renders the unsafe raw allergen fallback", async ({ page }) => {
+  // Regression guard for the P0 allergen-safety fix: this route used to print
+  // a raw `dish.allergens.length ? ... : "None declared."`, which claimed
+  // absence of allergens even when the dish's disclosure was unreviewed. It
+  // now renders the same <DishAllergens>/lib/allergenCopy.ts mapping the
+  // drawer uses, whose five possible headings never include that literal
+  // string — see lib/allergenCopy.test.ts for the full state matrix pinned
+  // there. This asserts the safety component is mounted and the unsafe
+  // fallback text is gone, without depending on this dish's specific
+  // allergen data (which lives in the catalog and can change).
+  await page.goto(PDP);
+
+  await expect(page.getByRole("heading", { name: "Allergens", level: 2 })).toBeVisible();
+  await expect(page.getByText("None declared.", { exact: true })).toHaveCount(0);
+});
+
 test("the focus shell renders no global chrome on the PDP", async ({ page }) => {
   // The flip side of the bug: this page must NOT grow a tab bar to solve the
   // dead end — that would break the layout contract. The fix belongs in the
