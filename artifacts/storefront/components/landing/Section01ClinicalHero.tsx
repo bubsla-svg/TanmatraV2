@@ -53,35 +53,29 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
     <section 
       data-ui-generation="stitch-74" 
       data-screen-id="MOB-10-Home-Dark"
-      className="mx-auto w-full max-w-screen-xl px-4 pt-8 pb-10 sm:px-6 sm:pt-12 sm:pb-14"
+      className="mx-auto w-full max-w-screen-xl px-4 pt-16 pb-16 sm:px-6 sm:pt-24 sm:pb-20"
     >
-      <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-12">
-        {/* Copy column — 7/12, left-weighted */}
-        <div className="lg:col-span-7">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-semibold tracking-wider uppercase mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            {hero.eyebrow}
-          </div>
+      <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
+        {/* Centered Hero Architecture */}
+        <h1 className="text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-6xl">
+          {headStart}{" "}
+          <span className="inline-block align-middle mx-1.5 w-12 h-10 sm:w-16 sm:h-12 rounded-2xl overflow-hidden border border-line translate-y-[-2px]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <SafeImage
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTXgMAoQYxN5p3zcei43W83rQfIoGOdQIO50IXWQyIhBz5qZE3bZ49KT7w1hQmkMVfz9MXWxiPKiegmpAqtWbxDBHxl0ef-8j-NGzOrqsz4XffWPew40F1JHL4h-OejaOjZc6ghvxRhoaseR4F8xrQprNkxz7yPyq8l7BxubvT41I0uW_7RUl4wYQ-c8EyjkcbmTS-iCXT8JY93CjsazBM-FnaNe91ByEkXEjDeN4gSRIq1LBRkNvzifaunvZYeSiBgpjFbIKtA1I"
+              alt=""
+              aria-hidden
+              className="w-full h-full object-cover"
+            />
+          </span>{" "}
+          {headEnd}
+        </h1>
 
-          <h1 className="mt-2 text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-6xl">
-            {headStart}{" "}
-            <span className="inline-block align-middle mx-1.5 w-12 h-10 sm:w-16 sm:h-12 rounded-2xl overflow-hidden border border-line translate-y-[-2px]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <SafeImage
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTXgMAoQYxN5p3zcei43W83rQfIoGOdQIO50IXWQyIhBz5qZE3bZ49KT7w1hQmkMVfz9MXWxiPKiegmpAqtWbxDBHxl0ef-8j-NGzOrqsz4XffWPew40F1JHL4h-OejaOjZc6ghvxRhoaseR4F8xrQprNkxz7yPyq8l7BxubvT41I0uW_7RUl4wYQ-c8EyjkcbmTS-iCXT8JY93CjsazBM-FnaNe91ByEkXEjDeN4gSRIq1LBRkNvzifaunvZYeSiBgpjFbIKtA1I"
-                alt=""
-                aria-hidden
-                className="w-full h-full object-cover"
-              />
-            </span>{" "}
-            {headEnd}
-          </h1>
-
-          <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-muted sm:text-lg">
+          <p className="mt-5 text-base leading-relaxed text-ink-muted sm:text-lg">
             {hero.blurb}
           </p>
 
-          <div className="mt-7 flex flex-wrap items-center gap-3.5 sm:mt-9">
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-3.5 sm:mt-9">
             <Button asChild shape="pill" size="fluid" className="px-8 py-3.5 font-bold shadow-lg shadow-gold/10">
               <Link
                 href="/menu"
@@ -108,7 +102,7 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
           </div>
 
           {/* Clinical authority trust bar */}
-          <div className="mt-9 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-line pt-5 text-xs font-medium text-ink-muted">
+          <div className="mt-9 flex flex-wrap justify-center items-center gap-x-3 gap-y-1.5 border-t border-line pt-5 text-xs font-medium text-ink-muted">
             <span>ISO 22000 Certified</span>
             <span aria-hidden className="text-line-strong">·</span>
             <span>FSSAI Verified</span>
@@ -117,22 +111,22 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
           </div>
         </div>
 
-        {/* Photo column — 5/12, tall frame + floating glass macro badge */}
-        <div className="relative lg:col-span-5">
+        {/* Photo area — centered below text */}
+        <div className="relative mt-12 w-full max-w-2xl mx-auto">
           {hero.badge && (
             <span className="absolute left-4 top-4 z-10 rounded-full border border-gold bg-[var(--glass)] px-3 py-1 text-xs font-bold text-gold-text backdrop-blur-md">
               {hero.badge}
             </span>
           )}
           <div className="overflow-hidden rounded-3xl border border-line bg-surface-raised shadow-2xl shadow-black/40">
-            <div className="relative aspect-[4/5] w-full">
+            <div className="relative aspect-[16/9] w-full">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <SafeImage
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkXUatAbp7GpnFbDf0BTpJCPRd2FRuRIoRlbyoRY_B4NGgShl6G32eTYQQ1uxUSny6sOye9Rpm3Xe7cKS4wizt7QZgR72SoEfWc7C02yvSId2aujwgQ8RFWMZVmOfN4ckkE81T7Rkli2yA5Z-tVzDrRcgOmFT5r8klXpPd2k8EuassiZLq5821La5aJB_rvWSK_UQUdLuk5qZwIYRIVhJ85beF2yu9DY9gqtx9XAGuHIN_-stMpiWveI18_bU9E1qUpqZ9a_hlIrE"
                 alt="Chef-plated clinical meal, photographed from above"
                 className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
               />
-              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between rounded-2xl border border-line bg-[var(--glass)] p-4 backdrop-blur-md shadow-xl">
+              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-2xl border border-line bg-[var(--glass)] p-4 backdrop-blur-md shadow-xl max-w-sm mx-auto">
                 <div>
                   <div className="text-[10px] font-mono uppercase tracking-widest text-primary mb-0.5">MACRO PROFILE</div>
                   <p className="font-mono text-sm font-bold text-ink tracking-tight">32P · 41C · 12F</p>
@@ -147,7 +141,6 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
             </div>
           </div>
         </div>
-      </div>
     </section>
   );
 }

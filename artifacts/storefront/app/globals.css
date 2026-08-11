@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400&display=swap');
 
 /*
  * Map the raw design tokens (from @workspace/tokens/tokens.css, imported in the
@@ -67,11 +68,11 @@
   --z-nav: 50;
   --z-modal: 100;
 
-  /* Typeface (TNM-UIF-01 §10.2 decision): IBM Plex Sans for UI, JetBrains Mono
+  /* Typeface (TNM-UIF-01 §10.2 decision): Satoshi for UI, JetBrains Mono
      for macro/numeric data. The families are loaded via next/font in the root
      layout (exposed as the two vars below); this override wins over the system
      stack in tokens.css because globals.css is imported after it. */
-  --font-sans: var(--font-ibm-plex-sans), ui-sans-serif, system-ui, -apple-system,
+  --font-sans: 'Satoshi', ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, "JetBrains Mono",
     "SFMono-Regular", Menlo, monospace;

@@ -18,7 +18,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({
   onNavigate,
 }) => {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-dvh bg-slate-950 text-slate-100 flex flex-col font-sans">
       <GlobalHeader currentRoute={currentRoute} onNavigate={onNavigate} />
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 py-6 pb-24 md:pb-12">
@@ -42,7 +42,7 @@ export const FocusLayout: React.FC<FocusLayoutProps> = ({
   onBack,
 }) => {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-dvh bg-slate-950 text-slate-100 flex flex-col font-sans">
       {/* Focus Header - Minimalist, no distractive banners */}
       <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/80 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -88,7 +88,7 @@ export const B2BLayout: React.FC<B2BLayoutProps> = ({
   companyName = "Corporate Partner",
 }) => {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-dvh bg-slate-950 text-slate-100 flex flex-col font-sans">
       <header className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-sm">

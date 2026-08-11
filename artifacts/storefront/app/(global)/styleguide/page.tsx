@@ -27,7 +27,7 @@ export default function StyleguidePage({
       data-ui-generation="stitch-74"
       data-screen-id={theme === "light" ? "4.2" : "4.1"}
       data-screen-state={theme}
-      className="min-h-screen bg-bg text-ink pb-24"
+      className="min-h-dvh bg-bg text-ink pb-24"
     >
       <GlobalHeader />
       
