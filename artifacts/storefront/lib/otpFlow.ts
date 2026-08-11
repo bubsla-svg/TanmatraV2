@@ -68,4 +68,9 @@ export const OTP_MESSAGES = {
     "That code request expired. Tap Resend to get a fresh code.",
   invalidPhone: "Enter a 10-digit mobile number.",
   invalidCode: `Enter the ${CODE_DIGITS}-digit code from the SMS.`,
+  // A 5xx from verify-otp is our outage, not the customer's mistake — the
+  // raw server body ("internal error") reached the screen verbatim in the
+  // 2026-08-11 incident and reads as a dead end with no next step.
+  serverError:
+    "Something went wrong on our side — your code was correct, so please tap Verify again in a moment.",
 } as const;
