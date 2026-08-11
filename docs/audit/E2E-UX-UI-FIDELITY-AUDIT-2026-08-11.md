@@ -996,3 +996,47 @@ A fourth conflict is **not** resolvable by precedence: screens 6.3, 6.4, 6.7 and
 **deliberately replaced** with the `docs/spec` 02-series goal-router model. Implementing the pack
 literally would reverse a recorded architectural decision. That requires an explicit owner ruling,
 not an engineering judgement.
+
+---
+
+# ADDENDUM 4 — Scan-before-build corrections (2026-08-11)
+
+> Implementation of the Stitch gaps began scan-first. Reading the code before
+> writing any refuted two claims in this report and re-scoped the remaining work.
+
+**CORRECTION 7 — `lib/subscriptionsApi.ts` does NOT expose "only skip/unskip".**
+§D/Funnel-3 and the Wave-2 remediation item inherited that from BUILD-GAP-ANALYSIS.
+The file exports **15 functions**, including `rescheduleDelivery` (:126) and
+`swapDelivery` (:138), plus `changePlan`, `createChangePlanReauthOrder`,
+`confirmChangePlanReauth`, `pause/resume/cancel/reactivateBilling`, and
+`getMealCredits`. Further, `components/account/ManageDeliverySheet.tsx` **exists
+and is wired** into `DeliveryList.tsx`, performing reschedule + dish-swap against
+the real `/reschedule` and `/swap` seams, importing `SKIP_SWAP_CUTOFF_MS` from
+the shared DB-free rules package so the UI cutoff cannot drift from the server's.
+The stated finding — "meal/time/address changes on an active subscription are
+unreachable from the storefront" — is **FALSE at current HEAD**. What 9.2 actually
+lacks is the remaining action rows (skip, pause, add-item, change-address, help)
+and the one-unavailable-action-with-reason row.
+
+**CORRECTION 8 — Stitch 14.6 (payment processing) is already implemented and
+marked.** `PlanCheckout.tsx:214` carries `data-screen-id="14.6"` /
+`data-screen-state="payment-processing"`, gated on the `verifying` flag, with the
+"Opening payment…" vs "Confirming your payment…" distinction documented at :73.
+Quote staleness machinery also exists — `lib/quoteApi.ts` exports `quoteIsFresh()`
+and `AlacarteCheckout.tsx:139-142` computes it with the comment *"stale prices must
+ask to be refreshed, not keep quietly rendering."* 8.2's genuine gap is the
+dedicated recovery *screen*, not the underlying detection.
+
+## Re-scoped remaining gaps (10)
+
+| Screen | True state after scan |
+|---|---|
+| 14.6 payment processing | **Effectively done** — marked and gated; needs evidence, not code |
+| 9.2 Manage Delivery | **Partially done** — reschedule + swap live; add the remaining rows |
+| 8.2 quote expired | **Machinery exists** — needs the recovery screen over `quoteIsFresh()` |
+| 6.5 Change Dish | **New** — `SwapDialog` is real but bound to the post-purchase meal-plan domain (`mealPlanApi`, numeric planId, `MealPlanSlot`); not reusable pre-purchase |
+| 10.9 Meal Feedback | **Wiring + API route** — component complete, no `apiPost`, zero importers |
+| 6.2, 6.6, 12.4, 14.3, 14.4 | **Genuinely new** |
+
+The pattern holds: of 13 gaps, 3 are now closed, 3 more are completion rather than
+construction, and only 5 are genuinely new build.
