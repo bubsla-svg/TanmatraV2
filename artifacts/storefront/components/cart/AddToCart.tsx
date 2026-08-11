@@ -11,12 +11,17 @@ import { useCart } from "@/components/cart/CartProvider";
 import { ApiError } from "@/lib/apiClient";
 import { addItem } from "@/lib/groupOrdersApi";
 
-// macros/macrosEstimated optional (not Pick'd straight off DishData, which
-// declares macros as required) — D-14's capture is best-effort: a caller
-// that builds a narrower literal (InstantPlanPreview) still type-checks and
-// simply adds a line with no macro chip, same as any cart written before
-// this field existed.
+// `isAvailable` is optional here (unlike DishData, where it's required): most
+// call sites hand this component a full DishData and get it for free, but a
+// few (InstantPlanPreview) build a narrower literal with no availability
+// concept at all. `undefined` reads as available, same convention as
+// cartStore's `opts.isAvailable` and catalog.ts's `!== false` checks.
+// macros/macrosEstimated are likewise optional (not Pick'd straight off
+// DishData, which declares macros as required) — D-14's capture is
+// best-effort: a narrower literal still type-checks and simply adds a line
+// with no macro chip, same as any cart written before this field existed.
 type Dish = Pick<DishData, "id" | "slug" | "name" | "price"> & {
+  isAvailable?: boolean;
   macros?: DishMacros;
   macrosEstimated?: boolean;
 };
@@ -24,7 +29,7 @@ const GROUP_CODE = /^[0-9A-Za-z]{6,8}$/;
 
 export function AddToCart({ dish }: { dish: Dish }) {
   return (
-    <Suspense fallback={<CartAdd dish={dish} />}>
+    <Suspense fallback={dish.isAvailable === false ? <UnavailableAdd /> : <CartAdd dish={dish} />}>
       <AddToCartResolved dish={dish} />
     </Suspense>
   );
@@ -32,8 +37,28 @@ export function AddToCart({ dish }: { dish: Dish }) {
 
 function AddToCartResolved({ dish }: { dish: Dish }) {
   const group = useSearchParams().get("group");
+  // D-19: a paused dish is refused before either destination — the shared
+  // group order (server-resolved) and the local cart both get the same
+  // "Back soon" state, since adding to a group order the host can't
+  // actually fulfil is the same contradiction as adding it locally.
+  if (dish.isAvailable === false) return <UnavailableAdd />;
   if (group && GROUP_CODE.test(group)) return <GroupAdd code={group} dish={dish} />;
   return <CartAdd dish={dish} />;
+}
+
+/** D-19: the "Back soon" face — disabled, labeled, same footprint as Add so
+ *  no layout shift when a dish's availability flips. */
+function UnavailableAdd() {
+  return (
+    <button
+      type="button"
+      disabled
+      aria-label="Back soon — kitchen has paused this dish"
+      className="min-h-11 rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-ink-muted opacity-70"
+    >
+      Back soon
+    </button>
+  );
 }
 
 /** Add my pick to the shared group order (server resolves price + safety). */
@@ -107,7 +132,10 @@ function CartAdd({ dish }: { dish: Dish }) {
         type="button"
         onClick={(e) => {
           e.stopPropagation();
-          setCart(addLine(cart, line));
+          // AddToCartResolved already refuses to render this button for an
+          // unavailable dish — this is cartStore's own backstop (D-19),
+          // never the primary gate.
+          setCart(addLine(cart, line, { isAvailable: dish.isAvailable }));
         }}
         className="min-h-11 rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-ink transition-transform active:scale-[0.98]"
       >
