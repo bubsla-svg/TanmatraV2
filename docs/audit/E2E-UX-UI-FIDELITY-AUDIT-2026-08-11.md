@@ -825,3 +825,81 @@ missing design references and absent accessibility tooling — are unchanged.
 
 The most important shift is that the **highest-value finding is now an operations question, not
 an engineering one**: 52% of the live menu cannot be bought today, and no code change fixes that.
+
+---
+
+# ADDENDUM 2 — Design reference received (2026-08-11)
+
+The final missing input arrived: the approved P0 + Phases 4–13 implementation plan and
+UX/UI Architecture Document (Google Doc, 159k chars), the 74-screen Stitch package as baseline,
+and five approved route rulings with an explicit precedence rule: *later written rulings
+supersede Stitch screens.* This addendum records what that unlocks and what it does not.
+
+## A2-1. The five approved route rulings, verified against production
+
+Tested by direct request against `https://tanmatra.food` (deployed sha `c842289` = main tip):
+
+| Ruling | Production behaviour | Verdict |
+|---|---|---|
+| `/quiz` → `/quick-setup` | `308 → /quick-setup` | **COMPLIES** |
+| `/auth` → `/login` | `308 → /login` | **COMPLIES** |
+| Mobile tabs Home / Menu / Care / Account | exact match (`MobileBottomNav.tsx`) | **COMPLIES** |
+| **`/menu/[productSlug]` canonical; `/dish/[slug]` redirects to it** | **INVERTED**: `/dish/quinoa-khichdi` → 200, `/menu/quinoa-khichdi` → **404** | **VIOLATED** |
+| **`/corporate` canonical; `/corporate-wellness` redirects to it** | both → 200, no redirect | **VIOLATED** |
+
+**NEW DEFECT RUL-01 (MAJOR)** — the entire PDP surface lives on the deprecated route. Every
+internal link, the sitemap, and the SEO-indexed dish pages use `/dish/[slug]`; the approved
+canonical `/menu/[productSlug]` does not exist (404). This is precisely the audit charter §2.3
+prohibition: *"the implementation substitutes another route for the required route without an
+approved canonical redirect."* Functionally nothing is broken — which is why no prior pass
+caught it — but the approved contract is inverted. Remediation: add `/menu/[productSlug]` as
+the canonical page (or a redirect layer both ways per the ruling), migrate internal links, then
+308 `/dish/[slug]` → `/menu/[productSlug]`.
+
+**NEW DEFECT RUL-02 (MAJOR)** — `/corporate-wellness` and `/corporate` coexist as equal
+canonicals, which the architecture doc explicitly prohibits ("Prohibited duplicate route
+engines"). Compounding irony: the **canonical** route (`/corporate`) is the placeholder stub
+(CRT-04) while the **deprecated** route carries the real lead-gen content. Remediation order
+matters: wire the real content into `/corporate` first, *then* 308 `/corporate-wellness` to it —
+redirecting today would send visitors from a working page to a stub.
+
+The doc also confirms `/login?step=phone|otp|account-conflict` was "Recommended", so the shipped
+`?next=` contract remains a **recorded divergence** (parked by owner decision), not a defect —
+unchanged from the original report.
+
+## A2-2. Visual-fidelity scoring: still NOT VERIFIABLE, for two hard reasons
+
+The instruction restricts pass/fail visual scoring to screens marked **APPROVED TARGET** or
+**APPROVED WITH NOTES**. Verified directly:
+
+1. **The approval vocabulary does not exist anywhere in the repository or the architecture
+   doc.** `grep` for `APPROVED TARGET` / `APPROVED WITH NOTES` across all JSON/MD/CSV/TS: zero
+   hits. The manifest's per-screen status field is `designDisposition` with exactly two values —
+   `original` (62) and `rebuild-required` (12) — which does not encode the required approval
+   partition. **Which of the 74 screens are authoritative pass/fail targets is recorded
+   nowhere I can access.**
+2. **The reference images are absent.** All 74 `referenceArtifact` paths point to
+   `artifacts/stitch/reference/<promptId>.png`; zero exist on disk and the directory is absent
+   from the entire git history. The Stitch MCP server attached to this session exposed no
+   screen-fetch tools. Pixel-level comparison is impossible regardless of approval status.
+
+What the manifest DOES enable — and this was used: each of the 74 entries maps
+`canonicalRoute`, `layout`, `themes`, `viewport`, `state`, `routeEntryPoint`, and expected
+primary action. That structural mapping corroborates the original audit's route/layout/state
+verification (sections C and E). The visual-fidelity **cap at 60 therefore stands**, now for a
+narrower and precisely-stated reason: baseline received, but its approval partition and its
+image artifacts are both missing.
+
+> **MISSING INPUT (narrowed): Stitch screen approval dispositions + reference images**
+> Recommended evidence: (a) add an `approvalStatus` field
+> (`approved-target | approved-with-notes | concept | superseded | implementation-capture`)
+> to `docs/stitch/stitch-screen-manifest.json`, annotating the two rulings-conflicted screens
+> per the precedence rule; (b) commit the 74 reference PNGs to `artifacts/stitch/reference/`
+> (the exact paths the manifest already declares), or provide read access to the Stitch project.
+
+## A2-3. Net effect
+
+Verdict **NOT CERTIFIED** and score **61/100** unchanged — two MAJOR route-ruling violations
+added (RUL-01, RUL-02); no cap moves. Route-registry compliance is now measured against the
+*approved* contract rather than inferred from the tree, which is what section 7.1 always
+required: 3 of 5 rulings hold in production, 2 do not.
