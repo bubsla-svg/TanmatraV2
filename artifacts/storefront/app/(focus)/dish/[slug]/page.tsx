@@ -6,6 +6,7 @@ import { SafeImage } from "@/components/ui/SafeImage";
 import { AccordionItem } from "@/components/primitives/Accordion";
 import { formatPaise } from "@/lib/format";
 import { PdpBuyLedger } from "@/components/menu/PdpBuyLedger";
+import { FallbackMenuBanner } from "@/components/menu/FallbackMenuBanner";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function DishPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;
-  const { dishes } = await fetchMenu();
+  const { dishes, source } = await fetchMenu();
   const dish = findDish(resolvedParams.slug, dishes);
   if (!dish) notFound();
 
@@ -42,6 +43,7 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
       </div>
 
       <div className="px-gutter pt-6 flex-1 flex flex-col">
+        {source === "fallback" && <FallbackMenuBanner />}
         {/* Header Section */}
         <div className="mb-6">
           <div className="flex gap-2 items-center mb-3">

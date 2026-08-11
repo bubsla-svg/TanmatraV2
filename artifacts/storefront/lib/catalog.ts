@@ -47,18 +47,73 @@ function availableFallback(): DishData[] {
   return DISHES.filter((d) => d.isAvailable !== false);
 }
 
-export async function fetchMenu(): Promise<MenuResult> {
-  try {
-    const res = await fetch(`${API_BASE}/api/menu/public`, {
-      // Revalidate hourly — the menu is not per-request data.
-      next: { revalidate: 3600 },
+/** The live fetch both fetchMenu() and checkMenuSource() share — throws with
+ *  a specific reason on any non-success outcome so callers can tell api-down
+ *  from empty-menu without re-deriving it. */
+async function fetchLiveMenu(): Promise<DishData[]> {
+  const res = await fetch(`${API_BASE}/api/menu/public`, {
+    // Revalidate hourly — the menu is not per-request data.
+    next: { revalidate: 3600 },
+  });
+  if (!res.ok) throw new Error(`menu ${res.status}`);
+  const data = (await res.json()) as { dishes?: DishData[] };
+  if (!data.dishes?.length) throw new Error("empty menu");
+  return data.dishes;
+}
+
+/** D-06: one Sentry event per fallback, fire-and-forget — same dynamic
+ *  import + DSN gate as app/global-error.tsx / SegmentError.tsx, so a build
+ *  with no DSN configured pays nothing and reports nothing. */
+function reportMenuFallback(error: unknown): void {
+  if (!process.env.NEXT_PUBLIC_SENTRY_DSN) return;
+  const reason = error instanceof Error ? error.message : String(error);
+  import("@sentry/nextjs").then((Sentry) => {
+    Sentry.captureMessage("Menu catalog fell back to static data", {
+      level: "warning",
+      extra: { reason },
     });
-    if (!res.ok) throw new Error(`menu ${res.status}`);
-    const data = (await res.json()) as { dishes?: DishData[] };
-    if (!data.dishes?.length) throw new Error("empty menu");
-    return { dishes: data.dishes.map(normalizeDishImages), source: "api" };
-  } catch {
+  });
+}
+
+/**
+ * Server-side catalog fetch (see file header). `reportFallback` is injectable
+ * (default: reportMenuFallback) purely so tests can assert the fallback path
+ * fires the event without reaching into the real Sentry SDK — every other
+ * caller (MenuPage, DishPage) takes the default.
+ */
+export async function fetchMenu(
+  reportFallback: (error: unknown) => void = reportMenuFallback,
+): Promise<MenuResult> {
+  try {
+    const dishes = await fetchLiveMenu();
+    return { dishes: dishes.map(normalizeDishImages), source: "api" };
+  } catch (error) {
+    reportFallback(error);
     return { dishes: availableFallback(), source: "fallback" };
+  }
+}
+
+/**
+ * D-06(c): the `x-menu-source` signal for ops, read by middleware.ts.
+ *
+ * This is NOT called from fetchMenu() — it exists because Next.js Server
+ * Components cannot set outgoing response headers (`next/headers`'s
+ * `headers()` is explicitly read-only), so /menu and /dish/[slug] have no
+ * way to stamp their own response. Middleware is the only layer in the App
+ * Router that can. It calls the same `${API_BASE}/api/menu/public` URL with
+ * the same `revalidate: 3600` window as fetchLiveMenu(), so it shares Next's
+ * fetch cache with the page's own fetchMenu() call — in steady state this
+ * resolves from cache, not a second network round-trip; only a true
+ * cache-miss (at most once per revalidate window) pays for a real fetch.
+ * Deliberately does not import DISHES — middleware may run on the Edge
+ * runtime and the static fallback catalog has no reason to be in that bundle.
+ */
+export async function checkMenuSource(): Promise<MenuResult["source"]> {
+  try {
+    await fetchLiveMenu();
+    return "api";
+  } catch {
+    return "fallback";
   }
 }
 
