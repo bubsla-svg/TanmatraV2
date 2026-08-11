@@ -134,6 +134,9 @@ test.describe("stitch-runtime: commerce (5.x)", () => {
     // The PDP h1 is the exact product name the card advertised.
     await expect(page.getByRole("heading", { name: productName, exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Add to Order" })).toBeVisible();
+    // DEF-RECON-MARKETPLACE-001: payForMarketplace() had zero callers — the
+    // PDP's own money-path CTA, alongside the cart-only "Add to Order".
+    await expect(page.getByRole("button", { name: "Buy now" })).toBeVisible();
     await expect(marker(page, "5.8", "default")).toBeVisible();
     await evidenceShot(page, "5.8");
   });
