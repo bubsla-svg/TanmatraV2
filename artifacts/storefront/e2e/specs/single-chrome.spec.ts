@@ -50,10 +50,17 @@ test.describe("chrome is rendered exactly once per route", () => {
   });
 
   test("b2b shell: exactly one business header, no consumer chrome", async ({ page }) => {
-    await page.goto("/corporate");
-    // The compact B2B header (app/(b2b)/layout.tsx) — and only it.
-    await expect(page.locator("header")).toHaveCount(1);
-    await expect(page.getByRole("navigation", { name: "Business" })).toHaveCount(1);
+    await page.goto("/corporate-wellness");
+    // The compact B2B shell header (app/(b2b)/layout.tsx) — identified by the
+    // "Business" nav it wraps, not by tag alone: /corporate-wellness's own
+    // content is a landing page whose hero section (LandingHero.tsx) uses a
+    // semantic <header> for the hero itself, so a bare `locator("header")`
+    // count would conflate page content with shell chrome. This asserts what
+    // the test actually means — exactly one instance of the SHELL header.
+    const b2bHeader = page.locator("header").filter({
+      has: page.getByRole("navigation", { name: "Business" }),
+    });
+    await expect(b2bHeader).toHaveCount(1);
     // None of the consumer chrome leaks in.
     await expect(page.locator("footer")).toHaveCount(0);
     await expect(

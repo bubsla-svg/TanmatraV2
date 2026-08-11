@@ -1,0 +1,2222 @@
+[
+  {
+    "STITCH_ID": "4.1",
+    "STITCH_TITLE": "Dark Design-System Screen",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/4.1.png",
+    "REFERENCE_VERSION": "839f4a92436a4444bda6fabfa07d7a06",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/styleguide",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Component reference",
+    "ENTRY_ACTION": "route-navigation:Styleguide (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Inspect design tokens",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": "No per-screen approval field on the manifest; treated as always-approved design-system reference, not a route target."
+  },
+  {
+    "STITCH_ID": "4.2",
+    "STITCH_TITLE": "Light Design-System Screen",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/4.2.png",
+    "REFERENCE_VERSION": "f814ddb11cbb4b17832dba069604e371",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/styleguide",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Component reference",
+    "ENTRY_ACTION": "route-navigation:Styleguide (light) (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Inspect design tokens",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "light"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": "No per-screen approval field on the manifest; treated as always-approved design-system reference, not a route target."
+  },
+  {
+    "STITCH_ID": "5.1",
+    "STITCH_TITLE": "Tanmatra Home: Clinical Feed",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/5.1.png",
+    "REFERENCE_VERSION": "966d396f55ed43ada3e69ff56950d3ef",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Home tab (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Order today",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "5.2",
+    "STITCH_TITLE": "Daily Menu: Clinical Selection",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/5.2.png",
+    "REFERENCE_VERSION": "72d14e82a0064eb398552c2bee5d4682",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/menu",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Menu tab (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Add a dish to cart",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "5.3",
+    "STITCH_TITLE": "Menu Filter Bottom Sheet",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/5.3.png",
+    "REFERENCE_VERSION": "72d14e82a0064eb398552c2bee5d4682-filter",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/menu",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Overlay",
+    "ENTRY_ACTION": "button:Filter (from menu-default)",
+    "EXIT_ACTION": "close-button, escape, safe-backdrop, focus-restored",
+    "PRIMARY_CTA": "Apply filters",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "5.4",
+    "STITCH_TITLE": "Dish Quick-View Bottom Sheet",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/5.4.png",
+    "REFERENCE_VERSION": "72d14e82a0064eb398552c2bee5d4682-quickview",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/menu",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Overlay",
+    "ENTRY_ACTION": "button:Dish card (dish name) (from menu-default)",
+    "EXIT_ACTION": "close-button, escape, safe-backdrop, focus-restored",
+    "PRIMARY_CTA": "Add to cart",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "5.5",
+    "STITCH_TITLE": "Dish PDP: Full Clinical Detail",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/5.5.png",
+    "REFERENCE_VERSION": "ef20a9487d414d8aaa48ab69e4b1f22d",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/dish/[slug]",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "link:Dish card (from menu-default)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Add to cart",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "5.6",
+    "STITCH_TITLE": "Cart Drawer: Commerce Overlay",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/5.6.png",
+    "REFERENCE_VERSION": "44267f5a1c8c43f0873fb5ed30fef65d",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "global",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Bottom sheet",
+    "ENTRY_ACTION": "button:View cart (from any-commerce-surface)",
+    "EXIT_ACTION": "close-button, escape, safe-backdrop, focus-restored",
+    "PRIMARY_CTA": "Checkout",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "5.7",
+    "STITCH_TITLE": "Tanmatra Marketplace: Pantry & Hydration",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/5.7.png",
+    "REFERENCE_VERSION": "866fc4167d9c47709ff6c3465ab63b84",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/marketplace",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Marketplace (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Add a product to cart",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "5.8",
+    "STITCH_TITLE": "Marketplace Product PDP",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/5.8.png",
+    "REFERENCE_VERSION": "866fc4167d9c47709ff6c3465ab63b84-pdp",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/marketplace/[slug]",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "link:Product card (from marketplace-default)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Add to cart",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "5.9",
+    "STITCH_TITLE": "Meal Deals: Bundles & Combos",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/5.9.png",
+    "REFERENCE_VERSION": "866fc4167d9c47709ff6c3465ab63b84-deals",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/meal-deals",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Meal deals (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Add combo to cart",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "5.10",
+    "STITCH_TITLE": "AI-Assisted Meal Recommendations",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/5.10.png",
+    "REFERENCE_VERSION": "866fc4167d9c47709ff6c3465ab63b84-recs",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/meal-recommendations",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Meal recommendations (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Add recommended dish",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "5.11",
+    "STITCH_TITLE": "Meal Reheating & Macro Guide",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/5.11.png",
+    "REFERENCE_VERSION": "ef20a9487d414d8aaa48ab69e4b1f22d-guide",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/meal-guides/[dishSlug]",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "link:Meal guide link (from order-history)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Reorder dish",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "5.12",
+    "STITCH_TITLE": "RD Recipe Library & Rationale",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/5.12.png",
+    "REFERENCE_VERSION": "ef20a9487d414d8aaa48ab69e4b1f22d-recipes",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/recipes",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Recipes (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Open recipe",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "6.1",
+    "STITCH_TITLE": "Subscription Plans Discovery",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/6.1.png",
+    "REFERENCE_VERSION": "8d3c8980a3cc4937b00e062e5d5e554c",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/plans",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Plan tab (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Pick your goal",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "6.2",
+    "STITCH_TITLE": "Plans Mealtime Preference Sheet",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/6.2.png",
+    "REFERENCE_VERSION": "8d3c8980a3cc4937b00e062e5d5e554c-mealtime",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/plans",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Overlay",
+    "ENTRY_ACTION": "button:Select mealtime (from plans-default)",
+    "EXIT_ACTION": "close-button, escape, safe-backdrop, focus-restored",
+    "PRIMARY_CTA": "Confirm mealtime",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "6.3",
+    "STITCH_TITLE": "Plan Configuration: Initial Setup",
+    "APPROVAL_STATUS": "APPROVED_TARGET_REBUILD_REQUIRED",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/6.3.png",
+    "REFERENCE_VERSION": "e4be16728fa3442d88c96a63529b1b92",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/plan/[planId]",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "route-navigation:Plan card (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Generate my week",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "6.4",
+    "STITCH_TITLE": "Plan Day-by-Day Meal Lineup",
+    "APPROVAL_STATUS": "APPROVED_TARGET_REBUILD_REQUIRED",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/6.4.png",
+    "REFERENCE_VERSION": "e4be16728fa3442d88c96a63529b1b92-lineup",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/plan/[planId]",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "server-response:lineup_ready (from generating)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Continue to schedule",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "6.5",
+    "STITCH_TITLE": "Plan Change Dish Bottom Sheet",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/6.5.png",
+    "REFERENCE_VERSION": "e4be16728fa3442d88c96a63529b1b92-swap",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/plan/[planId]",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Overlay",
+    "ENTRY_ACTION": "button:Change dish (from lineup-active)",
+    "EXIT_ACTION": "close-button, escape, safe-backdrop, focus-restored",
+    "PRIMARY_CTA": "Replace meal",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "6.6",
+    "STITCH_TITLE": "Plan Accompaniment Editor Sheet",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/6.6.png",
+    "REFERENCE_VERSION": "e4be16728fa3442d88c96a63529b1b92-sides",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/plan/[planId]",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Overlay",
+    "ENTRY_ACTION": "button:Edit accompaniment (from lineup-active)",
+    "EXIT_ACTION": "close-button, escape, safe-backdrop, focus-restored",
+    "PRIMARY_CTA": "Save accompaniments",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "6.7",
+    "STITCH_TITLE": "Plan Delivery Schedule Configuration",
+    "APPROVAL_STATUS": "APPROVED_TARGET_REBUILD_REQUIRED",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/6.7.png",
+    "REFERENCE_VERSION": "e4be16728fa3442d88c96a63529b1b92-schedule",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/plan/[planId]",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "button:Continue to schedule (from lineup-active)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Continue to checkout",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "6.8",
+    "STITCH_TITLE": "3-Day Clinical Taste Trial",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/6.8.png",
+    "REFERENCE_VERSION": "59aa3123733a4aac84001db8d6032283",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/trial",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Try 3 days first (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Start my 3-day trial",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "6.9.1",
+    "STITCH_TITLE": "Quick Setup Step 1: Goal",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/6.9.1.png",
+    "REFERENCE_VERSION": "21ee21b9d8e94c98927f921775b8c5f3-qs1",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/quick-setup",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "route-navigation:Quick setup (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Continue",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "6.9.2",
+    "STITCH_TITLE": "Quick Setup Step 2: Dietary Style",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/6.9.2.png",
+    "REFERENCE_VERSION": "21ee21b9d8e94c98927f921775b8c5f3-qs2",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/quick-setup",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "button:Continue (from step-1-goal)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Continue",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "6.9.3",
+    "STITCH_TITLE": "Quick Setup Step 3: Allergens",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/6.9.3.png",
+    "REFERENCE_VERSION": "21ee21b9d8e94c98927f921775b8c5f3-qs3",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/quick-setup",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "button:Continue (from step-2-dietary-style)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "See my plan",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "7.2",
+    "STITCH_TITLE": "Custom Build Step 1: Goal",
+    "APPROVAL_STATUS": "APPROVED_TARGET_REBUILD_REQUIRED",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/7.2.png",
+    "REFERENCE_VERSION": "21ee21b9d8e94c98927f921775b8c5f3",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/custom-build",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "route-navigation:Custom build (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Next: Routine",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "7.3",
+    "STITCH_TITLE": "Custom Build Step 2: Routine",
+    "APPROVAL_STATUS": "APPROVED_TARGET_REBUILD_REQUIRED",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/7.3.png",
+    "REFERENCE_VERSION": "21ee21b9d8e94c98927f921775b8c5f3-cb2",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/custom-build",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "button:Next: Routine (from goal)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Next: Preferences",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "7.4",
+    "STITCH_TITLE": "Custom Build Wearable Interstitial",
+    "APPROVAL_STATUS": "APPROVED_TARGET_REBUILD_REQUIRED",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/7.4.png",
+    "REFERENCE_VERSION": "21ee21b9d8e94c98927f921775b8c5f3-cb-wearable",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/custom-build",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "button:Connect wearable (from routine)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Connect or skip",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "7.5",
+    "STITCH_TITLE": "Custom Build Step 3: Food Preferences",
+    "APPROVAL_STATUS": "APPROVED_TARGET_REBUILD_REQUIRED",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/7.5.png",
+    "REFERENCE_VERSION": "21ee21b9d8e94c98927f921775b8c5f3-cb3",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/custom-build",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "button:Continue (from wearable-interstitial)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Next: Intensity",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "7.6",
+    "STITCH_TITLE": "Custom Build Step 4: Plan Intensity",
+    "APPROVAL_STATUS": "APPROVED_TARGET_REBUILD_REQUIRED",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/7.6.png",
+    "REFERENCE_VERSION": "21ee21b9d8e94c98927f921775b8c5f3-cb4",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/custom-build",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "button:Next: Intensity (from preferences)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Next: Duration",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "7.7",
+    "STITCH_TITLE": "Custom Build Step 5: Duration & Renewal",
+    "APPROVAL_STATUS": "APPROVED_TARGET_REBUILD_REQUIRED",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/7.7.png",
+    "REFERENCE_VERSION": "21ee21b9d8e94c98927f921775b8c5f3-cb5",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/custom-build",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "button:Next: Duration (from intensity)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Review my build",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "7.8",
+    "STITCH_TITLE": "Custom Build Step 6: Configuration Review",
+    "APPROVAL_STATUS": "APPROVED_TARGET_REBUILD_REQUIRED",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/7.8.png",
+    "REFERENCE_VERSION": "21ee21b9d8e94c98927f921775b8c5f3-cb6",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/custom-build",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "button:Review my build (from duration-renewal)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Generate my plan",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "7.9",
+    "STITCH_TITLE": "Custom Build Generated Plan Review",
+    "APPROVAL_STATUS": "APPROVED_TARGET_REBUILD_REQUIRED",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/7.9.png",
+    "REFERENCE_VERSION": "21ee21b9d8e94c98927f921775b8c5f3-cb-plan",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/custom-build",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "server-response:generation_complete (from generating)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Continue to checkout",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "7.10",
+    "STITCH_TITLE": "Custom Build Pre-Checkout Questions",
+    "APPROVAL_STATUS": "APPROVED_TARGET_REBUILD_REQUIRED",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/7.10.png",
+    "REFERENCE_VERSION": "21ee21b9d8e94c98927f921775b8c5f3-cb-questions",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/custom-build",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "button:Continue to checkout (from generated-plan)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Proceed to payment",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "8.1",
+    "STITCH_TITLE": "Secure Focus Checkout: Tanmatra OS",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/8.1.png",
+    "REFERENCE_VERSION": "b4f7b93cf4854f5eac4e1afb72efff6f",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/checkout",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "button:Checkout (from cart-drawer-open)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Pay",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "8.2",
+    "STITCH_TITLE": "Checkout Quote Expired Recovery",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/8.2.png",
+    "REFERENCE_VERSION": "b4f7b93cf4854f5eac4e1afb72efff6f-expired",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/checkout",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Recovery state",
+    "ENTRY_ACTION": "server-response:QUOTE_EXPIRED (from quote-active)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Refresh quote",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "8.3",
+    "STITCH_TITLE": "Order Confirmed & Telemetry Opt-in",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/8.3.png",
+    "REFERENCE_VERSION": "b4f7b93cf4854f5eac4e1afb72efff6f-confirmed",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/order/confirmed/[orderId]",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "server-response:payment_succeeded (from payment-processing)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Track order",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "9.1",
+    "STITCH_TITLE": "Meal Planner: Active Protocol Schedule",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/9.1.png",
+    "REFERENCE_VERSION": "75cf7ca6e32c4596b20c9ef59e0d9f16",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/meal-planner",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Meal planner (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Swap a meal",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "9.2",
+    "STITCH_TITLE": "Manage Delivery Bottom Sheet",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/9.2.png",
+    "REFERENCE_VERSION": "75cf7ca6e32c4596b20c9ef59e0d9f16-delivery",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/meal-planner",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Overlay",
+    "ENTRY_ACTION": "button:Manage (from delivery-list)",
+    "EXIT_ACTION": "close-button, escape, safe-backdrop, focus-restored",
+    "PRIMARY_CTA": "Save delivery change",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "9.3",
+    "STITCH_TITLE": "Account Active Subscriptions Management",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/9.3.png",
+    "REFERENCE_VERSION": "75cf7ca6e32c4596b20c9ef59e0d9f16-subs",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/account/subscriptions",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Subscriptions (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Pause plan",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "10.1",
+    "STITCH_TITLE": "Account Hub: Clinical Profile & Summary",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/10.1.png",
+    "REFERENCE_VERSION": "f49ace3e5e27464aacca6184b0432059",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/account",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Account tab (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Open orders",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "10.2",
+    "STITCH_TITLE": "Account Order History & Invoices",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/10.2.png",
+    "REFERENCE_VERSION": "f49ace3e5e27464aacca6184b0432059-orders",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/account/orders",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Orders (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "View order",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "10.3",
+    "STITCH_TITLE": "Account Saved Delivery Addresses",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/10.3.png",
+    "REFERENCE_VERSION": "f49ace3e5e27464aacca6184b0432059-addresses",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/account/addresses",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Addresses (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Add address",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "10.4",
+    "STITCH_TITLE": "Account Preferences: Diet & Theme",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/10.4.png",
+    "REFERENCE_VERSION": "f49ace3e5e27464aacca6184b0432059-preferences",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/account/preferences",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Preferences (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Save preferences",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "10.5",
+    "STITCH_TITLE": "Account Wellness & Biomarker Trends",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/10.5.png",
+    "REFERENCE_VERSION": "f49ace3e5e27464aacca6184b0432059-wellness",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/account/wellness",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Wellness (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Log a meal",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "10.6",
+    "STITCH_TITLE": "Account Consumption History & Macro Trends",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/10.6.png",
+    "REFERENCE_VERSION": "f49ace3e5e27464aacca6184b0432059-history",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/account/history",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:History (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Review week",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "10.7",
+    "STITCH_TITLE": "Account Symptoms & Food Reaction Log",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/10.7.png",
+    "REFERENCE_VERSION": "f49ace3e5e27464aacca6184b0432059-symptoms",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/account/symptoms",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Symptoms (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Log symptom",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "10.8",
+    "STITCH_TITLE": "Health Connections: Apple Health & Android Sync",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/10.8.png",
+    "REFERENCE_VERSION": "2b29b0174cfb46b1826594928710885e",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/account/connections",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Health connections (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Connect Apple Health",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "10.9",
+    "STITCH_TITLE": "Post-Meal Feedback Bottom Sheet",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/10.9.png",
+    "REFERENCE_VERSION": "f49ace3e5e27464aacca6184b0432059-feedback",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/account",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Overlay",
+    "ENTRY_ACTION": "button:Rate meal (from order-history)",
+    "EXIT_ACTION": "close-button, escape, safe-backdrop, focus-restored",
+    "PRIMARY_CTA": "Submit feedback",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "11.1",
+    "STITCH_TITLE": "Metabolic Health Program Landing",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/11.1.png",
+    "REFERENCE_VERSION": "43952f75a4c649be9f2e947d011b6bc0-meta",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/metabolic",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Metabolic (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "See matching plan",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "11.2",
+    "STITCH_TITLE": "Performance Nutrition Landing",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/11.2.png",
+    "REFERENCE_VERSION": "43952f75a4c649be9f2e947d011b6bc0-perf",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/performance",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Performance (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "See matching plan",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "11.3",
+    "STITCH_TITLE": "Clinical Care Protocols Hub",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/11.3.png",
+    "REFERENCE_VERSION": "43952f75a4c649be9f2e947d011b6bc0-clin",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/clinical",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Clinical (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "See matching plan",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "11.4",
+    "STITCH_TITLE": "Condition-Specific Clinical Care",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/11.4.png",
+    "REFERENCE_VERSION": "43952f75a4c649be9f2e947d011b6bc0",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/care/[condition]",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Condition care (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "See matching plan",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "11.5",
+    "STITCH_TITLE": "Registered Dietitian Directory",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/11.5.png",
+    "REFERENCE_VERSION": "43952f75a4c649be9f2e947d011b6bc0-rd",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/rd",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Dietitians (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "View dietitian",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "11.6",
+    "STITCH_TITLE": "RD Consultation Booking Focus Flow",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/11.6.png",
+    "REFERENCE_VERSION": "43952f75a4c649be9f2e947d011b6bc0-booking",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/rd/[slug]",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "button:Book (from rd-profile)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Confirm booking",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "11.7",
+    "STITCH_TITLE": "Tanmatra AI Nutrition Coach Conversation",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/11.7.png",
+    "REFERENCE_VERSION": "43952f75a4c649be9f2e947d011b6bc0-coach",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/coach",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Coach (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Ask the coach",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "11.8",
+    "STITCH_TITLE": "Dietitian Verified Community Q&A",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/11.8.png",
+    "REFERENCE_VERSION": "43952f75a4c649be9f2e947d011b6bc0-qa",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/qa",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Q&A (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Ask a question",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "12.1",
+    "STITCH_TITLE": "Corporate Employee Benefit Invite Activation",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/12.1.png",
+    "REFERENCE_VERSION": "43952f75a4c649be9f2e947d011b6bc0-corp-invite",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/corporate/invite/[token]",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "link:Corporate invite link (from external)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Activate benefit",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "12.2",
+    "STITCH_TITLE": "B2B Corporate Wellness Acquisition",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/12.2.png",
+    "REFERENCE_VERSION": "43952f75a4c649be9f2e947d011b6bc0-corp-well",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/corporate-wellness",
+    "EXPECTED_LAYOUT": "B2BLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Corporate wellness (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Request a proposal",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "12.3",
+    "STITCH_TITLE": "Gym & Athletic Facility Partner Landing",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/12.3.png",
+    "REFERENCE_VERSION": "43952f75a4c649be9f2e947d011b6bc0-gym",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/partners/gyms",
+    "EXPECTED_LAYOUT": "B2BLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Gym partners (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Partner with us",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "12.4",
+    "STITCH_TITLE": "Gym Membership Verification State",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/12.4.png",
+    "REFERENCE_VERSION": "43952f75a4c649be9f2e947d011b6bc0-gym-verify",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/partners/gyms",
+    "EXPECTED_LAYOUT": "B2BLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "button:Check my member benefit (from gyms-default)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Verify membership",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "12.5",
+    "STITCH_TITLE": "Fitness Club & Endurance Community Portal",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/12.5.png",
+    "REFERENCE_VERSION": "43952f75a4c649be9f2e947d011b6bc0-fitness",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/partners/fitness-clubs",
+    "EXPECTED_LAYOUT": "B2BLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Fitness clubs (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Partner with us",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "12.6",
+    "STITCH_TITLE": "Dietitian Referral Patient Activation",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/12.6.png",
+    "REFERENCE_VERSION": "43952f75a4c649be9f2e947d011b6bc0-rd-ref",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/partners/dietitians",
+    "EXPECTED_LAYOUT": "B2BLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Dietitian partners (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Refer a client",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "12.7",
+    "STITCH_TITLE": "Dietitian Partner Network Onboarding",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/12.7.png",
+    "REFERENCE_VERSION": "43952f75a4c649be9f2e947d011b6bc0-rd-partner",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/rd-partners",
+    "EXPECTED_LAYOUT": "B2BLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:RD partner network (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Apply to the network",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "13.1",
+    "STITCH_TITLE": "Metabolic Challenges Discovery",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/13.1.png",
+    "REFERENCE_VERSION": "43952f75a4c649be9f2e947d011b6bc0-challenges",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/challenges",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Challenges (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "View challenge",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "13.2",
+    "STITCH_TITLE": "Challenge Registration & Clinical Detail",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/13.2.png",
+    "REFERENCE_VERSION": "43952f75a4c649be9f2e947d011b6bc0-challenge-detail",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/challenges/[slug]",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "link:Challenge card (from challenges-default)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Register",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "13.3",
+    "STITCH_TITLE": "Active Metabolic Challenge Tracker",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/13.3.png",
+    "REFERENCE_VERSION": "43952f75a4c649be9f2e947d011b6bc0-challenge-track",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/challenges/tracker",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route",
+    "ENTRY_ACTION": "route-navigation:Challenge tracker (from any)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Log activity",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "14.1",
+    "STITCH_TITLE": "Empty Cart Drawer State",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/14.1.png",
+    "REFERENCE_VERSION": "44267f5a1c8c43f0873fb5ed30fef65d-empty",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "global",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Empty state",
+    "ENTRY_ACTION": "empty-data condition:Cart has zero items (from cart-drawer-open)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Browse the menu",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "14.2",
+    "STITCH_TITLE": "Menu No Matching Meals Result",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/14.2.png",
+    "REFERENCE_VERSION": "72d14e82a0064eb398552c2bee5d4682-no-match",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/menu",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Empty state",
+    "ENTRY_ACTION": "empty-data condition:Filters match zero dishes (from filter-applied)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Clear filters",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "14.3",
+    "STITCH_TITLE": "Plan Generation Loading State",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/14.3.png",
+    "REFERENCE_VERSION": "e4be16728fa3442d88c96a63529b1b92-loading",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/plan/[planId]",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Loading state",
+    "ENTRY_ACTION": "server-response:generating (from initial-configuration)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Wait or cancel",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "14.4",
+    "STITCH_TITLE": "Plan Generation Error Recovery",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/14.4.png",
+    "REFERENCE_VERSION": "e4be16728fa3442d88c96a63529b1b92-error",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/plan/[planId]",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Recovery state",
+    "ENTRY_ACTION": "server-response:generation_failed (from plan-generating)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Try again",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "14.5",
+    "STITCH_TITLE": "Unserviceable Address Notice",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/14.5.png",
+    "REFERENCE_VERSION": "f49ace3e5e27464aacca6184b0432059-unserviceable",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/account/addresses",
+    "EXPECTED_LAYOUT": "GlobalLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "serviceability result:Pincode outside delivery area (from address-form)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Change address",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "14.6",
+    "STITCH_TITLE": "Checkout Payment Processing State",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/14.6.png",
+    "REFERENCE_VERSION": "b4f7b93cf4854f5eac4e1afb72efff6f-processing",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/checkout",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Route state",
+    "ENTRY_ACTION": "server-response:payment_verifying (from quote-active)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Wait for verification",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  },
+  {
+    "STITCH_ID": "14.7",
+    "STITCH_TITLE": "Payment Timeout Recovery State",
+    "APPROVAL_STATUS": "APPROVED_TARGET",
+    "REFERENCE_IMAGE": "artifacts/stitch/reference/14.7.png",
+    "REFERENCE_VERSION": "b4f7b93cf4854f5eac4e1afb72efff6f-timeout",
+    "USER_JOURNEY": null,
+    "EXPECTED_ROUTE": "/checkout",
+    "EXPECTED_LAYOUT": "FocusLayout",
+    "SCREEN_OR_STATE": "Recovery state",
+    "ENTRY_ACTION": "timeout:Payment verification timed out (from payment-processing)",
+    "EXIT_ACTION": null,
+    "PRIMARY_CTA": "Check payment status",
+    "SECONDARY_ACTIONS": null,
+    "REQUIRED_DATA": null,
+    "REQUIRED_SERVICE": null,
+    "AUTHENTICATION_RULE": null,
+    "FEATURE_FLAG": null,
+    "RESPONSIVE_VARIANTS": [
+      "390x844"
+    ],
+    "THEME_VARIANTS": [
+      "dark"
+    ],
+    "ACCESSIBILITY_NOTES": null,
+    "RELATED_SCREENS": null,
+    "ROUTE_RULING": null,
+    "SOURCE_OF_TRUTH": "docs/stitch/stitch-screen-manifest.json",
+    "GOVERNANCE_GAPS": null
+  }
+]

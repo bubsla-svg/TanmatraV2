@@ -32,9 +32,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/care/diabetes", priority: 0.7, changeFrequency: "monthly" },
     { path: "/performance", priority: 0.6, changeFrequency: "monthly" },
     { path: "/clinical", priority: 0.6, changeFrequency: "monthly" },
-    { path: "/wellness", priority: 0.6, changeFrequency: "monthly" },
     { path: "/premium", priority: 0.6, changeFrequency: "monthly" },
-    { path: "/corporate", priority: 0.6, changeFrequency: "monthly" },
+    // /corporate is a 308 redirect onto this canonical URL (reconciliation
+    // sweep decision gate, docs/reconciliation/, 2026-08-11) — only the
+    // destination belongs in a sitemap.
     { path: "/corporate-wellness", priority: 0.6, changeFrequency: "monthly" },
     { path: "/about", priority: 0.5, changeFrequency: "monthly" },
     { path: "/faq", priority: 0.5, changeFrequency: "monthly" },

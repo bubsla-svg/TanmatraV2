@@ -47,6 +47,29 @@ test("the assessment entry survives on a condition slug with no known display ma
   const assessmentLink = page.getByRole("link", { name: "Find my starting point" });
   await expect(assessmentLink).toBeVisible();
   await expect(assessmentLink).toHaveAttribute("href", "/quick-setup?condition=some-unmapped-condition");
-  // Fallback display name is still readable, never a raw/crashed slug.
-  await expect(page.getByRole("heading", { name: "Some Unmapped Condition Protocol", level: 1 })).toBeVisible();
+  // Fallback display name is still readable, never a raw/crashed slug — and
+  // carries no "Protocol" framing, since this slug isn't a recognized
+  // condition (DEF-RECON-CARECONDITION-001 — see the next test).
+  await expect(page.getByRole("heading", { name: "Some Unmapped Condition", level: 1, exact: true })).toBeVisible();
+});
+
+/**
+ * DEF-RECON-CARECONDITION-001 (reconciliation sweep, 2026-08-11): /care/[condition]
+ * stays a free-text catch-all (no notFound(), no allowlist gate — a standing
+ * product ruling), but an arbitrary slug must not render the same
+ * clinical-sounding "Clinical Objectives" / "RD-crafted therapeutic meal
+ * plan" copy a recognized condition gets. isCareConditionKnown()
+ * (lib/careConditions.ts) decides which copy renders, not whether the route
+ * resolves.
+ */
+test("an unmapped slug gets no clinical framing; a known condition still does", async ({ page }) => {
+  await page.goto("/care/asdfqwerty");
+  await expect(page.getByRole("heading", { name: "Clinical Objectives" })).toHaveCount(0);
+  await expect(page.getByText("RD-crafted therapeutic meal plan", { exact: false })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Explore Plans" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Browse Care Directory" })).toBeVisible();
+
+  await page.goto("/care/pcos");
+  await expect(page.getByRole("heading", { name: "Clinical Objectives" })).toBeVisible();
+  await expect(page.getByText("RD-crafted therapeutic meal plan", { exact: false })).toBeVisible();
 });

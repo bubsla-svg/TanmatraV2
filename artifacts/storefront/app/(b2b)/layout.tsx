@@ -33,7 +33,7 @@ export default function B2BLayout({
             </span>
           </Link>
           <nav aria-label="Business" className="flex items-center gap-4 text-sm">
-            <Link href="/corporate" className="text-ink-muted hover:text-ink">
+            <Link href="/corporate-wellness" className="text-ink-muted hover:text-ink">
               Corporate
             </Link>
             <Link href="/rd-partners" className="text-ink-muted hover:text-ink">
