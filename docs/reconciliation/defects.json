@@ -95,7 +95,9 @@
     "impact": "Marketplace items can be added to cart but have no confirmed, wired path to payment.",
     "reuseDecision": "REUSE_AS_IS for payForMarketplace — wire it from the marketplace item PDP (app/(focus)/marketplace/[slug]/page.tsx) per the design comment's own stated intent.",
     "stitchIds": [],
-    "phase": 4
+    "phase": 4,
+    "status": "RESOLVED",
+    "resolution": "Fixed (2026-08-11): a pre-Stitch-74 version of this PDP already had a fully-grounded, tested 'Place order' → payForMarketplace() flow (quarantine/components/marketplace/MarketplaceItemView.tsx) that the Stitch-74 rewrite dropped in favor of a cart-only MarketplaceAddToCart. Rather than re-deriving the design, ported its buy() contract (401 → inline PhoneAuth, 422 → server message, generic retry fallback) into a new MarketplaceBuyNow.tsx, added to the PDP's sticky footer alongside the existing Add to Order button. Deliberately scoped to ship-only — the quarantined version's bundle-with-a-recent-order mode depends on another quarantined component (BundlePicker.tsx) not evaluated here, so it's left for a dedicated follow-up rather than pulled into this fix. Buys the quantity already reflected in the cart's own stepper for that item (qtyOf, min 1), so the two controls can't disagree. On success, redirects to the same /order/confirmed/[orderId] surface guest à-la-carte checkout already uses (marketplace orders land in the same ordersTable, keyed by externalOrderId — confirmed in artifacts/api-server/src/routes/marketplace.ts), rather than inventing a separate confirmation panel. Regression coverage added in e2e/specs/stitch-runtime/commerce.spec.ts (5.8, fullStack-gated — the PDP's RSC data fetch can't be page.route-stubbed, same limitation as the rest of that suite); the underlying payForMarketplace() call sequence was already covered by lib/marketplaceApi.test.ts."
   },
   {
     "id": "DEF-RECON-GROUPORDER-001",

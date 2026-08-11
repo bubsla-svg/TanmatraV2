@@ -1,8 +1,10 @@
 # Defect register
 
-17 defects: 7 CRITICAL, 5 MAJOR, 3 MODERATE, 2 MINOR — 4 CRITICAL + 1 MAJOR now
-RESOLVED (3 CRITICAL from the Phase 3 decision gates, plus DEF-RECON-TRIALCTA-001
-and DEF-RECON-PANTRY-001 from Phase 4.2). Machine-readable form: `defects.json`. IDs
+17 defects: 7 CRITICAL, 5 MAJOR, 3 MODERATE, 2 MINOR — 3 CRITICAL + 2 MAJOR now
+RESOLVED: CARECONDITION-001 and ROUTE-RULING-001 from the Phase 3 decision
+gates, TRIALCTA-001 from Phase 4.2 (CRITICAL), and PANTRY-001 (Phase 4.2) and
+MARKETPLACE-001 (Phase 4.3, this PR) (MAJOR). Machine-readable form:
+`defects.json`. IDs
 prefixed `DEF-RECON-` are new findings from this sweep; IDs without that
 prefix are carried forward from `docs/stitch/stitch-defect-register.md`
 (already tracked against the Stitch manifest) and included here only for
@@ -25,7 +27,7 @@ completeness of the Phase-ordered plan in `implementation-plan.md`.
 | ID | Area | Summary |
 |---|---|---|
 | DEF-RECON-PLACEHOLDERS-001 | Routes | 4 remaining live routes are `PlaceholderPage` stubs (`/corporate/[slug]`, `/team`, `/group/[code]`, `/office-lunch/[id]`) — `/corporate` itself resolved above. `/team` is in general nav. |
-| DEF-RECON-MARKETPLACE-001 | Marketplace | `payForMarketplace()` + `POST /marketplace/checkout` are complete and tested; zero active callers. |
+| DEF-RECON-MARKETPLACE-001 | Marketplace | `payForMarketplace()` + `POST /marketplace/checkout` are complete and tested; zero active callers. | **RESOLVED** — ported the already-grounded "Place order" flow from a quarantined pre-Stitch-74 PDP into a new `MarketplaceBuyNow.tsx`, wired alongside the existing cart-only Add to Order button (ship-only; bundle-with-order left for a follow-up). |
 | DEF-RECON-GROUPORDER-001 | Group orders | Full lifecycle exists client+server; the only hosting screen (`/group/[code]`) is a placeholder, exposing a partial revenue journey (join works, cart/close/pay doesn't). |
 | DEF-RECON-PANTRY-001 | Wellness / pantry scan | "Add to Subscription" button has no `onClick` at all. | **RESOLVED** — the suggestions are catalogue dishes, not a subscription add-on, so wired to the cart mutation path (`addLine`, same as `CustomBuildHub`) and relabeled "Add to cart". |
 | DEF-RECON-5.5-REVIEWS-001 | Dish PDP | Complete, tested dish-review feature (client + server + AI digest) has zero importers from the live PDP. |
