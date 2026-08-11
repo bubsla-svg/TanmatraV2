@@ -201,11 +201,38 @@ export interface PrecisionPlanResult {
   totalPlanPricePaise: number;
 }
 
+/** Generating ALSO persists the plan as an authoritative draft (opaque
+ *  `draftId`, guest-cookie ownership while unauthenticated) so it survives
+ *  navigation and the auth boundary — see
+ *  docs/audit/PRECISION-PLANNER-DRAFT-ID.md. */
 export function generatePrecisionPlan(
   input: PrecisionPlannerInput,
   fetchImpl?: FetchImpl
-): Promise<{ plan: PrecisionPlanResult }> {
+): Promise<{ plan: PrecisionPlanResult; draftId: string }> {
   return apiPost("/wellness/precision-planner/generate", input, fetchImpl);
+}
+
+export interface PrecisionPlanDraft {
+  id: string;
+  input: PrecisionPlannerInput;
+  result: PrecisionPlanResult;
+}
+
+/** Resolve a previously-generated draft (reload, or after a sign-in
+ *  redirect) instead of forcing the customer to redo the quiz. */
+export function getPrecisionPlanDraft(
+  draftId: string,
+  fetchImpl?: FetchImpl
+): Promise<{ draft: PrecisionPlanDraft }> {
+  return apiGet(`/wellness/precision-planner/drafts/${encodeURIComponent(draftId)}`, fetchImpl);
+}
+
+/** Claim a guest-owned draft once signed in. */
+export function claimPrecisionPlanDraft(
+  draftId: string,
+  fetchImpl?: FetchImpl
+): Promise<{ draft: PrecisionPlanDraft }> {
+  return apiPost(`/wellness/precision-planner/drafts/${encodeURIComponent(draftId)}/claim`, {}, fetchImpl);
 }
 
 export interface DetectedIngredient {
