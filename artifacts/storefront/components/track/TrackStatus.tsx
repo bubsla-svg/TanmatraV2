@@ -88,9 +88,16 @@ export function TrackStatus({ externalOrderId }: { externalOrderId: string }) {
     );
   }
 
-  const { status, etaMinutes } = result.status;
+  const { status, timing, etaMinutes, scheduledFor, deliveryWindow } = result.status;
   const tone = statusTone(status);
   const trackable = TRACKABLE_STATUSES.has(status);
+  const scheduledLabel = scheduledFor
+    ? new Date(scheduledFor).toLocaleDateString("en-IN", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      })
+    : null;
   return (
     <div
       aria-live="polite"
@@ -116,7 +123,7 @@ export function TrackStatus({ externalOrderId }: { externalOrderId: string }) {
         )}
         {statusLabel(status)}
       </p>
-      {trackable && (
+      {trackable && timing === "on_demand" && (
         <div className="relative z-10 flex flex-col items-center gap-1">
           <span className="text-sm text-ink-muted">Estimated arrival in</span>
           <span className="tabular flex items-baseline gap-1.5 text-5xl font-semibold leading-none text-ink">
@@ -125,6 +132,23 @@ export function TrackStatus({ externalOrderId }: { externalOrderId: string }) {
               min
             </span>
           </span>
+        </div>
+      )}
+      {trackable && timing === "scheduled" && (
+        <div className="relative z-10 flex flex-col items-center gap-1">
+          <span className="text-sm text-ink-muted">Scheduled for</span>
+          <span className="text-2xl font-semibold leading-tight text-ink">
+            {scheduledLabel}
+          </span>
+          {deliveryWindow && (
+            <span className="tabular text-sm text-ink-muted">{deliveryWindow}</span>
+          )}
+        </div>
+      )}
+      {trackable && timing === "pending" && (
+        <div className="relative z-10 flex flex-col items-center gap-1">
+          <span className="text-sm font-semibold text-ink">Confirming your delivery time</span>
+          <span className="text-xs text-ink-muted">This updates automatically — no action needed.</span>
         </div>
       )}
       {tone === "failed" && (

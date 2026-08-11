@@ -54,5 +54,61 @@ test("fetchOrderStatus defaults a missing etaMinutes to 0 rather than NaN", asyn
     new Response(JSON.stringify({ orderId: "TM-1", status: "preparing" }), { status: 200 });
   const result = await fetchOrderStatus("TM-1", "https://api.test", fetchImpl as typeof fetch);
   assert.equal(result.kind, "ok");
-  if (result.kind === "ok") assert.equal(result.status.etaMinutes, 0);
+  if (result.kind === "ok") {
+    assert.equal(result.status.timing, "on_demand");
+    assert.equal(result.status.etaMinutes, 0);
+  }
+});
+
+test("fetchOrderStatus surfaces a scheduled delivery's date/window, never a countdown", async () => {
+  const fetchImpl = async () =>
+    new Response(
+      JSON.stringify({
+        orderId: "sub-1",
+        status: "preparing",
+        timing: "scheduled",
+        etaMinutes: null,
+        scheduledFor: "2026-08-13T06:30:00.000Z",
+        deliveryWindow: "12:00-14:00",
+      }),
+      { status: 200 },
+    );
+  const result = await fetchOrderStatus("sub-1", "https://api.test", fetchImpl as typeof fetch);
+  assert.equal(result.kind, "ok");
+  if (result.kind === "ok") {
+    assert.equal(result.status.timing, "scheduled");
+    assert.equal(result.status.etaMinutes, null);
+    assert.equal(result.status.scheduledFor, "2026-08-13T06:30:00.000Z");
+    assert.equal(result.status.deliveryWindow, "12:00-14:00");
+  }
+});
+
+test("fetchOrderStatus surfaces a pending schedule as pending, not a fabricated countdown", async () => {
+  const fetchImpl = async () =>
+    new Response(
+      JSON.stringify({ orderId: "sub-2", status: "placed", timing: "pending", etaMinutes: null }),
+      { status: 200 },
+    );
+  const result = await fetchOrderStatus("sub-2", "https://api.test", fetchImpl as typeof fetch);
+  assert.equal(result.kind, "ok");
+  if (result.kind === "ok") {
+    assert.equal(result.status.timing, "pending");
+    assert.equal(result.status.etaMinutes, null);
+    assert.equal(result.status.scheduledFor, null);
+    assert.equal(result.status.deliveryWindow, null);
+  }
+});
+
+test("fetchOrderStatus rejects an unrecognised timing value back to on_demand", async () => {
+  const fetchImpl = async () =>
+    new Response(
+      JSON.stringify({ orderId: "TM-1", status: "preparing", timing: "quantum", etaMinutes: 9 }),
+      { status: 200 },
+    );
+  const result = await fetchOrderStatus("TM-1", "https://api.test", fetchImpl as typeof fetch);
+  assert.equal(result.kind, "ok");
+  if (result.kind === "ok") {
+    assert.equal(result.status.timing, "on_demand");
+    assert.equal(result.status.etaMinutes, 9);
+  }
 });

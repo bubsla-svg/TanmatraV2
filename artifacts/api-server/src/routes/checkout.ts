@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, ordersTable, usersTable } from "@workspace/db";
+import { db, ordersTable, usersTable, subscriptionDeliveriesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { makeBatchDishResolver } from "../lib/menuResolver";
@@ -484,7 +484,17 @@ router.post("/orders", async (req: Request, res: Response) => {
  * GET /orders/:externalOrderId/status
  *
  * No auth. Guests can poll their own order by the idempotency key they
- * generated at checkout. ETA counts down from the 25-minute SLA window.
+ * generated at checkout. Delivery timing is reported honestly per order
+ * kind (P0-3, docs/audit/P0-3-SCHEDULE-NOT-COUNTDOWN.md):
+ *
+ *   - on_demand — the 25-minute SLA countdown, as before.
+ *   - scheduled — a subscription delivery (found via the
+ *     subscription_deliveries.order_id link): its own confirmed
+ *     scheduledFor/deliveryWindow, never a fabricated countdown.
+ *   - pending — a subscription order (externalOrderId "sub-…") whose
+ *     delivery link hasn't landed. Should be unreachable in practice
+ *     (both writers link it in the same transaction that creates the
+ *     order) — exists so a future gap fails honestly instead of guessing.
  */
 router.get("/orders/:externalOrderId/status", async (req: Request, res: Response) => {
   const externalOrderId = String(req.params.externalOrderId ?? "").trim();
@@ -494,8 +504,17 @@ router.get("/orders/:externalOrderId/status", async (req: Request, res: Response
   }
 
   const rows = await db
-    .select({ status: ordersTable.status, createdAt: ordersTable.createdAt })
+    .select({
+      status: ordersTable.status,
+      createdAt: ordersTable.createdAt,
+      deliveryScheduledFor: subscriptionDeliveriesTable.scheduledFor,
+      deliveryWindow: subscriptionDeliveriesTable.deliveryWindow,
+    })
     .from(ordersTable)
+    .leftJoin(
+      subscriptionDeliveriesTable,
+      eq(subscriptionDeliveriesTable.orderId, ordersTable.id),
+    )
     .where(eq(ordersTable.externalOrderId, externalOrderId))
     .limit(1);
 
@@ -505,12 +524,43 @@ router.get("/orders/:externalOrderId/status", async (req: Request, res: Response
     return;
   }
 
+  if (row.deliveryScheduledFor != null) {
+    res.json({
+      orderId: externalOrderId,
+      status: row.status,
+      timing: "scheduled",
+      etaMinutes: null,
+      scheduledFor: row.deliveryScheduledFor.toISOString(),
+      deliveryWindow: row.deliveryWindow,
+    });
+    return;
+  }
+
+  if (externalOrderId.startsWith("sub-")) {
+    res.json({
+      orderId: externalOrderId,
+      status: row.status,
+      timing: "pending",
+      etaMinutes: null,
+      scheduledFor: null,
+      deliveryWindow: null,
+    });
+    return;
+  }
+
   const etaMinutes = Math.max(
     0,
     25 - Math.floor((Date.now() - row.createdAt.getTime()) / 60000),
   );
 
-  res.json({ orderId: externalOrderId, status: row.status, etaMinutes });
+  res.json({
+    orderId: externalOrderId,
+    status: row.status,
+    timing: "on_demand",
+    etaMinutes,
+    scheduledFor: null,
+    deliveryWindow: null,
+  });
 });
 
 export default router;

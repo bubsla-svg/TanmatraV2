@@ -415,6 +415,9 @@ jobs:
           ./src/routes/ops.paidGate.test.ts
           ./src/routes/checkout.customizations.test.ts
           ./src/routes/checkout.doubletap.test.ts
+          # P0-3: GET /orders/:externalOrderId/status's on_demand/scheduled/
+          # pending timing split — see docs/audit/P0-3-SCHEDULE-NOT-COUNTDOWN.md.
+          ./src/routes/checkout.orderStatus.test.ts
           ./src/routes/serviceability.test.ts
           ./src/routes/serviceabilityInterest.test.ts
           ./src/routes/geo.test.ts
