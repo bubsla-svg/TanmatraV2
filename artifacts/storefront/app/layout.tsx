@@ -27,6 +27,7 @@ import "@/lib/themes/tanmatraBridge.css";
 import "@/lib/themes/stitch.css";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { StitchScope } from "@/components/StitchScope";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { SiteStructuredData } from "@/components/StructuredData";
 import { NetworkStatusToast } from "@/components/NetworkStatusToast";
@@ -128,6 +129,15 @@ export const viewport: Viewport = {
  */
 const STITCH_ROUTE_SCRIPT = `(function () {
   try {
+    // An explicit stored theme choice (Header's ThemeToggle writes
+    // localStorage "theme") hands the canvas to next-themes: "dark" paints
+    // dark via data-theme anyway, and "light" must genuinely mean light.
+    // Keep in sync with lib/stitchRoutes.ts's stitchCanvasForced(), which
+    // components/StitchScope.tsx re-applies after hydration and on every
+    // soft navigation.
+    var choice = null;
+    try { choice = localStorage.getItem("theme"); } catch (e) {}
+    if (choice === "light" || choice === "dark") return;
     var EXACT = ${JSON.stringify(STITCH_EXACT_ROUTES)};
     var PREFIXES = ${JSON.stringify(STITCH_PREFIX_ROUTES)};
     var path = String(location.pathname).split(/[?#]/)[0] || "";
@@ -203,6 +213,11 @@ export default function RootLayout({
         <PostHogProvider>
           <QueryProvider>
             <ThemeProvider>
+              {/* Post-hydration half of the Stitch canvas: re-syncs
+                  data-stitch on soft navigations (the guard script above runs
+                  once per full load) and yields it to an explicit theme
+                  choice so the Header toggle works on redesigned routes. */}
+              <StitchScope />
               <a
                 href="#main"
                 className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-gold focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-[var(--gold-ink)]"
