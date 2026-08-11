@@ -6,9 +6,9 @@ export const metadata: Metadata = { title: "Sign in", robots: { index: false } }
 
 /**
  * Standalone OTP entry (§2 — account access; checkout keeps its own in-flow
- * identity). `next` is sanitized to an internal path — a value that doesn't
- * start with exactly one "/" falls back to /account, so this can never be an
- * open redirect (lib/loginRoute.ts owns the guard, unit-tested there).
+ * identity). `next` is sanitized to an internal path — a value that isn't a
+ * genuine same-origin absolute path falls back to "/", so this can never be
+ * an open redirect (lib/loginRoute.ts owns the guard, unit-tested there).
  *
  * `step` is the P0 §7 canonical linkable auth state (`phone|otp`) — LoginCard
  * opens directly at that stage and keeps the address bar in sync as the

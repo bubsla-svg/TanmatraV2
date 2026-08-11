@@ -38,10 +38,39 @@ export function authStepForOtpStage(stage: OtpStage): AuthStep | undefined {
   return undefined;
 }
 
-/** Return-route guard (domain invariant 13, "Return-Route Preservation").
- *  Rejects protocol-relative (`//host`) and absolute external URLs — only a
- *  same-origin absolute path is honored — so `next` can never be used to
- *  bounce a freshly verified session off-site. */
+/** Return-route guard (domain invariant 13, "Return-Route Preservation";
+ *  D-05A/D-10 owner ruling 2026-08-11). Rejects protocol-relative (`//host`),
+ *  absolute external URLs, non-http(s) schemes (`javascript:`), and
+ *  malformed values — only a same-origin absolute path is honored — so
+ *  `next` can never be used to bounce a freshly verified session off-site.
+ *  Falls back to `/`.
+ *
+ *  Parsed through the real WHATWG URL parser rather than a hand-rolled
+ *  regex: a regex checking "does it start with exactly one /" still misses
+ *  the classic backslash-normalization bypass (`/\evil.example` — browsers
+ *  treat `\` as `/` for special schemes per the URL spec, so a regex that
+ *  only rejects a literal second `/` lets `/\evil.example` straight
+ *  through). Resolving against a placeholder origin and checking the
+ *  RESULT's origin catches that by construction: the parser applies the
+ *  exact same normalization a browser would, so there is no bypass left to
+ *  individually enumerate. */
+const SANITIZER_BASE_ORIGIN = "http://tnm-returnto-sanitizer.internal";
+
 export function safeNextPath(next: string | undefined): string {
-  return next && /^\/(?!\/)/.test(next) ? next : "/account";
+  const FALLBACK = "/";
+  if (!next) return FALLBACK;
+  // Reject anything that isn't a literal absolute-path string up front —
+  // e.g. a bare "menu" or an encoded "%2Fevil.com" resolves "successfully"
+  // against the placeholder base below without ever being same-origin
+  // *content*, but only a genuine "/..." string is the contract this
+  // function honors (domain invariant 13: same-origin absolute path only).
+  if (!next.startsWith("/")) return FALLBACK;
+  let parsed: URL;
+  try {
+    parsed = new URL(next, SANITIZER_BASE_ORIGIN);
+  } catch {
+    return FALLBACK;
+  }
+  if (parsed.origin !== SANITIZER_BASE_ORIGIN) return FALLBACK;
+  return parsed.pathname + parsed.search + parsed.hash;
 }
