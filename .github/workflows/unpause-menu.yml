@@ -1,0 +1,86 @@
+# Ops: unpause the entire menu (owner directive 2026-08-11 — 76/145 dishes
+# were is_available=false with no recorded reason, left behind by POS
+# stock-sync webhooks; see scripts/src/unpause-menu.ts).
+#
+# workflow_dispatch only. Runs a dry-run first so the log always shows what
+# would change; only writes when the `apply` input is ticked. Database access
+# mirrors deploy.yml's migrate-db job: Cloud SQL Auth Proxy + the
+# brand-tanmatra-database-url secret read via Secret Manager at run time
+# (never interpolated into the script from ${{ secrets }}).
+name: Unpause Menu
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Actually write (unchecked = dry-run only)"
+        type: boolean
+        default: false
+
+jobs:
+  unpause-menu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GCP_PROJECT: brand-tanmatra-tmg
+      GCP_REGION: asia-south2
+      SQL_INSTANCE: brand-tanmatra-tmg:asia-south2:brand-tanmatra-db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+      - name: Start Cloud SQL Auth Proxy
+        run: |
+          curl -sfL -o cloud-sql-proxy \
+            https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.14.2/cloud-sql-proxy.linux.amd64
+          chmod +x cloud-sql-proxy
+          ./cloud-sql-proxy --credentials-file "$GOOGLE_APPLICATION_CREDENTIALS" \
+            --address 127.0.0.1 --port 5433 "$SQL_INSTANCE" &
+          for i in $(seq 1 20); do
+            (echo > /dev/tcp/127.0.0.1/5433) 2>/dev/null && { echo "proxy up"; exit 0; }
+            sleep 1
+          done
+          echo "cloud-sql-proxy never came up — check the deploy SA has roles/cloudsql.client"; exit 1
+      - name: Unpause menu (dry-run first, then apply if requested)
+        env:
+          APPLY: ${{ inputs.apply }}
+        run: |
+          RAW=$(gcloud secrets versions access latest \
+            --secret=brand-tanmatra-database-url --project "$GCP_PROJECT") || {
+            echo "cannot read secret brand-tanmatra-database-url — grant the deploy SA roles/secretmanager.secretAccessor"; exit 1; }
+          echo "::add-mask::$RAW"
+          # Rewrite the URL to go through the proxy, handling both hostful
+          # (…@HOST:PORT/db) and unix-socket (…@/db?host=/cloudsql/…) shapes.
+          export DATABASE_URL=$(python3 - "$RAW" <<'EOF'
+          import sys, urllib.parse as u
+          raw = sys.argv[1]
+          p = u.urlsplit(raw)
+          q = dict(u.parse_qsl(p.query))
+          q.pop("host", None)     # unix-socket param, replaced by the proxy
+          q.pop("sslmode", None)  # the proxy listener is plaintext-local and
+          q.pop("ssl", None)      # already TLS-tunnelled; sslmode=require here
+                                  # would make node-postgres refuse to connect
+          # Pass the userinfo through VERBATIM — see deploy.yml's migrate-db
+          # job for why re-quoting would double-encode the password.
+          auth = p.netloc.rsplit("@", 1)[0] + "@" if "@" in p.netloc else ""
+          query = ("?" + u.urlencode(q)) if q else ""
+          print(f"{p.scheme}://{auth}127.0.0.1:5433{p.path}{query}")
+          EOF
+          )
+          pnpm --filter @workspace/scripts run unpause-menu
+          if [ "$APPLY" = "true" ]; then
+            pnpm --filter @workspace/scripts run unpause-menu --apply
+          else
+            echo "dry-run only — re-run with the apply input ticked to write"
+          fi

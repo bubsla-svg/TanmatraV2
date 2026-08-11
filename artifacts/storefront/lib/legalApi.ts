@@ -4,16 +4,24 @@
  * `GET /api/legal-documents/:slug` (full body) — both also returning the
  * `legal_company_profile` singleton (entity name, FSSAI licence, contacts).
  * Server components call these directly via API_BASE_URL, same pattern as
- * lib/recipesApi.ts; a cold/unreachable API degrades to []/null so a page
- * renders its own empty/not-found state instead of throwing. Fetches use a
- * short ISR window (not `force-cache`) so publishing a new version — or
- * editing the company profile — is live on the next revalidation with no
- * storefront deploy.
+ * lib/recipesApi.ts. Fetches use a short ISR window (not `force-cache`) so
+ * publishing a new version — or editing the company profile — is live on the
+ * next revalidation with no storefront deploy.
+ *
+ * STATIC FALLBACK: when the CMS has nothing to say — unreachable, or its
+ * `legal_documents` table is simply unseeded (production 2026-08-11:
+ * `{"documents":[],"company":null}`) — these functions serve the bundled
+ * content/legal documents instead. Terms, privacy, refunds, shipping,
+ * disclaimer and grievance are statutory disclosures for an Indian
+ * food-delivery business; an empty CMS must degrade to the reviewed bundled
+ * copy, never to a 404. Same doctrine as the menu's STATIC_DISHES fallback.
+ * A live CMS with published documents always wins.
  */
 // Relative, not "@/..." — lib/ files run directly under node:test (no path-
 // alias resolution there), so an "@/" import here 404s at test time despite
 // a clean typecheck/build. See CLAUDE.md's "no-@/-alias rule" for lib/.
 import type { LegalDoc, LegalSection } from "../content/legal/types";
+import { LEGAL_DOCS, LEGAL_BY_SLUG, COMPANY } from "../content/legal/index";
 
 const API_BASE = process.env.API_BASE_URL ?? "http://localhost:3000";
 
@@ -73,9 +81,39 @@ export interface LegalDocumentsList {
   company: CompanyProfile | null;
 }
 
+/** The bundled content/legal registry in the wire's shape — served whenever
+ *  the CMS is unreachable or unseeded. */
+function staticCompanyProfile(): CompanyProfile {
+  return {
+    legalName: COMPANY.legalName,
+    brand: COMPANY.brand,
+    fssaiLicenseNo: COMPANY.fssaiLicenseNo,
+    fssaiValidUpto: "",
+    cin: COMPANY.cin,
+    registeredOffice: COMPANY.registeredOffice,
+    grievanceOfficer: COMPANY.grievanceOfficer,
+    grievanceEmail: COMPANY.grievanceEmail,
+    privacyEmail: COMPANY.privacyEmail,
+    supportEmail: COMPANY.supportEmail,
+    supportPhone: COMPANY.supportPhone,
+    serviceAreas: COMPANY.serviceAreas,
+    jurisdictionCity: COMPANY.jurisdictionCity,
+    jurisdictionState: COMPANY.jurisdictionState,
+    updatedAt: COMPANY.updated,
+  };
+}
+
+function staticDocumentsList(): LegalDocumentsList {
+  return {
+    documents: LEGAL_DOCS.map(({ slug, title, summary, updated }) => ({ slug, title, summary, updated })),
+    company: staticCompanyProfile(),
+  };
+}
+
 /** Every published legal document (title/summary only — no body, matching
  *  what /legal's index actually renders) plus the company/entity singleton.
- *  Degrades to `{documents: [], company: null}` on any failure. */
+ *  An unreachable OR unseeded CMS degrades to the bundled content/legal
+ *  registry — the statutory pages must always have something to render. */
 export async function getLegalDocuments(fetchImpl: FetchImpl = fetch): Promise<LegalDocumentsList> {
   try {
     const res = await fetchImpl(`${API_BASE}/api/legal-documents`, REVALIDATE);
@@ -84,9 +122,10 @@ export async function getLegalDocuments(fetchImpl: FetchImpl = fetch): Promise<L
       documents?: WireDocumentSummary[];
       company?: CompanyProfile | null;
     };
-    return { documents: (data.documents ?? []).map(toLegalDocHeader), company: data.company ?? null };
+    if (!data.documents || data.documents.length === 0) return staticDocumentsList();
+    return { documents: data.documents.map(toLegalDocHeader), company: data.company ?? staticCompanyProfile() };
   } catch {
-    return { documents: [], company: null };
+    return staticDocumentsList();
   }
 }
 
@@ -105,27 +144,32 @@ export type LegalDocumentResult =
 
 /**
  * One published document by slug, full body included, plus the company
- * singleton. Distinguishes "no such slug, or a draft never published" from
- * "couldn't reach the api" — same reasoning as recipesApi's
- * `getRecipeOrReason`: collapsing both to a 404 would turn a transient API
- * outage into a real page reading as permanently gone.
+ * singleton. A CMS miss (404, outage, or an unseeded table) falls back to
+ * the bundled content/legal document for that slug before reporting
+ * not_found/unavailable — a statutory page must never read as gone just
+ * because the CMS has not been seeded. A slug in neither the CMS nor the
+ * bundle is a genuine not_found (→ the route's notFound()).
  */
 export async function getLegalDocument(
   slug: string,
   fetchImpl: FetchImpl = fetch,
 ): Promise<LegalDocumentResult> {
+  const staticDoc = LEGAL_BY_SLUG[slug];
+  const staticResult: LegalDocumentResult | null = staticDoc
+    ? { ok: true, doc: staticDoc, company: staticCompanyProfile() }
+    : null;
   try {
     const res = await fetchImpl(`${API_BASE}/api/legal-documents/${encodeURIComponent(slug)}`, REVALIDATE);
-    if (res.status === 404) return { ok: false, reason: "not_found" };
-    if (!res.ok) return { ok: false, reason: "unavailable" };
+    if (res.status === 404) return staticResult ?? { ok: false, reason: "not_found" };
+    if (!res.ok) return staticResult ?? { ok: false, reason: "unavailable" };
     const data = (await res.json()) as {
       document?: WireDocumentDetail;
       company?: CompanyProfile | null;
     };
-    if (!data.document) return { ok: false, reason: "not_found" };
+    if (!data.document) return staticResult ?? { ok: false, reason: "not_found" };
     const doc: LegalDoc = { ...toLegalDocHeader(data.document), sections: data.document.body };
     return { ok: true, doc, company: data.company ?? null };
   } catch {
-    return { ok: false, reason: "unavailable" };
+    return staticResult ?? { ok: false, reason: "unavailable" };
   }
 }

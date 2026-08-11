@@ -186,7 +186,13 @@ export function PhoneAuth({
       setStage("collapsed");
       setSignedIn(true);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : friendlyFirebaseError(e));
+      if (e instanceof ApiError) {
+        // 5xx bodies are the server's generic "internal error" string — never
+        // customer copy. 4xx messages ("invalid token") are specific and kept.
+        setError(e.status >= 500 ? OTP_MESSAGES.serverError : e.message);
+      } else {
+        setError(friendlyFirebaseError(e));
+      }
     } finally {
       setBusy(false);
     }

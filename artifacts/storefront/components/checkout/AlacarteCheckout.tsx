@@ -13,9 +13,12 @@ import {
   type PaidFacts,
 } from "@/lib/moneyPath";
 import { fetchQuote, quoteIsFresh, type QuoteSnapshot } from "@/lib/quoteApi";
+// lib/orderErrors owns the failure copy (Architecture Invariant 18: what,
+// why, and what to do next — never the raw server string) plus the
+// retryable/deterministic split that keeps "Retry pricing" honest.
+import { humanizeOrderError, isRetryableQuoteError } from "@/lib/orderErrors";
 import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter";
 import {
-  ApiError,
   getAddresses,
   type Address,
   type AlacarteOrderInput,
@@ -34,26 +37,6 @@ export type QuoteUiState = "loading" | "active" | "expired" | "error";
  *  fields in AlacarteDetails under its own key. */
 const PHONE_DRAFT_KEY = "alc_draft_phone_v1";
 export const ADDRESS_DRAFT_KEY = "alc_draft_address_v1";
-
-/** Turn a quote/create failure into copy that says what is unavailable, why,
- *  and what to do next (Architecture Invariant 18) — never the raw server
- *  string a customer can't act on. */
-function humanizeOrderError(e: unknown): string {
-  if (e instanceof ApiError) {
-    if (e.code === "dish_unavailable") {
-      const name = e.message.replace(/^dish unavailable:\s*/i, "");
-      return `${name} isn't available right now — the kitchen has paused it. Use the − control below to remove it, then continue.`;
-    }
-    if (e.code === "unserviceable_pincode") {
-      return "We don't deliver to this PIN code yet — we currently serve Noida sectors only. Change the PIN to continue.";
-    }
-    if (e.code === "premium_required") {
-      return "One of these dishes is premium-members-only. Remove it below to continue as a guest.";
-    }
-    return e.message;
-  }
-  return "Something went wrong. Please try again.";
-}
 
 /**
  * À-la-carte guest checkout (SF-05 / CUJ-01 tail). Cart → details → Razorpay
@@ -92,6 +75,10 @@ export function AlacarteCheckout() {
   const [quote, setQuote] = useState<QuoteSnapshot | null>(null);
   const [quoteState, setQuoteState] = useState<QuoteUiState>("loading");
   const [quoteError, setQuoteError] = useState<string | null>(null);
+  // False for deterministic 4xx refusals (safety block, paused dish): the fix
+  // is editing the cart, so offering "Retry pricing" there is a loop that
+  // cannot converge — the production bug this state exists to prevent.
+  const [quoteRetryable, setQuoteRetryable] = useState(true);
   const [pincode, setPincode] = useState("");
   const quoteSeq = useRef(0);
 
@@ -119,6 +106,7 @@ export function AlacarteCheckout() {
         setQuote(null);
         setQuoteState("error");
         setQuoteError(humanizeOrderError(e));
+        setQuoteRetryable(isRetryableQuoteError(e));
       });
   }, [dishLines, pincode]);
 
@@ -333,6 +321,7 @@ export function AlacarteCheckout() {
         quote={quote}
         quoteState={quoteState}
         quoteError={quoteError}
+        quoteRetryable={quoteRetryable}
         onRefreshQuote={loadQuote}
         onPincodeChange={setPincode}
       />

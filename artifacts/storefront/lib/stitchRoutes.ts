@@ -116,6 +116,28 @@ export function isStitchRoute(pathname: string): boolean {
   return STITCH_PREFIX_ROUTES.some((p) => path.startsWith(p) && path.length > p.length);
 }
 
+/** The visitor's STORED next-themes choice (localStorage "theme"): "light"/
+ *  "dark" are explicit ThemeToggle picks; anything else means never chose. */
+export type StoredTheme = string | null;
+
+/**
+ * Whether the Stitch dark canvas should be forced for this path. The canvas
+ * is the DEFAULT for redesigned routes, not an override of the visitor's
+ * will: before this rule, `data-stitch` beat every value next-themes wrote
+ * (the `!important` color-scheme in lib/themes/stitch.css), so ThemeToggle
+ * visibly did nothing on home/menu/PDP/checkout (2026-08-11 owner report).
+ * An explicit stored choice now hands the canvas to next-themes — "dark"
+ * paints dark via data-theme anyway, "light" genuinely means light — and
+ * only visitors who never chose keep the dark-first canvas.
+ * Three consumers must agree: the pre-paint guard script (app/layout.tsx,
+ * inlined — keep in sync), StitchScope's post-hydration sync, and
+ * ThemeToggle's icon state. Pure so it is testable under node --test.
+ */
+export function stitchCanvasForced(pathname: string, storedTheme: StoredTheme): boolean {
+  if (storedTheme === "light" || storedTheme === "dark") return false;
+  return isStitchRoute(pathname);
+}
+
 /**
  * ─── Stitch Project & Screen Registry ──────────────────────────────────────
  *

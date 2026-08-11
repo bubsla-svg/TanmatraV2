@@ -47,6 +47,7 @@ export function AlacarteDetails({
   quote,
   quoteState,
   quoteError,
+  quoteRetryable,
   onRefreshQuote,
   onPincodeChange,
 }: {
@@ -70,6 +71,8 @@ export function AlacarteDetails({
   quote: QuoteSnapshot | null;
   quoteState: QuoteUiState;
   quoteError: string | null;
+  /** See QuoteBreakdown — withholds "Retry pricing" on deterministic refusals. */
+  quoteRetryable?: boolean;
   onRefreshQuote: () => void;
   onPincodeChange: (pin: string) => void;
 }) {
@@ -237,7 +240,7 @@ export function AlacarteDetails({
           ))}
         </ul>
 
-        <QuoteBreakdown quote={quote} quoteState={quoteState} quoteError={quoteError} onRefreshQuote={onRefreshQuote} />
+        <QuoteBreakdown quote={quote} quoteState={quoteState} quoteError={quoteError} quoteRetryable={quoteRetryable} onRefreshQuote={onRefreshQuote} />
       </div>
 
       <div>
