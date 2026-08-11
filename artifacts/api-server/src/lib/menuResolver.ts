@@ -8,6 +8,7 @@ import {
 import { listMenuItems, type DbReadExecutor } from "./menu";
 import { getSummariesForSlugs } from "./dishReviews";
 import { getCachedOrFetch } from "./menuCatalogCache";
+import { resolveAllergensReviewed } from "./allergenReview";
 
 const VALID_CATEGORIES = new Set<DishCategory>([
   "beverages",
@@ -87,6 +88,7 @@ async function fetchMergedCatalog(
       continue;
     }
     const gi = coerceGi(row.glycaemicIndex);
+    const reviewState = coerceReviewState(row.allergenReviewState);
     merged.push({
       ...stat,
       name: row.name || stat.name,
@@ -122,7 +124,18 @@ async function fetchMergedCatalog(
       customizations:
         (row.customizations as DishCustomGroup[] | null) ?? [],
       ...(row.pairingSlug ? { pairingSlug: row.pairingSlug } : {}),
-      rdReviewState: coerceReviewState(row.allergenReviewState),
+      rdReviewState: reviewState,
+      // The DB review state is the RD's explicit verdict on this dish's
+      // allergen disclosure, so a "reviewed" row must supersede the static
+      // seed's fail-closed `allergensReviewed: false` (stamped by
+      // _deriveAllergens when the seed had no curated list and an ingredient
+      // it couldn't classify). Without this override the strict checkout gate
+      // 422s `unchecked_allergens` on dishes the RD has already cleared —
+      // the "Safety block / Retry pricing" dead-end on /checkout.
+      allergensReviewed: resolveAllergensReviewed(
+        stat.allergensReviewed,
+        reviewState,
+      ),
     });
   }
 

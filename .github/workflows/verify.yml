@@ -439,6 +439,7 @@ jobs:
           ./src/lib/ai/aiHardening.test.ts
           ./src/lib/anomalies.golden.test.ts
           ./src/lib/menuResolver.cache.test.ts
+          ./src/lib/menuResolver.allergenReview.test.ts
           ./src/routes/petpooja.cacheInvalidation.test.ts
           ./src/lib/menuEngineering.sliceCounts.golden.test.ts
           ./src/lib/menuEngineering.recipeCosts.golden.test.ts
