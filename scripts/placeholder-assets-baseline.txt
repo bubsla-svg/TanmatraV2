@@ -1,0 +1,20 @@
+# Placeholder-photography baseline — occurrences present when the gate landed.
+#
+# Not an approval list. A debt register. See scripts/lint-placeholder-assets.ts.
+# Every line is real photography that has not been shot yet (C-2 in the
+# storefront audit: hero dish, three protocol dishes, one kitchen frame, one
+# delivery frame retires most of this).
+#
+# The list may only SHRINK: replace a placeholder with a real asset, then lower
+# the count here — or delete the line when the file reaches zero. A count that
+# no longer matches the tree fails the gate in BOTH directions, so the register
+# cannot drift out of date in either the forgiving or the strict direction.
+#
+# Sorted, "<repo-relative path> <count>" per line, so additive edits in
+# different alphabetical positions merge without conflict.
+artifacts/storefront/components/landing/FlipCard.tsx 1
+artifacts/storefront/components/landing/Section03AgitationPanel.tsx 1
+artifacts/storefront/components/landing/Section04ProtocolsGrid.tsx 3
+artifacts/storefront/components/landing/Section04TelehealthTracking.tsx 1
+artifacts/storefront/components/landing/Section05LogisticsMoat.tsx 1
+artifacts/storefront/components/landing/Section07ProofKitchen.tsx 1

@@ -24,6 +24,9 @@ on:
       - "scripts/lint-tokens.ts"
       - "scripts/lint-component-drift.ts"
       - "scripts/component-drift-baseline.txt"
+      - "scripts/lint-landmarks.ts"
+      - "scripts/lint-placeholder-assets.ts"
+      - "scripts/placeholder-assets-baseline.txt"
       - "scripts/src/lighthouse-audit.mjs"
       - "docs/stitch/stitch-screen-manifest.json"
       - "tools/verify-stitch-manifest.mjs"
@@ -140,6 +143,15 @@ jobs:
       - name: Component-drift gate — no duplicate-spelling class debt
         if: ${{ !cancelled() }}
         run: pnpm --filter @workspace/storefront run lint:component-drift
+      # Both of the gates below exist because their failure mode is INVISIBLE
+      # in review: <main> and <div> render identically, and a placeholder photo
+      # looks like a photo. Neither typecheck nor any other gate here objects.
+      - name: Landmark gate — one <main> per rendered document
+        if: ${{ !cancelled() }}
+        run: pnpm --filter @workspace/storefront run lint:landmarks
+      - name: Placeholder-photography gate — baselined debt may only shrink
+        if: ${{ !cancelled() }}
+        run: pnpm --filter @workspace/storefront run lint:placeholder-assets
       # Stitch traceability gates. The manifest verifier proves the 74-entry
       # manifest is schema-valid; the wiring verifier proves its filesystem
       # claims match the repo. Honest missing/partial/blocked entries PASS —
