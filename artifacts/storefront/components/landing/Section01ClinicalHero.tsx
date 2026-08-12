@@ -21,28 +21,44 @@ import type { HeroContent } from "@/lib/heroContent";
  * ends here.) The per-meal price reaches us pre-formatted inside hero.blurb —
  * no price math, no PLAN_PRICE_TABLE import, server owns every amount.
  *
- * Stitch geometry: asymmetric split (copy 7/12, photo 5/12), one inline plate
- * photo embedded at type-height in the headline, gold pill as the single
- * primary CTA → /menu; every other action on the screen — /plans and the
- * in-photo "Order" — is a ghost pill. The 60s assessment entry survives
- * as a quiet text action firing the SAME analytics label + CustomEvent as
- * before — the on-page stepper (§09) remains its main door.
+ * Stitch geometry: asymmetric split (copy 7/12, photo 5/12), a plate photo as
+ * a decorative chip ABOVE the headline, gold pill as the single primary CTA →
+ * /menu; every other action on the screen — /plans and the in-photo "Order" —
+ * is a ghost pill. The 60s assessment entry survives as a quiet text action
+ * firing the SAME analytics label + CustomEvent as before — the on-page
+ * stepper (§09) remains its main door.
+ *
+ * The chip used to be an inline photo embedded at type-height BETWEEN two
+ * halves of the headline, which required splitting `hero.headline` on its
+ * em-dash. That is gone, and deliberately: a replaced element inside the <h1>
+ * put the page's one top-level heading at the mercy of an image load, so a
+ * failed asset (or a slow one) fractured the headline mid-sentence, and the
+ * split made the accessible name depend on where the copy happened to place a
+ * dash. The headline is now one continuous string and the photo is atmosphere
+ * beside it.
  */
 
-/** Split the headline for the inline plate photo: at the em-dash pause when the
- *  copy has one, else after the third word. Pure and deterministic (SSR-safe —
- *  server HTML and hydration must agree). */
-function splitHeadline(headline: string): [string, string] {
-  const dash = headline.indexOf(" — ");
-  if (dash > 0) return [headline.slice(0, dash), headline.slice(dash + 1)];
-  const words = headline.split(" ");
-  if (words.length < 4) return [headline, ""];
-  return [words.slice(0, 3).join(" "), words.slice(3).join(" ")];
+/**
+ * One claim in the clinical trust bar, with its leading interpunct BOUND to it
+ * rather than sitting beside it.
+ *
+ * The separators used to be flex children in their own right — `<span>·</span>`
+ * between each pair of labels — which made them independently wrappable. At
+ * 390px the bar wraps to three lines, and a naked "·" would settle at the end
+ * of a line with nothing after it to separate (and, at some widths, take a
+ * line entirely to itself). A separator that lives inside the item it
+ * introduces can only ever render immediately before that text.
+ */
+function TrustItem({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="flex items-center gap-x-3">
+      <span aria-hidden className="text-line-strong">·</span>
+      {children}
+    </span>
+  );
 }
 
 export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
-  const [headStart, headEnd] = splitHeadline(hero.headline);
-
   const handleAssessmentClick = () => {
     emitLpEvent("hero_cta_click", { page: "/", label: "Take Metabolic Assessment" });
     if (typeof window !== "undefined") {
@@ -58,18 +74,19 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
     >
       <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
         {/* Centered Hero Architecture */}
+        {/* Decorative only, and hidden from AT on the wrapper rather than on
+            SafeImage: SafeImage's props are {src, alt, className, imgClassName,
+            priority} and it spreads nothing, so an `aria-hidden` handed to the
+            component itself is silently dropped on the floor. */}
+        <div aria-hidden className="mb-6">
+          <SafeImage
+            src="/brand/hero-plate.jpg"
+            alt=""
+            className="h-14 w-24 rounded-2xl border border-line sm:h-16 sm:w-28"
+          />
+        </div>
         <h1 className="text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-6xl">
-          {headStart}{" "}
-          <span className="inline-block align-middle mx-1.5 w-12 h-10 sm:w-16 sm:h-12 rounded-2xl overflow-hidden border border-line translate-y-[-2px]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <SafeImage
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTXgMAoQYxN5p3zcei43W83rQfIoGOdQIO50IXWQyIhBz5qZE3bZ49KT7w1hQmkMVfz9MXWxiPKiegmpAqtWbxDBHxl0ef-8j-NGzOrqsz4XffWPew40F1JHL4h-OejaOjZc6ghvxRhoaseR4F8xrQprNkxz7yPyq8l7BxubvT41I0uW_7RUl4wYQ-c8EyjkcbmTS-iCXT8JY93CjsazBM-FnaNe91ByEkXEjDeN4gSRIq1LBRkNvzifaunvZYeSiBgpjFbIKtA1I"
-              alt=""
-              aria-hidden
-              className="w-full h-full object-cover"
-            />
-          </span>{" "}
-          {headEnd}
+          {hero.headline}
         </h1>
 
           <p className="mt-5 text-base leading-relaxed text-ink-muted sm:text-lg">
@@ -112,12 +129,9 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
               ))}
               <span className="ml-1 text-ink">4.9/5</span>
             </span>
-            <span aria-hidden className="text-line-strong">·</span>
-            <span>ISO 22000 Certified</span>
-            <span aria-hidden className="text-line-strong">·</span>
-            <span>FSSAI Verified</span>
-            <span aria-hidden className="text-line-strong">·</span>
-            <span>Dietitian Supervised</span>
+            <TrustItem>ISO 22000 Certified</TrustItem>
+            <TrustItem>FSSAI Verified</TrustItem>
+            <TrustItem>Dietitian Supervised</TrustItem>
           </div>
         </div>
 
@@ -130,11 +144,11 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
           )}
           <div className="overflow-hidden rounded-3xl border border-line bg-surface-raised shadow-2xl shadow-black/40">
             <div className="relative aspect-[16/9] w-full">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <SafeImage
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkXUatAbp7GpnFbDf0BTpJCPRd2FRuRIoRlbyoRY_B4NGgShl6G32eTYQQ1uxUSny6sOye9Rpm3Xe7cKS4wizt7QZgR72SoEfWc7C02yvSId2aujwgQ8RFWMZVmOfN4ckkE81T7Rkli2yA5Z-tVzDrRcgOmFT5r8klXpPd2k8EuassiZLq5821La5aJB_rvWSK_UQUdLuk5qZwIYRIVhJ85beF2yu9DY9gqtx9XAGuHIN_-stMpiWveI18_bU9E1qUpqZ9a_hlIrE"
+                src="/brand/hero-dish.jpg"
                 alt="Chef-plated clinical meal, photographed from above"
-                className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                className="h-full w-full"
+                imgClassName="transition-transform duration-700 hover:scale-105"
               />
               <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-2xl border border-line bg-[var(--glass)] p-4 backdrop-blur-md shadow-xl max-w-sm mx-auto">
                 <div>

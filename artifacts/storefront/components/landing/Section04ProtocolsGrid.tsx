@@ -35,13 +35,13 @@ export function Section04ProtocolsGrid() {
         <p className="mt-3 text-sm text-ink-muted sm:text-base">
           Choose a plan tailored to your health goals, whether it's sustainable weight loss, hormone balance, or building strength.
         </p>
-        <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/5 px-4 py-1.5 text-xs font-semibold text-gold-text">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-gold"></span>
-          </span>
-          Only 14 trial slots left this week
-        </div>
+        {/* No scarcity badge here. This slot held "Only 14 trial slots left this
+            week" as a hardcoded string with no capacity source behind it — a
+            claim we cannot keep, on a page that also claims ISO 22000 and
+            dietitian supervision. Restoring it requires a real remaining-
+            capacity signal from the API, not a second literal; and the copy
+            has to degrade gracefully when capacity is plentiful, because a
+            badge reading "412 slots left" sells nothing. */}
       </div>
 
       {/* Two rules this grid used to break, both fixed in place:
