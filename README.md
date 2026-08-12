@@ -1,59 +1,104 @@
 # Tanmatra
 
-Therapeutic / clinical-grade meal-delivery & wellness platform — web app, mobile app, an RD-facing console, and an Express + Postgres backend, all in one pnpm monorepo.
+Therapeutic / clinical-grade meal-delivery & wellness platform — customer web app, mobile app, an internal Admin ERP + RD console, and an Express + Postgres backend, all in one pnpm monorepo.
+
+> **New here?** `CLAUDE.md` is the authoritative deep-dive (commands, architecture, conventions).
+> `docs/CLONE-HANDOVER.md` has the exact clone → install → verify steps for a fresh machine or external agent.
+
+## Requirements
+
+- **Linux x64 (glibc)** — the root `pnpm.overrides` strip all other platforms' native binaries; builds fail on macOS/Windows/arm64 by design
+- **Node.js 22** (`.nvmrc`) and **pnpm 9.15.5** (`packageManager` pin; `corepack enable` gets you both)
+- pnpm **only** — the root `preinstall` script rejects npm/yarn and deletes their lockfiles
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server
-- `pnpm --filter @workspace/tanmatra run dev` — run the customer web app
-- `pnpm --filter @workspace/tanmatra-mobile run dev` — run the Expo mobile app
+```bash
+pnpm install --frozen-lockfile                     # canonical, CI-proven install
+```
+
+- `pnpm --filter @workspace/api-server run dev` — Express API server (port 8080)
+- `pnpm --filter @workspace/storefront run dev` — **customer web app** (Next.js 16) — all new customer work goes here
+- `pnpm --filter @workspace/tanmatra run dev` — legacy SPA, now internal-only Admin ERP + RD console
+- `cd artifacts/tanmatra-mobile && pnpm exec expo start` — Expo mobile app
 - `pnpm run typecheck` — full typecheck across all packages
+- `pnpm run test` — every package with a `test` script
 - `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
+- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks + Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+
+Minimum env to boot the API: `DATABASE_URL` (Postgres). `CLINICAL_KMS_MASTER_KEY` is additionally
+required in production; `REDIS_URL` is optional (queue is skipped without it). Full table:
+`CLAUDE.md` › Required environment variables, and `docs/CLONE-HANDOVER.md` §7.
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
+- pnpm workspaces, Node.js 22, TypeScript ~5.9
+- API: Express 5, esbuild server bundle, BullMQ + Redis (optional), Socket.IO realtime, Gemini AI agents
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Web: React 19 + Vite + Tailwind v4 + shadcn/ui (new-york), framer-motion, cmdk
+- API codegen: Orval (from OpenAPI spec) — consumed by the legacy SPA, mobile, and agents apps
+- Customer web: **Next.js 16 App Router** (server-first) + Tailwind v4 + shadcn/Radix, Astryx design system
+- Legacy web (admin/RD): React 19 + Vite + React Router v7 + Tailwind v4, framer-motion, cmdk
 - Mobile: Expo + React Native
-- Build: esbuild (CJS bundle for server)
 
 ## Where things live
 
-- `artifacts/tanmatra` — customer web app (anchor screens: Home, Menu, Dish, Cart/Checkout, Account/Tracker)
-- `artifacts/tanmatra-mobile` — Expo React Native app
-- `artifacts/api-server` — Express + Drizzle API
-- `artifacts/mockup-sandbox` — Vite preview server for canvas/mockup work
-- `lib/api-spec` — OpenAPI source of truth (`openapi.yaml`) + Orval codegen
-- `lib/api-client-react` — generated React Query hooks + Zod schemas
-- `lib/menu-catalog` — shared dish/menu data types
-- `lib/db` — Drizzle schema + migrations
-
-### Tanmatra web design system
-
-- `artifacts/tanmatra/src/index.css` — single source of truth for color, type scale, radii, shadows, motion durations & easings (CSS custom properties under `@theme`).
-- `artifacts/tanmatra/src/lib/motion.ts` — JS mirror of motion tokens (`DURATION`, `EASE`, `SPRING`, `FADE_IN_UP`) for framer-motion.
-- `artifacts/tanmatra/src/components/CommandPalette.tsx` — global ⌘K palette (mounted from `Header`); searches dishes + every customer route.
-- `artifacts/tanmatra/src/pages/Styleguide.tsx` — live `/__styleguide` route documenting tokens, type scale, icons, motion, primitives. Keep in sync when tokens change.
-- `artifacts/tanmatra/src/components/layout/{Header,BottomNav,Footer}.tsx` — global chrome, IA grouping is **Eat / Plan / Track / Community / Account**.
+| Path | Role |
+|------|------|
+| `artifacts/storefront` | **Customer web app** (Next.js 16) — serves `tanmatra.food` since the 2026-07-25 cutover (`docs/DOMAIN-CUTOVER.md`) |
+| `artifacts/tanmatra` | Legacy SPA — customer routes removed 2026-07-26; internal-only Admin ERP + RD console |
+| `artifacts/tanmatra-mobile` | Expo React Native app |
+| `artifacts/api-server` | Express 5 + Drizzle API (auth, dispatch, payments, AI agents, schedulers) |
+| `artifacts/agents` | Agency Agents Browser (Vite + wouter) over the `lib/agency-agents` catalogue |
+| `artifacts/mockup-sandbox` | Vite preview server for mockup work |
+| `lib/api-spec` | OpenAPI source of truth (`openapi.yaml`) + Orval codegen config |
+| `lib/api-client-react` | Generated React Query hooks + Zod schemas — never edit by hand |
+| `lib/api-zod` | Shared Zod request/response schemas |
+| `lib/db` | Drizzle schema + migrations (Postgres) |
+| `lib/tokens` | Design tokens — `src/tokens.css` runtime source of truth + TS mirror |
+| `lib/menu-catalog` | Shared dish/menu data types |
+| `lib/preferences-match` | Shared dietary preference-matching logic |
+| `lib/subscription-rules` | Pure, DB-free subscription lifecycle rules (24 h skip/swap cutoff) |
+| `lib/agency-agents` | Bundled agent content + generated index (MIT import) |
+| `lib/integrations-gemini-ai` | Gemini AI integration utilities |
+| `scripts/` | One-off data scripts (seeding, backfills, audits) + repo lint gates |
 
 ## Architecture decisions
 
-- **Contract-first APIs.** OpenAPI spec in `lib/api-spec` drives generated React Query hooks + Zod schemas. Server validates inputs/outputs with the same schemas.
-- **Single design-token source.** `@theme` in `index.css` is the only place to introduce a color/radius/duration; mirror motion tokens in `lib/motion.ts` so Framer Motion stays in lockstep.
-- **Phosphor (primary) + Lucide (legacy).** New customer surfaces use `@phosphor-icons/react`; admin/RD console screens may keep `lucide-react`.
-- **Variable fonts via @fontsource.** Inter Variable + JetBrains Mono Variable + Instrument Serif are bundled — no Google Fonts CDN.
-- **Path-based routing through the shared proxy.** Each artifact reads `BASE_PATH`; never hard-code URLs across artifacts.
+- **Contract-first APIs — except the storefront.** The OpenAPI spec in `lib/api-spec` drives
+  generated hooks/schemas for the legacy SPA, mobile, and agents apps, and the server validates
+  with the same schemas. The storefront is deliberately outside this flow: it uses hand-written
+  typed clients in `artifacts/storefront/lib/` (injectable `fetchImpl`, fully unit-tested), so
+  contract changes must be mirrored there by hand.
+- **Server owns every amount.** The browser never sends a price; Razorpay `keyId` comes from the
+  server's order response. The money path moves as one unit (`docs/AGENT_WORKING_AGREEMENT.md`).
+- **Single design-token source per app.** Storefront: `lib/tokens/src/tokens.css`, bridged in
+  `app/globals.css` — enforced by the `lint:tokens` CI gate (no raw hex). Legacy SPA:
+  `src/index.css @theme`, motion mirrored in `src/lib/motion.ts`.
+- **Auth-gated surfaces are islands.** On 401 the storefront renders `<PhoneAuth/>` in place —
+  no `/login` redirects.
+- **Icons:** storefront allows Lucide + Heroicons; legacy customer surfaces use Phosphor, admin/RD
+  screens use Lucide.
+
+## Design system
+
+- **Storefront** — Astryx design system (owner decision 2026-07-27): palette lives in
+  `lib/themes/tanmatra.ts` (brand hues as dark-mode values; `#7F6921` is light-mode gold).
+  One surviving caveat: **gold is the only action colour** — see `docs/ASTRYX-ADOPTION-RUNBOOK.md` §3.
+  Live styleguide at `/styleguide` (`app/styleguide/page.tsx`). CI gates: `lint:filecap`
+  (`.tsx` ≤ 400 lines), `lint:tokens`.
+- **Legacy SPA** — Clinical Dark palette stays locked (`#D4AF37` gold, `#6BA3C8` blue, `#7D9E7E`
+  sage); no new base colors without explicit approval. Global chrome in
+  `src/components/layout/{Header,BottomNav}.tsx` (IA: Eat / Plan / Track / Community / Account),
+  ⌘K palette in `src/components/CommandPalette.tsx`.
+- **Both:** tabular numerals wherever clinical data is shown (`.text-clinical-data` /
+  `font-variant-numeric: tabular-nums`). Combo cards on Menu are a single clickable card opening
+  a Dialog of constituent dishes with an "Add Combo" CTA.
 
 ## Product
 
-Customer-facing capabilities (web + mobile):
+Customer-facing capabilities (storefront + mobile):
 
 - Browse a curated clinical menu (single dishes + Curated Selection combos with constituent dish drill-down)
 - Build a cart / checkout / track live order
@@ -62,25 +107,35 @@ Customer-facing capabilities (web + mobile):
 - Join cohort challenges, browse RD-curated marketplace + recipes
 - Personal preferences/health profile, rewards, vouchers, premium
 
-Operator / RD surfaces (admin-gated routes under `/admin/*` and `/rd-console`).
+Operator / RD surfaces live in the legacy SPA (admin-gated `/admin/*` routes and `/rd-console`).
 
-## User preferences
+## Testing
 
-- Clinical Dark palette is locked (`#D4AF37` clinical-gold, `#6BA3C8` blue, `#7D9E7E` sage). Do not introduce new base colors without explicit approval.
-- Tabular numerals everywhere clinical data is shown (`.text-clinical-data` or `font-variant-numeric: tabular-nums`).
-- Combo cards on Menu must be a single clickable image/title that opens a Dialog listing constituent dishes (each linking to `/dish/:slug`) plus an "Add Combo" CTA.
-- Dish page: macro overlay must be compact and not collide with the RD card.
+- Storefront: 372 unit tests under `artifacts/storefront/lib/`, all DB- and network-free (~8 s).
+- Legacy SPA: 79 unit tests. Both suites are driven from `artifacts/api-server` with **quoted**
+  globs — `node --test --import tsx "../storefront/lib/**/*.test.ts"` — the quotes are
+  load-bearing (unquoted `**` silently runs a subset under bash).
+- `pnpm run lint:test-reach` fails CI on any test file no workflow reaches.
+- e2e: Playwright, `artifacts/storefront/e2e/playwright.config.ts` (`E2E_BASE_URL` targets a
+  local prod build or the deployed service).
 
 ## Gotchas
 
-- Do **not** run `pnpm dev` at the workspace root — use the configured workflows (or `pnpm --filter @workspace/<name> run dev`) so `PORT` / `BASE_PATH` are wired up.
-- Any new color/radius/duration token must be added to `index.css @theme` AND the `/__styleguide` page.
-- When extending the customer IA, update both `Header.tsx` (desktop) and `BottomNav.tsx` (mobile) — they share the Eat/Plan/Track/Community/Account grouping.
-- Add new routes to `CommandPalette.tsx` so ⌘K can find them.
-- `useMenuCatalog()` returns `{ dishes, isLoading, isError }` and falls back to `STATIC_DISHES` so UI never blanks.
+- Do **not** run `pnpm dev` at the workspace root — there is no root `dev` script by design;
+  always `pnpm --filter @workspace/<name> run dev`.
+- Never regenerate `pnpm-lock.yaml` to make `--frozen-lockfile` pass — fix the cause.
+- New tokens go in a token file (`lib/tokens` for the storefront, `index.css @theme` for the
+  legacy SPA), never inline — `lint:tokens` fails the build on raw hex.
+- Stale `.next/` from another branch breaks storefront typecheck — remove it with an absolute
+  path before rebuilding.
+- `API_UPSTREAM` / `IMAGE_UPSTREAM` are **build-time only** for the storefront: rewrites are
+  baked at `next build`; setting them at `next start` does nothing.
+- `useMenuCatalog()` (legacy SPA) falls back to `STATIC_DISHES` so the UI never blanks.
 
 ## Pointers
 
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
-- See `.local/skills/artifacts` for the artifact lifecycle (creating new artifacts, registering them).
-
+- `CLAUDE.md` — authoritative repo guide; overrides older docs on any conflict
+- `docs/CLONE-HANDOVER.md` — exact clean-clone/bootstrap steps (external agents start here)
+- `docs/AGENT_WORKING_AGREEMENT.md` — mandatory pre-commit reading (branch base, one concern per PR, verify checklist)
+- `docs/DOMAIN-CUTOVER.md` — which app serves `tanmatra.food`, and the rollback procedure
+- `docs/ASTRYX-ADOPTION-RUNBOOK.md` — storefront design-system adoption record
