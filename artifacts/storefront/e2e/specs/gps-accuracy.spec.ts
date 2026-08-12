@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { locationTrigger } from "../support/locators";
 
 /**
  * Edge Case A — weak-GPS correction prompt.
@@ -35,7 +36,7 @@ const WEAK_PROMPT = /drag the pin to your exact building/i;
 async function openPicker(page: import("@playwright/test").Page): Promise<void> {
   await page.goto("/menu");
   await expect(async () => {
-    await page.getByRole("button", { name: /select your location/i }).click();
+    await locationTrigger(page).click();
     await expect(page.getByRole("heading", { name: "Add address" })).toBeVisible({
       timeout: 2_000,
     });

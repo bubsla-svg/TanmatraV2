@@ -219,16 +219,37 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
           // label + "MAP"), overflowing right through the ⌘K button — the
           // label's own `truncate` never got a chance to apply because the
           // button around it never actually shrank. Measured via Playwright.
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--ink)] shadow-sm hover:border-[var(--line-strong)] transition-colors text-left disabled:opacity-60"
+          className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-2.5 sm:px-4 py-3 text-sm text-[var(--ink)] shadow-sm hover:border-[var(--line-strong)] transition-colors text-left disabled:opacity-60"
         >
-          <svg className="h-5 w-5 text-gold shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="h-4 w-4 sm:h-5 sm:w-5 text-gold shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
+          {/* Below sm the whole widget is capped at MENU_FIT's 9rem, and the
+              long labels did not fit inside it: after the pin, the gaps, the
+              padding and the "MAP" tag there were ~38px left for text, so the
+              control shipped reading "Se… MAP" — an ellipsis where the verb
+              should be. The pin glyph already says "map", so from the tightest
+              breakpoint the tag stands down and the label loses its verb; both
+              come back from sm up, where there is room for them. `truncate`
+              stays as the backstop for a font that measures wider than ours.
+              The narrow-width padding/gap/icon sizes are MEASURED, not chosen:
+              "Set location" needs 94px, and at the original px-3/gap-2/h-5 the
+              label box was 90px — still four short, still an ellipsis. The
+              tighter trio buys 10px, so the label clears its box with room
+              rather than by a hair. Re-measure if any of them changes; the
+              9rem cap itself is fixed by the wordmark and must not move. */}
           <span className="font-semibold text-ink-muted flex-1 truncate">
-            {busy ? "Checking location..." : "Select your location"}
+            {busy ? (
+              "Checking…"
+            ) : (
+              <>
+                <span className="sm:hidden">Set location</span>
+                <span className="hidden sm:inline">Select your location</span>
+              </>
+            )}
           </span>
-          {!busy && <span className="text-xs font-bold text-gold shrink-0">MAP</span>}
+          {!busy && <span className="hidden sm:inline text-xs font-bold text-gold shrink-0">MAP</span>}
         </button>
       </div>
       {err && <p role="alert" className="text-xs font-medium text-[var(--danger)] w-full">{err}</p>}

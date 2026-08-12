@@ -61,11 +61,20 @@ export function CartDrawer({
           <DrawerTitle className="text-lg font-semibold text-ink">Your cart</DrawerTitle>
           <ul className="mt-3 flex-1 divide-y divide-line overflow-y-auto overscroll-contain">
             {cart.lines.map((l) => (
-              <li key={`${l.kind}-${l.dishId}-${(l.customizations ?? []).join("|")}`} className="flex items-center justify-between gap-3 py-3">
+              <li key={`${l.kind}-${l.dishId}-${(l.customizations ?? []).join("|")}`} className="flex items-start justify-between gap-3 py-3">
+                {/* `items-start`, not `items-center`: once the name is allowed
+                    two lines the text column is taller than the stepper, and
+                    centring floated the controls against the middle of a
+                    two-line title. */}
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-ink">{l.name}</p>
+                  {/* Wraps to two lines rather than truncating to one. A cart
+                      is the last surface that may be ambiguous about what is
+                      being bought — "Grilled Paneer Tikka with Quinoa…" and
+                      "Grilled Paneer Tikka with Millet…" clipped to the same
+                      string — and vertical space in a drawer is free. */}
+                  <p className="line-clamp-2 text-sm font-medium text-ink">{l.name}</p>
                   {l.customizations && l.customizations.length > 0 && (
-                    <p className="truncate text-xs text-ink-muted">{l.customizations.join(", ")}</p>
+                    <p className="line-clamp-2 text-xs text-ink-muted">{l.customizations.join(", ")}</p>
                   )}
                   <p className="tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
                   {/* D-14: "Andaaza nahi, likha hua" — the same figures the

@@ -31,7 +31,9 @@ export default function StyleguidePage({
     >
       <GlobalHeader />
       
-      <main className="max-w-screen-xl mx-auto px-4 py-8 space-y-12">
+      {/* A <div>: this page sits in the (global) route group, whose layout
+          already wraps children in <main id="main">. */}
+      <div className="max-w-screen-xl mx-auto px-4 py-8 space-y-12">
         <section className="space-y-4">
           <h2 className="text-xl font-bold tracking-tight text-white mb-6 border-b border-white/10 pb-2">CTAs & Buttons</h2>
           <div className="flex flex-wrap gap-4 items-center">
@@ -96,7 +98,7 @@ export default function StyleguidePage({
             />
           </div>
         </section>
-      </main>
+      </div>
       {/* D-17: no in-page duplicate nav demo any more — app/(global)/layout.tsx
           already mounts the real MobileBottomNav for every (global) route,
           including this one. That's "the real one" this branch points at. */}

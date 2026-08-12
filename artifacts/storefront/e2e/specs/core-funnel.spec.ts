@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { collectErrors } from "../fixtures";
 import { MenuPage } from "../support/pages/MenuPage";
 import { CartDrawer } from "../support/pages/CartDrawer";
+import { locationTrigger } from "../support/locators";
 
 /**
  * Core Revenue Funnel (Phase 2 Proactive QA)
@@ -18,13 +19,11 @@ test("core funnel: address -> marketplace -> cart -> checkout login prompt", asy
   // 1. Land on homepage, verify sticky address/serviceability bar is present
   await page.goto("/");
   await expect(page.getByRole("banner")).toBeVisible();
-  // Page-scoped, not <main>-scoped. The serviceability entry point is rendered
-  // twice on purpose: the Header carries it at every width, and app/page.tsx
-  // adds an in-<main> copy only from `sm` up ("hidden sm:block" — mobile hides
-  // it to avoid header redundancy). Scoping to <main> therefore asserted a
-  // control the mobile layout deliberately hides, and failed every [mobile] run.
-  // What the funnel actually needs is that a location picker is reachable.
-  await expect(page.getByText("Select your location", { exact: false }).first()).toBeVisible();
+  // Page-scoped, not <main>-scoped: scoping to <main> asserted a control the
+  // mobile layout deliberately hides, and failed every [mobile] run. What the
+  // funnel needs is that a location picker is reachable — under whichever
+  // label the breakpoint calls for, which is `locationTrigger`'s whole job.
+  await expect(locationTrigger(page).first()).toBeVisible();
 
   // 2. Marketplace is visible on the homepage
   await expect(page.getByRole("heading", { name: /Meal Plans Designed for Real Results|Dietitian-Approved Pantry|The RD-Curated Pantry|Everyday Wellness/i }).first()).toBeVisible();
