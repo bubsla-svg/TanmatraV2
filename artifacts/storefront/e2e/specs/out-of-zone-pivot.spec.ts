@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { collectErrors } from "../fixtures";
+import { locationTrigger } from "../support/locators";
 
 /**
  * Vector 2 — the out-of-zone pivot must offer a way forward.
@@ -59,7 +60,7 @@ async function enterPincode(page: import("@playwright/test").Page, pincode: stri
   // the picker is open the retry stops clicking and only waits.
   await expect(async () => {
     if (!(await heading.isVisible().catch(() => false))) {
-      await page.getByRole("button", { name: /select your location/i }).click({ timeout: 2_000 });
+      await locationTrigger(page).click({ timeout: 2_000 });
     }
     await expect(heading).toBeVisible({ timeout: 2_000 });
   }).toPass({ timeout: 15_000 });

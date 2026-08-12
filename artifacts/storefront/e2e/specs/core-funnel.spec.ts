@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { collectErrors } from "../fixtures";
 import { MenuPage } from "../support/pages/MenuPage";
 import { CartDrawer } from "../support/pages/CartDrawer";
+import { locationTrigger } from "../support/locators";
 
 /**
  * Core Revenue Funnel (Phase 2 Proactive QA)
@@ -18,20 +19,11 @@ test("core funnel: address -> marketplace -> cart -> checkout login prompt", asy
   // 1. Land on homepage, verify sticky address/serviceability bar is present
   await page.goto("/");
   await expect(page.getByRole("banner")).toBeVisible();
-  // Page-scoped, not <main>-scoped, and matched by ROLE rather than by one
-  // exact string. Two reasons, both learned the hard way:
-  //   • Scoping to <main> asserted a control the mobile layout deliberately
-  //     hid, and failed every [mobile] run.
-  //   • The label is viewport-dependent. Inside the header's 9rem cap the long
-  //     form did not fit and shipped as "Se… MAP", so below `sm` the control
-  //     now reads "Set location" and the long form is display:none — a
-  //     getByText("Select your location") passes on desktop and fails on the
-  //     Pixel 7 project this gate actually runs.
-  // What the funnel needs is that a location picker is reachable, under
-  // whichever label the breakpoint calls for.
-  await expect(
-    page.getByRole("button", { name: /(Set|Select your) location/i }).first(),
-  ).toBeVisible();
+  // Page-scoped, not <main>-scoped: scoping to <main> asserted a control the
+  // mobile layout deliberately hides, and failed every [mobile] run. What the
+  // funnel needs is that a location picker is reachable — under whichever
+  // label the breakpoint calls for, which is `locationTrigger`'s whole job.
+  await expect(locationTrigger(page).first()).toBeVisible();
 
   // 2. Marketplace is visible on the homepage
   await expect(page.getByRole("heading", { name: /Meal Plans Designed for Real Results|Dietitian-Approved Pantry|The RD-Curated Pantry|Everyday Wellness/i }).first()).toBeVisible();
