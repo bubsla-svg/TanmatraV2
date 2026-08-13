@@ -149,29 +149,29 @@ export const FamilyLeaderboardView: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Top Banner Header */}
-      <div className="bg-gradient-to-r from-sky-900 via-sky-950 to-slate-950 text-white p-6 sm:p-8 rounded-3xl shadow-2xl relative overflow-hidden border border-sky-800/30">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-amber-400/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="bg-gradient-to-r from-[var(--gold)]/15 via-[var(--gold)]/10 to-[var(--surface)] text-ink p-6 sm:p-8 rounded-3xl shadow-2xl relative overflow-hidden border border-[var(--gold)]/30">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-gold/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 font-extrabold text-xs border border-amber-500/30 flex items-center gap-1.5 shadow-sm">
-                <Trophy className="w-3.5 h-3.5 text-amber-400" /> Family Health Gamification Engine
+              <span className="px-3 py-1 rounded-full bg-gold/20 text-[var(--gold-text)] font-extrabold text-xs border border-[var(--gold)]/30 flex items-center gap-1.5 shadow-sm">
+                <Trophy className="w-3.5 h-3.5 text-[var(--gold-text)]" /> Family Health Gamification Engine
               </span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black font-heading tracking-tight">
               Family Health Leaderboard & Daily Streaks
             </h2>
-            <p className="text-xs sm:text-sm text-slate-200 font-medium max-w-xl">
+            <p className="text-xs sm:text-sm text-ink-faint font-medium max-w-xl">
               Compete with family members, complete daily nutrition quests, maintain daily habit streaks, and unlock ICMR wellness rewards!
             </p>
           </div>
 
-          <div className="flex items-center gap-4 bg-white/10 p-4 rounded-2xl border border-white/15 backdrop-blur-md shrink-0">
-            <Flame className="w-8 h-8 text-amber-400 animate-pulse" />
+          <div className="flex items-center gap-4 bg-surface-raised p-4 rounded-2xl border border-line backdrop-blur-md shrink-0">
+            <Flame className="w-8 h-8 text-[var(--gold-text)] animate-pulse" />
             <div>
-              <strong className="text-2xl font-black text-amber-300 font-heading block">{sortedMembers[0]?.streakDays || 14} Days 🔥</strong>
-              <span className="text-[10px] text-slate-300 uppercase tracking-wider font-bold">Top Family Habit Streak</span>
+              <strong className="text-2xl font-black text-[var(--gold-text)] font-heading block">{sortedMembers[0]?.streakDays || 14} Days 🔥</strong>
+              <span className="text-[10px] text-ink-faint uppercase tracking-wider font-bold">Top Family Habit Streak</span>
             </div>
           </div>
         </div>
@@ -199,30 +199,30 @@ export const FamilyLeaderboardView: React.FC = () => {
       {/* Add Member Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div onClick={() => setIsAddModalOpen(false)} className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[99]" />
+          <div onClick={() => setIsAddModalOpen(false)} className="fixed inset-0 bg-surface/80 backdrop-blur-md z-[99]" />
           
-          <div className="relative z-[100] bg-white dark:bg-slate-900 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
-            <h3 className="text-lg font-black font-heading text-slate-900 dark:text-white">Add Family Member</h3>
+          <div className="relative z-[100] bg-surface rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-line space-y-4">
+            <h3 className="text-lg font-black font-heading text-ink">Add Family Member</h3>
             
             <form onSubmit={handleAddMember} className="space-y-3">
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Member Name</label>
+                <label className="text-xs font-bold text-ink-muted block mb-1">Member Name</label>
                 <input
                   type="text"
                   required
                   value={newMemberName}
                   onChange={(e) => setNewMemberName(e.target.value)}
                   placeholder="e.g. Rahul Sharma"
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-sky-900"
+                  className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Relationship</label>
+                <label className="text-xs font-bold text-ink-muted block mb-1">Relationship</label>
                 <select
                   value={newMemberRelation}
                   onChange={(e) => setNewMemberRelation(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-sky-900"
+                  className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
                 >
                   <option value="Spouse">Spouse</option>
                   <option value="Sister">Sister</option>
@@ -236,14 +236,14 @@ export const FamilyLeaderboardView: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Avatar Icon</label>
+                <label className="text-xs font-bold text-ink-muted block mb-1">Avatar Icon</label>
                 <div className="flex gap-2">
                   {['👨‍💼', '👩‍💼', '👦', '👧', '👴', '👵'].map(av => (
                     <button
                       key={av}
                       type="button"
                       onClick={() => setNewMemberAvatar(av)}
-                      className={`text-2xl p-2 rounded-xl border ${newMemberAvatar === av ? 'border-sky-900 bg-sky-900/10' : 'border-slate-200'}`}
+                      className={`text-2xl p-2 rounded-xl border ${newMemberAvatar === av ? 'border-[var(--gold)] bg-gold/10' : 'border-line'}`}
                     >
                       {av}
                     </button>
@@ -255,13 +255,13 @@ export const FamilyLeaderboardView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold"
+                  className="px-4 py-2 rounded-xl bg-surface-subtle text-ink-muted text-xs font-bold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-sky-900 text-white text-xs font-bold shadow-md"
+                  className="px-4 py-2 rounded-xl bg-gold text-[var(--gold-ink)] text-xs font-bold shadow-md"
                 >
                   Save Member
                 </button>

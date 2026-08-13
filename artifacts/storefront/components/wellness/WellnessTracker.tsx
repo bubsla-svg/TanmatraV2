@@ -84,7 +84,7 @@ export function WellnessTracker() {
       <div className="flex items-center justify-between gap-4">
         <div className="flex shrink-0 gap-2">
           {WATER_PRESETS.map((ml) => (
-            <button key={ml} type="button" onClick={() => logWaterMutation.mutate(ml)} disabled={busy} className="tabular rounded-full border border-line px-4 py-2 text-xs text-ink-muted transition-colors hover:bg-surface hover:text-ink disabled:opacity-50">+{ml} ml</button>
+            <button key={ml} type="button" onClick={() => logWaterMutation.mutate(ml)} disabled={busy} className="tabular rounded-full border border-line px-4 py-2 text-xs text-ink-muted transition-colors hover:bg-surface hover:brightness-110 disabled:opacity-50">+{ml} ml</button>
           ))}
         </div>
         <Button type="button" onClick={() => setLogOpen(true)} shape="pill" size="fluid" className="flex shrink-0 items-center gap-2 px-6 py-3 font-semibold hover:brightness-110">

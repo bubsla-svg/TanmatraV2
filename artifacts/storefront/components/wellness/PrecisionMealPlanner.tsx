@@ -86,7 +86,7 @@ const PrecisionMealPlannerResolved: React.FC = () => {
       <PrecisionPlannerFunnel onGenerate={handleGenerate} loading={loading} />
 
       {error && (
-        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-bold">
+        <div className="p-4 rounded-2xl bg-[var(--danger)]/10 border border-[var(--danger)]/30 text-[var(--danger)] text-xs font-bold">
           {error}
         </div>
       )}

@@ -44,37 +44,37 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
-      <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
-        <div className="w-10 h-10 rounded-2xl bg-sky-900/10 text-sky-900 dark:text-cyan-400 flex items-center justify-center font-bold">
-          <Sparkles className="w-5 h-5 text-amber-500" />
+    <form onSubmit={handleSubmit} className="bg-surface rounded-3xl p-6 sm:p-8 border border-line shadow-xl space-y-6">
+      <div className="flex items-center gap-3 border-b border-line pb-4">
+        <div className="w-10 h-10 rounded-2xl bg-gold/10 text-[var(--gold-text)] flex items-center justify-center font-bold">
+          <Sparkles className="w-5 h-5 text-[var(--gold-text)]" />
         </div>
         <div>
-          <h3 className="text-lg font-black text-slate-900 dark:text-white font-heading">ICMR Clinical Precision Funnel</h3>
-          <span className="text-xs text-slate-500 font-medium">Input your biometrics to auto-calculate BMR, TDEE, & 7-Day Thalis</span>
+          <h3 className="text-lg font-black text-ink font-heading">ICMR Clinical Precision Funnel</h3>
+          <span className="text-xs text-ink-muted font-medium">Input your biometrics to auto-calculate BMR, TDEE, & 7-Day Thalis</span>
         </div>
       </div>
 
       {/* Grid 1: Biometrics */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div>
-          <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Age (Years)</label>
+          <label className="text-xs font-bold text-ink-muted block mb-1">Age (Years)</label>
           <input
             type="number"
             min={12}
             max={120}
             value={age}
             onChange={(e) => setAge(parseInt(e.target.value) || 30)}
-            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-sky-900"
+            className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
           />
         </div>
 
         <div>
-          <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Gender</label>
+          <label className="text-xs font-bold text-ink-muted block mb-1">Gender</label>
           <select
             value={gender}
             onChange={(e) => setGender(e.target.value as any)}
-            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-sky-900"
+            className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
           >
             <option value="male">Male</option>
             <option value="female">Female</option>
@@ -83,26 +83,26 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
         </div>
 
         <div>
-          <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Height (cm)</label>
+          <label className="text-xs font-bold text-ink-muted block mb-1">Height (cm)</label>
           <input
             type="number"
             min={100}
             max={250}
             value={heightCm}
             onChange={(e) => setHeightCm(parseInt(e.target.value) || 170)}
-            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-sky-900"
+            className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
           />
         </div>
 
         <div>
-          <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Weight (kg)</label>
+          <label className="text-xs font-bold text-ink-muted block mb-1">Weight (kg)</label>
           <input
             type="number"
             min={30}
             max={300}
             value={weightKg}
             onChange={(e) => setWeightKg(parseInt(e.target.value) || 70)}
-            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-sky-900"
+            className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
           />
         </div>
       </div>
@@ -110,11 +110,11 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
       {/* Grid 2: Activity & Health Goal */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Activity Multiplier</label>
+          <label className="text-xs font-bold text-ink-muted block mb-1">Activity Multiplier</label>
           <select
             value={activityLevel}
             onChange={(e) => setActivityLevel(e.target.value as any)}
-            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-sky-900"
+            className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
           >
             <option value="sedentary">Sedentary (Desk Job)</option>
             <option value="light">Lightly Active (1-3 days/wk)</option>
@@ -125,11 +125,11 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
         </div>
 
         <div>
-          <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Primary Clinical Goal</label>
+          <label className="text-xs font-bold text-ink-muted block mb-1">Primary Clinical Goal</label>
           <select
             value={goal}
             onChange={(e) => setGoal(e.target.value as any)}
-            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-sky-900"
+            className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
           >
             <option value="fat_loss">Fat Loss (-500 kcal Deficit)</option>
             <option value="muscle_gain">Muscle Build (+15% Surplus)</option>
@@ -142,7 +142,7 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
       {/* Diet Preference & Allergens */}
       <div className="space-y-3">
         <div>
-          <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Dietary Preference</label>
+          <label className="text-xs font-bold text-ink-muted block mb-1">Dietary Preference</label>
           <div className="grid grid-cols-4 gap-2">
             {[
               { id: 'any', label: 'Omnivore 🍱' },
@@ -156,8 +156,8 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
                 onClick={() => setDietPreference(d.id as any)}
                 className={`py-2 rounded-xl text-xs font-bold border transition-all ${
                   dietPreference === d.id
-                    ? 'bg-sky-900 text-white border-sky-900 shadow-md'
-                    : 'bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-sky-900'
+                    ? 'bg-gold text-[var(--gold-ink)] border-[var(--gold)] shadow-md'
+                    : 'bg-surface-subtle text-ink-muted border-line hover:border-[var(--gold)]'
                 }`}
               >
                 {d.label}
@@ -167,7 +167,7 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
         </div>
 
         <div>
-          <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Excludes Allergens (Safety Filter)</label>
+          <label className="text-xs font-bold text-ink-muted block mb-1">Excludes Allergens (Safety Filter)</label>
           <div className="flex flex-wrap gap-2">
             {ALLERGEN_OPTIONS.map((alg) => {
               const active = selectedAllergens.includes(alg);
@@ -178,8 +178,8 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
                   onClick={() => toggleAllergen(alg)}
                   className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${
                     active
-                      ? 'bg-rose-500 text-white border-rose-500 shadow-sm'
-                      : 'bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-rose-400'
+                      ? 'bg-[var(--danger)] text-[var(--gold-ink)] border-[var(--danger)] shadow-sm'
+                      : 'bg-surface-subtle text-ink-muted border-line hover:border-[var(--danger)]'
                   }`}
                 >
                   {active ? `✓ No ${alg}` : `+ ${alg}`}
@@ -193,7 +193,7 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-black uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2"
+        className="w-full py-3 rounded-2xl bg-sage hover:brightness-110 disabled:opacity-50 text-[var(--sage-ink)] text-xs font-black uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2"
       >
         <Sparkles className="w-4 h-4" />
         <span>{loading ? "Calculating ICMR Precision Plan..." : "Generate 7-Day Precision Thali Plan"}</span>

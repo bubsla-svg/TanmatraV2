@@ -24,21 +24,21 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
   // no longer travel.
   const shouldReduceMotion = useReducedMotion();
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+    <div className="bg-surface rounded-3xl p-6 sm:p-8 border border-line shadow-xl space-y-6">
+      <div className="flex items-center justify-between border-b border-line pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-sky-900/10 text-sky-900 dark:text-cyan-400 flex items-center justify-center font-bold">
-            <Trophy className="w-5 h-5 text-amber-500" />
+          <div className="w-10 h-10 rounded-2xl bg-gold/10 text-[var(--gold-text)] flex items-center justify-center font-bold">
+            <Trophy className="w-5 h-5 text-[var(--gold-text)]" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-slate-900 dark:text-white font-heading">Family Wellness Leaderboard</h3>
-            <span className="text-xs text-slate-500 font-medium">Total Combined Points: {totalFamilyPoints} Pts</span>
+            <h3 className="text-lg font-black text-ink font-heading">Family Wellness Leaderboard</h3>
+            <span className="text-xs text-ink-muted font-medium">Total Combined Points: {totalFamilyPoints} Pts</span>
           </div>
         </div>
 
         <button
           onClick={onOpenAddModal}
-          className="px-4 py-2 rounded-xl bg-sky-900 hover:bg-sky-950 text-white text-xs font-bold shadow-md transition-all flex items-center gap-1.5"
+          className="px-4 py-2 rounded-xl bg-gold hover:brightness-110 text-[var(--gold-ink)] text-xs font-bold shadow-md transition-all flex items-center gap-1.5"
         >
           <Plus className="w-4 h-4" /> Add Member
         </button>
@@ -53,13 +53,13 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
             animate={{ opacity: 1, y: 0 }}
             className={`p-4 sm:p-5 rounded-2xl border-2 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
               idx === 0 
-                ? 'border-amber-400/60 bg-gradient-to-r from-amber-50/50 via-slate-50 to-amber-50/30 dark:from-amber-950/20 dark:to-slate-900 shadow-md' 
-                : 'border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950'
+                ? 'border-[var(--gold)]/60 bg-gradient-to-r from-[var(--gold)]/10/50 via-[var(--surface)] to-[var(--gold)]/10/30 shadow-md' 
+                : 'border-line bg-surface-subtle'
             }`}
           >
             <div className="flex items-center gap-4">
               {/* Rank Badge */}
-              <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 font-black text-xs text-slate-800 dark:text-white flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-surface-raised font-black text-xs text-ink flex items-center justify-center shrink-0">
                 {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
               </div>
 
@@ -67,31 +67,31 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
 
               <div>
                 <div className="flex items-center gap-2">
-                  <strong className="text-sm font-bold text-slate-900 dark:text-white font-heading">{member.name}</strong>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-900/10 text-sky-900 dark:text-cyan-400 font-extrabold">
+                  <strong className="text-sm font-bold text-ink font-heading">{member.name}</strong>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-gold/10 text-[var(--gold-text)] font-extrabold">
                     {member.relation}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-                  <span className="text-amber-500 font-bold flex items-center gap-1">
-                    <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> {member.streakDays} Day Streak
+                <div className="flex items-center gap-3 text-xs text-ink-muted mt-1 font-medium">
+                  <span className="text-[var(--gold-text)] font-bold flex items-center gap-1">
+                    <Flame className="w-3.5 h-3.5 fill-[var(--gold)] text-[var(--gold-text)]" /> {member.streakDays} Day Streak
                   </span>
-                  <span>• Health Index: <strong className="text-emerald-500 font-bold">{member.healthScore}/10</strong></span>
+                  <span>• Health Index: <strong className="text-sage-text font-bold">{member.healthScore}/10</strong></span>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between sm:justify-end gap-6 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 dark:border-slate-800">
+            <div className="flex items-center justify-between sm:justify-end gap-6 pt-2 sm:pt-0 border-t sm:border-t-0 border-line">
               <div className="text-right">
-                <strong className="text-lg font-black text-sky-900 dark:text-cyan-400 font-heading block">
+                <strong className="text-lg font-black text-[var(--gold-text)] font-heading block">
                   {member.points} <span className="text-xs font-bold">Pts</span>
                 </strong>
-                <span className="text-[10px] text-slate-400 block font-bold">{member.badge}</span>
+                <span className="text-[10px] text-ink-faint block font-bold">{member.badge}</span>
               </div>
 
               {member.id !== '1' && (
-                <button onClick={() => onRemoveMember(member.id)} className="text-slate-400 hover:text-rose-500">
+                <button onClick={() => onRemoveMember(member.id)} className="text-ink-faint hover:text-[var(--danger)]">
                   <Trash2 className="w-4 h-4" />
                 </button>
               )}

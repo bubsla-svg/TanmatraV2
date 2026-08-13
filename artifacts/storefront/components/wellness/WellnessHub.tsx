@@ -22,11 +22,11 @@ export function WellnessHub() {
           onClick={() => setActiveTab("precision")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "precision"
-              ? "bg-sky-900 text-white shadow-md"
-              : "bg-surface text-ink-muted hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800"
+              ? "bg-gold text-[var(--gold-ink)] shadow-md"
+              : "bg-surface text-ink-muted hover:bg-surface-subtle"
           }`}
         >
-          <Sparkles className="w-4 h-4 text-amber-400" />
+          <Sparkles className="w-4 h-4 text-[var(--gold-text)]" />
           <span>ICMR Precision Planner</span>
         </button>
 
@@ -35,11 +35,11 @@ export function WellnessHub() {
           onClick={() => setActiveTab("blood_ocr")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "blood_ocr"
-              ? "bg-sky-900 text-white shadow-md"
-              : "bg-surface text-ink-muted hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800"
+              ? "bg-gold text-[var(--gold-ink)] shadow-md"
+              : "bg-surface text-ink-muted hover:bg-surface-subtle"
           }`}
         >
-          <Activity className="w-4 h-4 text-rose-400" />
+          <Activity className="w-4 h-4 text-[var(--danger)]" />
           <span>Blood Report AI OCR</span>
         </button>
 
@@ -48,11 +48,11 @@ export function WellnessHub() {
           onClick={() => setActiveTab("pantry_vision")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "pantry_vision"
-              ? "bg-sky-900 text-white shadow-md"
-              : "bg-surface text-ink-muted hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800"
+              ? "bg-gold text-[var(--gold-ink)] shadow-md"
+              : "bg-surface text-ink-muted hover:bg-surface-subtle"
           }`}
         >
-          <Camera className="w-4 h-4 text-amber-400" />
+          <Camera className="w-4 h-4 text-[var(--gold-text)]" />
           <span>Pantry Vision Scanner</span>
         </button>
 
@@ -61,11 +61,11 @@ export function WellnessHub() {
           onClick={() => setActiveTab("hydration")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "hydration"
-              ? "bg-sky-900 text-white shadow-md"
-              : "bg-surface text-ink-muted hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800"
+              ? "bg-gold text-[var(--gold-ink)] shadow-md"
+              : "bg-surface text-ink-muted hover:bg-surface-subtle"
           }`}
         >
-          <Droplets className="w-4 h-4 text-cyan-400" />
+          <Droplets className="w-4 h-4 text-[var(--gold-text)]" />
           <span>Hydration & Fasting</span>
         </button>
 
@@ -74,11 +74,11 @@ export function WellnessHub() {
           onClick={() => setActiveTab("leaderboard")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "leaderboard"
-              ? "bg-sky-900 text-white shadow-md"
-              : "bg-surface text-ink-muted hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800"
+              ? "bg-gold text-[var(--gold-ink)] shadow-md"
+              : "bg-surface text-ink-muted hover:bg-surface-subtle"
           }`}
         >
-          <Trophy className="w-4 h-4 text-amber-400" />
+          <Trophy className="w-4 h-4 text-[var(--gold-text)]" />
           <span>Family Leaderboard</span>
         </button>
 
@@ -87,11 +87,11 @@ export function WellnessHub() {
           onClick={() => setActiveTab("nutrition")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "nutrition"
-              ? "bg-sky-900 text-white shadow-md"
-              : "bg-surface text-ink-muted hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800"
+              ? "bg-gold text-[var(--gold-ink)] shadow-md"
+              : "bg-surface text-ink-muted hover:bg-surface-subtle"
           }`}
         >
-          <Utensils className="w-4 h-4 text-emerald-400" />
+          <Utensils className="w-4 h-4 text-sage-text" />
           <span>Nutrition Tracker</span>
         </button>
       </div>
