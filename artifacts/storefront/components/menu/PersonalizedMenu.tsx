@@ -13,6 +13,7 @@
 // the rendering is server-side now.
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { DishForMatch, PreferencesForMatch } from "@workspace/preferences-match";
 import { apiGet } from "@/lib/apiClient";
 import { MenuGrid, type MenuGridRow } from "@/components/MenuGrid";
@@ -31,7 +32,14 @@ import {
   filterDishes,
   type MenuFilterState,
 } from "@/lib/menuFilters";
+import { mergeMenuUrlState, parseMenuUrlState } from "@/lib/menuUrlState";
 import { MenuFilterSheet } from "@/components/menu/MenuFilterSheet";
+
+// N2.3: URL sync is debounced, not immediate — chip/filter changes are
+// discrete clicks (a 400ms delay before the address bar updates is
+// imperceptible), but the search box fires on every keystroke and a
+// router.replace per character would be wasteful.
+const URL_SYNC_DEBOUNCE_MS = 400;
 
 interface PrefsRow {
   allergens?: string[];
@@ -63,11 +71,21 @@ export function PersonalizedMenu({
   dishes: DishForMatch[];
   rows: MenuGridRow[];
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [prefs, setPrefs] = useState<PreferencesForMatch | null>(null);
-  const [chip, setChip] = useState<DietFilterChip>("all");
-  const [filters, setFilters] = useState<MenuFilterState>(EMPTY_FILTERS);
+  // Seeded from the URL (lazy initializer — runs once, at mount only), so a
+  // filtered view survives the unmount/remount that back-navigation causes.
+  // A URL-provided value counts as already-chosen, same as a manual click:
+  // resolveInitialDietChip's own guard below only ever upgrades FROM "all".
+  const [chip, setChip] = useState<DietFilterChip>(() => parseMenuUrlState(searchParams).chip);
+  const [filters, setFilters] = useState<MenuFilterState>(
+    () => parseMenuUrlState(searchParams).filters,
+  );
   const [filterOpen, setFilterOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(() => parseMenuUrlState(searchParams).query);
 
   useEffect(() => {
     let live = true;
@@ -91,6 +109,27 @@ export function PersonalizedMenu({
       live = false;
     };
   }, []);
+
+  // Committed state -> URL, debounced. MenuFilterSheet's own draft editing
+  // never reaches this effect — only what onApply hands back as `filters`.
+  //
+  // A merge, not a from-scratch replace, and `searchParams` is a dependency
+  // here on purpose: the dish-card links and drawer are same-route
+  // navigations built with their own hardcoded `?dish=slug` query string, so
+  // opening a dish drops diet/filters/search from the URL the instant it
+  // navigates — well before any unmount. Watching searchParams lets this
+  // effect notice that drift and re-assert its own params (merged, so
+  // `?dish=` survives) rather than only ever reacting to ITS OWN state
+  // changing, which would let the very first same-route navigation erase
+  // everything this fix exists to preserve.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      const desired = mergeMenuUrlState(searchParams, { chip, filters, query: searchQuery });
+      if (desired === searchParams.toString()) return;
+      router.replace(desired ? `${pathname}?${desired}` : pathname, { scroll: false });
+    }, URL_SYNC_DEBOUNCE_MS);
+    return () => clearTimeout(id);
+  }, [chip, filters, searchQuery, pathname, router, searchParams]);
 
   const ranked = useMemo(() => {
     if (!prefs || !isMeaningful(prefs)) return null;

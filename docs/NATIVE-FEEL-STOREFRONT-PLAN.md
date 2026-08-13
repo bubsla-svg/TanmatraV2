@@ -197,7 +197,7 @@ the page, a font that pops in, an offline story that 404s.
 The storefront's individual screens behave natively; the seams *between* them are
 where it feels like a website.
 
-### N2.1 No transition between routes — navigations cut, apps slide
+### N2.1 No transition between routes — navigations cut, apps slide  — **Blocked, checked 2026-08-13**
 
 - **Tell:** tapping a dish card swaps the entire screen in one frame (or worse, via
   N2.2, after a blank pause). Native navigation pushes/pops with motion that tells
@@ -211,8 +211,32 @@ where it feels like a website.
   Directional slide (menu → dish pushes left, back pops right) is a later, separate
   step; it needs per-route transition names and real design intent. Browsers without
   support degrade to today's instant swap — pure progressive enhancement.
-- **Effort:** S for cross-fade, M for directional. **Risk:** low (experimental flag,
-  but failure mode is "no transition", which is the status quo).
+- **Checked before starting, found genuinely blocked, not just "experimental":**
+  Next 16.2.11's `experimental.viewTransition` flag (confirmed present in its own
+  `.d.ts`) enables React's `<ViewTransition>` component specifically — its own doc
+  comment links to `react.dev/reference/react/ViewTransition`. That component does
+  not exist in this repo's installed React at all: `react@19.1.0` (the pinned,
+  STABLE catalog version, verified directly — `'ViewTransition' in React` is
+  `false`) never shipped it; it is canary/experimental-channel-only. Flipping the
+  Next flag here would be inert, not risky-but-working — there is nothing for it to
+  enable. The alternative that stays on stable APIs — hand-rolling the plain
+  browser View Transitions API (`document.startViewTransition()`) via a custom
+  client wrapper keyed off `usePathname()` — is real and does not need a React
+  version bump, but it is a materially bigger, root-level, every-route change than
+  "flip a flag": it needs its own design for how it composes with the overlay
+  back-gesture history (`useOverlayHistory`) and the money-path SW rules already in
+  place, not just a CSS pass. **Not attempted in this pass** — it is a different
+  risk class from N1.x/N2.2 (additive, narrowly-scoped, standard APIs) and deserves
+  its own scoped design rather than being rushed through the same cadence. Bumping
+  React to canary for this one feature is explicitly not recommended: canary is not
+  meant for production, and the payoff (a cross-fade) does not justify that
+  liability.
+- **Effort:** S for cross-fade IF a stable path existed; the actual remaining work is
+  M–L (hand-rolled `startViewTransition` wrapper + interaction design with existing
+  navigation state) or requires a React canary bump (not recommended). **Risk:**
+  was scoped as low ("experimental flag, worst case no transition"); the real
+  picture is higher — either a real architectural addition, or a non-production
+  dependency channel.
 
 ### N2.2 Skeleton coverage is 2 routes out of ~50 — **Shipped 2026-08-13**
 
@@ -255,7 +279,7 @@ where it feels like a website.
 - **Effort:** M (mechanical but many files; each is small under the 400-line cap).
   **Risk:** minimal.
 
-### N2.3 Menu filters and search don't survive back-navigation
+### N2.3 Menu filters and search don't survive back-navigation — **Shipped 2026-08-13**
 
 - **Tell:** filter to Veg, search "bowl", open a dish, swipe back — chips and query
   are reset. A native list screen would be exactly where you left it. (Scroll
@@ -263,10 +287,38 @@ where it feels like a website.
 - **Evidence:** `components/menu/PersonalizedMenu.tsx` holds chip / advanced-filter
   / search state in `useState`; client component state does not survive the
   unmount/remount of back-navigation.
-- **Fix:** lift chip + search (and the filter sheet's committed state) into URL
-  `searchParams` via `router.replace(..., { scroll: false })`. This is the ECC
-  URL-as-state pattern, and it makes filtered views shareable/bookmarkable for free.
-  Keep the sheet's *draft* state local; only committed filters belong in the URL.
+- **Fix (shipped):** new pure module `lib/menuUrlState.ts` (13 unit tests) — reads
+  committed chip/filters/search back out of `URLSearchParams` on mount (a lazy
+  `useState` initializer, so a URL-provided value counts as already-chosen and
+  `resolveInitialDietChip`'s system-inferred default correctly never overrides
+  it), and a debounced effect writes them back via `router.replace(pathname + "?"
+  + search, { scroll: false })`. `MenuFilterSheet`'s own draft editing never
+  reaches this — only what `onApply` hands back as `filters`.
+- **Real bug found while building the e2e, not assumed away:** the first
+  version wrote the URL from scratch each time and only reacted to its OWN
+  state changing. That silently broke the moment a dish card was clicked —
+  `DishDrawer`'s `?dish=slug` link is a same-route navigation built with its
+  own hardcoded query string, so it drops `diet`/`q` the instant it opens,
+  *before* any unmount, and nothing was watching for that drift to re-assert
+  them. Fixed with `mergeMenuUrlState` (merges into whatever `URLSearchParams`
+  already exists rather than replacing wholesale, so `?dish=` survives) and
+  by adding `searchParams` itself to the sync effect's dependencies, so an
+  externally-caused change to the URL is noticed and repaired, not just a
+  self-caused one. This is exactly the class of bug a plausible-looking unit
+  test suite doesn't catch on its own — the merge/preserve-unrelated-param
+  cases are unit-tested now, but the FIRST time this surfaced was a real
+  browser, a real click, and a real assertion failing.
+- **Verified:** 13 unit tests for `lib/menuUrlState.ts` (round-trips per field,
+  combined, unknown/tampered values dropped not trusted, duplicate values
+  deduped, merge preserves an unrelated param, merge clears a stale managed
+  value the caller no longer has). Build, typecheck, all 7 lint gates, full
+  unit suite. Two new e2e specs (`menu-filter-url-state.spec.ts`) against a
+  live server: diet chip + search survive opening a dish (push navigation)
+  and a real `page.goBack()` — not `Escape`, a different, already-covered
+  code path; and clearing back to defaults drops the query params entirely
+  rather than leaving `?q=`. Existing menu specs (`cuj-01-menu-cart.spec.ts`,
+  `core-funnel.spec.ts`) re-run clean — no regression from touching the
+  shared `PersonalizedMenu.tsx`/`MenuPage.ts` page object.
 - **Effort:** M. **Risk:** low; needs a small e2e (filter → dish → back → filters
   intact) added to the menu specs.
 
@@ -521,8 +573,8 @@ assumed, before being bundled in).
 | 2 | N1.1 manifest + icons — **shipped 2026-08-13** | The single biggest perceived jump; unblocks N4.5 |
 | 3 | N1.3 self-hosted Satoshi — **shipped 2026-08-13, out of turn** | First-paint stability; independent of everything |
 | 4 | N2.2 skeleton coverage (hot paths) — **shipped 2026-08-13** | Pairs naturally with 5 |
-| 5 | N2.1 view-transition cross-fade | The two together transform perceived navigation |
-| 6 | N2.3 menu state → URL | Contained to menu components + one e2e |
+| 5 | N2.1 view-transition cross-fade — **checked 2026-08-13, blocked**: the flagged path needs React canary; the stable path is a bigger, separately-scoped change | The two together transform perceived navigation |
+| 6 | N2.3 menu state → URL — **shipped 2026-08-13** | Contained to menu components + one e2e |
 | 7 | N3.1 menu grid containment | One CSS utility + class application |
 | 8 | N3.2 blur audit → cap | Needs measurement first |
 | 9 | N3.3/N3.4 image + bundle finish | Ongoing discipline items |
