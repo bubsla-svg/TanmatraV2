@@ -27,6 +27,9 @@ export const globalCopy = {
   },
   offline: {
     banner: "You are currently offline. Some features may be unavailable.",
+    title: "You're offline",
+    subtitle:
+      "This page needs a connection to load. Once you're back online, try again.",
   },
   menu: {
     fallbackBanner: "Menu refreshed a while ago — every price is confirmed at checkout.",

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 // FIRST, always. A bare @layer statement that fixes the cascade-layer order;
 // layer rank is set at first declaration, so this has to be declared before any
 // sheet that opens a layer. Without it Tailwind's Preflight (declared last, via
@@ -42,7 +43,24 @@ import {
 } from "@/lib/stitchRoutes";
 
 // TNM-UIF-01 §10.2: Satoshi (UI) + JetBrains Mono (macro/numeric data).
-// next/font self-hosts JetBrains Mono; Satoshi is loaded via CDN in globals.css.
+// Both self-hosted via next/font — Satoshi used to load render-blocking from
+// Fontshare's CDN (`@import url('https://api.fontshare.com/...')`, formerly
+// globals.css:1); measured at ~12.8s to fail closed when that CDN is slow or
+// unreachable, blocking the `load` event on every route. Same four static
+// weights the CDN request asked for (`f[]=satoshi@900,700,500,400`, normal
+// style only — no italic was ever requested). Licensed for self-hosted web
+// use under Fontshare's Free Font EULA — see app/fonts/satoshi/LICENSE.txt.
+const satoshi = localFont({
+  src: [
+    { path: "./fonts/satoshi/Satoshi-Regular.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/satoshi/Satoshi-Medium.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/satoshi/Satoshi-Bold.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/satoshi/Satoshi-Black.woff2", weight: "900", style: "normal" },
+  ],
+  variable: "--font-satoshi",
+  display: "swap",
+});
+
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500"],
@@ -76,6 +94,15 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: TITLE,
     description: DESCRIPTION,
+  },
+  // N1.1: "default" (opaque status bar, content below it), not
+  // "black-translucent" — the latter draws content edge-to-edge UNDER a
+  // transparent status bar, which this app's safe-area handling was never
+  // built to expect. Revisit only after a deliberate scroll-under pass.
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Tanmatra",
   },
 };
 
@@ -182,7 +209,7 @@ export default function RootLayout({
       // document is in scope and the tokens inherit everywhere.
       data-astryx-theme="tanmatra"
       suppressHydrationWarning
-      className={`${jetbrainsMono.variable}`}
+      className={`${satoshi.variable} ${jetbrainsMono.variable}`}
     >
       <body
         // Paints the canvas itself so there is no unpainted gap between the

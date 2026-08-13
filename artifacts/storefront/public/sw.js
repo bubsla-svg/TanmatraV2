@@ -21,7 +21,12 @@
 // below is ever replayed — so nothing personalised (/order, /track, /login, a
 // signed-in header) can end up on disk even indirectly.
 
-const VERSION = "v1";
+// v2: app/offline/page.tsx now exists. Bumping VERSION is what actually
+// matters here — sw.js's own bytes have to change for the browser to detect
+// an update and re-run install()/precacheShell() at all; an already-active
+// worker never spontaneously notices that a previously-404ing precache route
+// started returning 200. New cache names are a side effect, not the point.
+const VERSION = "v2";
 const SHELL_CACHE = `tnm-shell-${VERSION}`;
 const ASSET_CACHE = `tnm-assets-${VERSION}`;
 const EXPECTED_CACHES = [SHELL_CACHE, ASSET_CACHE];

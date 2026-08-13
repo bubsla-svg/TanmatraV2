@@ -44,6 +44,14 @@ export class MenuPage {
     return this.page.locator('a[href^="/menu?dish="]');
   }
 
+  /** Same links, but respecting the `hidden` attribute a diet/sheet filter
+   *  puts on a row it narrows out — `dishCardLinks` is deliberately raw CSS
+   *  (see the class doc) so a filter test needs the visible-only variant
+   *  instead of asserting against a card no user can see or click. */
+  get visibleDishCardLinks(): Locator {
+    return this.page.locator('a[href^="/menu?dish="]:visible');
+  }
+
   /** Every "Add" CTA. Card-count parity with `dishCardLinks` is the
    *  à-la-carte-only invariant: a card with no Add is a browse-only dead end. */
   get addButtons(): Locator {
@@ -81,5 +89,29 @@ export class MenuPage {
 
   async openCart(): Promise<void> {
     await this.page.getByRole("button", { name: "View cart" }).click();
+  }
+
+  /** The dish-name search box (N2.3 URL-as-state). */
+  get searchInput(): Locator {
+    return this.page.getByRole("searchbox", { name: "Search dishes" });
+  }
+
+  /** A diet chip button ("All" / "Veg" / "Non-veg"). Anchored regex, not a
+   *  plain string: an ACTIVE chip's accessible name gains a "✓ " prefix, and
+   *  default substring matching would otherwise make "Veg" match "Non-veg"
+   *  too (it's a real substring of it). */
+  dietChip(label: "All" | "Veg" | "Non-veg"): Locator {
+    const pattern = new RegExp(`^(?:✓\\s*)?${label}$`);
+    return this.page
+      .getByRole("group", { name: "Filter dishes by diet" })
+      .getByRole("button", { name: pattern });
+  }
+
+  get filterTrigger(): Locator {
+    return this.page.getByTestId("menu-filter-trigger");
+  }
+
+  get activeFiltersText(): Locator {
+    return this.page.getByTestId("menu-active-filters");
   }
 }

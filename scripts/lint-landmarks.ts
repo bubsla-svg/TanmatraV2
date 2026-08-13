@@ -32,6 +32,23 @@ import { fileURLToPath } from "node:url";
 //                                            root layout's unconditional
 //                                            skip link (href="#main") is a
 //                                            dead anchor.
+//        • app/offline/page.tsx            — the sw.js OFFLINE_URL fallback.
+//                                            Same reasoning as the three
+//                                            above (it sits outside every
+//                                            route group, so nothing above it
+//                                            renders <main>), but it can't
+//                                            satisfy the flat app/<file>.tsx
+//                                            shape those get matched by:
+//                                            Next.js requires a NAMED route's
+//                                            file to be <segment>/page.tsx,
+//                                            never app/<segment>.tsx. Listed
+//                                            explicitly (ROOT_OWN_PAGES)
+//                                            rather than widening the rule to
+//                                            "any ungrouped page.tsx", so a
+//                                            careless page landing outside
+//                                            every group by accident still
+//                                            has to earn its way onto this
+//                                            list instead of silently passing.
 //      Everything else — pages, components, and the GROUP-level error.tsx
 //      boundaries (which mount inside their own layout's <main id="main">) —
 //      inherits a landmark from above and must not open a second.
@@ -50,6 +67,12 @@ const SKIP_DIRS = new Set(["node_modules", ".next", "dist", ".turbo", "quarantin
  *  only at the immediate root of app/ — a group-level error.tsx does mount
  *  inside its layout and is therefore NOT exempt. */
 const ROOT_OWN_LANDMARK = new Set(["error.tsx", "not-found.tsx", "global-error.tsx"]);
+
+/** Named routes (page.tsx, necessarily >2 segments — Next.js has no flat
+ *  app/<name>.tsx form for these) that ALSO sit outside every route group,
+ *  by exact relative path. Kept as an explicit allow-list, not a rule, so a
+ *  page landing outside every group by accident still fails this gate. */
+const ROOT_OWN_PAGES = new Set(["app/offline/page.tsx"]);
 
 /** `<main` followed by a tag boundary — space, newline, `>` or `/`. Keeps
  *  `<mainNavigation>` and the like from matching. */
@@ -76,7 +99,8 @@ function mayOwnLandmark(relFromTarget: string): boolean {
   const basename = segments[segments.length - 1]!;
   if (basename === "layout.tsx") return true;
   // Root-level special file: app/<name>.tsx, i.e. exactly two segments.
-  return segments.length === 2 && ROOT_OWN_LANDMARK.has(basename);
+  if (segments.length === 2 && ROOT_OWN_LANDMARK.has(basename)) return true;
+  return ROOT_OWN_PAGES.has(segments.join("/"));
 }
 
 function scanFile(abs: string, violations: Violation[]): void {
