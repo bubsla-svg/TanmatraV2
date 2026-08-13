@@ -33,6 +33,8 @@ on:
       - "docs/stitch/stitch-screen-manifest.json"
       - "tools/verify-stitch-manifest.mjs"
       - "tools/verify-stitch-wiring.mjs"
+      - "scripts/lint-stitch-markers.ts"
+      - "scripts/stitch-marker-baseline.txt"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
       - ".github/workflows/storefront.yml"
@@ -192,6 +194,16 @@ jobs:
       - name: Stitch wiring — manifest claims match the repository
         if: ${{ !cancelled() }}
         run: node tools/verify-stitch-wiring.mjs
+      # Closes the gap the two verifiers above leave open: neither reads the
+      # SOURCE of an implemented screen, so a template adoption that eats the
+      # marked wrapper element (the exact break the Astryx PDP rebuild shipped
+      # in dc80404, caught one commit later only by a manually-run e2e spec)
+      # stayed green here. This gate statically requires every verified
+      # screen's data-screen-id in the union of its manifest-claimed artifacts.
+      # Presence-in-source only — runtime reachability stays e2e's job.
+      - name: Stitch markers — implemented screens carry their data-screen-id
+        if: ${{ !cancelled() }}
+        run: pnpm --filter @workspace/storefront run lint:stitch-markers
 
       # ---------------------------------------------------------------------
       # PERFORMANCE BASELINE — DELIBERATELY NON-BLOCKING. DO NOT FLIP YET.

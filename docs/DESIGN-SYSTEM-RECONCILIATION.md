@@ -1,0 +1,139 @@
+# Design-system reconciliation — Astryx × Stitch-74
+
+**Status: adopted (owner directive, 2026-08-13).** This is the decision record
+for how the storefront's two design programmes coexist, what owns what, and the
+order in which the duplicate stacks collapse. It exists because the two
+programmes were documented in complete mutual isolation — the Astryx adoption
+runbook never mentions Stitch markers, the Stitch manifest never mentions
+Astryx — and that isolation shipped a real break: the Astryx PDP rebuild
+(dc80404) silently dropped screen 5.5's `data-screen-id`, CI stayed green, and
+only a manually-run e2e spec caught it a commit later.
+
+## The four-layer ownership model
+
+Each layer has exactly one owner. A conflict between layers is resolved by this
+table, not by whichever file was edited last.
+
+| Layer | Owner | Concretely |
+|---|---|---|
+| **1 · Tokens** | **Astryx** | `astryx theme build` → `lib/themes/tanmatra.ts` (extends stoneTheme) is the palette; `lib/tokens/src/tokens.css` bridges into Tailwind v4. The three brand hues are the dark-mode values; light-mode counterparts exist where dark fails contrast (`#7F6921` gold). Gold remains the ONLY action colour — the one surviving design caveat from the DS-0 revocations. |
+| **2 · Primitives** | **Astryx canonical, legacy frozen** | `@astryxdesign/core` components are the canonical implementation of every concept they ship (census below). Legacy locals (`components/ui/*`, `components/primitives/*`, raw elements) are FROZEN: no new call sites, no new features. They are retired concept-by-concept per the migration order — never big-bang (73 importers of `ui/button.tsx` is a repo-wide diff with zero visible payoff; users see pixels, not imports). |
+| **3 · Composition** | **Stitch decides WHAT, Astryx decides HOW** | The Stitch-74 screen programme (docs/stitch/stitch-screen-manifest.json) defines which screens and states exist, their triggers, transitions and close behaviours. Astryx templates/blocks are the sanctioned way to BUILD those screens — adopting them verbatim is the goal (CLAUDE.md DS-0), except the primary-CTA colour, which is repointed to gold. |
+| **4 · Identity** | **Stitch, enforced** | `data-ui-generation="stitch-74"` + `data-screen-id` + `data-screen-state` on each screen's root survive EVERY rebuild, template adoption included. Enforced statically by `scripts/lint-stitch-markers.ts` (CI: storefront.yml) — see below. |
+
+**The rule that prevents the next dc80404:** an Astryx template adoption
+replaces a screen's *markup*, never its *identity*. Port the three `data-*`
+attributes onto the new root before anything else, the way dc80404 should have.
+The gate makes forgetting this a build failure instead of a silent break.
+
+## Layer-4 enforcement: `lint:stitch-markers`
+
+Until 2026-08-13 the markers had **zero** enforcement: the e2e suite that keys
+on them (`e2e/specs/stitch-runtime/*`) runs in no workflow, and the two manifest
+verifiers (`tools/verify-stitch-manifest.mjs`, `verify-stitch-wiring.mjs`) never
+read source files. The new gate closes exactly that gap:
+
+- **Selects** manifest entries with `proof.renderChain === "verified"` **or**
+  `proof.sourceDefinition === "verified"` (55 today). The OR is load-bearing:
+  the wiring verifier's defect backstop keys on `sourceDefinition` only, so a
+  `renderChain`-keyed gate could be silenced by a one-word manifest edit with
+  no defect filed (verified empirically during design).
+- **Requires** `data-screen-id="<promptId>"` (or the computed-attribute form)
+  in the **concatenated** source of the entry's `routeEntryPoint` +
+  `implementationComponent` + `controllerComponent`. Concatenated, not
+  per-file: 18 of 55 screens keep the marker in a component, not the page, and
+  12.6/12.7 split id and attribute across two files.
+- **Does not gate** `data-screen-state` (state strings already drift: 14.2
+  emits `no-match`, manifest says `no-matching-meals` — reconciling that is
+  manifest work) and runs one-directional, manifest → source (the orphan id
+  `MOB-10-Home-Dark` in `Section01ClinicalHero.tsx` predates the manifest's
+  naming scheme; retiring it is tracked work).
+- **Baseline** `scripts/stitch-marker-baseline.txt` seeded with the single
+  honest gap (10.9, `DEF-10.9-FEEDBACK-001`); shrink-only, stale entries fail.
+- **Scope**: presence-in-source only. A marker on a never-rendered branch still
+  passes — runtime reachability remains the (currently unscheduled)
+  `test:stitch-runtime` suite's job.
+
+## Duplicate-stack census and migration order
+
+Full census (module-graph walk, 527 files, 2026-08-13): the storefront imports
+17 Astryx modules across 25 files. Adoption is **bimodal** — forms ~80%
+migrated, the PDP fully migrated, everything else 0%. Verdicts per concept:
+
+**DUPLICATE (both stacks live) — retire the local, in this order (by reach):**
+
+| # | Concept | Local reach to retire | Astryx side live today |
+|---|---|---|---|
+| 1 | card | inline `border border-line`+`bg-surface`: 369 sites / 175 files | `Card` ×3 (checkout) |
+| 2 | badge/chip | inline chip pattern: 93 sites / 59 files | `Badge` ×3 (PDP) |
+| 3 | input/textfield | raw `<input>` 56/34 + `<textarea>` 6/6 | `TextInput` ×13, `Field` ×12, `TextArea` ×4, `NumberInput` ×7 |
+| 4 | select | raw `<select>`: 9 sites / 6 files | `Selector` ×8 |
+| 5 | checkbox | raw `type="checkbox"`: 5 sites / 5 files | `CheckboxInput`/`CheckboxList` ×3 |
+| 6 | accordion | `FaqAccordion` (4) + `Section10FaqAccordion` (1) | `Collapsible`/`Group` ×3 (PDP) |
+| 7 | divider | `<hr>` ×1 + inline `border-t border-line` | `Divider` ×4 (PDP) |
+
+**LOCAL-ONLY (Astryx equivalent unused or absent) — frozen, migrate opportunistically:**
+button (`ui/button.tsx` 72 importers + 210 raw `<button>`), skeleton
+(17 importers), drawer/bottom-sheet (vaul `ui/drawer.tsx` — Astryx ships no
+bottom sheet; this one is **permanent-local**), modal/dialog (5 files raw
+Radix), toast, empty-state, tabs, spinner, avatar, icon-button,
+command-palette, bottom-nav (**Astryx-absent, permanent-local**).
+
+Migration discipline: one concept per PR, visually verified at 390px, markers
+intact (the gate now enforces that part). Prefer migrating a concept when a
+surface is being touched for CRO/product reasons anyway — a migration with no
+visible payoff queues behind one with.
+
+**Dead code (0 importers, confirmed by graph walk)** — deleted as part of this
+reconciliation where verification allows: `components/ui/badge.tsx`,
+`components/primitives/Accordion.tsx`, `components/account/AccountDrawer.tsx`,
+`components/menu/ProductDetailView.tsx` (pre-Astryx PDP), plus the
+pre-Astryx PDP satellite cluster (`menu/DishBuyBar|DishGallery|DishPairing|
+DishReviews|DishThumbnail|PdpAddToCart`) and other zero-importer files listed
+in the census. `/styleguide` is the load-bearing importer for most of
+`components/primitives/` — it documents a parallel stack the product never
+adopted, and follows the primitives out as they retire.
+
+## The seam ledger (visual audit, 390×844, production build, 2026-08-13)
+
+What "seamless" concretely requires, ranked by visibility. Consistent already:
+Satoshi everywhere; `#D4AF37`/dark-ink action colour without exception.
+
+1. **The app is two apps.** 5 routes paint `#0a0a0a`, 4 paint `#f3f3f5`, in one
+   session — `lib/stitchRoutes.ts`'s dark allowlist covers 15 routes and
+   excludes `/care`, `/account`, `/legal`, `/faq`. Menu → Care flips black→white.
+   **Decision: finish the migration — dark is the brand canvas; extend the
+   allowlist to all customer routes** (the tokens are `light-dark()`-resolved,
+   so this is allowlist work + per-route visual verification, not a redesign).
+2. **The bottom nav is welded dark** (`MobileBottomNav.tsx` hardcodes
+   `data-stitch="dark"`) — on light routes it reads as a component that failed
+   to theme. Resolves automatically with (1); until then it stays, as the
+   lesser evil vs a nav that flickers theme per tab.
+3. **Card radius is route-dependent**: 28px on /menu, 34px on /dish and /plans,
+   22px on /care and /account; `/` alone uses five values. **Decision: a card
+   is `rounded-2xl` (28px)** — /menu's 232-card coherence wins; 34/22 retire
+   with each surface's next touch. The `2px` veg-dot bracket value gets a
+   token; `rounded-full` vs Astryx `999px` unify on the Tailwind spelling.
+4. **8 gold-CTA geometries across 4 routes; 5 routes have no primary action at
+   all.** "Start the taste test" is an outline pill on /plans and a 56px solid
+   pill on /trial. **Decision: primary CTA = Astryx Button (gold-repointed),
+   pill, one height scale (44 standard / 56 pay-bar)** — adopted per surface
+   with the button-concept migration.
+5. **Same four goals, two components** (/plans list vs /care carousel, the
+   carousel clipping mid-word at 390px). **Decision: one shared goal-card
+   component; the /care rail becomes a stack at mobile width** (N5.12 already
+   tracks the rail-clipping half).
+6. Lower severity, tracked: translucent-bar ghosting on /plans, /legal, /faq,
+   /trial (N5.1's pattern, remaining instances); eyebrow tracking 0.3px vs
+   2.4px; `/plans` has no visible h1; h1 scale is 4 sizes × 2 weights.
+
+## What this supersedes
+
+- The mutual silence between `docs/ASTRYX-ADOPTION-RUNBOOK.md` and
+  `docs/stitch/*` — both now point here for the interaction contract.
+- Any reading of DS-0's "adopt templates verbatim" that includes replacing a
+  screen root without re-attaching its Stitch markers.
+
+What it does **not** touch: the money-path rules (server owns every amount),
+auth-islands, PHI encryption, `lint:test-reach`, and the gold-only action
+colour — all explicitly out of scope for both programmes, per CLAUDE.md.

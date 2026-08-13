@@ -6,6 +6,14 @@ state, the invariants, the traps already sprung once, and the remaining work.
 Read §2 and §3 before writing any code — every item in them was learned by
 breaking something.
 
+> **Interaction with Stitch-74:** this runbook and the Stitch screen programme
+> used to be documented in mutual isolation, and that isolation shipped a real
+> break (the PDP rebuild dropped screen 5.5's `data-screen-id`). The contract
+> between the two — template adoptions replace markup, never identity; markers
+> are statically enforced by `scripts/lint-stitch-markers.ts` — lives in
+> **docs/DESIGN-SYSTEM-RECONCILIATION.md**. Read it before adopting any
+> template onto a screen that carries `data-ui-generation="stitch-74"`.
+
 ---
 
 ## 1. Where things stand

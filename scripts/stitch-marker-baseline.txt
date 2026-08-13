@@ -1,0 +1,10 @@
+# Stitch marker debt register — implemented screens whose data-screen-id
+# marker is absent from their claimed source artifacts.
+#
+# Not an approval list. Each entry should have a matching defect ID in
+# docs/stitch/stitch-screen-manifest.json. See scripts/lint-stitch-markers.ts.
+#
+# The list may only SHRINK: restore the marker, then delete the line. A line
+# whose marker reappears fails the gate as a stale entry, so the register
+# cannot drift out of date in either direction. One promptId per line.
+10.9
