@@ -173,6 +173,14 @@ jobs:
       - name: Unregistered-color-utility gate — no silently-inert bg-/text-/border-/ring- class
         if: ${{ !cancelled() }}
         run: pnpm --filter @workspace/storefront run lint:unregistered-color-utility
+      # Same failure class as the gate above — a class that resolves to nothing
+      # — one layer out: a ligature icon-font class whose font is never loaded
+      # renders the LIGATURE NAME as body text. `auto_awesome` shipped visible
+      # on the home page that way, plus five in the meal-feedback dialog.
+      # Conditional, not a ban: use the font and load it and this passes.
+      - name: Icon-font gate — no ligature icon class without its font loaded
+        if: ${{ !cancelled() }}
+        run: pnpm --filter @workspace/storefront run lint:icon-font
       # Stitch traceability gates. The manifest verifier proves the 74-entry
       # manifest is schema-valid; the wiring verifier proves its filesystem
       # claims match the repo. Honest missing/partial/blocked entries PASS —

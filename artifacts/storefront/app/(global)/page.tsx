@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { Sparkles } from "lucide-react";
 import { Section01ClinicalHero } from "@/components/landing/Section01ClinicalHero";
 import { deriveHeroContent } from "@/lib/heroContent";
 import { Section02QualificationChips } from "@/components/landing/Section02QualificationChips";
@@ -134,7 +135,10 @@ export default async function HomePage() {
           <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 relative overflow-hidden">
             <div aria-hidden className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
             <div className="flex gap-3 items-center mb-4">
-              <span className="material-symbols-outlined text-primary">auto_awesome</span>
+              {/* Was a `material-symbols-outlined` ligature span for a font
+                  this app never loads, so it shipped the literal string
+                  "auto_awesome" to every visitor on the entry route. */}
+              <Sparkles aria-hidden className="h-5 w-5 text-primary" />
               <span className="font-bold text-xs text-primary uppercase tracking-widest">Smart Match</span>
             </div>
             <h3 className="text-lg font-bold text-ink mb-2">Optimize your Afternoon</h3>
