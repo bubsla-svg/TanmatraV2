@@ -239,12 +239,33 @@ before being filed — screenshots raised the question; the tree answered it.
 
 ### Mechanical — root-caused, PR-sized
 
-- **N5.1 Checkout buries the consent it asks for.** The pay bar is a 103px
-  `fixed` overlay (`components/checkout/AlacarteDetails.tsx:321`) and the
-  content column reserves **0px** of scroll-end clearance (measured live) — the
-  consent checkbox and its clause clip mid-sentence behind the bar. Fix:
-  scroll-end padding ≥ bar height + safe-area. *The new first PR of this plan —
-  it is a live money-path UX bug, ahead of the §8 ordering.*
+- ~~**N5.1 Checkout buries the consent it asks for.**~~ **Retracted
+  2026-08-13, same day, after rigorous re-test.** The original "0px scroll-end
+  clearance" claim was itself a measurement bug: `document.querySelector("main")`
+  found `(focus)/layout.tsx`'s `<main>` (safe-area padding only, by design —
+  see that file's own doc comment) and missed that the actual clearance lives
+  one level deeper, on `page.tsx`'s `<section className="...pb-44">` (176px).
+  Re-tested with a seeded cart, the form filled exactly as the owner's
+  screenshot showed, and a scroll-*settle* loop (a single-shot `scrollTo`
+  can read `scrollHeight` before late layout settles and undershoot the true
+  bottom — see `docs/audit/COHERENCE-SWEEP-2026-08-13.md`'s addendum for the
+  full mechanism, found via the sibling N6.1 finding retracting the same
+  way): the consent checkbox clears the bar by **60px**, the fine print by
+  **13px**, measured *before* scroll even reached true maximum. `pb-44`
+  (176px) does exceed the bar's real height (103px) with room to spare, as
+  designed. No occlusion on `main` today.
+
+  **Kept as a forward action despite the retraction:** the underlying pattern
+  — a hand-guessed padding constant that happens to exceed today's bar
+  height, with nothing enforcing that inequality — is still fragile. A
+  longer `blockedReason` line, a wrapped line at a larger accessibility font
+  size, or a future control added to the bar could each grow it past 176px
+  with no warning. The fix worth shipping is a self-measuring clearance
+  primitive (`ResizeObserver` on the bar, feeding the scrolling ancestor's
+  padding) that makes the inequality correct *by construction* instead of by
+  luck — framed as hardening against a real, plausible failure mode, not as
+  a fix for a confirmed-broken today. See the coherence-sweep addendum for
+  the parallel note on `/legal`.
 - **N5.2 The ₹50 → ₹112 ambush.** `CartDrawer.tsx` contains no delivery or
   threshold signal (grep-verified) while checkout renders "Add ₹450 more for
   free delivery" — a +124% fee reveal on the final screen, with the softening

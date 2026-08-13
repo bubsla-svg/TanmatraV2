@@ -111,3 +111,97 @@ graduate from this one-off sweep into permanent checks when the N5 fixes land:
 
 Run artefacts: sweep JSON in the session scratchpad; harness reproducible
 from this document's lens table (single Playwright spec, ~120 lines).
+
+---
+
+## Addendum — corrections from rigorous re-verification (2026-08-13, same day)
+
+Before acting on N6.1, both it and its sibling N5.1 (checkout, in the native-feel
+plan) were re-tested with a real cart/form state and pixel-precise measurement,
+per the standing practice of verifying a screenshot-sourced or sweep-sourced
+finding against the tree before shipping a fix for it. **Both retract.** This
+section documents why, because the *mechanism* of the false positive is more
+valuable than either individual finding — it says something about this sweep's
+detector, not just about these two pages.
+
+### N6.1 retracted — the detector under-scrolled
+
+`window.scrollTo(0, document.body.scrollHeight)`, called once, right after
+navigation, can read `scrollHeight` **before late layout settles** (a font
+swap, a hydrating client island growing the page) and land short of the
+page's true bottom. On `/legal` this was exactly the failure: the original
+sweep's single-shot scroll left `scrollY` short of `maxScrollY`. Re-run with
+a scroll-*settle* loop (repeat `scrollTo` until `scrollHeight` stops
+changing across two reads) and a corrected element selector (a `TreeWalker`
+over text nodes — the original `el.children.length < 3` filter incorrectly
+matched `<html>` itself, which has exactly two children), the true state at
+`scrollY === maxScrollY` is:
+
+- The "Refund & Cancellation Policy" heading sits at `top: -55, bottom: -31`
+  — **entirely above the viewport**, scrolled past, not stacked under
+  anything.
+- The only bottom-anchored bar candidate (`MobileBottomNav`) reports
+  `top: 812, translateHidden: true` at that scroll position — it has
+  auto-hidden itself (the documented scroll-down hide behavior,
+  `nav-contract.spec.ts`'s own contract), so it cannot be occluding text it
+  isn't rendering into view.
+
+No fix needed on `/legal`. The finding was the sweep's own scroll timing,
+not the page.
+
+### N5.1 retracted — same root cause, second surface
+
+The native-feel plan's checkout finding was re-tested with a seeded cart,
+the form filled exactly as the owner's screenshot showed (phone, address,
+city, PIN — consent deliberately left unchecked), and a corrected
+scroll-settle loop. Result: **positive clearance** — the consent checkbox
+clears the fixed pay bar by 60px, the fine print by 13px, measured before
+scroll even reached true maximum (so the true-max figures are larger
+still). `AlacarteDetails.tsx`'s `pb-44` (176px) does exceed the bar's real
+rendered height (103px) with room to spare, as designed. See
+`docs/NATIVE-FEEL-STOREFRONT-PLAN.md` §2/§6 for the corresponding
+retraction in that document — the engineering conclusion drawn from this
+(a self-measuring clearance primitive is still worth building as
+*hardening* against real fragility — long `blockedReason` text, large
+accessibility font sizes — independent of today's reproduction, precisely
+because a hand-guessed constant's correctness is coincidental, not
+guaranteed) lives there, not here.
+
+### N6.4 — mechanism confirmed, attribution corrected
+
+The hang itself is real and was root-caused precisely, via a full network
+trace: `api.fontshare.com` is unreachable in this sandbox and takes
+**~12.8 seconds** to fail (`net::ERR_CONNECTION_RESET`), not the near-instant
+refusal a dead local port gives. Since that stylesheet `@import` sits on
+line 1 of `app/globals.css` — loaded on **every** route, not just plan
+pages — it is what blocks the `load` event everywhere, including on routes
+that degrade gracefully in every other respect (`/menu` included). The
+original attribution ("`/plan/[planId]` has no API-down fallback") was
+wrong: no plan-specific code path was ever implicated by the trace. This
+is not a new defect — it is hard, specific, load-bearing evidence for
+**N1.3** (already filed in the native-feel plan: self-host Satoshi instead
+of the render-blocking Fontshare `@import`), upgraded from "font pop-in on
+a cold connection" to "empirically measured 12.8-second render-blocking
+hang when the font CDN is unreachable or slow" — exactly the degraded
+real-device condition N1.3 already worried about, just worse than
+originally scoped. N6.4 is retired as a standalone item; its evidence
+moves to N1.3.
+
+### What this changes about the gate proposals
+
+Gate #1 (the occlusion assertion) is **not safe to add as originally
+specified** — it would encode the same single-shot-scroll bug that produced
+this false positive and could block legitimate merges. If/when it's built,
+it must use the settle-loop, not a one-shot `scrollTo`. Gates #2 and #3 are
+unaffected — neither depends on scroll timing.
+
+### The honest summary
+
+Two lenses out of six produced a false positive from a shared, now-understood
+detector bug; one lens (occlusion) needs a methodology fix before it's
+trustworthy enough to gate on. The other four lenses' clean bills (§N6.5)
+are unaffected — they don't depend on scroll state at all. Net effect on
+the sweep's verdict: the redemption story gets *stronger*, not weaker —
+fewer real defects than originally reported, and the one still-standing
+finding (N6.4's evidence) was already tracked under N1.3 before this sweep
+ran.
