@@ -87,7 +87,11 @@ export function CommandMenu({ dishes = [] }: { dishes?: DishSearchEntry[] }) {
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.3-4.3" />
           </svg>
-          <span className="hidden sm:inline">Search</span>
+          {/* Visible only in the 640-767px band: below that BottomNav owns
+              search, and from md (768px) up PrimaryNav starts competing for
+              the same header row, so the icon + ⌘K badge alone carry this —
+              see desktop-header-nav-fit.spec.ts. */}
+          <span className="hidden sm:inline md:hidden">Search</span>
           <kbd className="hidden rounded border border-line px-1.5 text-3xs leading-4 text-ink-faint md:inline">⌘K</kbd>
         </button>
       </Dialog.Trigger>
