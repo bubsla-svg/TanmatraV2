@@ -20,13 +20,21 @@ interface Entry {
   group: string;
 }
 
+/** The minimal projection Header passes down — see its own comment for why
+ *  this is {id, name, slug} and not the full DishData. */
+export interface DishSearchEntry {
+  id: number;
+  name: string;
+  slug: string;
+}
+
 const ENTRIES: Entry[] = [
   ...NAV_GROUPS.flatMap((g) => g.links.map((l) => ({ label: l.label, href: l.href, group: g.label }))),
   ...COMPANY_LINKS.map((l) => ({ label: l.label, href: l.href, group: "Company" })),
   ...LEGAL_LINKS.map((l) => ({ label: l.label, href: l.href, group: "Legal" })),
 ].filter((e, i, a) => a.findIndex((x) => x.href === e.href) === i);
 
-export function CommandMenu() {
+export function CommandMenu({ dishes = [] }: { dishes?: DishSearchEntry[] }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const router = useRouter();
@@ -45,13 +53,21 @@ export function CommandMenu() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Idle (no query): page routes only, same as before — 116 dishes would
+  // swamp the default view. Once the customer types, dish name matches lead:
+  // the catalog page reads "116 dishes · order today", so the search icon in
+  // the header is what a food-app customer expects to find food with.
   const results = useMemo(() => {
     const term = q.trim().toLowerCase();
     if (!term) return ENTRIES;
-    return ENTRIES.filter(
+    const dishMatches: Entry[] = dishes
+      .filter((d) => d.name.toLowerCase().includes(term))
+      .map((d) => ({ label: d.name, href: `/dish/${d.slug}`, group: "Dishes" }));
+    const pageMatches = ENTRIES.filter(
       (e) => e.label.toLowerCase().includes(term) || e.group.toLowerCase().includes(term),
     );
-  }, [q]);
+    return [...dishMatches, ...pageMatches];
+  }, [q, dishes]);
 
   function go(href: string) {
     setOpen(false);
@@ -64,7 +80,7 @@ export function CommandMenu() {
       <Dialog.Trigger asChild>
         <button
           type="button"
-          aria-label="Search pages"
+          aria-label="Search pages and dishes"
           className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -83,17 +99,17 @@ export function CommandMenu() {
           aria-describedby={undefined}
           className="fixed left-1/2 top-20 z-[var(--z-modal)] w-[92vw] max-w-lg -translate-x-1/2 animate-dialog-in overflow-hidden rounded-xl border border-line bg-surface shadow-lg"
         >
-          <Dialog.Title className="sr-only">Search pages</Dialog.Title>
+          <Dialog.Title className="sr-only">Search pages and dishes</Dialog.Title>
           <input
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search pages…"
+            placeholder="Search pages and dishes…"
             className="w-full border-b border-line bg-transparent px-4 py-3 text-sm text-ink outline-none placeholder:text-ink-faint"
           />
           <ul className="max-h-[50vh] overflow-y-auto py-2">
             {results.length === 0 && (
-              <li className="px-4 py-3 text-sm text-ink-muted">No pages found.</li>
+              <li className="px-4 py-3 text-sm text-ink-muted">No results found.</li>
             )}
             {results.map((e) => (
               <li key={e.href}>

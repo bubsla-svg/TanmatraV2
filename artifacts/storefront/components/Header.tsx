@@ -4,6 +4,7 @@ import { PRIMARY_NAV } from "@/lib/nav";
 import { CommandMenu } from "@/components/CommandMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DeliveryAddressBar } from "@/components/onboarding/DeliveryAddressBar";
+import { fetchMenu } from "@/lib/catalog";
 
 /**
  * Global chrome shell. Server component itself; it hosts one small client island
@@ -19,7 +20,16 @@ import { DeliveryAddressBar } from "@/components/onboarding/DeliveryAddressBar";
  * a page's own search) are now impossible by construction — those pages live
  * in a group whose layout renders no header.
  */
-export function Header() {
+export async function Header() {
+  // Minimal {id, name, slug} projection for CommandMenu's dish search — not
+  // the full DishData (price, macros, images, ingredients, …), since ⌘K only
+  // ever needs to match a name and hand off to /dish/[slug]. Reuses
+  // fetchMenu()'s existing hourly revalidate cache (the same call the
+  // homepage and /menu already make), so this costs no extra network
+  // round-trip in steady state — same "catalog is already loaded" data flow.
+  const { dishes } = await fetchMenu();
+  const dishIndex = dishes.map((d) => ({ id: d.id, name: d.name, slug: d.slug }));
+
   return (
     <header className="sticky top-0 z-10 border-b border-line bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] backdrop-blur">
       <div className="mx-auto max-w-5xl">
@@ -58,7 +68,7 @@ export function Header() {
               </div>
 
               <div className="flex items-center gap-1">
-                <CommandMenu />
+                <CommandMenu dishes={dishIndex} />
                 {/* D-09: ThemeToggle was imported here and never rendered —
                     ServiceabilityBar's own width-budget comment already
                     accounted for it ("heading + this + ⌘K + ThemeToggle"
