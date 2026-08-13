@@ -25,8 +25,17 @@ test("core funnel: address -> marketplace -> cart -> checkout login prompt", asy
   // label the breakpoint calls for, which is `locationTrigger`'s whole job.
   await expect(locationTrigger(page).first()).toBeVisible();
 
-  // 2. Marketplace is visible on the homepage
-  await expect(page.getByRole("heading", { name: /Meal Plans Designed for Real Results|Dietitian-Approved Pantry|The RD-Curated Pantry|Everyday Wellness/i }).first()).toBeVisible();
+  // 2. The homepage rendered its commerce sections.
+  //
+  // This asserted a four-way alternation of headings — plans OR pantry OR two
+  // older pantry names — under a comment claiming to check the marketplace. It
+  // matched the PLANS heading, which is why it kept passing: this environment
+  // runs `next start` with no API, so the pantry section has no items and
+  // (correctly) renders nothing rather than heading an empty grid. Asserting
+  // the plans heading directly says what the step actually verifies, and does
+  // not depend on data this environment does not have. The marketplace itself
+  // is covered by the /marketplace navigation immediately below.
+  await expect(page.getByRole("heading", { name: "Pick a plan, we cook the rest." })).toBeVisible();
 
   // Navigate to Marketplace
   await page.goto("/marketplace");
