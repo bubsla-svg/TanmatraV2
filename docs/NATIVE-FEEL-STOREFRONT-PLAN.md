@@ -72,7 +72,7 @@ the page, a font that pops in, an offline story that 404s.
   back-navigation on iOS before shipping (overlay back-gesture already handled by
   `useOverlayHistory`; page-level back in standalone relies on edge-swipe).
 
-### N1.2 `sw.js` falls back to an `/offline` route that does not exist  **[bug, not polish]**
+### N1.2 `sw.js` falls back to an `/offline` route that does not exist  **[bug, not polish]** — **Shipped 2026-08-13**
 
 - **Tell:** go offline, tap a link → instead of the designed offline page, the user
   gets whatever the precache stored for a 404 — or the browser error page.
@@ -80,12 +80,49 @@ the page, a font that pops in, an offline story that 404s.
   leads `PRECACHE_ROUTES`; `git grep -l offline -- app/` matches only `layout.tsx`
   (a comment). **No route renders `/offline`.** The worker's `allSettled` precache
   (deliberately not atomic, `sw.js:79-81`) means installation survives — which is
-  exactly why this has been silently broken rather than loudly.
-- **Fix:** add a fully static, chrome-less `/offline` page (the `(focus)` route
-  group renders no header/nav — right fit), tokens-only, zero data fetches, with a
-  retry affordance. **Bump `VERSION` in `sw.js`** so existing installed workers
-  re-precache — without the bump, browsers that already ran the old install keep
-  the bad cache entry indefinitely.
+  exactly why this has been silently broken rather than loudly. Precisely, since
+  `cache.add()` only stores a 200: the old 404 for `/offline` was fetched, rejected
+  by `cache.add()`, and silently dropped by `allSettled` — `SHELL_CACHE` never held
+  a `/offline` entry at all, so `handleNavigation()`'s catch block fell all the way
+  through to a bare `Response.error()` for any uncached route while offline.
+- **Fix (shipped):** `app/offline/page.tsx` — static, chrome-less, zero data
+  fetches, one retry affordance (`location.reload()`, which re-issues the
+  *original* failed navigation, not a fixed href — `respondWith()` swaps the
+  response body, never the address bar). **Deviates from this section's original
+  suggestion of nesting it under `(focus)`**: structurally that group is
+  chrome-less too and would have inherited its `<main>` for free, but its own
+  layout doc-comment enumerates a specific, real list of what belongs there —
+  "auth, checkout, trial, quick-setup, custom-build, PDPs, order confirmation,
+  group/office-lunch carts, corporate invite activation" — and `/offline` is a
+  passive fallback, not a high-intent commerce flow. Filing it there risked a
+  future edit to that layout (auth-gating, checkout-specific analytics) leaking
+  onto a route it was never meant to reach. Placed as a standalone top-level page
+  instead, alongside `not-found.tsx`/`error.tsx`/`global-error.tsx` — the other
+  routes that, by the same structural necessity (nothing above them renders a
+  `<main>`), bring their own; `scripts/lint-landmarks.ts` gained one explicit,
+  narrowly-scoped exemption for this exact file rather than a broadened rule, so
+  a future ungrouped page still has to earn its way onto that list. **Bumped
+  `VERSION` in `sw.js`** (`v1` → `v2`) — necessary because sw.js's own bytes have
+  to change for a browser to detect an update and re-run `install()` at all; an
+  already-active worker never spontaneously notices that a previously-404ing
+  precache route started returning 200.
+- **Verified:** built and typechecked clean; all 7 lint gates including the
+  updated landmark gate; full unit suite. Then a ground-truth, self-contained
+  Playwright check — spawn `next start` as an owned process, load the page,
+  confirm the service worker actually reaches `active` and `tnm-shell-v2`
+  genuinely holds a 200 `/offline` entry with real content; SIGKILL the entire
+  process *group* (a naive single-PID kill left `next-server` running orphaned,
+  since `pnpm run start` forks it as a grandchild — confirmed by an earlier,
+  misleading pass) so the origin is truly unreachable at the TCP level for both
+  the page and the service worker's own internal `fetch()`; navigate to a
+  never-before-seen path while genuinely offline; confirm it renders this
+  fallback's real content rather than throwing or blanking, that `/offline`
+  itself still renders offline (genuinely cache-served, not just a fallback
+  target), and that "Try again" recovers to the real page once the origin
+  returns. `context.setOffline()` was deliberately not used for this — it is
+  CDP-level per-page emulation and it was not established whether that reaches
+  a service worker's own fetches (a separate CDP target); killing the real
+  process removes that doubt entirely.
 - **Effort:** S. **Risk:** minimal; the page is static by construction.
 
 ### N1.3 Satoshi loads as a render-blocking third-party CSS import  **[font pop-in]** — **Shipped 2026-08-13**
@@ -409,14 +446,15 @@ Named so nobody "fixes" them later:
 ## 8. Sequencing and verification
 
 Suggested order — each row is one PR-sized concern per the working agreement.
-Actual shipping order diverged at #3: N1.3 went first, out of turn, because the
-coherence sweep's network trace gave it the freshest and strongest evidence
-(a measured 12.8s render-blocking hang) of anything in this tier — see its
-entry in §2 for the shipped fix. N1.2 and N1.1 remain open, in original order.
+Actual shipping order diverged at #3: N1.3 shipped first, out of turn, because
+the coherence sweep's network trace gave it the freshest and strongest evidence
+(a measured 12.8s render-blocking hang) of anything in this tier. N1.2 shipped
+right after, back in its originally-planned #1 slot — see each item's entry in
+§2 for the shipped fix. N1.1 remains open.
 
 | Order | Item | Why this order |
 |---|---|---|
-| 1 | N1.2 offline route + SW version bump | It's a bug; smallest diff; completes an already-shipped feature |
+| 1 | N1.2 offline route + SW version bump — **shipped 2026-08-13** | It's a bug; smallest diff; completes an already-shipped feature |
 | 2 | N1.1 manifest + icons | The single biggest perceived jump; unblocks N4.5 |
 | 3 | N1.3 self-hosted Satoshi — **shipped 2026-08-13, out of turn** | First-paint stability; independent of everything |
 | 4 | N2.2 skeleton coverage (hot paths) | Pairs naturally with 5 |
