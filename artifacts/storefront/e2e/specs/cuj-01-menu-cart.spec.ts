@@ -109,8 +109,15 @@ test("every menu card is orderable — Add CTA on all cards, zero dead ends", as
   await page.goto("/menu");
   // À-la-carte-only grid: a card without an Add CTA is a browse-only dead
   // end, which the menu no longer ships. Count parity is the invariant.
-  const adds = await menu.addButtons.count();
   const total = await menu.dishCardLinks.count();
   expect(total).toBeGreaterThan(35);
-  expect(adds).toBe(total);
+  // Polled, not a bare read. The two locators do not share a basis:
+  // dishCardLinks is raw CSS (every card in the DOM) while addButtons is a
+  // role query (the accessibility tree). Rows below the fold sit under
+  // `content-visibility: auto` containment, so immediately after load the
+  // second count can still be catching up with the first — this assertion
+  // flaked exactly once under full-suite parallel load, never in isolation.
+  // The invariant is unchanged and still strict: parity must hold, and a card
+  // that genuinely ships without an Add still fails after the timeout.
+  await expect.poll(() => menu.addButtons.count()).toBe(total);
 });
