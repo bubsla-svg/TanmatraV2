@@ -1,5 +1,9 @@
 "use client"; // Justification: controlled form state and network lead submission.
 import { useState } from "react";
+import { Selector } from "@astryxdesign/core/Selector";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { TextArea } from "@astryxdesign/core/TextArea";
+import { Field } from "@astryxdesign/core/Field";
 import { ApiError } from "@/lib/apiClient";
 import { emitLpEvent } from "@/lib/lpEvents";
 import {
@@ -10,8 +14,23 @@ import {
   PARTNER_LEAD_KIND_LABELS,
   type PartnerLeadKind,
 } from "@/lib/partnerLeadsApi";
-import { Field, TextField, TextAreaField, SelectField } from "@/components/rd-partners/WizardControls";
 import { Button } from "@/components/ui/button";
+
+/* Stage-4 Astryx adoption: field chrome only. The WizardControls
+ * Field/TextField/TextAreaField/SelectField stack became TextInput/TextArea/
+ * Selector (each renders its own label + shell — never wrap them in Field).
+ * Per-field errors now flow through status={{type:'error', message}} — that
+ * keeps aria-invalid + the visible message; the per-field role="alert" of the
+ * old Field is accepted as lost (no spec targets it). The PHONE field stays a
+ * native <input> inside Astryx Field: TextInput's type is text|password|email
+ * only and its BaseProps deliberately omit inputMode/autoComplete, so a swap
+ * would cost the tel keyboard + autofill — its error line stays hand-rolled
+ * (role="alert", as before). htmlName carries autofill semantics for the
+ * Astryx fields. The partnerLeadProblems/showErrors gate (submit reveals
+ * errors, button NOT disabled), submit(), 429 copy, lpEvents ordering, done
+ * branch, form-level role="alert" and the wa.me link are untouched. */
+const phoneInputCls =
+  "w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none transition-colors focus-visible:border-[var(--gold)] focus-visible:ring-1 focus-visible:ring-[var(--gold)]";
 
 /**
  * Partner lead form (Stitch brief 17) — posts to `/partners/leads`, NOT the
@@ -104,67 +123,87 @@ export function PartnerLeadForm({
   }
 
   const err = (field: keyof typeof problems) => (showErrors ? problems[field] : undefined);
+  const errStatus = (msg: string | undefined) =>
+    msg ? ({ type: "error", message: msg } as const) : undefined;
+  const emailErr = err("email") ?? err("workEmail");
+  const phoneErr = err("phone");
 
   return (
     <div className="flex flex-col gap-4 rounded-3xl border border-line bg-surface p-6">
       {!lockKind && (
-        <Field label="You're a" htmlFor="pl-kind">
-          <SelectField
-            id="pl-kind"
-            value={kind}
-            onChange={(v) => setKind(v as PartnerLeadKind)}
-            placeholder="Select…"
-            options={PARTNER_LEAD_KINDS.map((k) => ({ value: k, label: PARTNER_LEAD_KIND_LABELS[k] }))}
-          />
-        </Field>
-      )}
-      <Field label="Your name" error={err("name")} htmlFor="pl-name">
-        <TextField id="pl-name" autoComplete="name" value={name} onChange={setName} placeholder="Your name" invalid={!!err("name")} />
-      </Field>
-      <Field label="Work email" error={err("email") ?? err("workEmail")} htmlFor="pl-email">
-        <TextField
-          id="pl-email"
-          type="email"
-          value={workEmail}
-          onChange={setWorkEmail}
-          placeholder="you@yourgym.com"
-          invalid={!!(err("email") || err("workEmail"))}
+        <Selector
+          label="You're a"
+          value={kind}
+          onChange={(v) => setKind(v as PartnerLeadKind)}
+          placeholder="Select…"
+          options={PARTNER_LEAD_KINDS.map((k) => ({ value: k, label: PARTNER_LEAD_KIND_LABELS[k] }))}
         />
-      </Field>
-      <Field label="Gym / studio name (optional)" error={err("company")} htmlFor="pl-company">
-        <TextField id="pl-company" value={company} onChange={setCompany} placeholder="Iron Yard, Sector 62" invalid={!!err("company")} />
-      </Field>
+      )}
+      <TextInput
+        label="Your name"
+        value={name}
+        onChange={setName}
+        placeholder="Your name"
+        htmlName="name"
+        status={errStatus(err("name"))}
+      />
+      <TextInput
+        label="Work email"
+        type="email"
+        value={workEmail}
+        onChange={setWorkEmail}
+        placeholder="you@yourgym.com"
+        htmlName="email"
+        status={errStatus(emailErr)}
+      />
+      <TextInput
+        label="Gym / studio name"
+        value={company}
+        onChange={setCompany}
+        placeholder="Iron Yard, Sector 62"
+        isOptional
+        status={errStatus(err("company"))}
+      />
 
       {/* Revealed only for the kinds the server format-checks. */}
       {regNoNeeded && (
-        <Field
+        <TextInput
           label="Registration number"
-          error={err("rdRegNo")}
-          htmlFor="pl-regno"
-          hint="Required for dietitians"
-        >
-          <TextField
-            id="pl-regno"
-            value={rdRegNo}
-            onChange={setRdRegNo}
-            placeholder="RD-1234 or IDA/5678"
-            invalid={!!err("rdRegNo")}
-          />
-        </Field>
+          value={rdRegNo}
+          onChange={setRdRegNo}
+          placeholder="RD-1234 or IDA/5678"
+          description="Required for dietitians"
+          status={errStatus(err("rdRegNo"))}
+        />
       )}
 
-      <Field label="Phone (optional)" error={err("phone")} htmlFor="pl-phone">
-        <TextField id="pl-phone" type="tel" value={phone} onChange={setPhone} placeholder="Phone" invalid={!!err("phone")} />
-      </Field>
-      <Field label="Anything we should know? (optional)" htmlFor="pl-msg">
-        <TextAreaField
-          id="pl-msg"
-          value={message}
-          onChange={setMessage}
-          placeholder="Member count, location, what you're hoping for…"
-          rows={3}
+      <Field label="Phone" inputID="pl-phone" isOptional>
+        <input
+          id="pl-phone"
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="Phone"
+          aria-invalid={phoneErr ? true : undefined}
+          className={phoneInputCls}
         />
       </Field>
+      {phoneErr && (
+        <p role="alert" className="text-2xs font-medium text-[var(--danger)]">
+          {phoneErr}
+        </p>
+      )}
+
+      <TextArea
+        label="Anything we should know?"
+        value={message}
+        onChange={setMessage}
+        placeholder="Member count, location, what you're hoping for…"
+        rows={3}
+        isOptional
+      />
 
       {error && (
         <p role="alert" className="text-xs font-medium text-[var(--danger)]">
