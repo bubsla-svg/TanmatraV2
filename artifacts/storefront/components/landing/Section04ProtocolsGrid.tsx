@@ -5,15 +5,47 @@ import Link from "next/link";
 import { SafeImage } from "@/components/ui/SafeImage";
 import { formatPaise } from "@/lib/format";
 import { emitLpEvent } from "@/lib/lpEvents";
+import type { PlanPhoto, PlanPhotoMap } from "@/lib/planPhotos";
 import { TRIAL_PRICE_PAISE } from "@/lib/trial";
 import { computePlanQuote } from "@workspace/subscription-rules";
 import { FlipCard } from "./FlipCard";
 
 /**
+ * A plan card's photo, or nothing at all.
+ *
+ * `photo === null` renders NO element — deliberately, not as an oversight.
+ * These three frames held random-image-API placeholders captioned as our own
+ * meals; the replacement (lib/planPhotos.ts) resolves a dish the plan actually
+ * rotates, and when it cannot, the honest output is an absent photo rather
+ * than a stand-in. Sized by the frame per SafeImage's contract, so the box is
+ * reserved before the image decodes and the card never reflows.
+ */
+function PlanPhotoFrame({ photo }: { photo: PlanPhoto | null | undefined }) {
+  if (!photo) return null;
+  return (
+    <SafeImage
+      src={photo.src}
+      alt={photo.alt}
+      className="mt-4 mb-2 aspect-[4/3] w-full rounded-xl border border-line"
+      // The photo is the appetite: it renders in full colour. It used to
+      // carry `mix-blend-luminosity opacity-90`, greying the food until
+      // hover, on the one surface whose job is to make lunch look good.
+      // (Those classes also sat on the FRAME, not the <img> — SafeImage owns
+      // the img via imgClassName — so the zoom scaled the box, not the photo.)
+      imgClassName="transition-transform duration-700 ease-out group-hover:scale-105"
+    />
+  );
+}
+
+/**
  * §4: Protocols Tier Grid.
  * Displays D2C Therapeutic Subscriptions with canonical trial & monthly pricing.
+ *
+ * `photos` is resolved server-side by the page (this is a client component, so
+ * it cannot read the catalog itself) from the same `fetchMenu()` call the
+ * homepage already makes — no extra round-trip.
  */
-export function Section04ProtocolsGrid() {
+export function Section04ProtocolsGrid({ photos }: { photos: PlanPhotoMap }) {
   const trialPrice = formatPaise(TRIAL_PRICE_PAISE);
   const deskFuelMonthly = formatPaise(computePlanQuote("desk_fuel").cycleTotalPaise);
   const steadyMonthly = formatPaise(computePlanQuote("steady").cycleTotalPaise);
@@ -74,13 +106,7 @@ export function Section04ProtocolsGrid() {
               </span>
               <span className="tabular text-xs font-bold text-ink-muted">{deskFuelMonthly}/mo</span>
             </div>
-            <div className="mt-4 mb-2 aspect-[4/3] w-full overflow-hidden rounded-xl border border-line">
-              <SafeImage
-                src="https://picsum.photos/seed/weightloss/800/600"
-                alt="Weight Loss Meal"
-                className="w-full h-full object-cover mix-blend-luminosity opacity-90 transition-transform duration-700 ease-out group-hover:scale-105 group-hover:mix-blend-normal group-hover:opacity-100"
-              />
-            </div>
+            <PlanPhotoFrame photo={photos.desk_fuel} />
             <h3 className="mt-2 text-xl font-bold text-ink">Weight-Loss Jumpstart</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
               Focus: Shed weight without feeling tired. Keeps you full and energized all day.
@@ -122,13 +148,7 @@ export function Section04ProtocolsGrid() {
               </span>
               <span className="tabular text-xs font-bold text-ink">{steadyMonthly}/mo</span>
             </div>
-            <div className="mt-4 mb-2 aspect-[4/3] w-full overflow-hidden rounded-xl border border-line">
-              <SafeImage
-                src="https://picsum.photos/seed/hormone/800/600"
-                alt="Hormone Balance Meal"
-                className="w-full h-full object-cover mix-blend-luminosity opacity-90 transition-transform duration-700 ease-out group-hover:scale-105 group-hover:mix-blend-normal group-hover:opacity-100"
-              />
-            </div>
+            <PlanPhotoFrame photo={photos.steady} />
             <h3 className="mt-2 text-xl font-bold text-ink">PCOS Hormone Balance</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
               Focus: Supports hormone balance and manages energy levels naturally. Approved by experts.
@@ -171,13 +191,7 @@ export function Section04ProtocolsGrid() {
               </span>
               <span className="tabular text-xs font-bold text-ink-muted">{proteinMonthly}/mo</span>
             </div>
-            <div className="mt-4 mb-2 aspect-[4/3] w-full overflow-hidden rounded-xl border border-line">
-              <SafeImage
-                src="https://picsum.photos/seed/muscle/800/600"
-                alt="Muscle Building Meal"
-                className="w-full h-full object-cover mix-blend-luminosity opacity-90 transition-transform duration-700 ease-out group-hover:scale-105 group-hover:mix-blend-normal group-hover:opacity-100"
-              />
-            </div>
+            <PlanPhotoFrame photo={photos.protein_build} />
             <h3 className="mt-2 text-xl font-bold text-ink">Lean Muscle Builder</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
               Focus: Fuel your workouts and recover faster with high-protein, energy-packed meals.

@@ -14,7 +14,6 @@
 # different alphabetical positions merge without conflict.
 artifacts/storefront/components/landing/FlipCard.tsx 1
 artifacts/storefront/components/landing/Section03AgitationPanel.tsx 1
-artifacts/storefront/components/landing/Section04ProtocolsGrid.tsx 3
 artifacts/storefront/components/landing/Section04TelehealthTracking.tsx 1
 artifacts/storefront/components/landing/Section05LogisticsMoat.tsx 1
 artifacts/storefront/components/landing/Section07ProofKitchen.tsx 1
