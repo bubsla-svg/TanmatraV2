@@ -1,12 +1,27 @@
 "use client";
 // Client: controlled add/edit form for a saved address.
-import { useState } from "react";
+import { useId, useState } from "react";
+import { Grid } from "@astryxdesign/core/Grid";
+import { Selector } from "@astryxdesign/core/Selector";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { Field } from "@astryxdesign/core/Field";
 import { Button } from "@/components/ui/button";
 import { NotifyMeForm } from "@/components/onboarding/NotifyMeForm";
 import type { Address, AddressInput, AddressType } from "@/lib/api";
 
-const inputCls =
-  "w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus-visible:border-line-strong";
+/* Stage-4 Astryx adoption: field chrome only. The aria-label'd raw inputs
+ * became TextInput/Selector with VISIBLE labels (a strict a11y upgrade over
+ * the aria-label hack), and the two `grid-cols-2` pair rows became Grid
+ * columns={{minWidth}} which collapses responsively for free. PIN and PHONE
+ * stay native <input>s inside Astryx Field: TextInput's BaseProps deliberately
+ * omit inputMode (and type is text|password|email only), so a swap would cost
+ * the numeric keyboard. The PIN keeps its existing aria-invalid signalling —
+ * no message box existed before and none is added. Submission payload, the
+ * client-side valid gate, busy label, Cancel link, the role="alert" error
+ * line, and the unserviceable-pincode panel (with its data-ui-generation /
+ * data-screen-* attributes) are untouched. */
+const nativeInputCls =
+  "w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none transition-colors focus-visible:border-[var(--gold)] focus-visible:ring-1 focus-visible:ring-[var(--gold)]";
 const TYPES: AddressType[] = ["home", "work", "other"];
 
 /**
@@ -49,6 +64,8 @@ export function AddressForm({
   const [city, setCity] = useState(initial?.city ?? "");
   const [pincode, setPincode] = useState(initial?.pincode ?? "");
   const [phone, setPhone] = useState(initial?.phone ?? "");
+  const pincodeID = useId();
+  const phoneID = useId();
 
   const pinValid = /^[0-9]{4,10}$/.test(pincode.trim());
   const phoneValid = phone.replace(/\D/g, "").length >= 10;
@@ -86,21 +103,68 @@ export function AddressForm({
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
-      <div className="grid grid-cols-2 gap-3">
-        <input aria-label="Label" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Home, Office…" className={inputCls} />
-        <select aria-label="Type" value={type} onChange={(e) => setType(e.target.value as AddressType)} className={inputCls}>
-          {TYPES.map((t) => (
-            <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
-          ))}
-        </select>
-      </div>
-      <input aria-label="Flat / house · street" value={line1} onChange={(e) => setLine1(e.target.value)} placeholder="Flat 3B, Sector 62" className={inputCls} />
-      <input aria-label="Landmark / area (optional)" value={line2} onChange={(e) => setLine2(e.target.value)} placeholder="Near the park (optional)" className={inputCls} />
-      <div className="grid grid-cols-2 gap-3">
-        <input aria-label="City" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Noida" className={inputCls} />
-        <input aria-label="PIN code" inputMode="numeric" value={pincode} onChange={(e) => setPincode(e.target.value)} placeholder="201301" aria-invalid={pincode.length > 0 && !pinValid} className={inputCls} />
-      </div>
-      <input aria-label="Phone" type="tel" inputMode="numeric" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" className={inputCls} />
+      <Grid gap={4} columns={{ minWidth: 200 }}>
+        <TextInput
+          label="Label"
+          value={label}
+          onChange={setLabel}
+          placeholder="Home, Office…"
+        />
+        <Selector
+          label="Type"
+          value={type}
+          onChange={(v) => setType(v as AddressType)}
+          options={TYPES.map((t) => ({ value: t, label: t.charAt(0).toUpperCase() + t.slice(1) }))}
+        />
+      </Grid>
+      <TextInput
+        label="Flat / house · street"
+        value={line1}
+        onChange={setLine1}
+        placeholder="Flat 3B, Sector 62"
+        htmlName="address-line1"
+      />
+      <TextInput
+        label="Landmark / area"
+        value={line2}
+        onChange={setLine2}
+        placeholder="Near the park (optional)"
+        htmlName="address-line2"
+        isOptional
+      />
+      <Grid gap={4} columns={{ minWidth: 200 }}>
+        <TextInput
+          label="City"
+          value={city}
+          onChange={setCity}
+          placeholder="Noida"
+          htmlName="address-level2"
+        />
+        <Field label="PIN code" inputID={pincodeID}>
+          <input
+            id={pincodeID}
+            inputMode="numeric"
+            autoComplete="postal-code"
+            value={pincode}
+            onChange={(e) => setPincode(e.target.value)}
+            placeholder="201301"
+            aria-invalid={pincode.length > 0 && !pinValid}
+            className={nativeInputCls}
+          />
+        </Field>
+      </Grid>
+      <Field label="Phone" inputID={phoneID}>
+        <input
+          id={phoneID}
+          type="tel"
+          inputMode="numeric"
+          autoComplete="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="98765 43210"
+          className={nativeInputCls}
+        />
+      </Field>
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
       <div className="mt-1 flex items-center gap-3 border-t border-line pt-3">
         <Button type="button" disabled={!valid || busy} onClick={submit} shape="xl" size="fluid" className="px-5 py-3 font-semibold disabled:opacity-40">

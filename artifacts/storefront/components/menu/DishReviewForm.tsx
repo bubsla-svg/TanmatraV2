@@ -4,6 +4,7 @@
 // reports the signed-in user is eligible (has ordered the dish), so it never
 // shows a dead form; the server re-checks eligibility, this is not the gate.
 import { useState, type FormEvent } from "react";
+import { TextArea } from "@astryxdesign/core/TextArea";
 import { submitDishReview } from "@/lib/dishReviewsApi";
 import { ApiError } from "@/lib/apiClient";
 import { Button } from "@/components/ui/button";
@@ -78,18 +79,27 @@ export function DishReviewForm({ slug, onSubmitted }: { slug: string; onSubmitte
         ))}
       </div>
 
-      <label htmlFor="dish-review-body" className="sr-only">
-        Your review
-      </label>
-      <textarea
-        id="dish-review-body"
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
-        maxLength={MAX_BODY}
-        rows={3}
-        placeholder="What did you think? (optional)"
-        className="mt-3 w-full rounded-2xl border border-line bg-surface-raised p-3 text-sm text-ink placeholder:text-ink-faint"
-      />
+      {/* Stage-4 Astryx adoption: field chrome only. The sr-only-labelled
+       * <textarea> became Astryx TextArea (isLabelHidden keeps the label for
+       * screen readers; maxLength renders its counter). Deliberately KEPT
+       * hand-rolled: the star picker above (converting its aria-pressed
+       * toggle-button group to RadioList would change keyboard semantics),
+       * the role="alert" error line, the done role="status" panel, and the
+       * gold submit Button. Submission logic and payload are untouched.
+       * Astryx maxLength paints the counter but does not enforce the limit
+       * (per its .d.ts), so onChange clamps to MAX_BODY to keep the native
+       * textarea's hard 2000-char cap — same payload guarantee as before. */}
+      <div className="mt-3">
+        <TextArea
+          label="Your review"
+          isLabelHidden
+          value={body}
+          onChange={(v) => setBody(v.slice(0, MAX_BODY))}
+          maxLength={MAX_BODY}
+          rows={3}
+          placeholder="What did you think? (optional)"
+        />
+      </div>
 
       {error && (
         <p role="alert" className="mt-2 text-xs" style={{ color: "var(--danger)" }}>

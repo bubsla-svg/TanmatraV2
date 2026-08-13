@@ -3,6 +3,8 @@
 // (routes/preferences.ts) owns validation and lowercases the free-text lists,
 // so this only gathers input; the parent re-seeds it from the saved response.
 import { useState } from "react";
+import { Grid } from "@astryxdesign/core/Grid";
+import { Selector } from "@astryxdesign/core/Selector";
 import { Button } from "@/components/ui/button";
 import { ChipInput } from "./ChipInput";
 import type {
@@ -30,11 +32,19 @@ const SPICE: { id: SpiceLevel; label: string }[] = [
   { id: "none", label: "None" }, { id: "mild", label: "Mild" }, { id: "medium", label: "Medium" }, { id: "hot", label: "Hot" },
 ];
 
-/** route-11 brief: each control sits on its own raised card, gold caps label
- *  above, the value itself set large and unchromed. */
+/* Stage-4 Astryx adoption: field chrome only. The four raised-card native
+ * <select>s (route-11 gold caps label + large unchromed value) became Astryx
+ * Selector, each still sitting on its raised card so the surface rhythm with
+ * the chip cards holds; the hand-rolled `grid md:grid-cols-2` became Astryx
+ * Grid columns={{minWidth}}. Selector renders its own label + Field shell, so
+ * the CAPS/SELECT class strings are gone. DELIBERATELY KEPT: the three
+ * ChipInput cards stay hand-rolled as-is — ChipInput renders its own <label>
+ * wrapper with an internal gold-caps label span, so wrapping it in Astryx
+ * Field (isGroupLabel) from this file would double the visible label and the
+ * chip group can't receive aria-labelledby without editing ChipInput itself.
+ * State shape, PreferencesPatch payload, role="alert" error line, saved sage
+ * indicator and the Save pill button are untouched. */
 const CARD = "rounded-3xl border border-line bg-surface p-6 transition-colors hover:bg-surface-raised";
-const CAPS = "mb-3 block text-xs font-bold uppercase tracking-wider text-gold-text";
-const SELECT = "w-full border-none bg-transparent p-0 text-lg text-ink focus-visible:ring-0";
 
 export function PreferencesForm({
   initial,
@@ -59,52 +69,40 @@ export function PreferencesForm({
 
   return (
     <div className="flex flex-col gap-10">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <Grid gap={4} columns={{ minWidth: 260 }}>
         <div className={CARD}>
-          <label className={CAPS} htmlFor="pref-dietary">Dietary style</label>
-          <select
-            id="pref-dietary"
+          <Selector
+            label="Dietary style"
             value={dietaryStyle}
-            onChange={(e) => setDietaryStyle(e.target.value as DietaryStyle)}
-            className={SELECT}
-          >
-            {DIETARY.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-          </select>
+            onChange={(v) => setDietaryStyle(v as DietaryStyle)}
+            options={DIETARY.map((o) => ({ value: o.id, label: o.label }))}
+          />
         </div>
         <div className={CARD}>
-          <label className={CAPS} htmlFor="pref-goal">Primary goal</label>
-          <select
-            id="pref-goal"
+          <Selector
+            label="Primary goal"
             value={goal}
-            onChange={(e) => setGoal(e.target.value as WellnessGoal)}
-            className={SELECT}
-          >
-            {GOAL.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-          </select>
+            onChange={(v) => setGoal(v as WellnessGoal)}
+            options={GOAL.map((o) => ({ value: o.id, label: o.label }))}
+          />
         </div>
         <div className={CARD}>
-          <label className={CAPS} htmlFor="pref-activity">Activity level</label>
-          <select
-            id="pref-activity"
+          <Selector
+            label="Activity level"
             value={activityLevel}
-            onChange={(e) => setActivityLevel(e.target.value as ActivityLevel)}
-            className={`${SELECT} tabular`}
-          >
-            {ACTIVITY.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-          </select>
+            onChange={(v) => setActivityLevel(v as ActivityLevel)}
+            options={ACTIVITY.map((o) => ({ value: o.id, label: o.label }))}
+          />
         </div>
         <div className={CARD}>
-          <label className={CAPS} htmlFor="pref-spice">Spice tolerance</label>
-          <select
-            id="pref-spice"
+          <Selector
+            label="Spice tolerance"
             value={spiceLevel}
-            onChange={(e) => setSpiceLevel(e.target.value as SpiceLevel)}
-            className={SELECT}
-          >
-            {SPICE.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-          </select>
+            onChange={(v) => setSpiceLevel(v as SpiceLevel)}
+            options={SPICE.map((o) => ({ value: o.id, label: o.label }))}
+          />
         </div>
-      </div>
+      </Grid>
 
       <div className="flex flex-col gap-6">
         <div className={CARD}>

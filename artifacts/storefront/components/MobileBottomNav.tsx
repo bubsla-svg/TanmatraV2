@@ -149,17 +149,38 @@ export function MobileBottomNav() {
           {TABS.map((tab) => {
             const isActive = isTabActive(tab, pathname);
 
+            // Astryx TabList idiom (stage 3): selection is expressed
+            // STRUCTURALLY — data-selected on the tab plus a separate
+            // indicator element — not by colour/weight alone. The indicator
+            // doubles as a second non-colour cue alongside aria-current
+            // (SC 1.4.1). Astryx ships no bottom tab BAR primitive (MobileNav
+            // is a side drawer), so per the runbook this adopts the styling
+            // idiom while the tab-bar interaction model stays — a product
+            // decision, not a skin.
+            const tabCls = `relative flex flex-col items-center justify-center gap-1 w-full h-full min-h-[44px] transition-transform active:scale-95 ${
+              isActive ? "text-gold font-semibold" : "text-ink-muted hover:text-ink"
+            }`;
+            const indicator = (
+              <span
+                aria-hidden="true"
+                data-selected={isActive || undefined}
+                className={`pointer-events-none absolute top-0 h-0.5 w-8 rounded-full transition-opacity duration-200 bg-gold ${
+                  isActive ? "opacity-100" : "opacity-0"
+                }`}
+              />
+            );
+
             if (tab.key === "account") {
               return (
                 <li key={tab.key} className="flex-1">
                   <button
                     type="button"
+                    data-selected={isActive || undefined}
                     aria-current={isActive ? "page" : undefined}
                     onClick={() => setAccountSheetOpen(true)}
-                    className={`flex flex-col items-center justify-center gap-1 w-full h-full min-h-[44px] transition-transform active:scale-95 ${
-                      isActive ? "text-gold font-bold" : "text-ink-muted hover:text-ink"
-                    }`}
+                    className={tabCls}
                   >
+                    {indicator}
                     {tab.icon}
                     <span className="text-3xs tracking-tight">{tab.label}</span>
                   </button>
@@ -174,11 +195,11 @@ export function MobileBottomNav() {
                     has always carried it; this bar had dropped it. */}
                 <Link
                   href={tab.href}
+                  data-selected={isActive || undefined}
                   aria-current={isActive ? "page" : undefined}
-                  className={`flex flex-col items-center justify-center gap-1 w-full h-full min-h-[44px] transition-transform active:scale-95 ${
-                    isActive ? "text-gold font-bold" : "text-ink-muted hover:text-ink"
-                  }`}
+                  className={tabCls}
                 >
+                  {indicator}
                   {tab.icon}
                   <span className="text-3xs tracking-tight">{tab.label}</span>
                 </Link>

@@ -3,8 +3,19 @@
 // (02d §8) for a plan/track the kitchen can't serve yet.
 
 import { useState } from "react";
+import { TextInput } from "@astryxdesign/core/TextInput";
 import { emitFunnel } from "@/lib/funnel";
 import { Button } from "@/components/ui/button";
+
+/* Stage-4 Astryx adoption: field chrome only. The sr-only label + native input
+ * became TextInput with isLabelHidden (its label stays SR-accessible) and
+ * status={{type:'error'}} for the invalid border + aria-invalid; the external
+ * <p id="waitlist-error" role="alert"> error line stays hand-rolled (Astryx
+ * status messages carry no documented role) and is linked via aria-describedby.
+ * Deliberately dropped: the old input's inputMode="tel" — the field accepts
+ * phone OR email free text, so the tel keypad was wrong for half its inputs
+ * and TextInput's BaseProps omit inputMode anyway. submit(), the funnel emit,
+ * the done branch and all copy are untouched. */
 
 /** D-11: Steady's waitlist body, verbatim (owner-supplied) — replaces the raw
  *  internal blocker string ("veg GI-low pool = 0; needs millets pasta import
@@ -57,20 +68,18 @@ export function Waitlist({ planId, planName, reason }: { planId: string; planNam
         )}
       </p>
       <div className="mt-4 flex gap-2">
-        <label htmlFor="waitlist-contact" className="sr-only">
-          Phone or email
-        </label>
-        <input
-          id="waitlist-contact"
-          type="text"
-          inputMode="tel"
-          value={contact}
-          onChange={(e) => setContact(e.target.value)}
-          placeholder="Phone or email"
-          aria-invalid={error != null}
-          aria-describedby={error ? "waitlist-error" : undefined}
-          className="flex-1 rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink focus-visible:border-line-strong"
-        />
+        <div className="flex-1">
+          <TextInput
+            label="Phone or email"
+            isLabelHidden
+            value={contact}
+            onChange={setContact}
+            placeholder="Phone or email"
+            width="100%"
+            status={error ? { type: "error" } : undefined}
+            aria-describedby={error ? "waitlist-error" : undefined}
+          />
+        </div>
         <Button
           type="submit"
           size="fluid"
