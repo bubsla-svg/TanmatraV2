@@ -125,12 +125,23 @@ export function navGroup(key: NavGroupKey): NavGroup {
   return g;
 }
 
-/** Header's compact primary row — the groups worth a top-level slot today. */
+/**
+ * Header's compact primary row — the groups worth a top-level slot today.
+ * Labels are deliberately shorter than the page titles they link to (this
+ * array has no other consumer, so it's free to diverge): "Corporate" reuses
+ * COMPANY_LINKS' existing shorthand for the same /corporate-wellness href
+ * below, and "Metabolic" drops "Care" to match. The unabridged names wrapped
+ * to two lines inside TopNav's centerContent grid track, and a wrapped label
+ * is the leading indicator that the row is running out of room — past that
+ * point the header's clusters stop merely looking cramped and start
+ * overlapping, which silently covers interactive controls rather than just
+ * reflowing them. desktop-header-nav-fit.spec.ts pins both properties.
+ */
 export const PRIMARY_NAV: NavLink[] = [
   { label: "Menu", href: "/menu" },
   { label: "Plans", href: "/plans" },
-  { label: "Metabolic Care", href: "/metabolic" },
-  { label: "Corporate Wellness", href: "/corporate-wellness" },
+  { label: "Metabolic", href: "/metabolic" },
+  { label: "Corporate", href: "/corporate-wellness" },
   { label: "Account", href: "/account" },
 ];
 

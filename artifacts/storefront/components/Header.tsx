@@ -1,16 +1,18 @@
 import Link from "next/link";
 import { TopNav } from "@astryxdesign/core/TopNav";
-import { PRIMARY_NAV } from "@/lib/nav";
 import { CommandMenu } from "@/components/CommandMenu";
+import { PrimaryNav } from "@/components/PrimaryNav";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DeliveryAddressBar } from "@/components/onboarding/DeliveryAddressBar";
 import { fetchMenu } from "@/lib/catalog";
 
 /**
- * Global chrome shell. Server component itself; it hosts one small client island
- * (CommandMenu, the ⌘K search). The primary links come from the central nav
- * config (lib/nav.ts) so route-parity waves extend the IA by editing data, not
- * this file. Primary links are desktop-only — on mobile the BottomNav carries them.
+ * Global chrome shell. Server component itself; it hosts two small client
+ * islands — CommandMenu (⌘K) and PrimaryNav (desktop nav links, needs
+ * usePathname() for the active-state match). The primary links come from the
+ * central nav config (lib/nav.ts) so route-parity waves extend the IA by
+ * editing data, not this file or PrimaryNav.tsx. Desktop-only — on mobile
+ * BottomNav carries the same core destinations.
  *
  * Renders only from app/(global)/layout.tsx. Focus routes (app/(focus)/ —
  * auth, checkout, onboarding, dish PDP) never mount this header at all, so
@@ -53,6 +55,7 @@ export async function Header() {
               Tanmatra
             </Link>
           }
+          centerContent={<PrimaryNav />}
           endContent={
             <nav aria-label="Primary" className="flex items-center gap-2">
               <div className="min-w-0">
@@ -77,10 +80,11 @@ export async function Header() {
                 <Link
                   href="/account"
                   aria-label="Account"
-                  // Desktop-only, matching this file's own header comment
-                  // ("Primary links are desktop-only — on mobile the
-                  // BottomNav carries them") — MobileBottomNav.tsx already
-                  // renders its own "Account" tab. Giving this link a real
+                  // Desktop-only, matching this file's own header comment —
+                  // MobileBottomNav.tsx already renders its own "Account"
+                  // tab, and PrimaryNav (centerContent, above) deliberately
+                  // drops /account from PRIMARY_NAV for the same reason this
+                  // icon exists. Giving this link a real
                   // accessible name (above) is what surfaced the gap:
                   // single-chrome.spec.ts counts visible "Account" nav
                   // affordances per viewport and expects exactly one, and
