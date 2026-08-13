@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Trophy, Plus, Flame, Trash2 } from 'lucide-react';
 import { type FamilyMember } from '@/lib/wellnessApi';
 
@@ -17,6 +17,12 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
   onOpenAddModal,
   onRemoveMember,
 }) => {
+  // WCAG 2.3.3. globals.css's reduced-motion block collapses CSS animation but
+  // cannot touch Motion's JS-driven inline transforms. Drop the y-translate and
+  // keep the opacity fade: the criterion targets movement, and a cross-fade is
+  // the sanctioned non-motion substitute — so rows still resolve in, they just
+  // no longer travel.
+  const shouldReduceMotion = useReducedMotion();
   return (
     <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
@@ -43,7 +49,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
         {sortedMembers.map((member, idx) => (
           <motion.div
             key={member.id}
-            initial={{ opacity: 0, y: 10 }}
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className={`p-4 sm:p-5 rounded-2xl border-2 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
               idx === 0 
