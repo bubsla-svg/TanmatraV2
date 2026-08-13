@@ -5,9 +5,8 @@ import {
   stitchCanvasForced,
   STITCH_EXACT_ROUTES,
   STITCH_PREFIX_ROUTES,
-  STITCH_SCREEN_REGISTRY,
-  getStitchScreenForRoute,
 } from "./stitchRoutes";
+import { STITCH_SCREEN_REGISTRY, getStitchScreenForRoute } from "./stitchScreenRegistry";
 
 // ── stitchCanvasForced: the toggle-vs-canvas contract (2026-08-11 report:
 //    "light and dark theme toggle in nav bar is dead") ─────────────────────
@@ -27,9 +26,11 @@ test("an explicit stored choice always wins over the canvas", () => {
 });
 
 test("non-Stitch routes are never forced regardless of choice", () => {
-  assert.equal(stitchCanvasForced("/account", null), false);
-  assert.equal(stitchCanvasForced("/account", "light"), false);
-  assert.equal(stitchCanvasForced("/legal/terms", null), false);
+  // /account and /legal joined the canvas in the 2026-08-13 seam tranche —
+  // /about and /marketplace are the still-light fixtures now.
+  assert.equal(stitchCanvasForced("/about", null), false);
+  assert.equal(stitchCanvasForced("/about", "light"), false);
+  assert.equal(stitchCanvasForced("/marketplace", null), false);
 });
 
 test("exact routes render on the dark canvas", () => {
@@ -51,8 +52,14 @@ test("/plan/ does not swallow /plans", () => {
 });
 
 test("unrelated routes stay on the light canvas", () => {
-  for (const route of ["/about", "/faq", "/recipes", "/legal/terms", "/account/orders", "/marketplace"]) {
+  for (const route of ["/about", "/recipes", "/marketplace", "/team", "/community"]) {
     assert.equal(isStitchRoute(route), false, `${route} should not be a Stitch route`);
+  }
+});
+
+test("the 2026-08-13 seam tranche renders dark, families included", () => {
+  for (const route of ["/care", "/care/diabetes", "/account", "/account/orders", "/legal", "/legal/terms", "/faq"]) {
+    assert.equal(isStitchRoute(route), true, `${route} should be a Stitch route`);
   }
 });
 
