@@ -207,26 +207,33 @@ export function PlanDetails({
           (focus)-shell route (app/(focus)/) — the global tab bar never renders
           here. */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
-        <div className="mx-auto flex max-w-md items-center justify-between gap-3 px-4 py-3">
-          <div className="flex min-w-0 flex-col">
-            <span className="text-3xs font-bold uppercase tracking-widest text-ink-muted">Billed each cycle</span>
-            <span className="tabular text-lg font-bold text-ink">
-              {quoteLoading || quoteTotalPaise === null ? "…" : formatPaise(quoteTotalPaise)}
-            </span>
+        <div className="mx-auto max-w-md px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 flex-col">
+              <span className="text-3xs font-bold uppercase tracking-widest text-ink-muted">Billed each cycle</span>
+              <span className="tabular text-lg font-bold text-ink">
+                {quoteLoading || quoteTotalPaise === null ? "…" : formatPaise(quoteTotalPaise)}
+              </span>
+            </div>
+            <Button
+              type="button" disabled={!valid || busy}
+              onClick={() => onSubmit({ member: draftToMember(member), address: { line1: line1.trim(), city: city.trim(), pincode: pincode.replace(/\D/g, "") } })}
+              aria-busy={verifying || busy} aria-live="polite"
+              shape="pill" size="fluid" className="px-8 py-3.5 text-center font-semibold disabled:opacity-40 shadow-lg shadow-gold/20 transition-transform duration-300 hover:scale-[1.02] hover:shadow-gold/40 active:scale-95"
+            >
+              {/* Once the modal resolves, money is already captured — "Opening
+                  payment…" would read as a hung or failed button on a charge
+                  that already went through. */}
+              {verifying ? "Confirming your payment…" : busy ? "Opening payment…" : "Continue to payment"}
+            </Button>
           </div>
-          <Button
-            type="button" disabled={!valid || busy}
-            onClick={() => onSubmit({ member: draftToMember(member), address: { line1: line1.trim(), city: city.trim(), pincode: pincode.replace(/\D/g, "") } })}
-            aria-busy={verifying || busy} aria-live="polite"
-            shape="pill" size="fluid" className="px-8 py-3.5 text-center font-semibold disabled:opacity-40 shadow-lg shadow-gold/20 transition-transform duration-300 hover:scale-[1.02] hover:shadow-gold/40 active:scale-95"
-          >
-            {/* Once the modal resolves, money is already captured — "Opening
-                payment…" would read as a hung or failed button on a charge
-                that already went through. */}
-            {verifying ? "Confirming your payment…" : busy ? "Opening payment…" : "Continue to payment"}
-          </Button>
-          <div className="mt-3 flex items-center justify-center gap-1.5 text-xs font-medium text-ink-muted">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 text-ink-muted">
+          {/* Was a THIRD flex column inside the row above — `mt-3` inside
+              items-center did nothing and the trust line rendered squeezed
+              beside the CTA. It belongs under the row, centred, vouching for
+              the button it sits beneath (N5.10's counterpart: the trust claim
+              lives at the pay action, not on the OTP step's header). */}
+          <div className="mt-2 flex items-center justify-center gap-1.5 text-xs font-medium text-ink-muted">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 text-ink-muted" aria-hidden>
               <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
             </svg>
             Secure, encrypted checkout

@@ -36,6 +36,7 @@ export function PlanCheckout({
   addOns,
   finePrint,
   successPerks,
+  recap,
 }: {
   planId: string;
   planName: string;
@@ -52,6 +53,9 @@ export function PlanCheckout({
   finePrint?: string[];
   /** Plan-scoped perks stashed for the confirmation beside the verify facts. */
   successPerks?: CheckoutPerks;
+  /** N5.11 — spine list quote for the sign-in gate's offer recap (host-computed
+   *  server-side from computePlanQuote; never authored here). */
+  recap?: { mealsPerCycle: number; cycleTotalPaise: number; cadence: string };
 }) {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -203,7 +207,7 @@ export function PlanCheckout({
   }
 
   if (!user) {
-    return <PlanIdentityGate planName={planName} onVerified={onVerified} />;
+    return <PlanIdentityGate planName={planName} recap={recap} onVerified={onVerified} />;
   }
 
   if (unresolved) {
