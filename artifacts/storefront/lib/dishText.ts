@@ -50,3 +50,57 @@ export function ingredientSummary(ingredients: string[], max = 4): string {
   if (names.length <= max) return shown;
   return `${shown} · +${names.length - max} more`;
 }
+
+/**
+ * Pantry staples — ingredients that appear in most dishes and therefore
+ * distinguish none of them. Matched on the whole name, case-insensitively,
+ * so "Garlic" is dropped but "Garlic bread" and "Garlic naan" survive.
+ */
+const PANTRY_STAPLES = new Set([
+  "salt",
+  "black pepper",
+  "pepper",
+  "water",
+  "olive oil",
+  "oil",
+  "ghee",
+  "butter",
+  "garlic",
+  "ginger",
+  "ginger-garlic paste",
+  "onion",
+  "sugar",
+  "lemon juice",
+  "coriander",
+  "parsley",
+]);
+
+/**
+ * The one line a MENU CARD gets to tell dishes apart.
+ *
+ * The catalog's own `description` is auto-derived from the first three
+ * ingredients, which for any dish family are the base the variants share:
+ * "Aglio Olio - Veg", "- Chicken" and "- Prawns" all printed "Spaghetti
+ * pasta, Olive oil, Garlic, and more." — three consecutive cards on /menu
+ * identical but for the name and the price. What actually differs is
+ * ingredient #5 (the vegetables / the chicken / the prawns), which the card
+ * never reached.
+ *
+ * So: authored copy always wins (`tasteDescription`); otherwise build from
+ * ingredient names with the pantry staples dropped, which promotes the
+ * differentiating ingredient into view without any cross-dish comparison.
+ * Falls back to the catalog description when a dish carries no usable
+ * ingredients — never to an empty line.
+ */
+export function dishCardSummary(dish: {
+  tasteDescription?: string | null;
+  description?: string | null;
+  ingredients?: string[] | null;
+}): string {
+  if (dish.tasteDescription && dish.tasteDescription.trim()) return dish.tasteDescription.trim();
+  const distinctive = (dish.ingredients ?? [])
+    .map(ingredientName)
+    .filter((n) => n && !PANTRY_STAPLES.has(n.toLowerCase()));
+  if (distinctive.length > 0) return ingredientSummary(distinctive, 3);
+  return dish.description?.trim() ?? "";
+}

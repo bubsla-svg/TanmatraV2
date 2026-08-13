@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Text } from "@astryxdesign/core/Text";
 import { type DishData } from "@workspace/menu-catalog";
 import { formatPaise } from "@/lib/format";
+import { dishCardSummary } from "@/lib/dishText";
 import { AddToCart } from "@/components/cart/AddToCart";
 
 import { SafeImage } from "@/components/ui/SafeImage";
@@ -95,8 +96,13 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
             <Text type="body" weight="bold" as="h3" maxLines={1} className="font-bold">{dish.name}</Text>
           </span>
 
+          {/* dishCardSummary, not `description`: the catalog derives that
+              field from the first three ingredients, which across a dish
+              FAMILY are the shared base — "Aglio Olio - Veg / - Chicken /
+              - Prawns" all printed the identical line, so three consecutive
+              cards differed only by name and price. See lib/dishText.ts. */}
           <Text type="supporting" color="secondary" maxLines={2}>
-            {dish.tasteDescription || dish.description}
+            {dishCardSummary(dish)}
           </Text>
           <RatingStars average={dish.averageRating} count={dish.reviewCount} />
           <span className="font-mono text-2xs text-ink-muted">
