@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { VStack, HStack } from "@astryxdesign/core/Layout";
+import { Text, Heading } from "@astryxdesign/core/Text";
+import { Badge } from "@astryxdesign/core/Badge";
+import { Divider } from "@astryxdesign/core/Divider";
+import { Collapsible, CollapsibleGroup } from "@astryxdesign/core/Collapsible";
 import { fetchMenu, findDish } from "@/lib/catalog";
 import { SafeImage } from "@/components/ui/SafeImage";
-import { AccordionItem } from "@/components/primitives/Accordion";
 import { formatPaise } from "@/lib/format";
 import { ingredientSummary } from "@/lib/dishText";
 import { PdpBuyLedger } from "@/components/menu/PdpBuyLedger";
@@ -18,6 +22,54 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return { title: dish.name };
 }
 
+/** One macro reading. Astryx type scale, not the uppercase `tracking-widest`
+ *  `text-3xs` micro-label + bordered chip the previous version used for every
+ *  figure — that treatment is what made a lunch page read as an instrument
+ *  panel. Value first, label under it, no box. */
+function Macro({ label, value }: { label: string; value: string }) {
+  return (
+    <VStack gap={0}>
+      <Text type="body" weight="bold" hasTabularNumbers>
+        {value}
+      </Text>
+      <Text type="supporting" color="secondary">
+        {label}
+      </Text>
+    </VStack>
+  );
+}
+
+/**
+ * Dish detail page, composed on the Astryx `product-detail` page template
+ * (`@astryxdesign/cli/templates/pages/product-detail`) — DS-0's sanctioned
+ * starting point, per CLAUDE.md ("Astryx templates and blocks ARE the
+ * sanctioned starting point — adopting them verbatim is the goal").
+ *
+ * WHAT CHANGED AND WHY: the previous hand-rolled version rendered every
+ * figure as a bordered chip with an uppercase `tracking-widest text-3xs`
+ * label over a mono numeral, on near-black surfaces — the template's own
+ * hierarchy (display title → price → generous body copy → collapsible
+ * detail) replaced with a uniform grid of instrument readouts. Owner's
+ * verdict was that it read as an "ordnance depot disguised as a PDP", and
+ * that is a fair description of the treatment, not of the content.
+ *
+ * Adopted from the template: the `display-2` title, the price/description
+ * hierarchy, `CollapsibleGroup` + `Divider` for detail sections (replacing
+ * the bespoke AccordionItem), and Astryx's type scale throughout instead of
+ * raw Tailwind font sizes.
+ *
+ * Deliberately NOT adopted: the template's colour/finish/quantity
+ * `SegmentedControl`s (a dish has no such variants — customisations are a
+ * separate, server-priced concern), its two-column sticky-info desktop grid
+ * (this route is the mobile-first focus shell), and its "Buy it now"
+ * secondary CTA (this funnel's canonical path is add → cart drawer →
+ * checkout; a second money CTA here would fork it).
+ *
+ * Held from before, unchanged: the price is rendered exactly as the server
+ * sent it, gold stays the only action colour (the badges below are signal —
+ * sanctioned by DS-0), and DishAllergens is never collapsed behind a
+ * disclosure.
+ */
 export default async function DishPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;
   const { dishes, source } = await fetchMenu();
@@ -27,14 +79,14 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
   const est = dish.macrosEstimated ? "~" : "";
 
   return (
-    <div data-ui-generation="stitch-74" data-screen-id="5.5" data-screen-state="default" className="min-h-dvh flex flex-col bg-bg pb-24">
-      {/* Hero Image */}
-      <div className="relative w-full aspect-square md:aspect-video overflow-hidden">
+    // pb-32 (128px), not pb-24: the sticky ledger card measures ~90px plus
+    // its 16px mask band, so 96px left the last content row sitting under
+    // it. Clearance is the card's real height, not a round number.
+    <div className="flex min-h-dvh flex-col bg-bg pb-32">
+      <div className="relative aspect-square w-full overflow-hidden md:aspect-video">
         <SafeImage src={dish.image} alt={dish.name} className="h-full w-full" />
         {/* The focus shell renders no Header, and FocusLayout's contract is
-            that each flow supplies its own back affordance. This page had
-            none — arriving here from a protocol rail, a saved favourite or a
-            search result left browser Back as the only way out. */}
+            that each flow supplies its own back affordance. */}
         <Link
           href="/menu"
           aria-label="Back to menu"
@@ -44,129 +96,122 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
         </Link>
       </div>
 
-      <div className="px-gutter pt-6 flex-1 flex flex-col">
+      <div className="flex flex-1 flex-col px-gutter pt-6">
         {source === "fallback" && <FallbackMenuBanner />}
-        {/* Header Section */}
-        <div className="mb-6">
-          <div className="flex gap-2 items-center mb-3">
-            <span className="px-2 py-1 rounded-full bg-surface-raised border border-line font-bold text-3xs text-ink-muted uppercase tracking-widest">
-              {dish.isVeg ? "Veg" : "Non-Veg"}
-            </span>
-            <span className="px-2 py-1 rounded-full bg-surface-raised border border-line font-bold text-3xs text-ink-muted uppercase tracking-widest">
-              {dish.category}
-            </span>
-            {dish.rdVerified && (
-              <span className="px-2 py-1 rounded-full bg-sage-soft/90 border border-[var(--sage)]/20 font-bold text-3xs text-sage-text uppercase tracking-widest">
-                RD Verified
-              </span>
-            )}
-          </div>
-          
-          <h1 className="font-bold text-3xl text-ink mb-2">{dish.name}</h1>
-          {/* N5.4: NOT `longDescription || description` — both are the
-              ingredient list (with quantities and a different separator),
-              which the Ingredients accordion below already renders in full.
-              Printing it here too was one string shown twice. Names only;
-              the accordion keeps the quantities. */}
-          <p className="text-ink-muted text-sm leading-relaxed mb-4">
+
+        <VStack gap={5}>
+          <VStack gap={2}>
+            <HStack gap={2}>
+              <Badge variant={dish.isVeg ? "green" : "orange"} label={dish.isVeg ? "Veg" : "Non-veg"} />
+              <Badge label={dish.category} />
+              {dish.rdVerified && <Badge variant="success" label="RD reviewed" />}
+            </HStack>
+
+            <Text type="display-2" as="h1">
+              {dish.name}
+            </Text>
+
+            <Text type="large" weight="bold" hasTabularNumbers>
+              {formatPaise(dish.price)}
+            </Text>
+          </VStack>
+
+          {/* Ingredient NAMES only — the quantities live in the Ingredients
+              section below, so this is no longer the same list printed twice
+              (see lib/dishText.ts). */}
+          <Text type="large" weight="normal" color="secondary">
             {ingredientSummary(dish.ingredients)}
-          </p>
-          
-          <div className="flex items-center gap-4 py-4 border-y border-line">
-            <div className="flex-1">
-              <span className="block font-bold text-3xs text-ink-muted uppercase tracking-widest mb-1">Calories</span>
-              <span className="font-mono text-ink">{est}{dish.macros.calories} kcal</span>
-            </div>
-            <div className="w-px h-8 bg-line"></div>
-            <div className="flex-1">
-              <span className="block font-bold text-3xs text-ink-muted uppercase tracking-widest mb-1">Protein</span>
-              <span className="font-mono text-ink">{est}{dish.macros.protein}g</span>
-            </div>
-            <div className="w-px h-8 bg-line"></div>
-            <div className="flex-1">
-              <span className="block font-bold text-3xs text-ink-muted uppercase tracking-widest mb-1">Carbs</span>
-              <span className="font-mono text-ink">{est}{dish.macros.carbs}g</span>
-            </div>
-          </div>
-        </div>
+          </Text>
 
-        {/* Nutrition & Ingredients Disclosure */}
-        <div className="mb-8 flex-1">
-          {/* N5.5: this said "Full macronutrient breakdown" while listing only
-              Fat and Fiber — i.e. the two macros the summary strip above
-              DOESN'T show, which is the opposite of full. Now genuinely all
-              five of DishMacros, so the label is true and the panel stands on
-              its own instead of being a footnote to the strip. */}
-          <AccordionItem title="Nutrition details" subtitle="Full macronutrient breakdown">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Energy</span>
-                <span className="tabular">{est}{dish.macros.calories} kcal</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Protein</span>
-                <span className="tabular">{est}{dish.macros.protein} g</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Carbohydrate</span>
-                <span className="tabular">{est}{dish.macros.carbs} g</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Total fat</span>
-                <span className="tabular">{est}{dish.macros.fat} g</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Fibre</span>
-                <span className="tabular">{est}{dish.macros.fiber} g</span>
-              </div>
-              {dish.sugarPerServing && (
-                <div className="flex justify-between border-t border-line pt-2">
-                  <span>Sugar</span>
-                  <span className="tabular">{dish.sugarPerServing}</span>
-                </div>
-              )}
-            </div>
-          </AccordionItem>
-          
-          <AccordionItem title="Ingredients">
-            <p>{dish.ingredients.join(", ") || "No ingredients listed."}</p>
-          </AccordionItem>
+          <Divider />
 
-          {/* Never collapsed behind the accordion above: this preserves the
-              reviewed / auto-detected / under-review states from
-              lib/allergenCopy.ts (an unreviewed or auto-detected list must
-              never render as an affirmative "no allergens"), and a customer
-              with allergies needs it visible, not opt-in. Mirrors
-              DishDrawer.tsx, the drawer surface for this same dish. */}
+          <HStack gap={6}>
+            <Macro label="Calories" value={`${est}${dish.macros.calories} kcal`} />
+            <Macro label="Protein" value={`${est}${dish.macros.protein} g`} />
+            <Macro label="Carbs" value={`${est}${dish.macros.carbs} g`} />
+          </HStack>
+
+          <CollapsibleGroup type="multiple" defaultValue={["nutrition"]}>
+            <Divider />
+            <Collapsible value="nutrition" trigger={<Heading level={3}>Nutrition</Heading>}>
+              <VStack gap={2}>
+                {/* Genuinely every macro — this section used to be labelled
+                    "Full macronutrient breakdown" while listing only the two
+                    the summary row above omits. */}
+                <NutritionRow label="Energy" value={`${est}${dish.macros.calories} kcal`} />
+                <NutritionRow label="Protein" value={`${est}${dish.macros.protein} g`} />
+                <NutritionRow label="Carbohydrate" value={`${est}${dish.macros.carbs} g`} />
+                <NutritionRow label="Total fat" value={`${est}${dish.macros.fat} g`} />
+                <NutritionRow label="Fibre" value={`${est}${dish.macros.fiber} g`} />
+                {dish.sugarPerServing && <NutritionRow label="Sugar" value={dish.sugarPerServing} />}
+              </VStack>
+            </Collapsible>
+
+            <Divider />
+            <Collapsible
+              value="ingredients"
+              defaultIsOpen={false}
+              trigger={<Heading level={3}>Ingredients</Heading>}
+            >
+              <VStack gap={1}>
+                {dish.ingredients.length === 0 ? (
+                  <Text type="body" color="secondary">
+                    No ingredients listed.
+                  </Text>
+                ) : (
+                  dish.ingredients.map((entry) => (
+                    <Text key={entry} type="body" color="secondary">
+                      {entry}
+                    </Text>
+                  ))
+                )}
+              </VStack>
+            </Collapsible>
+            <Divider />
+          </CollapsibleGroup>
+
+          {/* Never collapsed (§6): the reviewed / auto-detected / under-review
+              states must stay visible — an unreviewed list must never read as
+              an affirmative "no allergens". Mirrors DishDrawer.tsx. */}
           <DishAllergens dish={dish} />
-        </div>
+        </VStack>
 
-        {/* Bottom CTA — the StickyAddToCartLedger (UX/UI Architecture Phase 2
-            §6). This shell (app/(focus)/) renders no MiniCartBar, so the
-            route onward to checkout has to live here: PdpBuyLedger adds AND
-            opens the Cart Drawer in one action (the doc's canonical
-            PDP → Cart Drawer → /checkout path), not just a link past it.
-
-            N5.6: `sticky bottom-4` floats the card 16px above the viewport
-            bottom, and at 95% alpha that 16px band let page content scroll
-            visibly THROUGH it under the card — read as a rendering glitch,
-            not as a float. The float is kept (it is the design), and the
-            band is masked instead: a matching opaque strip sits behind the
-            gap via the wrapper's ::after, so the card still reads as
-            floating while nothing slides beneath it. Wrapper carries the
-            sticky positioning so the mask travels with the card. */}
-        <div className="sticky bottom-0 w-full pb-4 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-4 after:bg-bg after:content-['']">
-          <div className="relative z-10 w-full rounded-3xl border border-line bg-bg/95 p-4 shadow-2xl backdrop-blur-md">
+        {/* N5.6: the float is the design; the 16px band beneath it is masked
+            so page content can't scroll visibly through the gap. */}
+        <div className="sticky bottom-0 mt-8 w-full pb-4 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-4 after:bg-bg after:content-['']">
+          {/* OPAQUE, not bg-bg/95: at 95% the page's own text stayed legible
+              straight through the card as it scrolled past — which is what
+              N5.6 actually reported. The mask band below handles the 16px
+              float gap; this handles the card itself. */}
+          <div className="relative z-10 w-full rounded-3xl border border-line bg-bg p-4 shadow-2xl">
             <div className="flex items-center justify-between gap-3">
-              <div className="flex flex-col">
-                <span className="font-bold text-3xs text-ink-muted uppercase tracking-widest">Price</span>
-                <span className="font-clinical-data text-xl text-gold-text">{formatPaise(dish.price)}</span>
-              </div>
+              <VStack gap={0}>
+                <Text type="supporting" color="secondary">
+                  Price
+                </Text>
+                <Text type="large" weight="bold" hasTabularNumbers className="text-gold-text">
+                  {formatPaise(dish.price)}
+                </Text>
+              </VStack>
               <PdpBuyLedger dish={dish} />
             </div>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** One row of the nutrition panel. */
+function NutritionRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <Text type="body" color="secondary">
+        {label}
+      </Text>
+      <Text type="body" hasTabularNumbers>
+        {value}
+      </Text>
     </div>
   );
 }
