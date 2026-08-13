@@ -27,6 +27,8 @@ on:
       - "scripts/lint-landmarks.ts"
       - "scripts/lint-placeholder-assets.ts"
       - "scripts/placeholder-assets-baseline.txt"
+      - "scripts/lint-dark-forks.ts"
+      - "scripts/dark-forks-baseline.txt"
       - "scripts/src/lighthouse-audit.mjs"
       - "docs/stitch/stitch-screen-manifest.json"
       - "tools/verify-stitch-manifest.mjs"
@@ -152,6 +154,18 @@ jobs:
       - name: Placeholder-photography gate — baselined debt may only shrink
         if: ${{ !cancelled() }}
         run: pnpm --filter @workspace/storefront run lint:placeholder-assets
+      # Theme-blindness gate — same invisible-in-review argument as the two
+      # above: a `dark:` fork renders correctly in whichever mode the reviewer
+      # happens to be in. Baselined, not zero: 522 pre-existing violations in
+      # components/wellness/ + components/rd/ are frozen in
+      # scripts/dark-forks-baseline.txt so the gate blocks NEW forks, Tailwind
+      # palette colours and raw white/black today, while the migration (which
+      # needs a per-hue token mapping) is decided separately. The register may
+      # only shrink — a fixed line whose baseline entry is still present fails
+      # the gate as stale.
+      - name: Theme-blindness gate — no new dark:/palette/raw-white drift
+        if: ${{ !cancelled() }}
+        run: pnpm --filter @workspace/storefront run lint:dark-forks
       # Stitch traceability gates. The manifest verifier proves the 74-entry
       # manifest is schema-valid; the wiring verifier proves its filesystem
       # claims match the repo. Honest missing/partial/blocked entries PASS —
