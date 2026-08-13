@@ -11,12 +11,21 @@ import { Section05LogisticsMoat } from "@/components/landing/Section05LogisticsM
 import { Section05ProofMacros } from "@/components/landing/Section05ProofMacros";
 import { fetchMenu } from "@/lib/catalog";
 import { formatPaise } from "@/lib/format";
+import { pickPlanCardDishes } from "@/lib/planCardDish";
+import { planDisplay } from "@/lib/planCopy";
+import { PROTOCOL_CONFIG, type ProtocolKey } from "@/content/landing/protocol";
 import { DishCard } from "@/components/DishCard";
 import { Section06ProofRdPanel } from "@/components/landing/Section06ProofRdPanel";
 import { Section07ProofKitchen } from "@/components/landing/Section07ProofKitchen";
 import { Section09AssessmentSection } from "@/components/landing/Section09AssessmentSection";
 import { Section09bRecipesBridge } from "@/components/landing/Section09bRecipesBridge";
 import { Section10FaqAccordion } from "@/components/landing/Section10FaqAccordion";
+/** Protocol landers that exist as routes today. `/wellness` does not yet. */
+const LANDING_PROTOCOLS: { key: ProtocolKey; href: string }[] = [
+  { key: "clinical", href: "/clinical" },
+  { key: "performance", href: "/performance" },
+];
+
 /**
  * Consumer Home — 3-Pillar Revenue Architecture.
  * Server Component implementing DTR (Dynamic Tailored Referrals) personalization,
@@ -29,6 +38,10 @@ export default async function HomePage() {
   
   const { dishes } = await fetchMenu();
   const featuredDishes = dishes.slice(0, 5);
+  // The real dish behind each plan card, off the catalog we just loaded — the
+  // grid is a client component and cannot read it itself. Order matters: each
+  // plan claims its dish before the next one picks, so no two cards repeat.
+  const planDishes = pickPlanCardDishes(["desk_fuel", "steady", "protein_build"], dishes);
 
   return (
     <div
@@ -77,18 +90,34 @@ export default async function HomePage() {
           </ul>
         </section>
 
-        {/* Horizontal section: "Built for longer goals" */}
+        {/* Horizontal section: "Built for longer goals".
+            This rail listed 'Metabolic Reset' and 'Performance Protocol' as
+            subscriptions. Only one of those is real: PROTOCOL_CONFIG defines
+            three protocol landers (Wellness / Clinical / Performance), each
+            pointing at a plan you can actually buy. "Metabolic Reset" is not a
+            plan, a protocol, or a route — it named nothing. Both cards then
+            linked to /plans rather than to themselves, and described a "4-week
+            targeted clinical intervention with daily deliveries" — the real
+            plans are 22 weekday lunches a month, not daily.
+            Wellness has no lander route yet, so the two with routes are the
+            two rendered; add it here when /wellness ships. */}
         <section className="px-gutter py-6">
           <h2 className="font-bold text-3xl text-ink mb-6">Built for longer goals</h2>
           <ul className="flex gap-4 overflow-x-auto snap-x no-scrollbar pb-4 -mx-gutter px-gutter">
-            {['Metabolic Reset', 'Performance Protocol'].map((plan, i) => (
-              <li key={i} className="flex-none w-[300px] snap-start rounded-3xl border border-line bg-surface p-6">
-                <div className="font-bold text-xs text-primary mb-2">SUBSCRIPTION</div>
-                <h3 className="text-lg font-bold text-ink mb-2">{plan}</h3>
-                <p className="text-ink-muted text-sm mb-6">4-week targeted clinical intervention with daily deliveries.</p>
-                <a href="/plans" className="inline-block w-full text-center px-4 py-3 rounded-full border border-line font-bold text-xs text-ink hover:bg-surface-raised transition-colors">Explore Plan</a>
-              </li>
-            ))}
+            {LANDING_PROTOCOLS.map(({ key, href }) => {
+              const protocol = PROTOCOL_CONFIG[key];
+              const plan = planDisplay(protocol.planId);
+              return (
+                <li key={key} className="flex-none w-[300px] snap-start rounded-3xl border border-line bg-surface p-6">
+                  <div className="font-bold text-xs text-primary mb-2">{protocol.eyebrow.toUpperCase()}</div>
+                  <h3 className="text-lg font-bold text-ink mb-2">{plan.name}</h3>
+                  <p className="text-ink-muted text-sm mb-6">{plan.subtitle}</p>
+                  <a href={href} className="inline-block w-full text-center px-4 py-3 rounded-full border border-line font-bold text-xs text-ink hover:bg-surface-raised transition-colors">
+                    Explore {plan.name}
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         </section>
 
@@ -99,7 +128,7 @@ export default async function HomePage() {
             the other kept saying "Select your location" all session. */}
         <Section02QualificationChips />
 
-        <Section04ProtocolsGrid />
+        <Section04ProtocolsGrid dishes={planDishes} />
 
         <Section04bMarketplace />
 
@@ -124,19 +153,22 @@ export default async function HomePage() {
         <Section05LogisticsMoat />
         <Section03AgitationPanel />
 
-        {/* Compact AI recommendation card */}
-        <section className="px-gutter pb-8">
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 relative overflow-hidden">
-            <div aria-hidden className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
-            <div className="flex gap-3 items-center mb-4">
-              <span className="material-symbols-outlined text-primary">auto_awesome</span>
-              <span className="font-bold text-xs text-primary uppercase tracking-widest">Smart Match</span>
-            </div>
-            <h3 className="text-lg font-bold text-ink mb-2">Optimize your Afternoon</h3>
-            <p className="text-ink-muted text-sm mb-6">Based on your goals, adding the Matcha Focus protocol will stabilize your 3PM glucose dip.</p>
-            <button className="px-6 py-2.5 rounded-full bg-primary text-primary-foreground font-bold text-xs hover:opacity-90 active:scale-[0.98] transition-all">Add to Today</button>
-          </div>
-        </section>
+        {/* No "Smart Match" card here (owner decision, 2026-08-13). It read
+            "Based on your goals, adding the Matcha Focus protocol will
+            stabilize your 3PM glucose dip" — a per-visitor clinical finding,
+            hardcoded in a Server Component, shown identically to every
+            anonymous visitor including ones with no goals set and no order
+            history. Its "Add to Today" button had no handler and could not
+            have one here, so the one thing it invited you to do was the one
+            thing it could not do.
+
+            Restoring it needs a real recommendation from the API keyed to a
+            real profile, and a client island to act on it — not a second
+            literal. Until then the page says nothing rather than something
+            untrue, which matters more here than on most surfaces: this page
+            also claims ISO 22000, FSSAI licensing and RD supervision, and a
+            visitor who catches one invented claim has no reason to believe
+            the audited ones. */}
 
         {/* FAQ Accordion */}
         <Section10FaqAccordion />

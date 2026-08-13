@@ -1,7 +1,5 @@
 import React from "react";
 
-import { SafeImage } from "@/components/ui/SafeImage";
-
 /**
  * §7: Verification Proofs - Kitchen Credentials.
  * Showcases Noida medical-grade central kitchen infrastructure, strict sanitation logs,
@@ -25,18 +23,16 @@ export function Section07ProofKitchen() {
 
   return (
     <section className="mx-auto max-w-6xl px-4 sm:px-6">
+      {/* No ambient kitchen photo here, deliberately. This section's whole
+          claim is that OUR kitchen is auditable — FSSAI, ISO 22000, daily swab
+          checks — and it was illustrated with a random stock kitchen at 10%
+          opacity: a stranger's worktop, behind the sentence promising ours.
+          Nothing beats a real frame from the Noida kitchen; until that shoot
+          happens, no image is the honest state. It also cost every visitor a
+          1920x1080 download to render almost nothing. */}
       <div className="relative overflow-hidden rounded-2xl border border-line bg-surface p-6 sm:p-10 shadow-sm">
-        {/* Rich Ambient Imagery for Kitchen feel */}
-        <div className="absolute inset-0 z-0 opacity-10 mix-blend-luminosity grayscale pointer-events-none">
-          <SafeImage
-            src="https://picsum.photos/seed/kitchen-prep/1920/1080"
-            alt="Chef preparing fresh meal"
-            
-            className="object-cover"
-          />
-        </div>
-        
-        <div className="relative z-10 flex flex-col gap-2 border-b border-line pb-6 sm:flex-row sm:items-baseline sm:justify-between">
+
+        <div className="flex flex-col gap-2 border-b border-line pb-6 sm:flex-row sm:items-baseline sm:justify-between">
           <div>
             <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
               Triple Verification Pillar 3

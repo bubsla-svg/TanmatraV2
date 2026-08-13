@@ -5,15 +5,58 @@ import Link from "next/link";
 import { SafeImage } from "@/components/ui/SafeImage";
 import { formatPaise } from "@/lib/format";
 import { emitLpEvent } from "@/lib/lpEvents";
+import type { PlanCardDish, PlanDishMap } from "@/lib/planCardDish";
+import { planDisplay } from "@/lib/planCopy";
 import { TRIAL_PRICE_PAISE } from "@/lib/trial";
 import { computePlanQuote } from "@workspace/subscription-rules";
 import { FlipCard } from "./FlipCard";
 
 /**
+ * A plan card's photo, or nothing at all.
+ *
+ * `dish === null` renders NO element — deliberately, not as an oversight.
+ * These three frames held random-image-API placeholders captioned as our own
+ * meals; the replacement (lib/planCardDish.ts) resolves a dish the plan
+ * actually rotates, and when it cannot, the honest output is an absent photo
+ * rather than a stand-in. Sized by the frame per SafeImage's contract, so the
+ * box is reserved before the image decodes and the card never reflows.
+ */
+function PlanPhotoFrame({ dish }: { dish: PlanCardDish | null | undefined }) {
+  if (!dish) return null;
+  return (
+    <SafeImage
+      src={dish.image}
+      alt={dish.name}
+      className="mt-4 mb-2 aspect-[4/3] w-full rounded-xl border border-line"
+      // The photo is the appetite: it renders in full colour. It used to
+      // carry `mix-blend-luminosity opacity-90`, greying the food until
+      // hover, on the one surface whose job is to make lunch look good.
+      // (Those classes also sat on the FRAME, not the <img> — SafeImage owns
+      // the img via imgClassName — so the zoom scaled the box, not the photo.)
+      imgClassName="transition-transform duration-700 ease-out group-hover:scale-105"
+    />
+  );
+}
+
+/**
  * §4: Protocols Tier Grid.
  * Displays D2C Therapeutic Subscriptions with canonical trial & monthly pricing.
+ *
+ * `dishes` is resolved server-side by the page (this is a client component, so
+ * it cannot read the catalog itself) from the same `fetchMenu()` call the
+ * homepage already makes — no extra round-trip.
  */
-export function Section04ProtocolsGrid() {
+export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
+  const steadyDish = dishes.steady;
+  // The plan's ONE name, from lib/planCopy.ts. These three cards used to
+  // invent their own — "Weight-Loss Jumpstart", "PCOS Hormone Balance",
+  // "Lean Muscle Builder" — so a buyer who picked one by name landed on a
+  // page titled something else ("Desk Fuel", "Steady", "Protein Build") with
+  // no explanation, at the exact step where they were deciding to pay. The
+  // goal framing those names carried survives in each card's kicker.
+  const deskFuel = planDisplay("desk_fuel");
+  const steady = planDisplay("steady");
+  const proteinBuild = planDisplay("protein_build");
   const trialPrice = formatPaise(TRIAL_PRICE_PAISE);
   const deskFuelMonthly = formatPaise(computePlanQuote("desk_fuel").cycleTotalPaise);
   const steadyMonthly = formatPaise(computePlanQuote("steady").cycleTotalPaise);
@@ -65,7 +108,7 @@ export function Section04ProtocolsGrid() {
        *    is the house hover for a bordered control on a card (AccountHub,
        *    BillingPanel, VoucherRedeem, …). */}
       <div className="mt-12 grid grid-flow-dense gap-8 lg:grid-cols-3">
-        {/* Card 1: Weight-Loss Jumpstart */}
+        {/* Card 1: Desk Fuel */}
         <div className="group flex flex-col justify-between rounded-2xl border border-line bg-surface p-6 shadow-sm overflow-hidden transition-transform duration-700 ease-out hover:scale-105 hover:shadow-xl hover:border-gold/30">
           <div>
             <div className="flex items-center justify-between gap-2">
@@ -74,20 +117,22 @@ export function Section04ProtocolsGrid() {
               </span>
               <span className="tabular text-xs font-bold text-ink-muted">{deskFuelMonthly}/mo</span>
             </div>
-            <div className="mt-4 mb-2 aspect-[4/3] w-full overflow-hidden rounded-xl border border-line">
-              <SafeImage
-                src="https://picsum.photos/seed/weightloss/800/600"
-                alt="Weight Loss Meal"
-                className="w-full h-full object-cover mix-blend-luminosity opacity-90 transition-transform duration-700 ease-out group-hover:scale-105 group-hover:mix-blend-normal group-hover:opacity-100"
-              />
-            </div>
-            <h3 className="mt-2 text-xl font-bold text-ink">Weight-Loss Jumpstart</h3>
+            <PlanPhotoFrame dish={dishes.desk_fuel} />
+            <h3 className="mt-2 text-xl font-bold text-ink">{deskFuel.name}</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
               Focus: Shed weight without feeling tired. Keeps you full and energized all day.
             </p>
+            {/* Real plan copy, not invented specs. This block held
+                "1,500 kcal · 90g protein · 25g+ fiber" and two similar
+                lines on the other cards. PLAN_CATALOG carries no macro
+                targets — no calorie, protein or fibre figure exists for
+                any plan — so those numbers had no source, and the plan
+                page they link to shows nothing like them. Under the
+                correct plan name they would read as verified plan specs,
+                which is the more dangerous version of the same bug. */}
             <div className="mt-6 border-y border-line py-4">
-              <span className="tabular text-lg font-bold text-ink">1,500 kcal · 90g protein · 25g+ fiber</span>
-              <p className="mt-1 text-xs text-ink-muted">Keeps blood sugar steady</p>
+              <span className="text-sm font-semibold text-ink">{deskFuel.promise}</span>
+              <p className="mt-1 text-xs text-ink-muted">{deskFuel.subtitle}</p>
             </div>
             <ul className="mt-6 flex flex-col gap-2.5 text-xs text-ink-muted">
               <li className="flex items-center gap-2">✓ 100% cold-pressed olive oil &amp; desi ghee</li>
@@ -113,7 +158,7 @@ export function Section04ProtocolsGrid() {
           </div>
         </div>
 
-        {/* Card 2: PCOS Hormone Balance */}
+        {/* Card 2: Steady */}
         <div className="group flex flex-col justify-between rounded-2xl border-2 border-gold-text bg-surface p-6 shadow-md overflow-hidden transition-transform duration-700 ease-out hover:scale-105 hover:shadow-xl hover:border-gold/80">
           <div>
             <div className="flex items-center justify-between gap-2">
@@ -122,27 +167,42 @@ export function Section04ProtocolsGrid() {
               </span>
               <span className="tabular text-xs font-bold text-ink">{steadyMonthly}/mo</span>
             </div>
-            <div className="mt-4 mb-2 aspect-[4/3] w-full overflow-hidden rounded-xl border border-line">
-              <SafeImage
-                src="https://picsum.photos/seed/hormone/800/600"
-                alt="Hormone Balance Meal"
-                className="w-full h-full object-cover mix-blend-luminosity opacity-90 transition-transform duration-700 ease-out group-hover:scale-105 group-hover:mix-blend-normal group-hover:opacity-100"
-              />
-            </div>
-            <h3 className="mt-2 text-xl font-bold text-ink">PCOS Hormone Balance</h3>
+            <PlanPhotoFrame dish={dishes.steady} />
+            <h3 className="mt-2 text-xl font-bold text-ink">{steady.name}</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
               Focus: Supports hormone balance and manages energy levels naturally. Approved by experts.
             </p>
             <div className="mt-6 border-y border-line py-4">
-              <span className="tabular text-lg font-bold text-ink">1,700 kcal · 100g protein</span>
-              <p className="mt-1 text-xs text-ink-muted">Healthy fats, slow-burning carbs</p>
+              <span className="text-sm font-semibold text-ink">{steady.promise}</span>
+              <p className="mt-1 text-xs text-ink-muted">{steady.subtitle}</p>
             </div>
-            <div className="mt-4">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink">
-                Interactive Macro Spec:
-              </p>
-              <FlipCard />
-            </div>
+            {/* The whole block is gated on a real dish. It used to render
+                unconditionally around a FlipCard with no props, and that
+                card's default was a dish that does not exist — so the label
+                "Interactive Macro Spec" sat above invented macros. With no
+                qualifying dish there is no spec to show, and the heading for
+                one would be the same lie in smaller type. */}
+            {steadyDish && (
+              <div className="mt-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink">
+                  Interactive Macro Spec:
+                </p>
+                <FlipCard
+                  spec={{
+                    id: steadyDish.slug,
+                    name: steadyDish.name,
+                    image: steadyDish.image,
+                    isVeg: steadyDish.isVeg,
+                    price: steadyDish.pricePaise,
+                    macros: steadyDish.macros,
+                    macrosEstimated: steadyDish.macrosEstimated,
+                    rdVerified: steadyDish.rdVerified,
+                    ...(steadyDish.rdNote ? { rdNote: steadyDish.rdNote } : {}),
+                    category: steadyDish.category,
+                  }}
+                />
+              </div>
+            )}
           </div>
           <div className="mt-8 flex flex-col gap-2">
             <Link
@@ -162,7 +222,7 @@ export function Section04ProtocolsGrid() {
           </div>
         </div>
 
-        {/* Card 3: Lean Muscle Builder */}
+        {/* Card 3: Protein Build */}
         <div className="group flex flex-col justify-between rounded-2xl border border-line bg-surface-raised p-6 shadow-sm overflow-hidden transition-transform duration-700 ease-out hover:scale-105 hover:shadow-xl hover:border-gold/30">
           <div>
             <div className="flex items-center justify-between gap-2">
@@ -171,20 +231,14 @@ export function Section04ProtocolsGrid() {
               </span>
               <span className="tabular text-xs font-bold text-ink-muted">{proteinMonthly}/mo</span>
             </div>
-            <div className="mt-4 mb-2 aspect-[4/3] w-full overflow-hidden rounded-xl border border-line">
-              <SafeImage
-                src="https://picsum.photos/seed/muscle/800/600"
-                alt="Muscle Building Meal"
-                className="w-full h-full object-cover mix-blend-luminosity opacity-90 transition-transform duration-700 ease-out group-hover:scale-105 group-hover:mix-blend-normal group-hover:opacity-100"
-              />
-            </div>
-            <h3 className="mt-2 text-xl font-bold text-ink">Lean Muscle Builder</h3>
+            <PlanPhotoFrame dish={dishes.protein_build} />
+            <h3 className="mt-2 text-xl font-bold text-ink">{proteinBuild.name}</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
               Focus: Fuel your workouts and recover faster with high-protein, energy-packed meals.
             </p>
             <div className="mt-6 border-y border-line py-4">
-              <span className="tabular text-lg font-bold text-ink">2,400 kcal · 160g protein</span>
-              <p className="mt-1 text-xs text-ink-muted">High-quality protein for muscle growth</p>
+              <span className="text-sm font-semibold text-ink">{proteinBuild.promise}</span>
+              <p className="mt-1 text-xs text-ink-muted">{proteinBuild.subtitle}</p>
             </div>
             <ul className="mt-6 flex flex-col gap-2.5 text-xs text-ink-muted">
               <li className="flex items-center gap-2">✓ High amino-acid completeness</li>

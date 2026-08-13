@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { formatPaise } from "@/lib/format";
+import { planDisplay } from "@/lib/planCopy";
+import type { PlanId } from "@workspace/subscription-rules";
 import { TRIAL_PRICE_PAISE } from "@/lib/trial";
 import { emitLpEvent } from "@/lib/lpEvents";
 import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
@@ -118,18 +120,19 @@ export function AssessmentStepper({
   const currentConfig = ASSESSMENT_STEPS[stepIdx];
   if (!currentConfig && !showResult) return null;
 
+  // The assessment recommends a REAL plan, named the way the plan page names
+  // it. It used to invent a fourth naming universe of its own — "PCOS Hormone
+  // Balance & Low-GI Protocol", "Weight-Loss Jumpstart & Metabolic Reset
+  // Protocol" — none of which is a plan anyone can buy, alongside specs
+  // ("1,700 kcal · 100g verified protein") that no plan defines. Of all the
+  // places to invent a number, the result screen of a "clinical health
+  // assessment" is the worst: the visitor has just answered questions about
+  // their conditions and is primed to read whatever follows as a finding
+  // about them. Now it resolves a PlanId and renders that plan's own copy.
   const hasPcos = state.conditions.includes("pcos") || state.primaryGoal === "glucose_stability";
   const hasMuscle = state.primaryGoal === "lean_muscle";
-  const recTitle = hasPcos
-    ? "PCOS Hormone Balance & Low-GI Protocol"
-    : hasMuscle
-      ? "Lean Muscle Hypertrophy & Protein Protocol"
-      : "Weight-Loss Jumpstart & Metabolic Reset Protocol";
-  const recSpecs = hasPcos
-    ? "1,700 kcal · 100g verified protein · Anti-inflammatory low-GI"
-    : hasMuscle
-      ? "2,400 kcal · 160g protein surplus · Recovery-tuned"
-      : "1,500 kcal · 90g protein · 25g+ soluble fiber";
+  const recPlanId: PlanId = hasPcos ? "steady" : hasMuscle ? "protein_build" : "desk_fuel";
+  const recPlan = planDisplay(recPlanId);
 
   return (
     <div
@@ -159,8 +162,8 @@ export function AssessmentStepper({
               <span className="rounded-full bg-gold/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-gold-text">
                 Recommended Clinical Plan
               </span>
-              <h2 className="mt-3 text-2xl font-bold text-ink">{recTitle}</h2>
-              <p className="mt-1 text-sm font-medium text-ink-muted">{recSpecs}</p>
+              <h2 className="mt-3 text-2xl font-bold text-ink">{recPlan.name}</h2>
+              <p className="mt-1 text-sm font-medium text-ink-muted">{recPlan.subtitle}</p>
 
               <div className="mt-6 rounded-xl border border-line bg-surface p-4">
                 <span className="text-xs font-semibold uppercase text-gold-text">
@@ -174,7 +177,7 @@ export function AssessmentStepper({
                     <a href="/trial">Start 3-Day Trial Pack — {formatPaise(TRIAL_PRICE_PAISE)} →</a>
                   </Button>
                   <Button asChild variant="outline" shape="xl" size="fluid" className="px-5 py-3.5 text-xs font-semibold hover:border-line-strong">
-                    <a href={`/plans?goal=${state.primaryGoal}`}>View Monthly Protocol</a>
+                    <a href={`/plan/${recPlanId}`}>View {recPlan.name} →</a>
                   </Button>
                 </div>
               </div>

@@ -19,30 +19,14 @@ import { DISHES } from "@workspace/menu-catalog";
  * and flagged until the IMPECCABLE copy system lands.
  */
 
-export interface PlanDisplay {
-  id: PlanId;
-  name: string;
-  /** Router answer / one-line promise (02 §3, 02e §2). */
-  promise: string;
-  /** Sensory-hook subtitle (INFERRED from 02 §3 — flagged). */
-  subtitle: string;
-  clinical: boolean;
-}
-
-const DISPLAY: Record<PlanId, PlanDisplay> = {
-  desk_fuel: { id: "desk_fuel", name: "Desk Fuel", promise: "Get me through the workday", subtitle: "22 lunches that pull their weight.", clinical: false },
-  steady: { id: "steady", name: "Steady", promise: "Keep my sugar steady", subtitle: "Low-GI builds, RD-reviewed — steady energy, steady sugar.", clinical: true },
-  glp1_companion: { id: "glp1_companion", name: "GLP-1 Companion", promise: "I'm on a GLP-1", subtitle: "Small portions, serious protein — built for how you eat now.", clinical: true },
-  protein_build: { id: "protein_build", name: "Protein Build", promise: "Build muscle", subtitle: "Protein-per-rupee that trains with you.", clinical: false },
-  teams: { id: "teams", name: "Tanmatra for Teams", promise: "Feed the team", subtitle: "Desk-drop for 10+ seats, weekly invoice.", clinical: false },
-  trial_3day: { id: "trial_3day", name: "3-Day Taste Test", promise: "Try a few days first", subtitle: "Three lunches, full creditback if you continue.", clinical: false },
-};
+// The plan display copy lives in ./planCopy — no catalog import there, so a
+// component can ask for a plan's NAME without pulling 116 dishes into its
+// bundle. Re-exported here so every existing consumer of `@/lib/plans` is
+// unaffected by the split.
+import { planDisplay, type PlanDisplay } from "./planCopy";
+export { planDisplay, PLAN_DISPLAY, type PlanDisplay } from "./planCopy";
 
 export const DIET_TRACKS: DietTrack[] = ["veg", "egg", "nonveg"];
-
-export function planDisplay(id: PlanId): PlanDisplay {
-  return DISPLAY[id];
-}
 
 /** Plans that appear on the goal router (self-serve, launchable, not the trial
  *  or the sales-led Teams). Order preserves the 02e table. */

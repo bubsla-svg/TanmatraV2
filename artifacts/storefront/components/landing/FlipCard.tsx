@@ -4,37 +4,30 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { formatPaise } from "@/lib/format";
 import { emitLpEvent } from "@/lib/lpEvents";
-import { PLAN_PRICE_TABLE } from "@workspace/subscription-rules";
 import { SpecSheetCard, type ClinicalDishSpec } from "./SpecSheetCard";
 import { SafeImage } from "@/components/ui/SafeImage";
 
+/**
+ * `spec` is REQUIRED, and that is the fix.
+ *
+ * It used to be optional, defaulting to a fictional dish: a "Glazed Salmon &
+ * Quinoa Bowl" (stock photo, US healthy-bowl trope, shown to Noida lunch
+ * buyers) with invented macros, an invented GI classification, an invented
+ * dietitian's note, and — when its own price lookup missed — a price silently
+ * borrowed from a DIFFERENT plan's table. Nothing rendered it with real data,
+ * so the default WAS the component: the only dish this card ever showed was
+ * one that does not exist.
+ *
+ * Making the prop required means the card cannot render without a real dish
+ * behind it. Its one caller resolves that from the catalog and omits the card
+ * entirely when no dish qualifies (see lib/planCardDish.ts).
+ */
 export interface FlipCardProps {
-  spec?: ClinicalDishSpec;
+  spec: ClinicalDishSpec;
   initialFlipped?: boolean;
 }
 
-const DEFAULT_SPEC: ClinicalDishSpec = {
-  id: "steady_sample_01",
-  name: "Glazed Salmon & Quinoa Bowl",
-  image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop",
-  isVeg: false,
-  price:
-    PLAN_PRICE_TABLE.steady.nonveg.perMealPaise ??
-    PLAN_PRICE_TABLE.protein_build.veg.perMealPaise!,
-  macros: {
-    calories: 460,
-    protein: 38,
-    carbs: 42,
-    fat: 16,
-    fiber: 7,
-  },
-  giClass: "Low GI (<55) — Steady Predicate",
-  rdVerified: true,
-  rdNote: "Formulated for post-prandial glucose stability with high omega-3 lipid profile.",
-  category: "mains",
-};
-
-export function FlipCard({ spec = DEFAULT_SPEC, initialFlipped = false }: FlipCardProps) {
+export function FlipCard({ spec, initialFlipped = false }: FlipCardProps) {
   const [flipped, setFlipped] = useState(initialFlipped);
 
   function toggleFlip(newFlipped: boolean) {
@@ -56,7 +49,10 @@ export function FlipCard({ spec = DEFAULT_SPEC, initialFlipped = false }: FlipCa
     );
   }
 
-  const est = spec.macros ? "~" : "";
+  // Reads the dish's own flag. The old expression was `spec.macros ? "~" : ""`
+  // — and `macros` is a required field, so it was always truthy: every dish
+  // got the approximation tilde, including ones whose macros are exact.
+  const est = spec.macrosEstimated ? "~" : "";
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-[var(--shadow-card)] transition-transform hover:-translate-y-0.5">
@@ -87,15 +83,20 @@ export function FlipCard({ spec = DEFAULT_SPEC, initialFlipped = false }: FlipCa
             Tap for Specs ➔
           </span>
         </div>
+        {/* Both lines below are the dish's own or absent. They used to fall
+            back to "Clinical Macro Monitored" and "Precision macro balanced
+            meal designed by certified clinical dietitians." — house sentences
+            that read as findings about THIS dish and, with no catalog dish
+            carrying either field, would have appeared under every one of
+            them. A card that says less but only true things is the trade. */}
         <div className="flex flex-col gap-1.5 p-3 pb-0">
           <h3 className="text-sm font-semibold leading-snug text-ink">{spec.name}</h3>
-          <p className="text-2xs font-semibold text-ink-muted">
-            {spec.giClass ?? "Clinical Macro Monitored"}
-          </p>
-          <p className="line-clamp-2 text-xs leading-relaxed text-ink-muted">
-            {spec.rdNote ??
-              "Precision macro balanced meal designed by certified clinical dietitians."}
-          </p>
+          {spec.giClass && (
+            <p className="text-2xs font-semibold text-ink-muted">{spec.giClass}</p>
+          )}
+          {spec.rdNote && (
+            <p className="line-clamp-2 text-xs leading-relaxed text-ink-muted">{spec.rdNote}</p>
+          )}
         </div>
       </button>
 
