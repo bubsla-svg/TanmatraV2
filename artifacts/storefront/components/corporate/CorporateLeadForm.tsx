@@ -74,8 +74,21 @@ export function CorporateLeadForm({
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
-  const valid =
-    name.trim().length >= 2 && emailOk(workEmail) && company.trim().length >= 2 && teamSizeBand !== "";
+  // Fix-first status line (AlacarteDetails.tsx's blockedReason idiom): a
+  // typo'd email used to leave this button permanently disabled with zero
+  // explanation, and per-field errors were unreachable by construction
+  // (submit can't be attempted while invalid). Order matches field order.
+  const blockedReason =
+    name.trim().length < 2
+      ? "Enter your name"
+      : !emailOk(workEmail)
+        ? "Enter a valid work email"
+        : company.trim().length < 2
+          ? "Enter your company name"
+          : teamSizeBand === ""
+            ? "Choose a team size"
+            : null;
+  const valid = blockedReason === null;
 
   async function submit() {
     if (!valid) return;
@@ -198,8 +211,12 @@ export function CorporateLeadForm({
         isOptional
       />
       {error && <p role="alert" className="text-sm font-medium text-[var(--danger)]">{error}</p>}
+      {blockedReason !== null && !busy && (
+        <p role="status" className="text-xs font-medium text-ink-muted">{blockedReason}</p>
+      )}
       <Button
         type="button" disabled={!valid || busy} onClick={() => void submit()}
+        aria-busy={busy} aria-live="polite"
         shape="pill" size="fluid"
         className="mt-2 inline-flex w-full items-center justify-center px-8 py-4 font-semibold disabled:opacity-40"
       >

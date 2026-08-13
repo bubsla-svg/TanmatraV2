@@ -3,7 +3,7 @@ import { AccountNav } from "@/components/account/AccountNav";
 import { MealHistoryDashboard } from "@/components/history/MealHistoryDashboard";
 
 export const metadata: Metadata = {
-  title: "Meal History & Macro Dashboard | Tanmatra",
+  title: "Meal History & Macro Dashboard",
   description: "Inspect verified clinical nutritional logs and evaluate cumulative daily macronutrient target compliance over time.",
 };
 

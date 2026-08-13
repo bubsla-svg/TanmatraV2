@@ -4,7 +4,7 @@ import { LandingIcon } from "@/components/landing/LandingIcon";
 import type { LandingIconName } from "@/content/landing/partners";
 
 export const metadata: Metadata = {
-  title: "Tanmatra Premium",
+  title: "Premium",
   description:
     "One membership unlocks priority delivery, a monthly RD consult, premium-only dishes and exclusive pantry drops.",
   alternates: { canonical: "/premium" },

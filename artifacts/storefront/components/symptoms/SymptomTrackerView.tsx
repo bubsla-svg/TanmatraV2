@@ -129,6 +129,8 @@ export function SymptomTrackerView() {
         <Button
           type="submit"
           disabled={recordMutation.isPending}
+          aria-busy={recordMutation.isPending}
+          aria-live="polite"
           shape="pill"
           size="fluid"
           className="py-3 text-xs font-semibold mt-2"

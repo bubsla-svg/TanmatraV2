@@ -81,6 +81,8 @@ export function ReferralPanel({ data }: { data: ReferralMe }) {
             <button
               type="button"
               disabled={busy || !code.trim()}
+              aria-busy={busy}
+              aria-live="polite"
               onClick={() => void submit()}
               className="shrink-0 rounded-lg border border-line px-6 py-2 text-sm font-medium text-gold-text disabled:opacity-40"
             >

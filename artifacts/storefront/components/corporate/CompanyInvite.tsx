@@ -107,6 +107,8 @@ export function CompanyInvite({ token }: { token: string }) {
         type="button"
         onClick={accept}
         disabled={busy}
+        aria-busy={busy}
+        aria-live="polite"
         shape="pill"
         size="fluid"
         className="mt-6 w-full px-6 py-3.5 font-semibold disabled:opacity-60"

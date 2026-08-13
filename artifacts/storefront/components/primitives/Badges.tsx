@@ -44,7 +44,7 @@ export const FilterChip: React.FC<FilterChipProps> = ({
       onClick={onClick}
       className={`px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all duration-200 min-h-[44px] inline-flex items-center gap-2 border ${
         isSelected
-          ? "bg-gold text-gold-ink border-gold shadow-md shadow-[var(--gold)]/10"
+          ? "bg-gold text-[var(--gold-ink)] border-gold shadow-md shadow-[var(--gold)]/10"
           : "bg-surface-raised text-ink-muted border-line hover:bg-surface-raised"
       }`}
     >

@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "[SLUG] | Tanmatra",
+  title: "[SLUG]",
 };
 
 export default function PlaceholderPage() {
   return (
-    <div className="min-h-dvh flex items-center justify-center p-6 bg-surface-canvas text-ink-primary">
+    <div className="min-h-dvh flex items-center justify-center p-6 bg-bg text-ink">
       <div className="text-center">
-        <div className="font-label-caps text-3xs text-primary uppercase tracking-widest mb-4">
+        <div className="font-bold text-3xs text-primary uppercase tracking-widest mb-4">
           B2B Layout
         </div>
-        <h1 className="font-headline-md text-2xl mb-2">/corporate/[slug]</h1>
-        <p className="text-sm text-ink-secondary">Clean slate placeholder pending implementation.</p>
+        <h1 className="font-bold text-2xl mb-2">/corporate/[slug]</h1>
+        <p className="text-sm text-ink-muted">Clean slate placeholder pending implementation.</p>
       </div>
     </div>
   );

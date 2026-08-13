@@ -67,7 +67,15 @@ test("bar stays revealed at the very top of the page regardless of small jitter"
 
 test("bar is hidden and inert while the account sheet is open", async ({ page }) => {
   await page.goto("/");
-  const nav = page.getByRole("navigation", { name: "Native Mobile Navigation" });
+  // A raw attribute selector, not getByRole: the account sheet is now a real
+  // Radix/Vaul modal dialog (components/ui/drawer.tsx), and a modal dialog
+  // correctly marks its background siblings aria-hidden="true" while open —
+  // exactly the accessibility improvement this bar's own `inert` prop always
+  // intended. getByRole("navigation", ...) legitimately stops matching once
+  // that lands, since an aria-hidden element is excluded from the
+  // accessibility tree by design; this test cares about the CSS/JS state of
+  // the DOM node itself, which a role query is the wrong tool for here.
+  const nav = page.locator('nav[aria-label="Native Mobile Navigation"]');
   await expect(nav).toHaveClass(/translate-y-0/);
 
   await page.getByRole("button", { name: /^Account$/ }).click();

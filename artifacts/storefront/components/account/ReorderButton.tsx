@@ -66,6 +66,8 @@ export function ReorderButton({ items }: { items: OrderLineItem[] }) {
       <button
         type="button"
         disabled={busy}
+        aria-busy={busy}
+        aria-live="polite"
         onClick={() => void reorder()}
         className="text-sm font-medium text-gold-text hover:underline disabled:opacity-40"
       >

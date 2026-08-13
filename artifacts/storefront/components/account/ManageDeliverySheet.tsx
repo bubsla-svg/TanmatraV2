@@ -113,6 +113,8 @@ export function ManageDeliverySheet({
                 <Button
                   type="button"
                   disabled={pastCutoff || reschedule.isPending || date === toDateInputValue(delivery.scheduledFor)}
+                  aria-busy={reschedule.isPending}
+                  aria-live="polite"
                   onClick={() => reschedule.mutate()}
                   shape="xl"
                   size="fluid"

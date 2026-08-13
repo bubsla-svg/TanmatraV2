@@ -333,6 +333,7 @@ export function AlacarteDetails({
             </div>
             <Button
               type="button" disabled={!valid || busy}
+              aria-busy={verifying || busy} aria-live="polite"
               onClick={() => {
                 // Client-side catch for the allergen ack — deliberately NOT
                 // folded into `blockedReason`/`valid` above: those disable

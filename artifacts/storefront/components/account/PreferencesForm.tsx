@@ -122,6 +122,8 @@ export function PreferencesForm({
         <Button
           type="button"
           disabled={busy}
+          aria-busy={busy}
+          aria-live="polite"
           onClick={() => onSubmit({ dietaryStyle, goal, activityLevel, spiceLevel, allergens, dislikedIngredients: disliked, cuisines })}
           shape="pill" size="fluid" className="w-full py-5 text-xs font-bold uppercase tracking-wider disabled:opacity-40"
         >

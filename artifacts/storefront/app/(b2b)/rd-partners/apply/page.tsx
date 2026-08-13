@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PartnerWizard } from "@/components/rd-partners/PartnerWizard";
 
 export const metadata: Metadata = {
-  title: "Apply for Clinical Partnership | Tanmatra",
+  title: "Apply for Clinical Partnership",
   description: "Submit your IDA credentials and specialties to become a prescribing Dietitian Partner in the Tanmatra clinical network.",
 };
 

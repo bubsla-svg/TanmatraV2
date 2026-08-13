@@ -49,7 +49,7 @@ export function OfficePicker({ dishes, initial, budgetPaise, busy, onSave }: {
         </div>
         {over && <p className="text-xs text-[var(--danger)]">Over your per-person budget.</p>}
       </div>
-      <Button type="button" onClick={save} disabled={busy || over || total === 0} shape="xl" size="fluid" className="px-6 py-3 font-semibold disabled:opacity-60">
+      <Button type="button" onClick={save} disabled={busy || over || total === 0} aria-busy={busy} aria-live="polite" shape="xl" size="fluid" className="px-6 py-3 font-semibold disabled:opacity-60">
         {busy ? "Saving…" : Object.keys(initial).length ? "Update my pick" : "Lock my pick"}
       </Button>
     </div>

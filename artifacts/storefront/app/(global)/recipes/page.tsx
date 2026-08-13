@@ -3,17 +3,17 @@ import { getRecipes } from "@/lib/recipesApi";
 import { SafeImage } from "@/components/ui/SafeImage";
 
 export const metadata: Metadata = {
-  title: "Recipes | Tanmatra",
+  title: "Recipes",
 };
 
 export default async function RecipesPage() {
   const recipes = await getRecipes();
 
   return (
-    <div data-ui-generation="stitch-74" data-screen-id="5.12" data-screen-state="default" className="min-h-dvh flex flex-col bg-surface-canvas pb-24">
-      <div className="sticky top-0 z-20 bg-surface-canvas/95 backdrop-blur-md pt-4 pb-4 px-gutter border-b border-line">
-        <h1 className="font-headline-md text-headline-md text-ink-primary">Clinical Recipes</h1>
-        <p className="text-sm text-ink-secondary">RD-approved recipes for your goals</p>
+    <div data-ui-generation="stitch-74" data-screen-id="5.12" data-screen-state="default" className="min-h-dvh flex flex-col bg-bg pb-24">
+      <div className="sticky top-0 z-20 bg-bg/95 backdrop-blur-md pt-4 pb-4 px-gutter border-b border-line">
+        <h1 className="font-bold text-3xl text-ink">Clinical Recipes</h1>
+        <p className="text-sm text-ink-muted">RD-approved recipes for your goals</p>
       </div>
 
       <div className="px-gutter pt-6">
@@ -24,11 +24,11 @@ export default async function RecipesPage() {
                 <SafeImage src={recipe.image || ""} alt={recipe.title} className="aspect-video w-full" />
               </div>
               <div className="flex flex-col gap-1">
-                <h3 className="font-bold text-lg text-ink-primary">{recipe.title}</h3>
+                <h3 className="font-bold text-lg text-ink">{recipe.title}</h3>
                 <span className="font-mono text-2xs text-ink-muted">
                   {recipe.calories ?? 0} kcal · {recipe.proteinGrams ?? 0}g P
                 </span>
-                <p className="text-ink-secondary text-sm mt-1">{recipe.summary}</p>
+                <p className="text-ink-muted text-sm mt-1">{recipe.summary}</p>
               </div>
             </a>
           ))}

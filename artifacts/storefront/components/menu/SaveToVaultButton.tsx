@@ -53,6 +53,8 @@ export function SaveToVaultButton({ dishSlug, dishName, defaultSaved = false }: 
         type="button"
         onClick={handleToggle}
         disabled={saveMutation.isPending}
+        aria-busy={saveMutation.isPending}
+        aria-live="polite"
         className={`rounded-xl border px-3 py-2 text-xs font-semibold transition-all duration-200 ${
           saved
             ? "border-gold bg-gold/10 text-gold-text cursor-default"

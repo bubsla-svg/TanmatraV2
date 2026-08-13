@@ -167,7 +167,7 @@ export function CommunityQaForum() {
               </p>
             )}
 
-            <Button type="submit" disabled={submitMutation.isPending} shape="pill" size="fluid" className="mt-1 flex items-center justify-center gap-2 py-3 text-xs font-semibold disabled:opacity-40">
+            <Button type="submit" disabled={submitMutation.isPending} aria-busy={submitMutation.isPending} aria-live="polite" shape="pill" size="fluid" className="mt-1 flex items-center justify-center gap-2 py-3 text-xs font-semibold disabled:opacity-40">
               {submitMutation.isPending ? "Sending…" : (
                 <>
                   Send to our RDs

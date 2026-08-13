@@ -24,11 +24,11 @@ export const AccordionItem: React.FC<AccordionItemProps> = ({
         className="w-full flex items-center justify-between text-left group py-2 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm min-h-[44px]"
       >
         <div>
-          <h4 className="text-sm font-semibold text-ink-primary group-hover:text-primary transition-colors">
+          <h4 className="text-sm font-semibold text-ink group-hover:text-primary transition-colors">
             {title}
           </h4>
           {subtitle && (
-            <p className="text-xs text-ink-secondary mt-0.5">{subtitle}</p>
+            <p className="text-xs text-ink-muted mt-0.5">{subtitle}</p>
           )}
         </div>
         <div className={`p-2 rounded-lg bg-surface-raised text-ink-muted group-hover:text-primary transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}>
@@ -39,7 +39,7 @@ export const AccordionItem: React.FC<AccordionItemProps> = ({
       </button>
 
       {isOpen && (
-        <div className="mt-3 text-xs text-ink-secondary leading-relaxed bg-surface p-4 rounded-xl border border-line">
+        <div className="mt-3 text-xs text-ink-muted leading-relaxed bg-surface p-4 rounded-xl border border-line">
           {children}
         </div>
       )}

@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { QuickSetupWizard } from "@/components/wizard/QuickSetupWizard";
 
 export const metadata: Metadata = {
-  title: "Quick Dietary Setup | Tanmatra",
+  title: "Quick Dietary Setup",
   description: "Answer 3 quick questions about your goal, dietary style and allergens — we'll route you straight to your plan.",
 };
 

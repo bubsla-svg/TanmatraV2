@@ -31,6 +31,8 @@ export function UnresolvedPaymentPanel({
         type="button"
         disabled={checking}
         onClick={onCheckStatus}
+        aria-busy={checking}
+        aria-live="polite"
         shape="pill"
         size="fluid"
         className="px-6 py-3 font-semibold disabled:opacity-40"

@@ -144,6 +144,7 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
       {error && <p role="alert" className="mt-3 text-xs font-medium text-[var(--danger)]">{error}</p>}
 
       <Button type="button" onClick={() => void run()} disabled={busy || (!pending && !sel)}
+        aria-busy={busy} aria-live="polite"
         shape="xl" size="fluid" className="mt-5 w-full px-5 py-3 font-semibold disabled:opacity-40">
         {busy ? "Working…" : pending ? `Pay ${formatPaise(price)}` : price === 0 ? "Book free intro" : `Book & pay ${formatPaise(price)}`}
       </Button>

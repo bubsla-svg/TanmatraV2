@@ -103,7 +103,7 @@ export function ClinicalForm({ prefs, disabled, onSaved }: {
       </Grid>
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
       {saved && <p className="text-xs font-medium text-sage-text">Saved.</p>}
-      <Button type="button" onClick={save} disabled={busy} shape="xl" size="fluid" className="self-start px-5 py-2.5 font-semibold disabled:opacity-60">
+      <Button type="button" onClick={save} disabled={busy} aria-busy={busy} aria-live="polite" shape="xl" size="fluid" className="self-start px-5 py-2.5 font-semibold disabled:opacity-60">
         {busy ? "Saving…" : "Save health details"}
       </Button>
     </fieldset>

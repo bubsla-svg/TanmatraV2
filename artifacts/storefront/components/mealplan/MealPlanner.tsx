@@ -107,6 +107,8 @@ export function MealPlanner() {
               variant="outline"
               onClick={() => void mp.generate()}
               disabled={mp.busy}
+              aria-busy={mp.busy}
+              aria-live="polite"
               shape="pill"
               size="fluid"
               className="ml-auto shrink-0 px-4 py-3 text-xs font-semibold text-ink-muted hover:border-line-strong hover:text-ink disabled:opacity-60"
@@ -129,6 +131,8 @@ export function MealPlanner() {
             type="button"
             onClick={() => void mp.generate()}
             disabled={mp.busy}
+            aria-busy={mp.busy}
+            aria-live="polite"
             shape="pill"
             size="fluid"
             className="w-full px-5 py-3 font-semibold disabled:opacity-60"

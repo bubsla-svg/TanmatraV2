@@ -182,6 +182,8 @@ export function PartnerWizard() {
           <Button
             type="button"
             disabled={busy || (step === LAST_STEP && problem?.terminal === true)}
+            aria-busy={busy}
+            aria-live="polite"
             onClick={() => void (step === LAST_STEP ? submit() : next())}
             shape="pill"
             size="fluid"

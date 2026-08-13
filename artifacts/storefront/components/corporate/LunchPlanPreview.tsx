@@ -68,7 +68,7 @@ export function LunchPlanPreview({ proposal, onSchedule, scheduling, perEmployee
         </p>
       ) : (
         <div className="flex flex-col gap-2 border-t border-line pt-5">
-          <Button type="button" onClick={onSchedule} disabled={scheduling} shape="xl" size="fluid" className="w-full px-5 py-3.5 font-semibold disabled:opacity-40">
+          <Button type="button" onClick={onSchedule} disabled={scheduling} aria-busy={scheduling} aria-live="polite" shape="xl" size="fluid" className="w-full px-5 py-3.5 font-semibold disabled:opacity-40">
             {scheduling ? "Scheduling…" : "Schedule this week"}
           </Button>
           <p className="text-xs text-ink-faint">Creates one office lunch per day at {hour12} {ampm}, {formatPaise(perEmployeePaise)}/person. Members pick within budget.</p>

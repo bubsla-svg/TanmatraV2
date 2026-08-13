@@ -89,13 +89,13 @@ export function PremiumMembership() {
           </Button>
           <div className="flex justify-center pt-1">
             {m.status === "cancelled"
-              ? <button type="button" onClick={() => resumeMutation.mutate()} disabled={busy} className="text-sm font-medium text-gold-text hover:underline disabled:opacity-60">{busy ? "Working…" : "Resume auto-renewal"}</button>
-              : <button type="button" onClick={() => cancelMutation.mutate()} disabled={busy} className="text-sm font-medium text-ink-muted hover:text-ink disabled:opacity-60">{busy ? "Working…" : "Cancel renewal"}</button>}
+              ? <button type="button" onClick={() => resumeMutation.mutate()} disabled={busy} aria-busy={busy} aria-live="polite" className="text-sm font-medium text-gold-text hover:underline disabled:opacity-60">{busy ? "Working…" : "Resume auto-renewal"}</button>
+              : <button type="button" onClick={() => cancelMutation.mutate()} disabled={busy} aria-busy={busy} aria-live="polite" className="text-sm font-medium text-ink-muted hover:text-ink disabled:opacity-60">{busy ? "Working…" : "Cancel renewal"}</button>}
           </div>
         </div>
       ) : (
         <div className="mt-5 flex flex-col gap-3">
-          <Button type="button" onClick={() => joinMutation.mutate()} disabled={busy} shape="xl" size="fluid" className="px-6 py-3.5 font-semibold disabled:opacity-60">
+          <Button type="button" onClick={() => joinMutation.mutate()} disabled={busy} aria-busy={joinMutation.isPending} aria-live="polite" shape="xl" size="fluid" className="px-6 py-3.5 font-semibold disabled:opacity-60">
             {joinMutation.isPending ? "Opening payment…" : "Join Tanmatra Premium"}
           </Button>
           <p className="text-center text-xs text-ink-faint">Cancel anytime · your first RD consult is included every period.</p>

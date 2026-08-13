@@ -75,6 +75,8 @@ export function MarketplaceBuyNow({ item }: { item: MarketplaceItem }) {
         type="button"
         onClick={() => void buy()}
         disabled={busy}
+        aria-busy={busy}
+        aria-live="polite"
         className="min-h-11 rounded-full border border-line-strong bg-surface px-6 py-2 text-sm font-bold tracking-tight text-ink transition-transform hover:bg-surface-raised active:scale-[0.98] disabled:opacity-60"
       >
         {busy ? "Opening payment…" : "Buy now"}

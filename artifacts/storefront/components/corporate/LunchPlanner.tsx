@@ -114,7 +114,7 @@ export function LunchPlanner({ slug }: { slug: string }) {
             <h2 className="text-lg font-semibold tracking-tight text-ink">2 &middot; Weekly plan</h2>
             <p className="mt-0.5 text-sm text-ink-muted">Generated against the saved profile.</p>
           </div>
-          <Button type="button" onClick={() => generateMutation.mutate()} disabled={!profile || saveMutation.isPending || generateMutation.isPending || scheduleMutation.isPending} shape="xl" size="fluid" className="shrink-0 px-4 py-2 font-semibold disabled:opacity-40">
+          <Button type="button" onClick={() => generateMutation.mutate()} disabled={!profile || saveMutation.isPending || generateMutation.isPending || scheduleMutation.isPending} aria-busy={generateMutation.isPending} aria-live="polite" shape="xl" size="fluid" className="shrink-0 px-4 py-2 font-semibold disabled:opacity-40">
             {generateMutation.isPending ? "Generating…" : proposal ? "Regenerate" : "Generate plan"}
           </Button>
         </div>

@@ -109,6 +109,8 @@ export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
                 type="button"
                 onClick={() => removeMutation.mutate(saved.dishSlug)}
                 disabled={removing}
+                aria-busy={removing}
+                aria-live="polite"
                 className="inline-flex items-center gap-1 text-3xs font-semibold uppercase tracking-wider text-ink-muted transition-colors hover:text-[var(--danger)] disabled:opacity-50"
                 title="Remove from Vault"
               >

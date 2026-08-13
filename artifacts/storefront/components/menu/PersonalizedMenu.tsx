@@ -67,6 +67,7 @@ export function PersonalizedMenu({
   const [chip, setChip] = useState<DietFilterChip>("all");
   const [filters, setFilters] = useState<MenuFilterState>(EMPTY_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     let live = true;
@@ -101,20 +102,64 @@ export function PersonalizedMenu({
     [dishes, ranked, chip],
   );
 
-  // The 5.3 sheet narrows on top of the diet chip rather than replacing it:
-  // `visibleIds` already reflects the chip, so intersecting keeps both filters
-  // honest and leaves the server-rendered rows/order untouched.
+  // Name search over the SAME `dishes` prop the ranking/filter passes already
+  // read (id + name are both in DishForMatch) — no second fetch, matching the
+  // rest of this file's "catalog is already loaded" data flow. `null` means
+  // no search is active; an empty Set (vs. null) is what actually narrows.
+  const searchMatchedIds = useMemo(() => {
+    const term = searchQuery.trim().toLowerCase();
+    if (!term) return null;
+    return new Set(
+      dishes.filter((d) => d.name.toLowerCase().includes(term)).map((d) => d.id),
+    );
+  }, [dishes, searchQuery]);
+
+  // The 5.3 sheet AND search narrow on top of the diet chip rather than
+  // replacing it: `visibleIds` already reflects the chip, so intersecting
+  // keeps every filter honest and leaves the server-rendered rows/order
+  // untouched.
   const filteredIds = useMemo(() => {
-    if (!countActiveFilters(filters)) return visibleIds;
-    const survivors = new Set(filterDishes(dishes, filters).map((d) => d.id));
-    return new Set([...visibleIds].filter((id) => survivors.has(id)));
-  }, [dishes, filters, visibleIds]);
+    let ids = visibleIds;
+    if (countActiveFilters(filters)) {
+      const survivors = new Set(filterDishes(dishes, filters).map((d) => d.id));
+      ids = new Set([...ids].filter((id) => survivors.has(id)));
+    }
+    if (searchMatchedIds !== null) {
+      ids = new Set([...ids].filter((id) => searchMatchedIds.has(id)));
+    }
+    return ids;
+  }, [dishes, filters, visibleIds, searchMatchedIds]);
 
   const activeLabels = activeFilterLabels(filters);
-  const noMatch = countActiveFilters(filters) > 0 && filteredIds.size === 0;
+  const searchLabel = searchQuery.trim() ? [`"${searchQuery.trim()}"`] : [];
+  const allActiveLabels = [...searchLabel, ...activeLabels];
+  const noMatch = allActiveLabels.length > 0 && filteredIds.size === 0;
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="relative">
+        <svg
+          aria-hidden
+          className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search dishes…"
+          aria-label="Search dishes"
+          className="w-full rounded-full border border-line bg-surface py-2.5 pl-10 pr-4 text-sm text-ink outline-none placeholder:text-ink-faint focus-visible:border-[var(--gold)] focus-visible:ring-1 focus-visible:ring-[var(--gold)]"
+        />
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
         <div role="group" aria-label="Filter dishes by diet" className="flex items-center gap-1.5">
           {DIET_CHIP_OPTIONS.map((opt) => {
@@ -124,6 +169,7 @@ export function PersonalizedMenu({
                 key={opt.key}
                 type="button"
                 onClick={() => setChip(opt.key)}
+                aria-pressed={active}
                 // D-08: selection state, not a rival action colour — border +
                 // tint + marker, never a solid --gold fill (the mini-cart bar
                 // is this screen's one gold action).
@@ -163,9 +209,9 @@ export function PersonalizedMenu({
         </div>
       </div>
 
-      {activeLabels.length > 0 && (
+      {allActiveLabels.length > 0 && (
         <p className="text-xs text-ink-muted" data-testid="menu-active-filters">
-          Filtering by {activeLabels.join(" · ")}
+          Filtering by {allActiveLabels.join(" · ")}
         </p>
       )}
 
@@ -177,19 +223,22 @@ export function PersonalizedMenu({
           data-testid="menu-no-match-empty"
           className="rounded-2xl border border-line bg-surface-raised px-6 py-12 text-center"
         >
-          <h3 className="text-base font-semibold text-ink">Nothing matches every filter yet</h3>
+          <h3 className="text-base font-semibold text-ink">Nothing matches yet</h3>
           <p className="mx-auto mt-2 max-w-md text-sm text-ink-muted">
-            You asked for {activeLabels.join(" · ")}. No dish on today&apos;s menu meets all of
+            You asked for {allActiveLabels.join(" · ")}. No dish on today&apos;s menu meets all of
             those at once.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <button
               type="button"
-              onClick={() => setFilters(EMPTY_FILTERS)}
+              onClick={() => {
+                setFilters(EMPTY_FILTERS);
+                setSearchQuery("");
+              }}
               data-testid="menu-no-match-clear"
               className="min-h-[48px] rounded-full bg-gold px-6 text-sm font-bold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
             >
-              Clear filters
+              Clear all
             </button>
             <button
               type="button"

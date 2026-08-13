@@ -181,6 +181,8 @@ export function HealthInfoHub() {
               type="button"
               onClick={() => grantMutation.mutate()}
               disabled={grantMutation.isPending}
+              aria-busy={grantMutation.isPending}
+              aria-live="polite"
               shape="pill" size="fluid" className="w-full py-4 text-xs font-bold uppercase tracking-wider disabled:opacity-60"
             >
               {grantMutation.isPending ? "Recording…" : "I agree — save my health details"}

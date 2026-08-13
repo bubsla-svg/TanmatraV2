@@ -30,7 +30,7 @@ export function LocationSummaryCard({
               <circle cx="12" cy="10" r="3" />
             </svg>
           </div>
-          <div className="flex flex-col overflow-hidden">
+          <div className="flex flex-col overflow-hidden" role="status" aria-live="polite" aria-busy={loading}>
             <span className="truncate text-base font-bold text-ink">{loading ? "Locating…" : title}</span>
             <span className="truncate text-xs font-medium text-ink-muted">{loading ? "Fetching address details…" : subtitle}</span>
           </div>

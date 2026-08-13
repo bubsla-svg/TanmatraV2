@@ -95,6 +95,8 @@ function GroupAdd({ code, dish }: { code: string; dish: Dish }) {
         type="button"
         onClick={(e) => { e.preventDefault(); void add(); }}
         disabled={status === "adding"}
+        aria-busy={status === "adding"}
+        aria-live="polite"
         className="min-h-11 rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-ink transition-transform active:scale-[0.98] disabled:opacity-60"
       >
         {status === "adding" ? "Adding…" : status === "added" ? "Added ✓" : "Add to group"}
