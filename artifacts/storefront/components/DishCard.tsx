@@ -58,7 +58,7 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
       <Link href={`/menu?dish=${dish.slug}`} scroll={false} className="group flex flex-col rounded-2xl border border-line bg-surface p-3 transition-transform active:scale-[0.98]">
         <div className="relative mb-4 overflow-hidden rounded-xl bg-surface-raised border border-line">
           <div className="absolute top-2 left-2 flex gap-1 z-10">
-            <span className="px-2 py-1 rounded-full bg-sage-soft/90 backdrop-blur-md border border-sage-strong/20 font-label-caps text-[9px] text-sage-text uppercase tracking-widest">
+            <span className="px-2 py-1 rounded-full bg-sage-soft/90 backdrop-blur-md border border-sage-strong/20 font-label-caps text-3xs text-sage-text uppercase tracking-widest">
               {dish.isVeg ? "Veg" : "Non-Veg"}
             </span>
           </div>

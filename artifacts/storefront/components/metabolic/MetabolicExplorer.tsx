@@ -99,7 +99,7 @@ export function MetabolicExplorer({ dishes }: { dishes: MetabolicDish[] }) {
               <div className="relative h-40 bg-surface-raised">
                 <SafeImage src={d.image} className="h-full w-full" />
                 <span
-                  className={`absolute right-3 top-3 rounded-full border border-line px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider backdrop-blur-md ${
+                  className={`absolute right-3 top-3 rounded-full border border-line px-2 py-0.5 text-3xs font-bold uppercase tracking-wider backdrop-blur-md ${
                     d.isVeg ? "bg-sage-soft text-sage-text" : "bg-bg/80 text-[var(--danger)]"
                   }`}
                 >

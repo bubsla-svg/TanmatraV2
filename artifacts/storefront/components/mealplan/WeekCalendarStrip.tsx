@@ -27,8 +27,8 @@ export function WeekCalendarStrip({ calendar, onCycle }: {
                   : "border border-line text-ink-muted hover:border-line-strong hover:text-ink"
               }`}
             >
-              <span className="block font-mono text-[13px] font-semibold tracking-wide">{d}</span>
-              <span className={`block font-mono text-[9px] uppercase tracking-widest ${on ? "" : "text-ink-faint"}`}>
+              <span className="block font-mono text-sm font-semibold tracking-wide">{d}</span>
+              <span className={`block font-mono text-3xs uppercase tracking-widest ${on ? "" : "text-ink-faint"}`}>
                 {LABEL[kind]}
               </span>
             </button>

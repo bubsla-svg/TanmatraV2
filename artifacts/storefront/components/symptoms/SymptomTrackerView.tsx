@@ -98,7 +98,7 @@ export function SymptomTrackerView() {
             onChange={(e) => setSeverity(Number(e.target.value))}
             className="w-full accent-gold cursor-pointer"
           />
-          <div className="flex justify-between px-0.5 text-[9px] font-semibold uppercase tracking-wider text-ink-faint">
+          <div className="flex justify-between px-0.5 text-3xs font-semibold uppercase tracking-wider text-ink-faint">
             <span>Mild</span>
             <span>Severe</span>
           </div>

@@ -90,14 +90,32 @@
   --text-base: 1rem;
   --text-lg: 1.125rem;
   --text-xl: 1.375rem;
-  --text-2xl: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
-  --text-3xl: clamp(2rem, 1.4rem + 2.4vw, 3rem);
+  /* 2xl's ceiling was 2rem while 3xl's (set in globals.css @theme, which
+     inlines it into the utility and therefore wins) was 1.875rem — so past
+     the clamp knee, text-3xl rendered SMALLER than text-2xl. Ceilings now
+     ladder 30 → 34 → 36px; both files were adjusted together and must stay
+     that way. */
+  --text-2xl: clamp(1.5rem, 1.2rem + 1.2vw, 1.875rem);
+  /* Mirrors globals.css @theme's value. The utility takes it from there (it is
+     inlined at build); this declaration only keeps `var(--text-3xl)` honest
+     for anyone reading the property directly. */
+  --text-3xl: clamp(1.75rem, 4vw, 2.125rem);
 
   /* ── Radii ─────────────────────────────────────────────────────────────── */
+  /* Steps of +4 then +6. 2xl/3xl used to be MISSING here, which did not make
+     them unavailable — it silently handed them to Tailwind's stock scale
+     (1rem / 1.5rem), and that scale is not this one. The result was an
+     inverted ladder: rounded-2xl resolved to 16px, identical to rounded-lg
+     and SMALLER than rounded-xl's 22px, so reaching for a bigger corner gave
+     you a smaller one. 234 uses of rounded-2xl and 92 of rounded-3xl were
+     sitting on that. Defining them here continues the progression and puts
+     the names back in size order. */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
   --radius-xl: 22px;
+  --radius-2xl: 28px;
+  --radius-3xl: 34px;
   --radius-full: 999px;
 
   /* ── Shadows (light) ───────────────────────────────────────────────────── */

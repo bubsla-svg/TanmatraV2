@@ -26,7 +26,7 @@ export default async function MarketplacePage() {
                 {item.badges.length > 0 && (
                   <div className="absolute top-2 left-2 flex gap-1 z-10 flex-col">
                     {item.badges.map(badge => (
-                      <span key={badge} className="px-2 py-1 rounded-full bg-sage-soft/90 backdrop-blur-md border border-sage-strong/20 font-label-caps text-[9px] text-sage-text uppercase tracking-widest">
+                      <span key={badge} className="px-2 py-1 rounded-full bg-sage-soft/90 backdrop-blur-md border border-sage-strong/20 font-label-caps text-3xs text-sage-text uppercase tracking-widest">
                         {badge}
                       </span>
                     ))}
