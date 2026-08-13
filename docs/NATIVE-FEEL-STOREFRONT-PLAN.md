@@ -230,7 +230,129 @@ where it feels like a website.
 
 ---
 
-## 6. Deliberate non-changes
+## 6. Tier N5 — Screen-level defects (on-device screenshot audit, 2026-08-13)
+
+Two batches of owner-supplied phone screenshots (dish drawer / PDP / cart /
+checkout, then account sheet / care / plan auth gate / FAQ disclaimer). Every
+finding below was verified against code or measured against a live build
+before being filed — screenshots raised the question; the tree answered it.
+
+### Mechanical — root-caused, PR-sized
+
+- **N5.1 Checkout buries the consent it asks for.** The pay bar is a 103px
+  `fixed` overlay (`components/checkout/AlacarteDetails.tsx:321`) and the
+  content column reserves **0px** of scroll-end clearance (measured live) — the
+  consent checkbox and its clause clip mid-sentence behind the bar. Fix:
+  scroll-end padding ≥ bar height + safe-area. *The new first PR of this plan —
+  it is a live money-path UX bug, ahead of the §8 ordering.*
+- **N5.2 The ₹50 → ₹112 ambush.** `CartDrawer.tsx` contains no delivery or
+  threshold signal (grep-verified) while checkout renders "Add ₹450 more for
+  free delivery" — a +124% fee reveal on the final screen, with the softening
+  nudge one screen too late. Fix: threshold hint in the cart drawer, fed by the
+  same server-owned numbers checkout already gets (never client-derived).
+- **N5.3 The PDP is a room with no door.** `/menu` renders zero `/dish/*`
+  links — cards open the drawer, and the only path onward is the small "Open
+  full page" text link in the drawer footer (`DishDrawer.tsx:98`). Fix is a
+  product call on mechanism (card long-press? title link? drawer CTA
+  promotion?) but the reachability gap itself is not debatable.
+- **N5.4 The "description" is the ingredient list, twice.** The PDP subtitle
+  renders `longDescription || description` — which is literally
+  "ingredient – qty" text — then the Ingredients accordion repeats the same
+  list below (`app/(focus)/dish/[slug]/page.tsx:65` vs `:101`). The drawer's
+  variant is char-truncated mid-word ("Almond milk / low, and more.") and no
+  storefront code generates that string — it is baked into the API-side
+  content, so the fix is data-side: real descriptions, or derive the subtitle
+  from ingredient *names* only, cleanly joined.
+- **N5.5 "Full macronutrient breakdown" contains two rows** (Fat, Fiber —
+  `page.tsx:87-98`), fewer macros than the summary strip above it. Microcopy
+  overpromise; either add the full table or rename the accordion.
+- **N5.6 The floating price ledger's underlap band.** `sticky bottom-4` +
+  95%-alpha background (`page.tsx:118`, measured 16px gap) lets content
+  slivers scroll through the strip beneath the card — designed as a float,
+  perceived as a glitch. Either anchor `bottom-0` opaque, or keep the float
+  and mask the gap.
+- **N5.7 One dish, three number dialects.** Drawer: 4-up chips, "~3 g P".
+  PDP: 3-up row, "~3g", Fat demoted to an accordion. "8g (natural)" vs
+  "~2 g". En-dash on the PDP subtitle vs em-dash in the drawer for the same
+  ingredient–qty pairs. Fix: every macro/quantity string renders through one
+  formatter in `lib/format.ts`, unit-tested, both surfaces consuming it.
+- **N5.8 Crowding nits.** Cart line prints ₹50 twice at qty 1 (unit price +
+  line total); checkout truncates "Activated Charcoal S…" beside its stepper —
+  wrap to two lines instead.
+- **N5.9 The dark scrim is mathematically invisible.** `--scrim`'s dark arm is
+  `rgba(0,0,0,0.6)` layered over `#0a0a0a` surfaces
+  (`lib/themes/tanmatraBridge.css:92`) — modals on dark routes barely dim
+  their background, so sheets don't read as modal (owner shot: account sheet
+  over /menu with the header still fully vivid). Fix at the token: a
+  perceptible dark arm (higher alpha, subtle blur, or a white-tinted scrim),
+  verified across all three consumers (drawers, ⌘K, address switcher) in
+  `layout-vrt` both themes.
+- **N5.10 "SECURE UPI CHECKOUT" on the OTP step.** `components/FocusHeader.tsx`
+  renders the label on the identity gate, where the only transaction is an SMS
+  code (owner shot: "Start your Desk Fuel plan"). Make the label stage-aware
+  or drop it from the auth step — a trust label that misdescribes the moment
+  costs trust.
+- **N5.11 The auth gate answers none of the buyer's questions.** The plan
+  sign-in step renders a phone field in ~65% empty canvas with no plan name
+  context beyond the heading, no price, no recap — the customer is asked for
+  their number before being reminded what they're buying. Checkout's CURRENT
+  ORDER card is the existing pattern; render a compact plan recap above
+  `PhoneAuth`.
+- **N5.12 Rails built for two items.** `/care` renders two
+  `HorizontalSnapRail`s (`NeedStateRail.tsx`, `ConditionRail.tsx`) of ~2 cards
+  each; the only scroll affordance is the second card clipped mid-word
+  ("Keep my sug…", "Type 2 Diab…"), and the two rails use different card
+  anatomies (title+subtitle vs bare label). With n ≤ 3, stack full-width;
+  reserve rails for rails-worth of content.
+
+### Decision items — filed to the owner, not PR-able as-is
+
+- **N5-D1 The funnel's semiotics** (both owner remarks stand): commerce routes
+  force-dark pre-paint regardless of theme preference, surfaces run
+  #050505–#171717, microcopy is uppercase `tracking-widest` `text-3xs`,
+  numerals are mono — the stack reads tactical console, not lunch. Options
+  ladder: stop force-darking commerce routes (smallest change — honor the
+  user's preference), warm the dark food surfaces, or food-forward light
+  merchandising. Palette is governance-gated; this is an owner call.
+- **N5-D2 Add-on merchandising ratio.** ₹399–549 pantry jars recommended
+  against a ₹50 smoothie (8–11× cart value). Needs a server-side relevance /
+  price-ratio rule; the server owns recommendations like it owns amounts.
+- **N5-D3 The Account tab is a legal link farm.** The bottom-nav Account sheet
+  holds 2 account destinations and 9 company/legal links as visual peers —
+  Grievance Redressal sits beside My Orders. Legal belongs in the footer and
+  an account-settings page; the tab sheet should be account *actions*. IA
+  change → owner sign-off.
+- **N5-D4 The disclaimer needs a copywriter and an RD.** The title
+  "MANDATORY MEDICAL TREATMENT & DIETARY DISCLAIMER"
+  (`components/landing/Section10FaqAccordion.tsx`) parses as mandating
+  medical treatment; the body's "GLP-1 hormone receptor agonist therapy" is
+  garbled (the term is "GLP-1 receptor agonist"); dense legalese in a warning
+  card mid-funnel. Required disclosure, wrong execution — clinical-governance
+  adjacent, so copy changes route through owner/RD review.
+- **N5-D5 The left-edge clip — parked, not closed.** Owner screenshots show
+  the PDP's entire text column clipped by its first characters. Not
+  reproducible on `main`: measured `scrollWidth == viewport` with zero
+  offending elements at 320/342/390px. Either the deployed build predates a
+  fix or it is device-specific; close it by comparing the live `/api/build`
+  sha against `main` (the DOMAIN-CUTOVER verification trick) before hunting
+  further.
+
+### Competitive reference (owner-supplied, 2026-08-13)
+
+A walkthrough of a competitor's ordering app (Mother's Kitchen India — not in
+this monorepo; verified by string search) supplied the countercase to N5-D1:
+warm palette, real food photography, and human copy, wrapped around template
+jank. Two of its patterns are directly worth adopting here: **taxes and
+delivery itemized on the order form before checkout, with the full payable
+total in the CTA label** ("Add to Cart — ₹103.95") — the exact shape of the
+N5.2 fix — and a busy-state CTA that keeps the amount visible ("Adding… —
+₹103.95"). The contrast is the argument for N5-D1 in one frame: warmth is
+what sells food, discipline is what earns trust, and each app currently has
+only one of the two.
+
+---
+
+## 7. Deliberate non-changes
 
 Named so nobody "fixes" them later:
 
@@ -248,7 +370,7 @@ Named so nobody "fixes" them later:
 
 ---
 
-## 7. Sequencing and verification
+## 8. Sequencing and verification
 
 Suggested order — each row is one PR-sized concern per the working agreement:
 
