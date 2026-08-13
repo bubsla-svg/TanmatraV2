@@ -42,7 +42,7 @@ export function CheckoutIdentity({
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           placeholder="98765 43210"
-          className="w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus:border-line-strong"
+          className="w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus-visible:border-line-strong"
         />
         <p className="mt-1.5 text-xs text-ink-faint">We use this to reach you about your order — no passwords, ever.</p>
       </div>

@@ -24,7 +24,7 @@ export interface AlacarteAddress {
 }
 
 const inputCls =
-  "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus:border-line-strong";
+  "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus-visible:border-line-strong";
 
 /**
  * À-la-carte details (SF-05). One screen: contact phone (controlled by the

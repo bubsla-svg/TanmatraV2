@@ -65,7 +65,7 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
             max={120}
             value={age}
             onChange={(e) => setAge(parseInt(e.target.value) || 30)}
-            className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
+            className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus-visible:border-[var(--gold)]"
           />
         </div>
 
@@ -74,7 +74,7 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
           <select
             value={gender}
             onChange={(e) => setGender(e.target.value as any)}
-            className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
+            className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus-visible:border-[var(--gold)]"
           >
             <option value="male">Male</option>
             <option value="female">Female</option>
@@ -90,7 +90,7 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
             max={250}
             value={heightCm}
             onChange={(e) => setHeightCm(parseInt(e.target.value) || 170)}
-            className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
+            className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus-visible:border-[var(--gold)]"
           />
         </div>
 
@@ -102,7 +102,7 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
             max={300}
             value={weightKg}
             onChange={(e) => setWeightKg(parseInt(e.target.value) || 70)}
-            className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
+            className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus-visible:border-[var(--gold)]"
           />
         </div>
       </div>
@@ -114,7 +114,7 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
           <select
             value={activityLevel}
             onChange={(e) => setActivityLevel(e.target.value as any)}
-            className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
+            className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus-visible:border-[var(--gold)]"
           >
             <option value="sedentary">Sedentary (Desk Job)</option>
             <option value="light">Lightly Active (1-3 days/wk)</option>
@@ -129,7 +129,7 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
           <select
             value={goal}
             onChange={(e) => setGoal(e.target.value as any)}
-            className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
+            className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus-visible:border-[var(--gold)]"
           >
             <option value="fat_loss">Fat Loss (-500 kcal Deficit)</option>
             <option value="muscle_gain">Muscle Build (+15% Surplus)</option>

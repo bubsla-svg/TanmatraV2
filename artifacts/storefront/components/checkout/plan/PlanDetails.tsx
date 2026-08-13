@@ -10,7 +10,7 @@ import { MemberIntake, EMPTY_MEMBER, draftToMember, type MemberDraft } from "./M
 import { LocationPickerFlow } from "@/components/address/LocationPickerFlow";
 
 const inputCls =
-  "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus:border-line-strong";
+  "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus-visible:border-line-strong";
 const TRACK_LABEL: Record<DietTrack, string> = { veg: "Vegetarian", egg: "Egg", nonveg: "Non-veg" };
 
 export interface PlanDetailsValue {

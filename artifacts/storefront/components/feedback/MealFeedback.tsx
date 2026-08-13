@@ -171,7 +171,7 @@ export default function MealFeedback({
                                     onChange={(e) => setComments(e.target.value)}
                                     placeholder="Add any specific culinary or clinical notes..."
                                     rows={2}
-                                    className="w-full bg-bg border border-line rounded-xl p-3 text-xs text-ink placeholder-ink-muted focus:outline-none focus:border-gold transition-colors resize-none"
+                                    className="w-full bg-bg border border-line rounded-xl p-3 text-xs text-ink placeholder-ink-muted focus:outline-none focus-visible:border-gold transition-colors resize-none"
                                 />
                             </div>
                         )}

@@ -76,7 +76,7 @@ export function SymptomTrackerView() {
           <select
             value={symptom}
             onChange={(e) => setSymptom(e.target.value)}
-            className="rounded-xl border border-line bg-surface p-2.5 font-medium text-ink focus:border-gold outline-none"
+            className="rounded-xl border border-line bg-surface p-2.5 font-medium text-ink focus-visible:border-gold outline-none"
           >
             <option value="bloating">Post-Meal Bloating &amp; Gas</option>
             <option value="glucose_spike">Afternoon Lethargy / Glucose Dip</option>
@@ -111,7 +111,7 @@ export function SymptomTrackerView() {
             value={dishSlug}
             onChange={(e) => setDishSlug(e.target.value)}
             placeholder="e.g. hp-paneer-bowl"
-            className="rounded-xl border border-line bg-surface p-2.5 font-medium text-ink focus:border-gold outline-none"
+            className="rounded-xl border border-line bg-surface p-2.5 font-medium text-ink focus-visible:border-gold outline-none"
           />
         </div>
 
@@ -122,7 +122,7 @@ export function SymptomTrackerView() {
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
             placeholder="e.g. Experienced slight heaviness 45 mins after eating…"
-            className="rounded-xl border border-line bg-surface p-2.5 font-medium text-ink focus:border-gold outline-none"
+            className="rounded-xl border border-line bg-surface p-2.5 font-medium text-ink focus-visible:border-gold outline-none"
           />
         </div>
 

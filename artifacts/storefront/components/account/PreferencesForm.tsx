@@ -34,7 +34,7 @@ const SPICE: { id: SpiceLevel; label: string }[] = [
  *  above, the value itself set large and unchromed. */
 const CARD = "rounded-3xl border border-line bg-surface p-6 transition-colors hover:bg-surface-raised";
 const CAPS = "mb-3 block text-xs font-bold uppercase tracking-wider text-gold-text";
-const SELECT = "w-full border-none bg-transparent p-0 text-lg text-ink focus:ring-0";
+const SELECT = "w-full border-none bg-transparent p-0 text-lg text-ink focus-visible:ring-0";
 
 export function PreferencesForm({
   initial,

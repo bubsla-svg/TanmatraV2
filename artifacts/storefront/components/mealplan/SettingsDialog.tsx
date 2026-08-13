@@ -55,7 +55,7 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
   const busy = saveMutation.isPending;
   const errorText = validationError ?? (saveMutation.isError ? "Couldn't save settings." : null);
 
-  const input = "w-full rounded-2xl border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-[var(--gold)]";
+  const input = "w-full rounded-2xl border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus-visible:border-[var(--gold)]";
   return (
     <Dialog.Root open onOpenChange={(o) => { if (!o) onClose(); }}>
       <Dialog.Portal>

@@ -40,7 +40,7 @@ export function LogMealDialog({ onClose, onLogged }: { onClose: () => void; onLo
     catch (e) { setError(e instanceof ApiError ? e.message : "Couldn't save that log."); setBusy(false); }
   }
 
-  const cls = "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-[var(--gold)]";
+  const cls = "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus-visible:border-[var(--gold)]";
   return (
     <Dialog.Root open onOpenChange={(o) => { if (!o) onClose(); }}>
       <Dialog.Portal>

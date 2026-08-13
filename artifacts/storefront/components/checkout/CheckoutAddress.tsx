@@ -81,7 +81,7 @@ export function CheckoutAddress({
             placeholder="201301"
             aria-describedby="co-pin-hint"
             aria-invalid={pincode.length > 0 && !pinValid}
-            className="w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink focus:border-line-strong"
+            className="w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink focus-visible:border-line-strong"
           />
           <p id="co-pin-hint" className="mt-1.5 text-xs text-ink-faint">
             6-digit PIN code &mdash; we check delivery to your area.
@@ -99,7 +99,7 @@ export function CheckoutAddress({
             onChange={(e) => setLine(e.target.value)}
             placeholder="Flat 3B, Sector 62"
             aria-invalid={line.length > 0 && !lineValid}
-            className="w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink focus:border-line-strong"
+            className="w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink focus-visible:border-line-strong"
           />
         </div>
       </div>

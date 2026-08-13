@@ -117,7 +117,7 @@ export function CoachChat() {
           disabled={streaming}
           aria-label="Message the coach"
           placeholder="Ask your coach…"
-          className="flex-1 rounded-full border border-line bg-surface px-5 py-3 text-sm text-ink outline-none focus:border-line-strong"
+          className="flex-1 rounded-full border border-line bg-surface px-5 py-3 text-sm text-ink outline-none focus-visible:border-line-strong"
         />
         <Button type="submit" disabled={streaming || !input.trim()} shape="pill" size="fluid" className="px-5 py-3 font-semibold disabled:opacity-40">
           {streaming ? "…" : "Send"}

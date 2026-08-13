@@ -6,7 +6,7 @@ import { NotifyMeForm } from "@/components/onboarding/NotifyMeForm";
 import type { Address, AddressInput, AddressType } from "@/lib/api";
 
 const inputCls =
-  "w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus:border-line-strong";
+  "w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus-visible:border-line-strong";
 const TYPES: AddressType[] = ["home", "work", "other"];
 
 /**

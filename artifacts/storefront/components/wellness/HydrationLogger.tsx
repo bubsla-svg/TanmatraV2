@@ -121,7 +121,7 @@ export const HydrationLogger: React.FC<HydrationLoggerProps> = ({
           value={customMlInput}
           onChange={(e) => setCustomMlInput(e.target.value)}
           placeholder="Enter custom mL (e.g., 350)..."
-          className="flex-1 bg-surface-subtle border border-line rounded-xl px-4 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
+          className="flex-1 bg-surface-subtle border border-line rounded-xl px-4 py-2 text-xs text-ink focus:outline-none focus-visible:border-[var(--gold)]"
         />
         <button
           type="submit"

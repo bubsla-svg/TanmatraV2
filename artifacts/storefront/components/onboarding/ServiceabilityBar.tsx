@@ -173,7 +173,7 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
             value={inputVal}
             onChange={(e) => setInputVal(e.target.value)}
             disabled={busy}
-            className="w-44 min-w-0 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--ink)] outline-none focus:border-[var(--line-strong)] disabled:opacity-50"
+            className="w-44 min-w-0 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--ink)] outline-none focus-visible:border-[var(--line-strong)] disabled:opacity-50"
           />
           <Button
             type="submit"

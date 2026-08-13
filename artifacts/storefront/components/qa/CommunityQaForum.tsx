@@ -133,7 +133,7 @@ export function CommunityQaForum() {
 
             <label className="flex flex-col gap-1.5 text-xs">
               <span className="font-semibold text-ink">Category</span>
-              <select value={cat} onChange={(e) => setCat(e.target.value)} className="rounded-full border border-line bg-surface px-4 py-2.5 font-medium text-ink outline-none focus:border-[var(--gold)]">
+              <select value={cat} onChange={(e) => setCat(e.target.value)} className="rounded-full border border-line bg-surface px-4 py-2.5 font-medium text-ink outline-none focus-visible:border-[var(--gold)]">
                 {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
             </label>
@@ -143,7 +143,7 @@ export function CommunityQaForum() {
               <input
                 type="text" value={title} onChange={(e) => setTitle(e.target.value)} required
                 placeholder="e.g. Best timing for high-protein lunches?"
-                className="rounded-full border border-line bg-surface px-4 py-2.5 text-ink outline-none focus:border-[var(--gold)]"
+                className="rounded-full border border-line bg-surface px-4 py-2.5 text-ink outline-none focus-visible:border-[var(--gold)]"
               />
             </label>
 
@@ -152,7 +152,7 @@ export function CommunityQaForum() {
               <textarea
                 value={body} onChange={(e) => setBody(e.target.value)} rows={3} required
                 placeholder="Describe your routine or the challenge you're working through…"
-                className="rounded-2xl border border-line bg-surface p-3.5 text-ink outline-none focus:border-[var(--gold)]"
+                className="rounded-2xl border border-line bg-surface p-3.5 text-ink outline-none focus-visible:border-[var(--gold)]"
               />
             </label>
 

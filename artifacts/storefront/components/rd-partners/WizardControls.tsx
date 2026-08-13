@@ -6,7 +6,7 @@
 import type { ReactNode } from "react";
 
 const controlCls =
-  "w-full rounded-xl border bg-bg px-4 py-4 text-base text-ink outline-none transition-colors focus:border-[var(--gold)]";
+  "w-full rounded-xl border bg-bg px-4 py-4 text-base text-ink outline-none transition-colors focus-visible:border-[var(--gold)]";
 
 /** Caps label + optional inline error, wrapped around any control. */
 export function Field({
