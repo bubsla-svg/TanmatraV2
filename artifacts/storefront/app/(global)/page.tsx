@@ -12,7 +12,7 @@ import { Section05LogisticsMoat } from "@/components/landing/Section05LogisticsM
 import { Section05ProofMacros } from "@/components/landing/Section05ProofMacros";
 import { fetchMenu } from "@/lib/catalog";
 import { formatPaise } from "@/lib/format";
-import { pickPlanPhotos } from "@/lib/planPhotos";
+import { pickPlanCardDishes } from "@/lib/planCardDish";
 import { DishCard } from "@/components/DishCard";
 import { Section06ProofRdPanel } from "@/components/landing/Section06ProofRdPanel";
 import { Section07ProofKitchen } from "@/components/landing/Section07ProofKitchen";
@@ -31,10 +31,10 @@ export default async function HomePage() {
   
   const { dishes } = await fetchMenu();
   const featuredDishes = dishes.slice(0, 5);
-  // Real photography for the plan cards, off the catalog we just loaded — the
+  // The real dish behind each plan card, off the catalog we just loaded — the
   // grid is a client component and cannot read it itself. Order matters: each
   // plan claims its dish before the next one picks, so no two cards repeat.
-  const planPhotos = pickPlanPhotos(["desk_fuel", "steady", "protein_build"], dishes);
+  const planDishes = pickPlanCardDishes(["desk_fuel", "steady", "protein_build"], dishes);
 
   return (
     <div
@@ -105,7 +105,7 @@ export default async function HomePage() {
             the other kept saying "Select your location" all session. */}
         <Section02QualificationChips />
 
-        <Section04ProtocolsGrid photos={planPhotos} />
+        <Section04ProtocolsGrid dishes={planDishes} />
 
         <Section04bMarketplace />
 

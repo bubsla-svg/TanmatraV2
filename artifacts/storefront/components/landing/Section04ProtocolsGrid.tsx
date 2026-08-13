@@ -5,7 +5,7 @@ import Link from "next/link";
 import { SafeImage } from "@/components/ui/SafeImage";
 import { formatPaise } from "@/lib/format";
 import { emitLpEvent } from "@/lib/lpEvents";
-import type { PlanPhoto, PlanPhotoMap } from "@/lib/planPhotos";
+import type { PlanCardDish, PlanDishMap } from "@/lib/planCardDish";
 import { TRIAL_PRICE_PAISE } from "@/lib/trial";
 import { computePlanQuote } from "@workspace/subscription-rules";
 import { FlipCard } from "./FlipCard";
@@ -13,19 +13,19 @@ import { FlipCard } from "./FlipCard";
 /**
  * A plan card's photo, or nothing at all.
  *
- * `photo === null` renders NO element — deliberately, not as an oversight.
+ * `dish === null` renders NO element — deliberately, not as an oversight.
  * These three frames held random-image-API placeholders captioned as our own
- * meals; the replacement (lib/planPhotos.ts) resolves a dish the plan actually
- * rotates, and when it cannot, the honest output is an absent photo rather
- * than a stand-in. Sized by the frame per SafeImage's contract, so the box is
- * reserved before the image decodes and the card never reflows.
+ * meals; the replacement (lib/planCardDish.ts) resolves a dish the plan
+ * actually rotates, and when it cannot, the honest output is an absent photo
+ * rather than a stand-in. Sized by the frame per SafeImage's contract, so the
+ * box is reserved before the image decodes and the card never reflows.
  */
-function PlanPhotoFrame({ photo }: { photo: PlanPhoto | null | undefined }) {
-  if (!photo) return null;
+function PlanPhotoFrame({ dish }: { dish: PlanCardDish | null | undefined }) {
+  if (!dish) return null;
   return (
     <SafeImage
-      src={photo.src}
-      alt={photo.alt}
+      src={dish.image}
+      alt={dish.name}
       className="mt-4 mb-2 aspect-[4/3] w-full rounded-xl border border-line"
       // The photo is the appetite: it renders in full colour. It used to
       // carry `mix-blend-luminosity opacity-90`, greying the food until
@@ -41,11 +41,12 @@ function PlanPhotoFrame({ photo }: { photo: PlanPhoto | null | undefined }) {
  * §4: Protocols Tier Grid.
  * Displays D2C Therapeutic Subscriptions with canonical trial & monthly pricing.
  *
- * `photos` is resolved server-side by the page (this is a client component, so
+ * `dishes` is resolved server-side by the page (this is a client component, so
  * it cannot read the catalog itself) from the same `fetchMenu()` call the
  * homepage already makes — no extra round-trip.
  */
-export function Section04ProtocolsGrid({ photos }: { photos: PlanPhotoMap }) {
+export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
+  const steadyDish = dishes.steady;
   const trialPrice = formatPaise(TRIAL_PRICE_PAISE);
   const deskFuelMonthly = formatPaise(computePlanQuote("desk_fuel").cycleTotalPaise);
   const steadyMonthly = formatPaise(computePlanQuote("steady").cycleTotalPaise);
@@ -106,7 +107,7 @@ export function Section04ProtocolsGrid({ photos }: { photos: PlanPhotoMap }) {
               </span>
               <span className="tabular text-xs font-bold text-ink-muted">{deskFuelMonthly}/mo</span>
             </div>
-            <PlanPhotoFrame photo={photos.desk_fuel} />
+            <PlanPhotoFrame dish={dishes.desk_fuel} />
             <h3 className="mt-2 text-xl font-bold text-ink">Weight-Loss Jumpstart</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
               Focus: Shed weight without feeling tired. Keeps you full and energized all day.
@@ -148,7 +149,7 @@ export function Section04ProtocolsGrid({ photos }: { photos: PlanPhotoMap }) {
               </span>
               <span className="tabular text-xs font-bold text-ink">{steadyMonthly}/mo</span>
             </div>
-            <PlanPhotoFrame photo={photos.steady} />
+            <PlanPhotoFrame dish={dishes.steady} />
             <h3 className="mt-2 text-xl font-bold text-ink">PCOS Hormone Balance</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
               Focus: Supports hormone balance and manages energy levels naturally. Approved by experts.
@@ -157,12 +158,33 @@ export function Section04ProtocolsGrid({ photos }: { photos: PlanPhotoMap }) {
               <span className="tabular text-lg font-bold text-ink">1,700 kcal · 100g protein</span>
               <p className="mt-1 text-xs text-ink-muted">Healthy fats, slow-burning carbs</p>
             </div>
-            <div className="mt-4">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink">
-                Interactive Macro Spec:
-              </p>
-              <FlipCard />
-            </div>
+            {/* The whole block is gated on a real dish. It used to render
+                unconditionally around a FlipCard with no props, and that
+                card's default was a dish that does not exist — so the label
+                "Interactive Macro Spec" sat above invented macros. With no
+                qualifying dish there is no spec to show, and the heading for
+                one would be the same lie in smaller type. */}
+            {steadyDish && (
+              <div className="mt-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink">
+                  Interactive Macro Spec:
+                </p>
+                <FlipCard
+                  spec={{
+                    id: steadyDish.slug,
+                    name: steadyDish.name,
+                    image: steadyDish.image,
+                    isVeg: steadyDish.isVeg,
+                    price: steadyDish.pricePaise,
+                    macros: steadyDish.macros,
+                    macrosEstimated: steadyDish.macrosEstimated,
+                    rdVerified: steadyDish.rdVerified,
+                    ...(steadyDish.rdNote ? { rdNote: steadyDish.rdNote } : {}),
+                    category: steadyDish.category,
+                  }}
+                />
+              </div>
+            )}
           </div>
           <div className="mt-8 flex flex-col gap-2">
             <Link
@@ -191,7 +213,7 @@ export function Section04ProtocolsGrid({ photos }: { photos: PlanPhotoMap }) {
               </span>
               <span className="tabular text-xs font-bold text-ink-muted">{proteinMonthly}/mo</span>
             </div>
-            <PlanPhotoFrame photo={photos.protein_build} />
+            <PlanPhotoFrame dish={dishes.protein_build} />
             <h3 className="mt-2 text-xl font-bold text-ink">Lean Muscle Builder</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
               Focus: Fuel your workouts and recover faster with high-protein, energy-packed meals.

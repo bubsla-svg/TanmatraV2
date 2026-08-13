@@ -8,9 +8,13 @@
 # background washes were retired by deletion: each rendered at 3-10% opacity,
 # so each cost a 1920x1080 download to show a stranger's kitchen almost
 # invisibly behind our own hygiene claims.
+# The landing FlipCard's sample dish went the same way as the protocol cards:
+# it now renders a real dish from the plan's own pool.
 #
-# What is left is one sample dish on the landing FlipCard. Same fix as the
-# protocol cards — point it at a real catalog dish — rather than a shoot.
+# THE REGISTER IS EMPTY. Every placeholder the gate was created to track has
+# been retired, so the gate now reports "no placeholder photography anywhere"
+# and ANY new entry is a regression rather than inherited debt. Keep it empty:
+# the fix for a missing photo is a real asset or no photo, never a stand-in.
 #
 # The list may only SHRINK: replace a placeholder with a real asset, then lower
 # the count here — or delete the line when the file reaches zero. A count that
@@ -19,4 +23,3 @@
 #
 # Sorted, "<repo-relative path> <count>" per line, so additive edits in
 # different alphabetical positions merge without conflict.
-artifacts/storefront/components/landing/FlipCard.tsx 1
