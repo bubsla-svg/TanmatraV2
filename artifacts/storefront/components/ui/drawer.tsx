@@ -48,6 +48,11 @@ export function DrawerContent({
     <DrawerPortal>
       <DrawerOverlay />
       <VaulDrawer.Content
+        // Vaul's Root defaults `modal` to true (focus trap + scroll lock +
+        // inert background all apply), but it never stamps aria-modal onto
+        // the dialog node itself — every consumer's role="dialog" was
+        // missing the attribute a screen reader needs to announce "modal".
+        aria-modal="true"
         {...props}
         className="fixed inset-x-0 bottom-0 z-[var(--z-modal)] mx-auto flex max-h-[100dvh] w-full max-w-2xl flex-col rounded-t-2xl border border-line bg-[var(--glass)] backdrop-blur-[12px] shadow-[var(--shadow-card)] outline-none pb-[env(safe-area-inset-bottom)]"
       >

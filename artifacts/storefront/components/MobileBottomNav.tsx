@@ -9,6 +9,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { COMPANY_LINKS, LEGAL_LINKS, SITE } from "@/lib/nav";
 import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
+import { Drawer, DrawerContent, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 
 export type CoreTab = "home" | "menu" | "care" | "account";
 
@@ -209,25 +210,27 @@ export function MobileBottomNav() {
         </ul>
       </nav>
 
-      {/* Account Info Sheet */}
-      {accountSheetOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-[var(--scrim)] backdrop-blur-sm md:hidden animate-fade-in"
-          onClick={() => setAccountSheetOpen(false)}
-        >
-          {/* Same reasoning as the bar: the sheet is a sibling of the <nav>, not
-              a descendant, so it needs its own data-stitch to put its token
-              subtree on the dark arm — its panel is painted near-black on every
-              route. */}
-          <div
-            data-stitch="dark"
-            className="fixed bottom-0 inset-x-0 animate-sheet-in bg-surface border-t border-line rounded-t-3xl p-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] text-ink max-h-[85vh] overflow-y-auto overscroll-contain"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mx-auto w-12 h-1.5 rounded-full bg-line-strong mb-6" />
-
-            <h3 className="text-lg font-bold">Account &amp; Information</h3>
-            <p className="text-xs text-ink-muted mt-1">Manage profile, preferences, and policies</p>
+      {/* Account Info Sheet — the Drawer primitive (Vaul over Radix Dialog),
+          same as CartDrawer/DishDrawer: role="dialog", aria-modal, focus
+          move/trap and Escape-to-close all come from the primitive instead of
+          the hand-rolled scrim-div this replaced (no dialog role, no focus
+          trap, no Escape, dismiss was scrim-tap or back-gesture only). The
+          platform back-gesture behaviour is unchanged — useOverlayHistory
+          above still owns it, same division of labour CartDrawer's own
+          comment describes: "Vaul owns the slide; history ownership lives
+          here." Rendered unconditionally (not `{accountSheetOpen && ...}`) so
+          Vaul's own close transition can play instead of the content being
+          yanked out of the tree immediately. data-stitch="dark" moves onto
+          DrawerContent itself, matching CartDrawer's placement — the sheet is
+          a sibling of the <nav>, not a descendant, so it needs its own dark
+          scope; its panel painted near-black on every route without it. */}
+      <Drawer open={accountSheetOpen} onOpenChange={setAccountSheetOpen}>
+        <DrawerContent data-stitch="dark" className="md:hidden">
+          <div className="flex flex-col overflow-y-auto overscroll-contain px-6 pb-6 text-ink">
+            <DrawerTitle className="text-lg font-bold">Account &amp; Information</DrawerTitle>
+            <DrawerDescription className="text-xs text-ink-muted mt-1">
+              Manage profile, preferences, and policies
+            </DrawerDescription>
 
             <div className="mt-6 flex flex-col gap-3">
               <Link
@@ -268,8 +271,8 @@ export function MobileBottomNav() {
               {SITE.brand} · FSSAI {SITE.fssai}
             </div>
           </div>
-        </div>
-      )}
+        </DrawerContent>
+      </Drawer>
     </>
   );
 }
