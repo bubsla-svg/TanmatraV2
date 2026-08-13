@@ -82,7 +82,18 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
     // pb-32 (128px), not pb-24: the sticky ledger card measures ~90px plus
     // its 16px mask band, so 96px left the last content row sitting under
     // it. Clearance is the card's real height, not a round number.
-    <div className="flex min-h-dvh flex-col bg-bg pb-32">
+    //
+    // The data-screen-* attributes are load-bearing, not decoration: the
+    // Stitch runtime suite asserts this exact marker to prove screen 5.5 is
+    // wired (e2e/specs/stitch-runtime/commerce.spec.ts), and
+    // tools/verify-stitch-wiring.mjs reconciles the manifest against them.
+    // Dropping them in the Astryx rebuild is what broke that spec.
+    <div
+      data-ui-generation="stitch-74"
+      data-screen-id="5.5"
+      data-screen-state="default"
+      className="flex min-h-dvh flex-col bg-bg pb-32"
+    >
       <div className="relative aspect-square w-full overflow-hidden md:aspect-video">
         <SafeImage src={dish.image} alt={dish.name} className="h-full w-full" />
         {/* The focus shell renders no Header, and FocusLayout's contract is
