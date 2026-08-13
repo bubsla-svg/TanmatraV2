@@ -42,7 +42,7 @@ export function ClinicalForm({ prefs, disabled, onSaved }: {
     } finally { setBusy(false); }
   }
 
-  const input = "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-[var(--gold)] disabled:opacity-50";
+  const input = "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus-visible:border-[var(--gold)] disabled:opacity-50";
   return (
     <fieldset disabled={disabled} className="flex flex-col gap-5">
       <div>

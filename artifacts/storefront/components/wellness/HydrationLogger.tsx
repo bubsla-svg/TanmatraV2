@@ -70,7 +70,7 @@ export const HydrationLogger: React.FC<HydrationLoggerProps> = ({
 
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <strong className="text-3xl font-black text-ink font-heading">{hydrationPercentage}%</strong>
-            <span className="text-[11px] font-extrabold text-[var(--gold-text)] mt-0.5">{totalWaterLoggedMl} mL Logged</span>
+            <span className="text-2xs font-extrabold text-[var(--gold-text)] mt-0.5">{totalWaterLoggedMl} mL Logged</span>
           </div>
         </div>
 
@@ -91,7 +91,7 @@ export const HydrationLogger: React.FC<HydrationLoggerProps> = ({
           >
             <span className="text-xl block group-hover:scale-110 transition-transform">🥛</span>
             <strong className="text-xs font-black block">+250 mL</strong>
-            <span className="text-[10px] text-ink-muted group-hover:text-[var(--gold-text)] block">Glass</span>
+            <span className="text-3xs text-ink-muted group-hover:text-[var(--gold-text)] block">Glass</span>
           </button>
 
           <button
@@ -100,7 +100,7 @@ export const HydrationLogger: React.FC<HydrationLoggerProps> = ({
           >
             <span className="text-xl block group-hover:scale-110 transition-transform">🧴</span>
             <strong className="text-xs font-black block">+500 mL</strong>
-            <span className="text-[10px] text-ink-muted group-hover:text-[var(--gold-text)] block">Sports Bottle</span>
+            <span className="text-3xs text-ink-muted group-hover:text-[var(--gold-text)] block">Sports Bottle</span>
           </button>
 
           <button
@@ -109,7 +109,7 @@ export const HydrationLogger: React.FC<HydrationLoggerProps> = ({
           >
             <span className="text-xl block group-hover:scale-110 transition-transform">🫖</span>
             <strong className="text-xs font-black block">+1,000 mL</strong>
-            <span className="text-[10px] text-ink-muted group-hover:text-[var(--gold-text)] block">Jug</span>
+            <span className="text-3xs text-ink-muted group-hover:text-[var(--gold-text)] block">Jug</span>
           </button>
         </div>
       </div>
@@ -121,7 +121,7 @@ export const HydrationLogger: React.FC<HydrationLoggerProps> = ({
           value={customMlInput}
           onChange={(e) => setCustomMlInput(e.target.value)}
           placeholder="Enter custom mL (e.g., 350)..."
-          className="flex-1 bg-surface-subtle border border-line rounded-xl px-4 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
+          className="flex-1 bg-surface-subtle border border-line rounded-xl px-4 py-2 text-xs text-ink focus:outline-none focus-visible:border-[var(--gold)]"
         />
         <button
           type="submit"
@@ -135,7 +135,7 @@ export const HydrationLogger: React.FC<HydrationLoggerProps> = ({
       {/* Water Log History Feed */}
       {waterLogs.length > 0 && (
         <div className="space-y-2 pt-2 border-t border-line">
-          <span className="text-[11px] font-extrabold uppercase tracking-wider text-ink-muted block">Today&apos;s Log History:</span>
+          <span className="text-2xs font-extrabold uppercase tracking-wider text-ink-muted block">Today&apos;s Log History:</span>
           <div className="max-h-40 overflow-y-auto space-y-2 pr-1 no-scrollbar">
             {waterLogs.map(log => (
               <div key={log.id} className="flex items-center justify-between p-2.5 rounded-xl bg-surface-subtle border border-line text-xs">
@@ -144,7 +144,7 @@ export const HydrationLogger: React.FC<HydrationLoggerProps> = ({
                   <span className="font-bold text-ink">{log.waterMl} mL Logged</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-[10px] text-ink-faint font-medium">
+                  <span className="text-3xs text-ink-faint font-medium">
                     {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                   <button onClick={() => handleRemoveLog(log.id)} className="text-ink-faint hover:text-[var(--danger)]">

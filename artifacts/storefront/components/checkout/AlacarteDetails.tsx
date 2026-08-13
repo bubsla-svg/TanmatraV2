@@ -24,7 +24,7 @@ export interface AlacarteAddress {
 }
 
 const inputCls =
-  "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus:border-line-strong";
+  "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus-visible:border-line-strong";
 
 /**
  * À-la-carte details (SF-05). One screen: contact phone (controlled by the
@@ -307,7 +307,7 @@ export function AlacarteDetails({
 
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
 
-      <p className="text-center text-[11px] text-ink-faint">
+      <p className="text-center text-2xs text-ink-faint">
         UPI · FSSAI licensed · RD-reviewed kitchen · you won&rsquo;t be charged until you confirm in the payment step.
       </p>
 
@@ -321,7 +321,7 @@ export function AlacarteDetails({
           )}
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 flex-col">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-ink-muted">Payable now</span>
+              <span className="text-3xs font-bold uppercase tracking-widest text-ink-muted">Payable now</span>
               <span className="tabular text-lg font-bold text-ink">
                 {quoteState === "active" && quote ? formatPaise(quote.payableNowPaise) : formatPaise(subtotalPaise(cart))}
                 {quoteState !== "active" && <span className="ml-1 text-xs font-medium text-ink-faint">est.</span>}

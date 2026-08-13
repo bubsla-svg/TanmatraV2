@@ -39,7 +39,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   return (
     <div className={`flex flex-col items-center justify-center text-center p-8 max-w-md mx-auto ${className}`}>
       {imageUrl && (
-        <div className="w-48 h-48 mb-6 rounded-full overflow-hidden bg-surface border border-white/5 relative">
+        <div className="w-48 h-48 mb-6 rounded-full overflow-hidden bg-surface border border-line relative">
           <SafeImage src={imageUrl} alt="" className="w-full h-full object-cover opacity-80" />
         </div>
       )}

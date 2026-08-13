@@ -110,7 +110,7 @@ export const FastingClock: React.FC<FastingClockProps> = ({
                 <span>{mode.icon}</span>
                 <strong className="text-xs font-bold block">{mode.name.split(' ')[0]}</strong>
               </div>
-              <span className="text-[10px] opacity-80 block mt-1">{mode.fastingHours}h Fast • {mode.eatingHours}h Eat</span>
+              <span className="text-3xs opacity-80 block mt-1">{mode.fastingHours}h Fast • {mode.eatingHours}h Eat</span>
             </button>
           ))}
         </div>
@@ -119,7 +119,7 @@ export const FastingClock: React.FC<FastingClockProps> = ({
       {/* Timer Visual Display */}
       <div className="bg-surface text-ink p-6 rounded-3xl border border-line text-center space-y-4 relative overflow-hidden">
         <div className="space-y-1">
-          <span className="text-[11px] text-[var(--gold-text)] font-extrabold uppercase tracking-widest flex items-center justify-center gap-1">
+          <span className="text-2xs text-[var(--gold-text)] font-extrabold uppercase tracking-widest flex items-center justify-center gap-1">
             <Flame className="w-3.5 h-3.5" /> Fasting Timer Clock
           </span>
           <strong className="text-4xl sm:text-5xl font-black font-heading tracking-tight text-ink block">

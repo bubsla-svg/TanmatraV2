@@ -97,7 +97,7 @@ export function CompanyInvite({ token }: { token: string }) {
       </p>
 
       <div className="mt-6 w-full rounded-2xl border border-line bg-surface-raised p-4 text-left">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Invitation for</p>
+        <p className="text-2xs font-semibold uppercase tracking-wide text-ink-faint">Invitation for</p>
         <p className="mt-1 text-sm text-ink">{invite.email}</p>
       </div>
 
@@ -113,7 +113,7 @@ export function CompanyInvite({ token }: { token: string }) {
       >
         {busy ? "Joining…" : "Accept invite"}
       </Button>
-      <p className="mt-4 text-[11px] text-ink-faint">Secure corporate invitation.</p>
+      <p className="mt-4 text-2xs text-ink-faint">Secure corporate invitation.</p>
     </div>
   );
 }

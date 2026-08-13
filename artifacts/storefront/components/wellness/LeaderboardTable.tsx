@@ -68,7 +68,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
               <div>
                 <div className="flex items-center gap-2">
                   <strong className="text-sm font-bold text-ink font-heading">{member.name}</strong>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-gold/10 text-[var(--gold-text)] font-extrabold">
+                  <span className="text-3xs px-2 py-0.5 rounded-full bg-gold/10 text-[var(--gold-text)] font-extrabold">
                     {member.relation}
                   </span>
                 </div>
@@ -87,7 +87,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                 <strong className="text-lg font-black text-[var(--gold-text)] font-heading block">
                   {member.points} <span className="text-xs font-bold">Pts</span>
                 </strong>
-                <span className="text-[10px] text-ink-faint block font-bold">{member.badge}</span>
+                <span className="text-3xs text-ink-faint block font-bold">{member.badge}</span>
               </div>
 
               {member.id !== '1' && (

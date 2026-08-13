@@ -112,7 +112,7 @@ export function GroupOrderView({ code }: { code: string }) {
       <div className="rounded-2xl border border-line bg-surface p-6 text-center">
         <div className="flex flex-wrap items-center justify-center gap-2">
           <p className="tabular text-xl font-bold tracking-widest text-ink">{group.code}</p>
-          <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase ${closed ? "bg-[color-mix(in_srgb,var(--ink)_10%,transparent)] text-ink-muted" : "bg-sage text-sage-foreground"}`}>{group.status}</span>
+          <span className={`rounded-full px-2.5 py-0.5 text-2xs font-semibold uppercase ${closed ? "bg-[color-mix(in_srgb,var(--ink)_10%,transparent)] text-ink-muted" : "bg-sage text-sage-foreground"}`}>{group.status}</span>
         </div>
         <p className="mt-2 text-sm text-ink-muted">Hosted by {group.hostName} · {group.participants.length} participant{group.participants.length === 1 ? "" : "s"}</p>
         <p className="mx-auto mt-3 max-w-xs text-xs leading-relaxed text-ink-faint">Share code <span className="font-semibold text-ink-muted">{group.code}</span>. Anyone with the link can add their own items — the host closes the order and pays for everyone.</p>
@@ -153,7 +153,7 @@ export function GroupOrderView({ code }: { code: string }) {
       ) : isHost ? (
         <div>
           <Button type="button" onClick={closeAndCheckout} disabled={busy} shape="xl" size="fluid" className="w-full px-6 py-3.5 font-semibold disabled:opacity-60">{busy ? "Closing…" : "Close & checkout"}</Button>
-          <p className="mt-2 text-center text-[11px] text-ink-faint">Only you (the host) can close this order and pay for everyone.</p>
+          <p className="mt-2 text-center text-2xs text-ink-faint">Only you (the host) can close this order and pay for everyone.</p>
         </div>
       ) : (
         <Button asChild shape="xl" size="fluid" className="block w-full text-center px-6 py-3.5 font-semibold">

@@ -98,7 +98,7 @@ export function WhatsAppOptIn({
           <span className="tabular text-sm text-ink">
             {countryCode} {phone}
           </span>
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-sage-text">Verified</span>
+          <span className="text-3xs font-semibold uppercase tracking-widest text-sage-text">Verified</span>
         </div>
         <button
           type="button"
@@ -140,7 +140,7 @@ export function WhatsAppOptIn({
       )}
 
       {note && (
-        <p role="status" className="text-[11px] leading-relaxed text-ink-muted">
+        <p role="status" className="text-2xs leading-relaxed text-ink-muted">
           {note}
         </p>
       )}
@@ -152,7 +152,7 @@ export function WhatsAppOptIn({
           onClick={() => void (phase === "sent" ? verify() : send())}
           shape="pill"
           size="fluid"
-          className="self-start px-6 py-3 text-[10px] font-semibold uppercase tracking-widest disabled:opacity-40"
+          className="self-start px-6 py-3 text-3xs font-semibold uppercase tracking-widest disabled:opacity-40"
         >
           {busy ? "Working…" : phase === "sent" ? "Verify code" : "Send code"}
         </Button>

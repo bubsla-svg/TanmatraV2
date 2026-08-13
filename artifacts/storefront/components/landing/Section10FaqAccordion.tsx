@@ -63,7 +63,7 @@ export function Section10FaqAccordion() {
               <button
                 type="button"
                 onClick={() => toggle(idx, item.question)}
-                className="flex w-full items-center justify-between text-left text-base font-semibold text-ink focus:outline-none transition-opacity hover:opacity-90"
+                className="flex w-full items-center justify-between text-left text-base font-semibold text-ink outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm transition-opacity hover:opacity-90"
               >
                 <span>{item.question}</span>
                 <span className="ml-4 shrink-0 text-xs font-bold text-ink-faint">

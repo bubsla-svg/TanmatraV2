@@ -33,7 +33,7 @@ export function Section05ProofMacros() {
               key={idx}
               className="flex flex-col rounded-xl border border-line bg-surface-subtle p-5 shadow-sm"
             >
-              <span className="text-[11px] font-bold uppercase tracking-wider text-ink-faint">
+              <span className="text-2xs font-bold uppercase tracking-wider text-ink-faint">
                 {item.label}
               </span>
               <span className="mt-2 text-2xl font-extrabold text-ink tabular">

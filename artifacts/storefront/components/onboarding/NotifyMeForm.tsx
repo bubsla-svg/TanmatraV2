@@ -79,7 +79,7 @@ export function NotifyMeForm({ pincode, onReset }: NotifyMeFormProps) {
         <button
           type="button"
           onClick={onReset}
-          className="text-[11px] underline text-[var(--ink-muted)] hover:text-[var(--ink)]"
+          className="text-2xs underline text-[var(--ink-muted)] hover:text-[var(--ink)]"
         >
           Check another pincode
         </button>
@@ -101,7 +101,7 @@ export function NotifyMeForm({ pincode, onReset }: NotifyMeFormProps) {
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           disabled={busy}
-          className="w-48 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--ink)] outline-none focus:border-[var(--line-strong)] disabled:opacity-50"
+          className="w-48 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--ink)] outline-none focus-visible:border-[var(--line-strong)] disabled:opacity-50"
         />
         <Button
           type="submit"
@@ -122,7 +122,7 @@ export function NotifyMeForm({ pincode, onReset }: NotifyMeFormProps) {
         </button>
       </div>
       {err && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{err}</p>}
-      <p className="text-[11px] leading-snug text-[var(--ink-muted)]">
+      <p className="text-2xs leading-snug text-[var(--ink-muted)]">
         We&rsquo;ll use this number only to tell you when Tanmatra delivers in {pincode}.
       </p>
       <MarketplaceFallbackCta />

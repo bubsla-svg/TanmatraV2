@@ -30,7 +30,7 @@ export const DayCard = memo(function DayCard({ day, dayIndex, editable, onSwap, 
       <div className="flex items-center justify-between gap-2">
         <p className="font-mono text-xs font-semibold uppercase tracking-widest text-ink">{formatPlanDay(day.date)}</p>
         {editable && onRegen && (
-          <button type="button" onClick={handleRegen} className="rounded-full border border-line px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-ink-muted hover:border-line-strong hover:text-ink active:scale-[0.98]">Regen</button>
+          <button type="button" onClick={handleRegen} className="rounded-full border border-line px-3 py-1 text-3xs font-semibold uppercase tracking-widest text-ink-muted hover:border-line-strong hover:text-ink active:scale-[0.98]">Regen</button>
         )}
       </div>
       <ul className="mt-4 flex flex-col gap-4">
@@ -44,7 +44,7 @@ export const DayCard = memo(function DayCard({ day, dayIndex, editable, onSwap, 
                 <div aria-hidden className="h-16 w-16 shrink-0 rounded-2xl border border-dashed border-line bg-surface-raised" />
               )}
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-ink-faint">{SLOT_LABEL[slot]}</p>
+                <p className="text-3xs font-semibold uppercase tracking-widest text-ink-faint">{SLOT_LABEL[slot]}</p>
                 {entry ? <SlotLine entry={entry} /> : <p className="mt-0.5 text-sm italic text-ink-muted">No dish picked</p>}
               </div>
               {editable && (
@@ -52,7 +52,7 @@ export const DayCard = memo(function DayCard({ day, dayIndex, editable, onSwap, 
                   type="button"
                   onClick={() => onSwap(dayIndex, slot)}
                   aria-label={`Swap ${SLOT_LABEL[slot]}`}
-                  className="shrink-0 rounded-full border border-line px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-ink-muted hover:border-line-strong hover:text-ink active:scale-[0.98]"
+                  className="shrink-0 rounded-full border border-line px-3.5 py-1.5 text-3xs font-semibold uppercase tracking-widest text-ink-muted hover:border-line-strong hover:text-ink active:scale-[0.98]"
                 >
                   Swap
                 </button>
@@ -69,7 +69,7 @@ function SlotLine({ entry }: { entry: MealPlanSlotEntry }) {
   return (
     <>
       <p className="mt-0.5 truncate text-sm font-medium text-ink">{entry.name}</p>
-      <p className="tabular mt-1 text-[11px] text-ink-muted">
+      <p className="tabular mt-1 text-2xs text-ink-muted">
         {entry.calories} kcal · {entry.protein}g · {formatPaise(entry.pricePaise)}
       </p>
     </>

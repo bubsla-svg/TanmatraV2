@@ -12,10 +12,10 @@ export const ClinicalBadge: React.FC<ClinicalBadgeProps> = ({
   icon,
 }) => {
   const styles = {
-    gold: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-    emerald: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-    amber: "bg-amber-500/10 text-amber-300 border-amber-500/20",
-    slate: "bg-slate-800 text-slate-300 border-slate-700",
+    gold: "bg-gold/10 text-[var(--gold-text)] border-[var(--gold)]/20",
+    emerald: "bg-sage/10 text-sage-text border-[var(--sage)]/20",
+    amber: "bg-gold/10 text-[var(--gold-text)] border-[var(--gold)]/20",
+    slate: "bg-surface-raised text-ink-muted border-line",
   };
 
   return (
@@ -44,13 +44,13 @@ export const FilterChip: React.FC<FilterChipProps> = ({
       onClick={onClick}
       className={`px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all duration-200 min-h-[44px] inline-flex items-center gap-2 border ${
         isSelected
-          ? "bg-gold text-gold-ink border-gold shadow-md shadow-amber-500/10"
-          : "bg-slate-900/60 text-slate-300 border-slate-800 hover:bg-slate-800"
+          ? "bg-gold text-gold-ink border-gold shadow-md shadow-[var(--gold)]/10"
+          : "bg-surface-raised text-ink-muted border-line hover:bg-surface-raised"
       }`}
     >
       <span>{label}</span>
       {count !== undefined && (
-        <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${isSelected ? "bg-slate-950/20 text-slate-950" : "bg-slate-800 text-slate-400"}`}>
+        <span className={`px-1.5 py-0.5 rounded-full text-3xs ${isSelected ? "bg-[var(--gold-ink)]/20 text-[var(--gold-ink)]" : "bg-surface-raised text-ink-muted"}`}>
           {count}
         </span>
       )}

@@ -78,18 +78,18 @@ export function FlipCard({ spec = DEFAULT_SPEC, initialFlipped = false }: FlipCa
           <span
             role="img"
             aria-label={spec.isVeg ? "Vegetarian" : "Non-vegetarian"}
-            className={`absolute left-2 top-2 inline-block h-3 w-3 ring-2 ring-white ${
+            className={`absolute left-2 top-2 inline-block h-3 w-3 ring-2 ring-[var(--surface)] ${
               spec.isVeg ? "rounded-full" : "rounded-[2px]"
             }`}
             style={{ backgroundColor: spec.isVeg ? "var(--sage)" : "var(--danger)" }}
           />
-          <span className="absolute bottom-2 right-2 rounded-md border border-line bg-surface px-2 py-1 text-[11px] font-semibold text-ink shadow">
+          <span className="absolute bottom-2 right-2 rounded-md border border-line bg-surface px-2 py-1 text-2xs font-semibold text-ink shadow">
             Tap for Specs ➔
           </span>
         </div>
         <div className="flex flex-col gap-1.5 p-3 pb-0">
           <h3 className="text-sm font-semibold leading-snug text-ink">{spec.name}</h3>
-          <p className="text-[11px] font-semibold text-ink-muted">
+          <p className="text-2xs font-semibold text-ink-muted">
             {spec.giClass ?? "Clinical Macro Monitored"}
           </p>
           <p className="line-clamp-2 text-xs leading-relaxed text-ink-muted">
@@ -104,7 +104,7 @@ export function FlipCard({ spec = DEFAULT_SPEC, initialFlipped = false }: FlipCa
           <span className="tabular text-sm font-semibold text-ink">
             {formatPaise(spec.price)}
           </span>
-          <span className="tabular text-[11px] text-ink-faint">
+          <span className="tabular text-2xs text-ink-faint">
             {est}
             {spec.macros.calories} kcal · {est}
             {spec.macros.protein}g P

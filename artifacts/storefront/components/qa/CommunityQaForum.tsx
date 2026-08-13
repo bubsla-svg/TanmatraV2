@@ -79,14 +79,14 @@ export function CommunityQaForum() {
             {threadsQuery.data.map((t) => (
               <article key={t.id} className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5 shadow-sm sm:p-6">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="rounded-full bg-sage-soft px-3 py-1 font-mono text-[11px] font-semibold tracking-wide text-sage-text">{categoryLabel(t.category)}</span>
+                  <span className="rounded-full bg-sage-soft px-3 py-1 font-mono text-2xs font-semibold tracking-wide text-sage-text">{categoryLabel(t.category)}</span>
                   <span className="text-xs font-medium text-ink-muted">{t.authorName}</span>
                 </div>
                 <h3 className="text-lg font-semibold leading-snug text-ink">{t.questionTitle}</h3>
                 <p className="text-sm leading-relaxed text-ink-muted">{t.questionBody}</p>
                 {t.rdAnswer ? (
                   <div className="mt-1 flex flex-col gap-1.5 rounded-xl border border-[color-mix(in_srgb,var(--gold)_35%,transparent)] bg-[color-mix(in_srgb,var(--gold)_7%,transparent)] p-4">
-                    <div className="flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wide text-gold-text">
+                    <div className="flex items-center gap-1.5 font-mono text-2xs font-bold uppercase tracking-wide text-gold-text">
                       <BadgeCheck aria-hidden className="h-3.5 w-3.5 shrink-0" />
                       Answered by {t.rdAnsweredBy || "our RD team"}
                     </div>
@@ -133,7 +133,7 @@ export function CommunityQaForum() {
 
             <label className="flex flex-col gap-1.5 text-xs">
               <span className="font-semibold text-ink">Category</span>
-              <select value={cat} onChange={(e) => setCat(e.target.value)} className="rounded-full border border-line bg-surface px-4 py-2.5 font-medium text-ink outline-none focus:border-[var(--gold)]">
+              <select value={cat} onChange={(e) => setCat(e.target.value)} className="rounded-full border border-line bg-surface px-4 py-2.5 font-medium text-ink outline-none focus-visible:border-[var(--gold)]">
                 {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
             </label>
@@ -143,7 +143,7 @@ export function CommunityQaForum() {
               <input
                 type="text" value={title} onChange={(e) => setTitle(e.target.value)} required
                 placeholder="e.g. Best timing for high-protein lunches?"
-                className="rounded-full border border-line bg-surface px-4 py-2.5 text-ink outline-none focus:border-[var(--gold)]"
+                className="rounded-full border border-line bg-surface px-4 py-2.5 text-ink outline-none focus-visible:border-[var(--gold)]"
               />
             </label>
 
@@ -152,7 +152,7 @@ export function CommunityQaForum() {
               <textarea
                 value={body} onChange={(e) => setBody(e.target.value)} rows={3} required
                 placeholder="Describe your routine or the challenge you're working through…"
-                className="rounded-2xl border border-line bg-surface p-3.5 text-ink outline-none focus:border-[var(--gold)]"
+                className="rounded-2xl border border-line bg-surface p-3.5 text-ink outline-none focus-visible:border-[var(--gold)]"
               />
             </label>
 

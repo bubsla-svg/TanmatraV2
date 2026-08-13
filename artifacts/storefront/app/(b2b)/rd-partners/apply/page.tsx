@@ -13,7 +13,7 @@ export default function RdPartnersApplyPage() {
   return (
     <section className="mx-auto flex max-w-[640px] flex-col gap-10 px-4 py-[var(--space-section)]">
       <header className="flex flex-col gap-2 text-center">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-ink-faint">
+        <span className="text-3xs font-semibold uppercase tracking-widest text-ink-faint">
           RD partner programme
         </span>
         <h1 className="text-3xl font-semibold leading-tight tracking-tight text-ink">

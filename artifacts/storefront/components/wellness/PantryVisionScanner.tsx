@@ -71,7 +71,7 @@ export const PantryVisionScanner: React.FC = () => {
           <span className="text-xs font-bold text-ink">
             {imageFile ? imageFile.name : "Capture or upload fridge photo"}
           </span>
-          <span className="text-[10px] text-ink-faint font-medium mt-1">Identifies vegetables, proteins, dairy & recommends complementary meal kits</span>
+          <span className="text-3xs text-ink-faint font-medium mt-1">Identifies vegetables, proteins, dairy & recommends complementary meal kits</span>
           <input type="file" accept="image/*" onChange={handleScan} className="hidden" />
         </label>
 
@@ -101,7 +101,7 @@ export const PantryVisionScanner: React.FC = () => {
               {result.detectedIngredients.map((item, idx) => (
                 <div key={idx} className="px-3 py-1.5 rounded-xl bg-surface-raised text-ink text-xs font-bold flex items-center gap-2 border border-line">
                   <span>{item.name}</span>
-                  <span className="text-[10px] text-[var(--gold-text)] font-extrabold">{Math.round(item.confidenceScore * 100)}% Match</span>
+                  <span className="text-3xs text-[var(--gold-text)] font-extrabold">{Math.round(item.confidenceScore * 100)}% Match</span>
                 </div>
               ))}
             </div>

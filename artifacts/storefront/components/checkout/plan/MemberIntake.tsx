@@ -35,7 +35,7 @@ export function draftToMember(d: MemberDraft): MemberInput {
 }
 
 const inputCls =
-  "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus:border-line-strong";
+  "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus-visible:border-line-strong";
 const DIETS: MemberDiet[] = ["veg", "nonveg", "any"];
 const SPICES: SpiceLevel[] = ["mild", "medium", "hot"];
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);

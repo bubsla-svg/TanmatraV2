@@ -69,7 +69,7 @@ export function Waitlist({ planId, planName, reason }: { planId: string; planNam
           placeholder="Phone or email"
           aria-invalid={error != null}
           aria-describedby={error ? "waitlist-error" : undefined}
-          className="flex-1 rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink focus:border-line-strong"
+          className="flex-1 rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink focus-visible:border-line-strong"
         />
         <Button
           type="submit"

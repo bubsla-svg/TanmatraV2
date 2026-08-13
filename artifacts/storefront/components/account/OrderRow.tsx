@@ -48,7 +48,7 @@ export function OrderRow({ order }: { order: OrderSummary }) {
       </p>
 
       {tone === "failed" ? (
-        <p className="mt-4 text-[10px] font-bold uppercase tracking-widest text-ink-faint">
+        <p className="mt-4 text-3xs font-bold uppercase tracking-widest text-ink-faint">
           Incomplete transaction
         </p>
       ) : (

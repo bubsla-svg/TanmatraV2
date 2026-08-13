@@ -53,7 +53,7 @@ export function FocusHeader({
           {backLabel}
         </button>
         {trustSignal && (
-          <span className="text-[11px] font-medium uppercase tracking-widest text-ink-faint">
+          <span className="text-2xs font-medium uppercase tracking-widest text-ink-faint">
             {trustSignal}
           </span>
         )}

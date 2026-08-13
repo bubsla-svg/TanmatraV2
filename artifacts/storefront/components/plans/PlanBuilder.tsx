@@ -232,7 +232,7 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
         >
           Continue to checkout
         </Button>
-        <p className="text-center text-[10px] uppercase tracking-wide text-ink-faint">
+        <p className="text-center text-3xs uppercase tracking-wide text-ink-faint">
           No platform fee. No surge. Prices include all taxes.
         </p>
       </div>

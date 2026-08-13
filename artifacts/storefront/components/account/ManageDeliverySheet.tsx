@@ -108,7 +108,7 @@ export function ManageDeliverySheet({
                   min={new Date().toISOString().slice(0, 10)}
                   disabled={pastCutoff || reschedule.isPending}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus:border-line-strong disabled:opacity-50"
+                  className="w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus-visible:border-line-strong disabled:opacity-50"
                 />
                 <Button
                   type="button"

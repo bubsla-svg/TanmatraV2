@@ -101,7 +101,7 @@ export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
             className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-shadow duration-300 hover:shadow-lg"
           >
             <div className="flex items-center justify-between p-4">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-sage/20 bg-sage-soft px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-sage-text">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-sage/20 bg-sage-soft px-2.5 py-1 text-3xs font-semibold uppercase tracking-wider text-sage-text">
                 <CheckCircle2 aria-hidden className="h-3.5 w-3.5" />
                 Vault saved
               </span>
@@ -109,7 +109,7 @@ export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
                 type="button"
                 onClick={() => removeMutation.mutate(saved.dishSlug)}
                 disabled={removing}
-                className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-ink-muted transition-colors hover:text-[var(--danger)] disabled:opacity-50"
+                className="inline-flex items-center gap-1 text-3xs font-semibold uppercase tracking-wider text-ink-muted transition-colors hover:text-[var(--danger)] disabled:opacity-50"
                 title="Remove from Vault"
               >
                 {removing ? "Removing…" : "Remove"}
@@ -118,7 +118,7 @@ export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
             </div>
 
             {removeFailed && (
-              <p role="alert" className="px-4 text-[11px] font-medium text-[var(--danger)]">
+              <p role="alert" className="px-4 text-2xs font-medium text-[var(--danger)]">
                 Couldn&rsquo;t remove this item. Try again.
               </p>
             )}
@@ -158,14 +158,14 @@ export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
 
               <div className="flex flex-wrap gap-2">
                 {dish && (
-                  <span className="tabular rounded-full bg-surface-raised px-3 py-1 text-[11px] text-ink-muted">
+                  <span className="tabular rounded-full bg-surface-raised px-3 py-1 text-2xs text-ink-muted">
                     {dish.macros.protein}P · {dish.macros.carbs}C · {dish.macros.fat}F
                   </span>
                 )}
                 {saved.tags.map((t, idx) => (
                   <span
                     key={idx}
-                    className="rounded-full bg-surface-raised px-3 py-1 text-[11px] uppercase text-ink-muted"
+                    className="rounded-full bg-surface-raised px-3 py-1 text-2xs uppercase text-ink-muted"
                   >
                     {t}
                   </span>

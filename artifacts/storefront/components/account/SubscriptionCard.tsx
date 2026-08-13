@@ -57,7 +57,7 @@ export function SubscriptionCard({
           {sub.cadence} · {sub.mealsPerDelivery} meals / delivery
         </span>
         <span
-          className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${STATUS_STYLE[sub.status]}`}
+          className={`shrink-0 rounded-full px-3 py-1 text-2xs font-semibold uppercase tracking-wide ${STATUS_STYLE[sub.status]}`}
         >
           {STATUS_LABEL[sub.status]}
         </span>

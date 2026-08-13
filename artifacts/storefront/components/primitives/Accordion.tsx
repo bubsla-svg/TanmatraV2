@@ -21,7 +21,7 @@ export const AccordionItem: React.FC<AccordionItemProps> = ({
     <div className="border-b border-line last:border-b-0 py-4">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between text-left group py-2 focus:outline-none min-h-[44px]"
+        className="w-full flex items-center justify-between text-left group py-2 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm min-h-[44px]"
       >
         <div>
           <h4 className="text-sm font-semibold text-ink-primary group-hover:text-primary transition-colors">

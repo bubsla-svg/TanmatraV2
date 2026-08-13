@@ -42,7 +42,7 @@ export function ChipInput({
           {values.map((v) => (
             <li
               key={v}
-              className={`flex items-center gap-2 rounded-full px-4 py-2 text-[11px] font-medium uppercase tracking-wider ${TONE_CHIP[tone]}`}
+              className={`flex items-center gap-2 rounded-full px-4 py-2 text-2xs font-medium uppercase tracking-wider ${TONE_CHIP[tone]}`}
             >
               {v}
               <button

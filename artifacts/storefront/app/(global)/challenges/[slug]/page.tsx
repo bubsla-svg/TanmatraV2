@@ -72,12 +72,12 @@ export default async function ChallengePage({ params }: Params) {
       )}
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <span
-          className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${status === "live" ? "bg-gold text-[var(--gold-ink)]" : "bg-surface-raised text-ink-muted"}`}
+          className={`rounded-full px-3 py-1 text-2xs font-semibold uppercase tracking-wide ${status === "live" ? "bg-gold text-[var(--gold-ink)]" : "bg-surface-raised text-ink-muted"}`}
         >
           {STATUS_LABEL[status]}
         </span>
         {c.featured > 0 && (
-          <span className="rounded-full border border-line px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
+          <span className="rounded-full border border-line px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-ink-muted">
             Featured
           </span>
         )}

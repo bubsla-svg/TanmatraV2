@@ -35,7 +35,7 @@ export function NutritionRing({ label, value, target, unit, done }: {
         </span>
       </div>
       <div className="text-center">
-        <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-ink-muted">{label}</p>
+        <p className="mb-1 text-2xs font-bold uppercase tracking-wider text-ink-muted">{label}</p>
         <p className="tabular text-sm text-ink">{readout}</p>
       </div>
     </div>

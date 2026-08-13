@@ -257,7 +257,7 @@ function ReviewStep({ draft, errors, patch }: StepProps) {
       <dl className="flex flex-col gap-3 rounded-2xl border border-line bg-bg p-5">
         {summary.map((row) => (
           <div key={row.label} className="flex items-baseline justify-between gap-4">
-            <dt className="text-[10px] font-semibold uppercase tracking-widest text-ink-faint">{row.label}</dt>
+            <dt className="text-3xs font-semibold uppercase tracking-widest text-ink-faint">{row.label}</dt>
             <dd className="truncate text-sm text-ink">{row.value || "—"}</dd>
           </div>
         ))}

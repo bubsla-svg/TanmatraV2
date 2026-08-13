@@ -6,7 +6,7 @@
 import type { ReactNode } from "react";
 
 const controlCls =
-  "w-full rounded-xl border bg-bg px-4 py-4 text-base text-ink outline-none transition-colors focus:border-[var(--gold)]";
+  "w-full rounded-xl border bg-bg px-4 py-4 text-base text-ink outline-none transition-colors focus-visible:border-[var(--gold)]";
 
 /** Caps label + optional inline error, wrapped around any control. */
 export function Field({
@@ -28,17 +28,17 @@ export function Field({
       <div className="flex items-end justify-between gap-3">
         <label
           htmlFor={htmlFor}
-          className={`text-[10px] font-semibold uppercase tracking-widest ${
+          className={`text-3xs font-semibold uppercase tracking-widest ${
             error ? "text-[var(--danger)]" : "text-ink-faint"
           }`}
         >
           {label}
         </label>
-        {hint && <span className="tabular text-[10px] text-ink-faint">{hint}</span>}
+        {hint && <span className="tabular text-3xs text-ink-faint">{hint}</span>}
       </div>
       {children}
       {error && (
-        <p role="alert" className="text-[11px] font-medium text-[var(--danger)]">
+        <p role="alert" className="text-2xs font-medium text-[var(--danger)]">
           {error}
         </p>
       )}

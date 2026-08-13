@@ -92,7 +92,7 @@ export default async function TrialPage() {
           <h2 className="text-sm font-semibold text-ink">How the creditback works</h2>
           <ol className="mt-4 flex flex-col gap-4">
             <li className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-line-strong text-[10px] font-medium text-ink-faint">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-line-strong text-3xs font-medium text-ink-faint">
                 1
               </span>
               <p className="pt-0.5 text-sm leading-relaxed text-ink-muted">
@@ -100,7 +100,7 @@ export default async function TrialPage() {
               </p>
             </li>
             <li className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-line-strong text-[10px] font-medium text-ink-faint">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-line-strong text-3xs font-medium text-ink-faint">
                 2
               </span>
               <p className="pt-0.5 text-sm leading-relaxed text-ink-muted">
@@ -108,7 +108,7 @@ export default async function TrialPage() {
               </p>
             </li>
             <li className="flex gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-line-strong text-[10px] font-medium text-ink-faint">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-line-strong text-3xs font-medium text-ink-faint">
                 3
               </span>
               <p className="pt-0.5 text-sm leading-relaxed text-ink-muted">

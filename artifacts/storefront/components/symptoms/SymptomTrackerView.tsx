@@ -72,11 +72,11 @@ export function SymptomTrackerView() {
         )}
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <label className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Symptom Classification</label>
+          <label className="text-2xs font-semibold uppercase tracking-wider text-ink-muted">Symptom Classification</label>
           <select
             value={symptom}
             onChange={(e) => setSymptom(e.target.value)}
-            className="rounded-xl border border-line bg-surface p-2.5 font-medium text-ink focus:border-gold outline-none"
+            className="rounded-xl border border-line bg-surface p-2.5 font-medium text-ink focus-visible:border-gold outline-none"
           >
             <option value="bloating">Post-Meal Bloating &amp; Gas</option>
             <option value="glucose_spike">Afternoon Lethargy / Glucose Dip</option>
@@ -87,7 +87,7 @@ export function SymptomTrackerView() {
 
         <div className="flex flex-col gap-1.5 text-xs">
           <div className="flex justify-between items-center">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Reaction Severity</span>
+            <span className="text-2xs font-semibold uppercase tracking-wider text-ink-muted">Reaction Severity</span>
             <span className="tabular text-sm font-semibold text-ink">{severity} / 5</span>
           </div>
           <input
@@ -98,31 +98,31 @@ export function SymptomTrackerView() {
             onChange={(e) => setSeverity(Number(e.target.value))}
             className="w-full accent-gold cursor-pointer"
           />
-          <div className="flex justify-between px-0.5 text-[9px] font-semibold uppercase tracking-wider text-ink-faint">
+          <div className="flex justify-between px-0.5 text-3xs font-semibold uppercase tracking-wider text-ink-faint">
             <span>Mild</span>
             <span>Severe</span>
           </div>
         </div>
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <label className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Related Dish or Meal (Optional)</label>
+          <label className="text-2xs font-semibold uppercase tracking-wider text-ink-muted">Related Dish or Meal (Optional)</label>
           <input
             type="text"
             value={dishSlug}
             onChange={(e) => setDishSlug(e.target.value)}
             placeholder="e.g. hp-paneer-bowl"
-            className="rounded-xl border border-line bg-surface p-2.5 font-medium text-ink focus:border-gold outline-none"
+            className="rounded-xl border border-line bg-surface p-2.5 font-medium text-ink focus-visible:border-gold outline-none"
           />
         </div>
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <label className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Clinical Annotations</label>
+          <label className="text-2xs font-semibold uppercase tracking-wider text-ink-muted">Clinical Annotations</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
             placeholder="e.g. Experienced slight heaviness 45 mins after eating…"
-            className="rounded-xl border border-line bg-surface p-2.5 font-medium text-ink focus:border-gold outline-none"
+            className="rounded-xl border border-line bg-surface p-2.5 font-medium text-ink focus-visible:border-gold outline-none"
           />
         </div>
 
@@ -155,7 +155,7 @@ export function SymptomTrackerView() {
             {logsQuery.data.map((l) => (
               <div key={l.id} className="rounded-2xl border border-line bg-surface p-5 flex flex-col gap-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-sage-text">
+                  <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-2xs font-bold uppercase tracking-wide text-sage-text">
                     {l.symptomType.replace("_", " ")}
                   </span>
                   <span className="text-xs font-medium text-ink-muted">{l.loggedDate}</span>

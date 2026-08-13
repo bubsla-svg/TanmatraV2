@@ -80,11 +80,11 @@ export function ProtocolDishRail({
                   imgClassName="transition-transform duration-300 ease-out group-hover:scale-105"
                 />
                 <div className="absolute left-2.5 top-2.5 flex flex-col items-start gap-1.5">
-                  <span className="tabular rounded-full border border-line bg-surface/90 px-2.5 py-1 text-[10px] font-semibold text-ink backdrop-blur-sm">
+                  <span className="tabular rounded-full border border-line bg-surface/90 px-2.5 py-1 text-3xs font-semibold text-ink backdrop-blur-sm">
                     {badge(d, filter)}
                   </span>
                   {d.rdVerified && (
-                    <span className="rounded-full bg-sage-soft px-2.5 py-1 text-[10px] font-semibold text-sage-text backdrop-blur-sm">
+                    <span className="rounded-full bg-sage-soft px-2.5 py-1 text-3xs font-semibold text-sage-text backdrop-blur-sm">
                       RD-verified
                     </span>
                   )}
@@ -92,7 +92,7 @@ export function ProtocolDishRail({
               </div>
               <div className="p-3">
                 <p className="truncate text-xs font-semibold text-ink">{d.name}</p>
-                <p className="tabular mt-1 text-[10px] text-ink-muted">{Math.round(d.calories)} kcal</p>
+                <p className="tabular mt-1 text-3xs text-ink-muted">{Math.round(d.calories)} kcal</p>
               </div>
             </Link>
           ))}

@@ -13,7 +13,7 @@ const COUNTS: { key: CountKey; label: string }[] = [
   { key: "glutenFreeCount", label: "Gluten-free" }, { key: "jainCount", label: "Jain" }, { key: "halalCount", label: "Halal" },
 ];
 const allergenLabel = (a: string) => a.replace(/_/g, " ");
-const numInput = "rounded-lg border border-line bg-surface px-4 py-3 text-sm font-normal text-ink focus:border-[var(--gold)] focus:outline-none focus:ring-1 focus:ring-[var(--gold)]";
+const numInput = "rounded-lg border border-line bg-surface px-4 py-3 text-sm font-normal text-ink focus-visible:border-[var(--gold)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--gold)]";
 
 function Stepper({ label, value, onChange }: { label: string; value: number; onChange: (n: number) => void }) {
   return (

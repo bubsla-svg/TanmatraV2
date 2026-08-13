@@ -24,7 +24,7 @@ export function DishRationale({ dishId }: { dishId: number }) {
 
   return (
     <div className="mt-4 rounded-lg border border-line bg-surface p-3">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-sage-text">Why this dish</p>
+      <p className="text-2xs font-semibold uppercase tracking-wider text-sage-text">Why this dish</p>
       <p className="mt-1 text-sm text-ink">{data.rationale}</p>
       {data.expanded && data.expanded !== data.rationale && (
         <p className="mt-1 text-xs leading-relaxed text-ink-muted">{data.expanded}</p>

@@ -15,7 +15,7 @@ import {
 } from "@/lib/otpFlow";
 
 const inputCls =
-  "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus:border-line-strong";
+  "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus-visible:border-line-strong";
 
 /**
  * Optional sign-in (SF-03). Firebase sends the SMS, its idToken is exchanged for

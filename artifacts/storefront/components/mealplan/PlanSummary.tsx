@@ -16,7 +16,7 @@ export function PlanSummary({ plan, accepted }: { plan: MealPlan; accepted: Acce
     <div className="rounded-3xl border border-line bg-surface p-6">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-semibold text-ink">Week of {formatPlanDay(plan.weekStartDate)}</p>
-        <span className="rounded-full border border-line px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-gold-text">
+        <span className="rounded-full border border-line px-2.5 py-1 text-3xs font-semibold uppercase tracking-widest text-gold-text">
           {plan.model ? "AI plan" : "Plan"}
         </span>
       </div>
@@ -42,7 +42,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="tabular text-lg font-bold text-ink">{value}</p>
-      <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-ink-faint">{label}</p>
+      <p className="mt-0.5 text-3xs font-semibold uppercase tracking-widest text-ink-faint">{label}</p>
     </div>
   );
 }

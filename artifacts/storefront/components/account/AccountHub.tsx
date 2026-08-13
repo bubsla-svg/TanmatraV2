@@ -163,7 +163,7 @@ export function AccountHub() {
             className="pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full bg-sage/5 blur-3xl"
           />
           <div className="mb-4 flex items-start justify-between">
-            <span className="tabular text-[10px] uppercase tracking-widest text-sage-text">
+            <span className="tabular text-3xs uppercase tracking-widest text-sage-text">
               Live order
             </span>
             <span className="relative flex h-2 w-2">

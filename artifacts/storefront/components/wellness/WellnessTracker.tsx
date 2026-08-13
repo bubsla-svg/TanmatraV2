@@ -123,7 +123,7 @@ export function WellnessTracker() {
 
       {week && <WeekBars week={week} />}
 
-      <p className="text-center text-[11px] leading-relaxed text-ink-faint opacity-70">
+      <p className="text-center text-2xs leading-relaxed text-ink-faint opacity-70">
         Tanmatra is not a medical service — this tracker is for your own awareness, not diagnosis
         or treatment. Consult a healthcare professional before making significant dietary changes.
       </p>

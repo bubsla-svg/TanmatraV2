@@ -106,7 +106,7 @@ export function VoucherRedeem() {
           id="voucher-code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())}
           onKeyDown={(e) => { if (e.key === "Enter") doRedeem(); }}
           placeholder="Enter your code" autoCapitalize="characters" autoComplete="off"
-          className="tabular mt-3 w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base tracking-wide text-ink outline-none focus:border-line-strong"
+          className="tabular mt-3 w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base tracking-wide text-ink outline-none focus-visible:border-line-strong"
         />
         {msg && (
           <div className="mt-3 flex items-center gap-2 border-t border-line pt-3">

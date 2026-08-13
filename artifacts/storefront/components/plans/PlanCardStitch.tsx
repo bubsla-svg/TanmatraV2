@@ -29,14 +29,14 @@ export function PlanCardStitch({ id }: { id: PlanId }) {
         </div>
         <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
           {d.clinical && (
-            <span className="rounded-full border border-line px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-sage-text">
+            <span className="rounded-full border border-line px-2.5 py-1 text-3xs font-semibold uppercase tracking-wide text-sage-text">
               RD-reviewed
             </span>
           )}
           {q.servedTracks.map((t) => (
             <span
               key={t}
-              className="rounded-full border border-line px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink-muted"
+              className="rounded-full border border-line px-2.5 py-1 text-3xs font-semibold uppercase tracking-wide text-ink-muted"
             >
               {t}
             </span>
@@ -53,7 +53,7 @@ export function PlanCardStitch({ id }: { id: PlanId }) {
         )}
         <span className="ml-auto flex flex-col items-end">
           <span className="tabular text-sm text-ink">{formatPaise(q.cycleTotalPaise)}</span>
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">/mo</span>
+          <span className="text-3xs font-semibold uppercase tracking-wide text-ink-muted">/mo</span>
         </span>
       </div>
 

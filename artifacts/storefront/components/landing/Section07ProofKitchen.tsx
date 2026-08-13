@@ -52,13 +52,13 @@ export function Section07ProofKitchen() {
           {safetyProtocols.map((proto, idx) => (
             <div key={idx} className="flex flex-col justify-between rounded-xl border border-line bg-surface-subtle p-5">
               <div>
-                <span className="inline-block rounded-full border border-line bg-surface px-2.5 py-0.5 text-[10px] font-bold text-ink">
+                <span className="inline-block rounded-full border border-line bg-surface px-2.5 py-0.5 text-3xs font-bold text-ink">
                   Standard 0{idx + 1}
                 </span>
                 <h4 className="mt-3 text-base font-bold text-ink">{proto.title}</h4>
                 <p className="mt-2 text-xs leading-relaxed text-ink-muted">{proto.desc}</p>
               </div>
-              <p className="mt-4 text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
+              <p className="mt-4 text-2xs font-semibold uppercase tracking-wider text-ink-faint">
                 Verified Compliance
               </p>
             </div>

@@ -16,7 +16,7 @@ const KINDS: { id: CorporateLeadKind; label: string }[] = [
   { id: "fitness_club", label: "Fitness club" },
 ];
 const inputCls =
-  "w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none transition-colors focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)]";
+  "w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none transition-colors focus-visible:border-[var(--gold)] focus-visible:ring-1 focus-visible:ring-[var(--gold)]";
 const labelCls = "flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-faint";
 const emailOk = (e: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e.trim());
 

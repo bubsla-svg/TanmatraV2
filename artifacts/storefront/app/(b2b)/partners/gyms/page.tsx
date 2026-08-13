@@ -85,7 +85,7 @@ export default function GymsPartnerPage() {
               key={m.tag}
               className="w-[85%] shrink-0 snap-center rounded-3xl border border-line bg-surface p-6 md:w-auto"
             >
-              <span className="inline-flex rounded-full border border-[var(--gold)]/30 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-gold-text">
+              <span className="inline-flex rounded-full border border-[var(--gold)]/30 px-3 py-1 text-3xs font-semibold uppercase tracking-widest text-gold-text">
                 {m.tag}
               </span>
               <h3 className="mt-4 text-lg font-semibold text-ink">{m.title}</h3>

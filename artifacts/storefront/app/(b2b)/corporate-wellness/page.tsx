@@ -86,7 +86,7 @@ export default async function CorporateWellnessPage() {
       />
 
       <section className="py-[var(--space-section)]">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-ink-faint">
+        <p className="text-3xs font-semibold uppercase tracking-widest text-ink-faint">
           Where we already deliver daily
         </p>
         <div className="mt-4 flex flex-wrap gap-2">

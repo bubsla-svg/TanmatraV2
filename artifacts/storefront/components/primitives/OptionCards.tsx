@@ -23,7 +23,7 @@ export const SquircleOptionCard: React.FC<SquircleOptionCardProps> = ({
       className={`relative w-full p-5 flex flex-col items-start text-left gap-3 rounded-3xl transition-all duration-200 active:scale-[0.98] ${
         isSelected
           ? "bg-surface border-2 border-gold shadow-lg shadow-gold/5"
-          : "bg-surface border-2 border-white/5 hover:border-white/10 hover:bg-surface"
+          : "bg-surface border-2 border-line hover:border-line hover:bg-surface"
       } ${className}`}
     >
       {isSelected && (
@@ -33,7 +33,7 @@ export const SquircleOptionCard: React.FC<SquircleOptionCardProps> = ({
           </svg>
         </div>
       )}
-      {icon && <div className={`p-2 rounded-xl ${isSelected ? 'bg-gold/10 text-gold' : 'bg-white/5 text-ink-muted'}`}>{icon}</div>}
+      {icon && <div className={`p-2 rounded-xl ${isSelected ? 'bg-gold/10 text-gold' : 'bg-surface-raised text-ink-muted'}`}>{icon}</div>}
       <div>
         <h4 className={`text-base font-semibold tracking-tight mb-1 ${isSelected ? 'text-ink' : 'text-ink'}`}>
           {title}

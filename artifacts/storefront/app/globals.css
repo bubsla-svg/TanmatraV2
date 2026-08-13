@@ -86,8 +86,21 @@
  * neutrals, and whichever layer lands last silently wins. */
 
 @theme inline {
+  /* Micro tier — registers the names with Tailwind so `text-2xs` / `text-3xs`
+     exist as utilities at all. The VALUES live in @workspace/tokens (see its
+     header for who owns what); this only points at them, same pattern as the
+     radii below. Without this block the tokens are declared but unreachable
+     from a class name, which is exactly how 232 sites ended up hardcoding
+     `text-[10px]`. */
+  --text-3xs: var(--text-3xs);
+  --text-2xs: var(--text-2xs);
+
   /* Fluid Typography Architecture (Phase 2) */
-  --text-3xl: clamp(1.75rem, 4vw, 1.875rem);
+  /* Ceiling raised 1.875rem -> 2.125rem so 3xl clears 2xl (whose own ceiling
+     came down to 1.875rem in @workspace/tokens). Below the knee the ladder was
+     already ordered; only past it did 3xl land under 2xl. Keep this value and
+     the tokens.css mirror equal. */
+  --text-3xl: clamp(1.75rem, 4vw, 2.125rem);
   --text-4xl: clamp(2rem, 5vw, 2.25rem);
   --text-5xl: clamp(2.5rem, 6vw, 3rem);
   --text-6xl: clamp(3rem, 8vw, 3.75rem);
@@ -142,6 +155,11 @@
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
   --radius-xl: var(--radius-xl);
+  /* 2xl/3xl were absent, so rounded-2xl / rounded-3xl fell through to
+     Tailwind's stock 1rem / 1.5rem — see the radius block in
+     @workspace/tokens for how that inverted the ladder. */
+  --radius-2xl: var(--radius-2xl);
+  --radius-3xl: var(--radius-3xl);
 
   /* Overlay/disclosure motion — COMPOSITOR PROPERTIES ONLY (transform +
      opacity). Never animate height/width/top/left here: those run on the main

@@ -62,7 +62,7 @@ export function SaveToVaultButton({ dishSlug, dishName, defaultSaved = false }: 
         {saved ? "★ Saved to Vault" : saveMutation.isPending ? "Saving…" : "+ Save to Vault"}
       </button>
       {failed && (
-        <p role="alert" className="text-[11px] font-medium text-[var(--danger)]">
+        <p role="alert" className="text-2xs font-medium text-[var(--danger)]">
           Couldn&rsquo;t save. Try again.
         </p>
       )}

@@ -10,7 +10,7 @@ export function PartnerHero() {
   return (
     <div className="flex flex-col gap-[var(--space-section)]">
       <header className="flex flex-col gap-3">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-gold-text">
+        <span className="text-3xs font-semibold uppercase tracking-widest text-gold-text">
           Clinical nutrition partnership
         </span>
         <h1 className="text-3xl font-semibold leading-tight tracking-tight text-ink sm:text-4xl">

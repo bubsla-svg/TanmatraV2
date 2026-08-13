@@ -60,7 +60,7 @@ export function ProductDetailView({ dish }: ProductDetailViewProps) {
           <div className="flex items-center justify-between gap-4">
             <h1 className="text-2xl font-bold tracking-tight text-ink">{dish.name}</h1>
             {dish.isVeg !== undefined && (
-              <span className={`px-2 py-0.5 text-xs font-bold rounded border ${dish.isVeg ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' : 'border-rose-500/30 text-rose-400 bg-rose-500/10'}`}>
+              <span className={`px-2 py-0.5 text-xs font-bold rounded border ${dish.isVeg ? 'border-[var(--sage)]/30 text-sage-text bg-sage/10' : 'border-[var(--danger)]/30 text-[var(--danger)] bg-[var(--danger)]/10'}`}>
                 {dish.isVeg ? "VEG" : "NON-VEG"}
               </span>
             )}
@@ -101,7 +101,7 @@ export function ProductDetailView({ dish }: ProductDetailViewProps) {
                               setSelectedModifiers(selectedModifiers.filter((m) => m !== opt.name));
                             }
                           }}
-                          className="accent-amber-400 h-4 w-4 rounded"
+                          className="accent-[var(--gold)] h-4 w-4 rounded"
                         />
                       </label>
                     );
@@ -117,7 +117,7 @@ export function ProductDetailView({ dish }: ProductDetailViewProps) {
           <button
             type="button"
             onClick={() => setShowNutrition(!showNutrition)}
-            className="w-full flex items-center justify-between p-4 text-left font-semibold text-sm hover:bg-surface-raised transition-colors"
+            className="w-full flex items-center justify-between p-4 text-left font-semibold text-sm hover:bg-surface-subtle transition-colors"
           >
             <span>Therapeutic Nutrition Profile</span>
             <span className="text-gold font-mono">{showNutrition ? "− Hide" : "+ View Nutrition"}</span>
@@ -127,7 +127,7 @@ export function ProductDetailView({ dish }: ProductDetailViewProps) {
               <dl className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {macros.map(([label, value]) => (
                   <div key={label} className="p-3 rounded-lg bg-surface-raised border border-line">
-                    <dt className="text-[10px] font-bold uppercase tracking-wider text-ink-faint">{label}</dt>
+                    <dt className="text-3xs font-bold uppercase tracking-wider text-ink-faint">{label}</dt>
                     <dd className="mt-1 text-sm font-semibold text-ink tabular-nums">{value}</dd>
                   </div>
                 ))}
@@ -150,11 +150,11 @@ export function ProductDetailView({ dish }: ProductDetailViewProps) {
             </p>
           )}
           {dish.allergens && dish.allergens.length > 0 ? (
-            <p className="text-amber-400 font-medium">
+            <p className="text-[var(--gold-text)] font-medium">
               ⚠️ <strong>Contains Allergens:</strong> {dish.allergens.join(", ")}
             </p>
           ) : (
-            <p className="text-emerald-400 font-medium">✓ No major allergens declared.</p>
+            <p className="text-sage-text font-medium">✓ No major allergens declared.</p>
           )}
         </section>
       </div>

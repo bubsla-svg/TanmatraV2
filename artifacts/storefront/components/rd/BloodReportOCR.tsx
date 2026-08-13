@@ -62,7 +62,7 @@ export const BloodReportOCR: React.FC = () => {
           <span className="text-xs font-bold text-ink">
             {file ? file.name : "Click or drag blood report PDF / Image to scan"}
           </span>
-          <span className="text-[10px] text-ink-faint font-medium mt-1">Supports CBC, HbA1c, Lipid Profile, Vitamin D, TSH</span>
+          <span className="text-3xs text-ink-faint font-medium mt-1">Supports CBC, HbA1c, Lipid Profile, Vitamin D, TSH</span>
           <input type="file" accept="image/*,.pdf,.txt" onChange={handleFileUpload} className="hidden" />
         </label>
 
@@ -85,7 +85,7 @@ export const BloodReportOCR: React.FC = () => {
         <div className="bg-surface rounded-3xl p-6 sm:p-8 border border-line shadow-xl space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-4">
             <div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-ink-faint">Parsed Medical Report</span>
+              <span className="text-3xs font-black uppercase tracking-wider text-ink-faint">Parsed Medical Report</span>
               <h4 className="text-xl font-black text-ink font-heading">{activeRecord.reportName}</h4>
             </div>
 
@@ -126,7 +126,7 @@ export const BloodReportOCR: React.FC = () => {
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-bold text-ink">{b.name}</span>
                     {b.category && (
-                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-surface-raised text-ink-muted">
+                      <span className="text-3xs font-extrabold px-2 py-0.5 rounded-md bg-surface-raised text-ink-muted">
                         {b.category}
                       </span>
                     )}
@@ -140,7 +140,7 @@ export const BloodReportOCR: React.FC = () => {
                       {b.value} <span className="text-xs font-normal text-ink-muted">{b.unit}</span>
                     </strong>
                     {b.referenceRange && (
-                      <span className="text-[10px] font-medium text-ink-faint">Ref: {b.referenceRange}</span>
+                      <span className="text-3xs font-medium text-ink-faint">Ref: {b.referenceRange}</span>
                     )}
                   </div>
                 </div>

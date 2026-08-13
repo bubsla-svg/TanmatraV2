@@ -171,7 +171,7 @@ export const FamilyLeaderboardView: React.FC = () => {
             <Flame className="w-8 h-8 text-[var(--gold-text)] animate-pulse" />
             <div>
               <strong className="text-2xl font-black text-[var(--gold-text)] font-heading block">{sortedMembers[0]?.streakDays || 14} Days 🔥</strong>
-              <span className="text-[10px] text-ink-faint uppercase tracking-wider font-bold">Top Family Habit Streak</span>
+              <span className="text-3xs text-ink-faint uppercase tracking-wider font-bold">Top Family Habit Streak</span>
             </div>
           </div>
         </div>
@@ -213,7 +213,7 @@ export const FamilyLeaderboardView: React.FC = () => {
                   value={newMemberName}
                   onChange={(e) => setNewMemberName(e.target.value)}
                   placeholder="e.g. Rahul Sharma"
-                  className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
+                  className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus-visible:border-[var(--gold)]"
                 />
               </div>
 
@@ -222,7 +222,7 @@ export const FamilyLeaderboardView: React.FC = () => {
                 <select
                   value={newMemberRelation}
                   onChange={(e) => setNewMemberRelation(e.target.value)}
-                  className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
+                  className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus-visible:border-[var(--gold)]"
                 >
                   <option value="Spouse">Spouse</option>
                   <option value="Sister">Sister</option>

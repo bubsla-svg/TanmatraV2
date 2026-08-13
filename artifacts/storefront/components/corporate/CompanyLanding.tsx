@@ -56,7 +56,7 @@ export function CompanyLanding({ slug }: { slug: string }) {
       </div>
 
       <div>
-        <h2 className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Office lunches</h2>
+        <h2 className="text-2xs font-semibold uppercase tracking-wide text-ink-faint">Office lunches</h2>
         {ordersQuery.isPending ? (
           <p className="mt-2 text-sm text-ink-muted">Loading office lunches…</p>
         ) : ordersQuery.isError ? (
@@ -75,7 +75,7 @@ export function CompanyLanding({ slug }: { slug: string }) {
                     <span className="block truncate text-sm font-medium text-ink">{o.title}</span>
                     <span className="text-xs text-ink-faint">{day(o.scheduledFor)}</span>
                   </span>
-                  <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${officeWindowOpen(o) ? "bg-sage text-sage-foreground" : "bg-[color-mix(in_srgb,var(--ink)_10%,transparent)] text-ink-muted"}`}>
+                  <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-2xs font-semibold ${officeWindowOpen(o) ? "bg-sage text-sage-foreground" : "bg-[color-mix(in_srgb,var(--ink)_10%,transparent)] text-ink-muted"}`}>
                     {officeWindowOpen(o) ? "Picks open" : o.status}
                   </span>
                 </Link>
@@ -86,7 +86,7 @@ export function CompanyLanding({ slug }: { slug: string }) {
       </div>
 
       <div>
-        <h2 className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Team ({members.length})</h2>
+        <h2 className="text-2xs font-semibold uppercase tracking-wide text-ink-faint">Team ({members.length})</h2>
         <ul className="mt-3 flex flex-wrap gap-2">
           {members.map((m) => (
             <li key={m.id} className="rounded-full border border-line bg-surface px-3.5 py-1.5 text-xs text-ink-muted">{m.email}{m.role === "admin" ? " · admin" : ""}</li>

@@ -18,8 +18,8 @@ export const HorizontalSnapRail: React.FC<HorizontalSnapRailProps> = ({
       {(title || subtitle) && (
         <div className="mb-4 flex items-end justify-between px-1">
           <div>
-            {title && <h3 className="text-xl font-bold tracking-tight text-slate-100">{title}</h3>}
-            {subtitle && <p className="text-xs text-slate-400 mt-1">{subtitle}</p>}
+            {title && <h3 className="text-xl font-bold tracking-tight text-ink">{title}</h3>}
+            {subtitle && <p className="text-xs text-ink-muted mt-1">{subtitle}</p>}
           </div>
         </div>
       )}

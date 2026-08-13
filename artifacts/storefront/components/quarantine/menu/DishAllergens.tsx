@@ -19,7 +19,7 @@ export function DishAllergens({ dish }: { dish: DishData }) {
         warn ? "border-[var(--danger)]" : "border-line"
       }`}
     >
-      <h2 className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
+      <h2 className="text-2xs font-semibold uppercase tracking-wide text-ink-faint">
         Allergens
       </h2>
       <p className="mt-1 text-sm font-semibold text-ink">{view.heading}</p>

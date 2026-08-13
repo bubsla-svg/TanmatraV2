@@ -156,13 +156,11 @@ jobs:
         run: pnpm --filter @workspace/storefront run lint:placeholder-assets
       # Theme-blindness gate — same invisible-in-review argument as the two
       # above: a `dark:` fork renders correctly in whichever mode the reviewer
-      # happens to be in. Baselined, not zero: 522 pre-existing violations in
-      # components/wellness/ + components/rd/ are frozen in
-      # scripts/dark-forks-baseline.txt so the gate blocks NEW forks, Tailwind
-      # palette colours and raw white/black today, while the migration (which
-      # needs a per-hue token mapping) is decided separately. The register may
-      # only shrink — a fixed line whose baseline entry is still present fails
-      # the gate as stale.
+      # happens to be in. It shipped with 522 baselined violations; those have
+      # since been migrated onto semantic tokens, so the baseline is empty and
+      # any `dark:` fork, Tailwind palette colour or raw white/black fails the
+      # build outright. The register may only shrink — a fixed line whose
+      # baseline entry is still present fails the gate as stale.
       - name: Theme-blindness gate — no new dark:/palette/raw-white drift
         if: ${{ !cancelled() }}
         run: pnpm --filter @workspace/storefront run lint:dark-forks

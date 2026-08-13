@@ -79,7 +79,7 @@ export function WearablesHub() {
                 </div>
               </div>
               {p.connected && (
-                <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-500">
+                <span className="flex items-center gap-1 rounded-full bg-sage/10 px-2 py-0.5 text-3xs font-medium text-sage-text">
                   <CheckCircle2 size={12} /> Connected
                 </span>
               )}
@@ -88,7 +88,7 @@ export function WearablesHub() {
             <p className="text-xs text-ink-muted">{p.metricLabel}</p>
 
             {p.lastSync && (
-              <p className="text-[11px] text-ink-faint">Last synced: {p.lastSync}</p>
+              <p className="text-2xs text-ink-faint">Last synced: {p.lastSync}</p>
             )}
 
             <Button

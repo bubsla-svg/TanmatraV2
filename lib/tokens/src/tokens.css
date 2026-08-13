@@ -1,15 +1,38 @@
 /*
- * @workspace/tokens — the single source of truth for the rebuild storefront's
- * design tokens. Raw CSS custom properties only; a consuming app maps these to
- * Tailwind utilities via `@theme inline` (see the storefront's globals.css).
+ * @workspace/tokens — raw CSS custom properties for the storefront. A consuming
+ * app maps these to Tailwind utilities via `@theme inline` (see globals.css).
+ *
+ * ─── WHAT THIS FILE ACTUALLY OWNS (read before editing a colour here) ───────
+ * This file is NOT the whole truth any more, and editing a colour here has no
+ * effect. Three sheets declare tokens and they win in this order (later beats
+ * earlier, all unlayered at :root):
+ *
+ *   1. this file            — the base layer
+ *   2. globals.css @theme   — registers names with Tailwind so utilities exist
+ *   3. tanmatraBridge.css   — `:root[data-astryx-theme="tanmatra"]`, and
+ *                             app/layout.tsx stamps that attribute statically
+ *                             on <html>, so it ALWAYS applies
+ *
+ * So, concretely:
+ *   • COLOUR — superseded. Every colour below is overridden by the light-dark()
+ *     tuples in artifacts/storefront/lib/themes/tanmatraBridge.css. The values
+ *     here survive only as the fallback if that attribute were ever absent.
+ *     Change a colour THERE (and tanmatraTheme.ts, which astryxBridge.test.ts
+ *     holds in lockstep), never here.
+ *   • TYPE — the sizes below ARE live: `.text-xl` etc. compile to
+ *     `font-size: var(--text-xl)`, resolved from this :root. The ONE exception
+ *     is --text-3xl, which globals.css @theme re-declares and INLINES into the
+ *     utility, so its value there wins; the two are kept equal deliberately.
+ *   • RADII, SHADOWS, MOTION, SPACING — live and uncontested. This is the file.
  *
  * Theme model: LIGHT is the default (`:root`), so a server-rendered document
  * paints correct colours with zero client JS — no theme flash by construction.
  * Dark is an opt-in override on `:root[data-theme="dark"]`.
  *
- * Accents are the LOCKED Clinical palette (CLAUDE.md — no new base colours):
- * clinical-gold #D4AF37 · blue #6BA3C8 · sage #7D9E7E. Only the neutral
- * surface/ink ramp differs between light and dark.
+ * The accents below were the LOCKED Clinical palette; DS-0 (owner decision
+ * 2026-07-27, CLAUDE.md) lifted that lock for the storefront, and the bridge
+ * now serves light-mode counterparts (#7F6921 gold, #4e6357 sage) because the
+ * dark values fail AA on a light background.
  */
 
 :root {
@@ -53,19 +76,46 @@
     Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
 
+  /* Micro tier. The scale used to bottom out at --text-xs/12px, so every label,
+     chip and caption that needed to go smaller hardcoded `text-[10px]` /
+     `text-[11px]` instead — 232 sites across app/ and components/ before these
+     existed. Sizes chosen to match what those sites already rendered, so
+     adopting the token is a rename, not a resize. Both are below the 12px
+     comfortable-reading floor: use them for non-prose UI furniture (units,
+     counters, eyebrow labels), never for body copy. */
+  --text-3xs: 0.625rem; /* 10px */
+  --text-2xs: 0.6875rem; /* 11px */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
   --text-xl: 1.375rem;
-  --text-2xl: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
-  --text-3xl: clamp(2rem, 1.4rem + 2.4vw, 3rem);
+  /* 2xl's ceiling was 2rem while 3xl's (set in globals.css @theme, which
+     inlines it into the utility and therefore wins) was 1.875rem — so past
+     the clamp knee, text-3xl rendered SMALLER than text-2xl. Ceilings now
+     ladder 30 → 34 → 36px; both files were adjusted together and must stay
+     that way. */
+  --text-2xl: clamp(1.5rem, 1.2rem + 1.2vw, 1.875rem);
+  /* Mirrors globals.css @theme's value. The utility takes it from there (it is
+     inlined at build); this declaration only keeps `var(--text-3xl)` honest
+     for anyone reading the property directly. */
+  --text-3xl: clamp(1.75rem, 4vw, 2.125rem);
 
   /* ── Radii ─────────────────────────────────────────────────────────────── */
+  /* Steps of +4 then +6. 2xl/3xl used to be MISSING here, which did not make
+     them unavailable — it silently handed them to Tailwind's stock scale
+     (1rem / 1.5rem), and that scale is not this one. The result was an
+     inverted ladder: rounded-2xl resolved to 16px, identical to rounded-lg
+     and SMALLER than rounded-xl's 22px, so reaching for a bigger corner gave
+     you a smaller one. 234 uses of rounded-2xl and 92 of rounded-3xl were
+     sitting on that. Defining them here continues the progression and puts
+     the names back in size order. */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
   --radius-xl: 22px;
+  --radius-2xl: 28px;
+  --radius-3xl: 34px;
   --radius-full: 999px;
 
   /* ── Shadows (light) ───────────────────────────────────────────────────── */

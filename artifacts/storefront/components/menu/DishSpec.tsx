@@ -22,7 +22,7 @@ export function DishSpec({ dish }: { dish: DishData }) {
           shape + label carry it too), so the veg/non-veg mark stays legible
           without colour. */}
       <div className="flex flex-wrap gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-ink-muted">
           <span
             aria-hidden
             className={`inline-block h-2.5 w-2.5 ${dish.isVeg ? "rounded-full" : "rounded-[2px]"}`}
@@ -30,7 +30,7 @@ export function DishSpec({ dish }: { dish: DishData }) {
           />
           {dish.isVeg ? "Veg" : "Non-veg"}
         </span>
-        <span className="inline-flex items-center rounded-full border border-line bg-surface px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
+        <span className="inline-flex items-center rounded-full border border-line bg-surface px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-ink-muted">
           GI {GI_LABEL[dish.glycaemicIndex]}
         </span>
       </div>
@@ -38,14 +38,14 @@ export function DishSpec({ dish }: { dish: DishData }) {
       {/* nutrition facts beyond the headline kcal/P/C/F grid */}
       <dl className="grid grid-cols-2 gap-2">
         <div className="rounded-3xl border border-line bg-surface p-4">
-          <dt className="text-[11px] uppercase tracking-wide text-ink-muted">Fibre</dt>
+          <dt className="text-2xs uppercase tracking-wide text-ink-muted">Fibre</dt>
           <dd className="mt-1 font-mono text-sm tabular-nums text-ink">
             {est}
             {dish.macros.fiber} g
           </dd>
         </div>
         <div className="rounded-3xl border border-line bg-surface p-4">
-          <dt className="text-[11px] uppercase tracking-wide text-ink-muted">Sugar</dt>
+          <dt className="text-2xs uppercase tracking-wide text-ink-muted">Sugar</dt>
           <dd className="mt-1 font-mono text-sm tabular-nums text-ink">
             {dish.sugarPerServing || "—"}
           </dd>
@@ -56,7 +56,7 @@ export function DishSpec({ dish }: { dish: DishData }) {
           clamped or summarised. */}
       {dish.ingredients.length > 0 && (
         <div>
-          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
+          <h2 className="text-2xs font-semibold uppercase tracking-wide text-ink-muted">
             Ingredients
           </h2>
           <ul className="mt-2 flex flex-wrap gap-1.5">

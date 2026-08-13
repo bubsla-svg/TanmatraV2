@@ -35,19 +35,19 @@ export default function StyleguidePage({
           already wraps children in <main id="main">. */}
       <div className="max-w-screen-xl mx-auto px-4 py-8 space-y-12">
         <section className="space-y-4">
-          <h2 className="text-xl font-bold tracking-tight text-white mb-6 border-b border-white/10 pb-2">CTAs & Buttons</h2>
+          <h2 className="text-xl font-bold tracking-tight text-ink mb-6 border-b border-line pb-2">CTAs & Buttons</h2>
           <div className="flex flex-wrap gap-4 items-center">
             <PrimaryCTA>Primary CTA</PrimaryCTA>
             <SecondaryCTA>Secondary CTA</SecondaryCTA>
             <CompactAction>
               Compact Action
             </CompactAction>
-            <IconButton icon={<span className="w-6 h-6 block bg-white/20 rounded-full" />} variant="solid" />
+            <IconButton icon={<span className="w-6 h-6 block bg-surface-raised rounded-full" />} variant="solid" />
           </div>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-bold tracking-tight text-white mb-6 border-b border-white/10 pb-2">Inputs & Forms</h2>
+          <h2 className="text-xl font-bold tracking-tight text-ink mb-6 border-b border-line pb-2">Inputs & Forms</h2>
           <div className="max-w-md space-y-4">
             <TextInput label="Email Address" placeholder="clinical@tanmatra.com" />
             <SearchInput />
@@ -57,7 +57,7 @@ export default function StyleguidePage({
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-bold tracking-tight text-white mb-6 border-b border-white/10 pb-2">Badges & Chips</h2>
+          <h2 className="text-xl font-bold tracking-tight text-ink mb-6 border-b border-line pb-2">Badges & Chips</h2>
           <div className="flex flex-wrap gap-4 items-center">
             <ClinicalBadge label="32P · 41C · 12F" variant="slate" />
             <ClinicalBadge label="Metabolic Core" variant="emerald" />
@@ -70,7 +70,7 @@ export default function StyleguidePage({
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-bold tracking-tight text-white mb-6 border-b border-white/10 pb-2">Option Cards</h2>
+          <h2 className="text-xl font-bold tracking-tight text-ink mb-6 border-b border-line pb-2">Option Cards</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SquircleOptionCard 
               title="Weight Management" 
@@ -88,8 +88,8 @@ export default function StyleguidePage({
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-bold tracking-tight text-white mb-6 border-b border-white/10 pb-2">Empty State</h2>
-          <div className="bg-surface rounded-3xl border border-white/5 p-4">
+          <h2 className="text-xl font-bold tracking-tight text-ink mb-6 border-b border-line pb-2">Empty State</h2>
+          <div className="bg-surface rounded-3xl border border-line p-4">
             <EmptyState 
               title="No upcoming deliveries" 
               description="You have skipped this week's protocol." 

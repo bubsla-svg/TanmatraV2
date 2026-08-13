@@ -142,7 +142,7 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
           ))}
         </ul>
       )}
-      <p className="mt-0.5 text-[11px] text-ink-faint">
+      <p className="mt-0.5 text-2xs text-ink-faint">
         Skips up to 24h ahead come back as meal credits.
       </p>
       {managing && (

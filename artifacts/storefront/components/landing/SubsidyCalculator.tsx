@@ -47,7 +47,7 @@ export function SubsidyCalculator() {
 
       <div className="mt-8 flex flex-col gap-8 rounded-3xl border border-line bg-surface p-6">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-ink-faint">Funding model</p>
+          <p className="text-3xs font-semibold uppercase tracking-widest text-ink-faint">Funding model</p>
           <div className="mt-4 -mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
             {SUBSIDY_MODELS.map((m) => {
               const on = m.id === modelId;
@@ -74,7 +74,7 @@ export function SubsidyCalculator() {
         <div>
           <label
             htmlFor="corp-team-size"
-            className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-widest text-ink-faint"
+            className="flex items-center justify-between text-3xs font-semibold uppercase tracking-widest text-ink-faint"
           >
             Team size
             <span className="tabular text-base font-semibold text-ink">{teamSize}</span>
@@ -89,7 +89,7 @@ export function SubsidyCalculator() {
             onChange={(e) => handleTeamSizeChange(Number(e.target.value))}
             className="mt-3 w-full accent-[var(--gold)]"
           />
-          <p className="mt-2 text-[11px] text-ink-faint">
+          <p className="mt-2 text-2xs text-ink-faint">
             {model.mealsPerMonth} macro-balanced lunches per employee per month
           </p>
         </div>
@@ -102,7 +102,7 @@ export function SubsidyCalculator() {
           <div className="flex items-end justify-between gap-4">
             <p className="text-base text-ink">
               Monthly total
-              <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-widest text-ink-faint">
+              <span className="mt-0.5 block text-3xs font-semibold uppercase tracking-widest text-ink-faint">
                 Estimate · GST included
               </span>
             </p>

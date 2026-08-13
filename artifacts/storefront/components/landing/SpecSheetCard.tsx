@@ -53,33 +53,33 @@ export function SpecSheetCard({ spec, onFlipBack }: SpecSheetCardProps) {
 
         <div className="grid grid-cols-4 gap-1 rounded-md border border-line bg-surface p-2 text-center">
           <div className="flex flex-col">
-            <span className="text-[10px] text-ink-faint">KCAL</span>
+            <span className="text-3xs text-ink-faint">KCAL</span>
             <span className="font-semibold text-ink">{spec.macros.calories}</span>
           </div>
           <div className="flex flex-col border-l border-line">
-            <span className="text-[10px] text-ink-faint">PRO</span>
+            <span className="text-3xs text-ink-faint">PRO</span>
             <span className="font-semibold text-ink">{spec.macros.protein}g</span>
           </div>
           <div className="flex flex-col border-l border-line">
-            <span className="text-[10px] text-ink-faint">CARB</span>
+            <span className="text-3xs text-ink-faint">CARB</span>
             <span className="font-semibold text-ink">{spec.macros.carbs}g</span>
           </div>
           <div className="flex flex-col border-l border-line">
-            <span className="text-[10px] text-ink-faint">FAT</span>
+            <span className="text-3xs text-ink-faint">FAT</span>
             <span className="font-semibold text-ink">{spec.macros.fat}g</span>
           </div>
         </div>
 
         <div className="flex flex-col gap-1 rounded-md border border-line bg-surface-raised p-2">
           <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-semibold text-ink">RD Protocol Verification</span>
+            <span className="text-2xs font-semibold text-ink">RD Protocol Verification</span>
             {spec.rdVerified !== false && (
-              <span className="rounded border border-line bg-surface px-1.5 py-0.5 text-[10px] font-semibold text-ink-muted">
+              <span className="rounded border border-line bg-surface px-1.5 py-0.5 text-3xs font-semibold text-ink-muted">
                 Verified
               </span>
             )}
           </div>
-          <p className="line-clamp-2 text-[11px] leading-relaxed text-ink-muted">
+          <p className="line-clamp-2 text-2xs leading-relaxed text-ink-muted">
             {rdComment}
           </p>
         </div>

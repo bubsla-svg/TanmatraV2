@@ -43,7 +43,7 @@ export default function PlansPage() {
         </div>
 
         <div className="flex flex-col items-center gap-1 border-t border-line pt-8 text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
+          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-muted">
             Corporate solutions
           </p>
           <h2 className="text-lg font-semibold text-ink">Tanmatra for Teams</h2>

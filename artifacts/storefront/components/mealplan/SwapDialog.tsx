@@ -67,7 +67,7 @@ export function SwapDialog({ planId, target, onClose, onPick }: {
               >
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-medium text-ink">{it.name}</span>
-                  <span className="tabular block text-[11px] text-ink-muted">{it.calories} kcal · {it.protein}g protein</span>
+                  <span className="tabular block text-2xs text-ink-muted">{it.calories} kcal · {it.protein}g protein</span>
                 </span>
                 <span className="tabular shrink-0 text-sm font-semibold text-ink">{formatPaise(it.pricePaise)}</span>
               </button>

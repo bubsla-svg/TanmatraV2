@@ -81,7 +81,7 @@ export default function MealFeedback({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--scrim)] backdrop-blur-sm">
             <div className="bg-surface border border-line rounded-3xl p-6 max-w-md w-full text-ink shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
                 <button 
                     onClick={onClose}
@@ -171,7 +171,7 @@ export default function MealFeedback({
                                     onChange={(e) => setComments(e.target.value)}
                                     placeholder="Add any specific culinary or clinical notes..."
                                     rows={2}
-                                    className="w-full bg-bg border border-line rounded-xl p-3 text-xs text-ink placeholder-ink-muted focus:outline-none focus:border-gold transition-colors resize-none"
+                                    className="w-full bg-bg border border-line rounded-xl p-3 text-xs text-ink placeholder-ink-muted focus:outline-none focus-visible:border-gold transition-colors resize-none"
                                 />
                             </div>
                         )}
