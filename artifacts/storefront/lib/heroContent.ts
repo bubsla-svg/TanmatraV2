@@ -37,26 +37,26 @@ export function deriveHeroContent(refCookie?: string): HeroContent {
 
   if (ref.startsWith("rd_") || ref.startsWith("dietitian_") || ref.includes("diet") || ref.includes("clinic") || ref.startsWith("dr_")) {
     return {
-      eyebrow: "Referred by your Registered Dietitian",
-      headline: "Expert-designed meals, cooked fresh — delivered straight to your desk.",
-      blurb: `Formulated to align strictly with your health goals. Zero low-quality oils, precisely measured ingredients. Starting from ${basePrice} per meal.`,
-      badge: "Priority Health Plan",
+      eyebrow: "Sent here by your dietitian",
+      headline: "Lunch that fits your plan, cooked fresh and brought to your desk.",
+      blurb: `Cooked in cold-pressed oil and desi ghee, weighed to the gram, and checked by our dietitians before it goes out. From ${basePrice} a meal.`,
+      badge: "Dietitian referral",
     };
   }
 
   if (ref.startsWith("gym_") || ref.startsWith("trainer_") || ref.includes("fit") || ref.includes("gym") || ref.startsWith("coach_")) {
     return {
-      eyebrow: "Referred by your Fitness Club & Trainer",
-      headline: "High-protein recovery meals, cooked fresh — delivered to your office or gym.",
-      blurb: `Designed for muscle growth and steady energy with high-quality protein and healthy carbs. Starting from ${basePrice} per meal.`,
-      badge: "Workout Recovery Plan",
+      eyebrow: "Sent here by your gym",
+      headline: "Big-protein lunches that show up hot, at the office or the gym.",
+      blurb: `Real portions built around protein, so training actually sticks — and you are not hungry again by four. From ${basePrice} a meal.`,
+      badge: "Training partner",
     };
   }
 
   return {
-    eyebrow: "Metabolic Precision",
-    headline: "Personalized Nutrition — for Peak Metabolism",
-    blurb: `Engineered around your biological footprint. 100% RD-backed metabolic food plans formulated for glycemic stability, gut resilience, and peak physical recovery. Starting from ${basePrice} per meal.`,
+    eyebrow: "Fresh lunch, Noida",
+    headline: "Lunch you look forward to. Cooked today, at your desk by one.",
+    blurb: `Home-style plates cooked after you order — never reheated from a tray. Real ghee, real portions, and you still feel light at 4pm. From ${basePrice} a meal.`,
     badge: null,
   };
 }

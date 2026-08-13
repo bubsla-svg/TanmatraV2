@@ -1,35 +1,46 @@
 import { cookies } from "next/headers";
 import { Section01ClinicalHero } from "@/components/landing/Section01ClinicalHero";
 import { deriveHeroContent } from "@/lib/heroContent";
-import { Section02QualificationChips } from "@/components/landing/Section02QualificationChips";
-import { Section03AgitationPanel } from "@/components/landing/Section03AgitationPanel";
 import { Section04bMarketplace } from "@/components/landing/Section04bMarketplace";
 import { Section04ProtocolsGrid } from "@/components/landing/Section04ProtocolsGrid";
-import { Section03B2BEnterprise } from "@/components/landing/Section03B2BEnterprise";
-import { Section04TelehealthTracking } from "@/components/landing/Section04TelehealthTracking";
-import { Section05LogisticsMoat } from "@/components/landing/Section05LogisticsMoat";
-import { Section05ProofMacros } from "@/components/landing/Section05ProofMacros";
 import { fetchMenu } from "@/lib/catalog";
 import { formatPaise } from "@/lib/format";
 import { pickPlanCardDishes } from "@/lib/planCardDish";
-import { planDisplay } from "@/lib/planCopy";
-import { PROTOCOL_CONFIG, type ProtocolKey } from "@/content/landing/protocol";
+import { activeCampaign } from "@/lib/heroCampaign";
+import { SectionTrialPush } from "@/components/landing/SectionTrialPush";
 import { DishCard } from "@/components/DishCard";
-import { Section06ProofRdPanel } from "@/components/landing/Section06ProofRdPanel";
 import { Section07ProofKitchen } from "@/components/landing/Section07ProofKitchen";
-import { Section09AssessmentSection } from "@/components/landing/Section09AssessmentSection";
-import { Section09bRecipesBridge } from "@/components/landing/Section09bRecipesBridge";
 import { Section10FaqAccordion } from "@/components/landing/Section10FaqAccordion";
-/** Protocol landers that exist as routes today. `/wellness` does not yet. */
-const LANDING_PROTOCOLS: { key: ProtocolKey; href: string }[] = [
-  { key: "clinical", href: "/clinical" },
-  { key: "performance", href: "/performance" },
-];
-
 /**
- * Consumer Home — 3-Pillar Revenue Architecture.
- * Server Component implementing DTR (Dynamic Tailored Referrals) personalization,
- * assembling D2C Subscriptions, B2B Corporate Volume, Telehealth & Noida IoT Logistics Moat.
+ * Consumer home. Ordered by the visitor's hunger, not by the revenue model.
+ *
+ * This file used to open "3-Pillar Revenue Architecture" and stack sixteen
+ * sections to match: D2C, B2B enterprise, telehealth, a marketplace, recipes,
+ * a fear panel, a logistics moat, an on-page clinical assessment, three
+ * separate proof sections and a legal disclaimer to close. It read as an
+ * internal deck, and it asked someone who wanted lunch to choose between about
+ * twelve destinations before seeing any food.
+ *
+ * Seven blocks now, in the order a hungry person actually decides:
+ *
+ *   1. Hero          — what this is, plus the offer slot (see below)
+ *   2. Today's menu  — the food, with real photography and one tap to order
+ *   3. Trial         — the cheapest possible yes
+ *   4. Plans         — the same thing, monthly, for anyone already convinced
+ *   5. Pantry        — what else is on the shelf, in stock only
+ *   6. Kitchen       — who cooked it and where
+ *   7. FAQ           — the objections, answered
+ *
+ * B2B (/corporate-wellness), telehealth (/rd), recipes and the assessment all
+ * keep their own routes; they lost their slot on the entry route, not their
+ * existence. The footer and ⌘K still reach every one of them.
+ *
+ * DYNAMIC ON TWO AXES, and they compose:
+ *   - `deriveHeroContent(tnm_ref)` varies the hero by referral cookie, so a
+ *     dietitian's patient and a gym's member read different copy.
+ *   - `activeCampaign(now)` is the announcement / offer strip marketing drives
+ *     — a festival offer, a launch, a delivery waiver. Empty unless one is
+ *     live, and it expires by itself. See lib/heroCampaign.ts.
  */
 export default async function HomePage() {
   const cookieStore = await cookies();
@@ -42,6 +53,9 @@ export default async function HomePage() {
   // grid is a client component and cannot read it itself. Order matters: each
   // plan claims its dish before the next one picks, so no two cards repeat.
   const planDishes = pickPlanCardDishes(["desk_fuel", "steady", "protein_build"], dishes);
+  // Resolved once, server-side, so the whole render agrees on "now" — an offer
+  // cannot expire between the banner and the section beneath it.
+  const campaign = activeCampaign(new Date());
 
   return (
     <div
@@ -58,12 +72,18 @@ export default async function HomePage() {
           blind div→main replace that put 14 spurious landmarks in this file
           rewrote the very comment warning against them.) */}
       <div className="flex flex-col gap-10 sm:gap-16 lg:gap-20">
-        {/* Pillar 1 Hero: Food-First D2C Hook with Hero Meal Photo & Dual CTAs */}
-        <Section01ClinicalHero hero={heroData} />
+        {/* Hero — dynamic on two axes. `heroData` varies the copy by referral
+            cookie (dietitian / gym / direct); `campaign` is the announcement +
+            offer slot marketing drives, empty unless one is live. */}
+        <Section01ClinicalHero hero={heroData} campaign={campaign} />
 
+        {/* The food, immediately. This rail is the page's strongest moment —
+            real photography, real prices, one tap to order — so it now sits
+            directly under the hero instead of behind a chip rail and two
+            pitches. */}
         <section className="px-gutter">
           <div className="flex justify-between items-end mb-6">
-            <h2 className="font-bold text-3xl text-ink">Curated for today</h2>
+            <h2 className="font-bold text-3xl text-ink">On the menu today</h2>
             <a href="/menu" className="font-bold text-xs text-primary uppercase tracking-widest hover:opacity-80">View menu</a>
           </div>
           {/* A real list, so a screen reader announces "5 items" before the
@@ -77,98 +97,20 @@ export default async function HomePage() {
           </ul>
         </section>
 
-        {/* Horizontal need-state rail */}
-        <section className="px-gutter py-8">
-          <ul className="flex gap-3 overflow-x-auto snap-x no-scrollbar -mx-gutter px-gutter">
-            {['Fat loss', 'Glucose steady', 'PCOS support', 'High protein'].map((need) => (
-              <li key={need} className="flex-none snap-start">
-                <button className="px-6 py-3 rounded-full border border-line bg-surface hover:border-primary/50 hover:bg-surface-raised transition-all">
-                  <span className="font-clinical-data text-ink tracking-wide">{need}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* Horizontal section: "Built for longer goals".
-            This rail listed 'Metabolic Reset' and 'Performance Protocol' as
-            subscriptions. Only one of those is real: PROTOCOL_CONFIG defines
-            three protocol landers (Wellness / Clinical / Performance), each
-            pointing at a plan you can actually buy. "Metabolic Reset" is not a
-            plan, a protocol, or a route — it named nothing. Both cards then
-            linked to /plans rather than to themselves, and described a "4-week
-            targeted clinical intervention with daily deliveries" — the real
-            plans are 22 weekday lunches a month, not daily.
-            Wellness has no lander route yet, so the two with routes are the
-            two rendered; add it here when /wellness ships. */}
-        <section className="px-gutter py-6">
-          <h2 className="font-bold text-3xl text-ink mb-6">Built for longer goals</h2>
-          <ul className="flex gap-4 overflow-x-auto snap-x no-scrollbar pb-4 -mx-gutter px-gutter">
-            {LANDING_PROTOCOLS.map(({ key, href }) => {
-              const protocol = PROTOCOL_CONFIG[key];
-              const plan = planDisplay(protocol.planId);
-              return (
-                <li key={key} className="flex-none w-[300px] snap-start rounded-3xl border border-line bg-surface p-6">
-                  <div className="font-bold text-xs text-primary mb-2">{protocol.eyebrow.toUpperCase()}</div>
-                  <h3 className="text-lg font-bold text-ink mb-2">{plan.name}</h3>
-                  <p className="text-ink-muted text-sm mb-6">{plan.subtitle}</p>
-                  <a href={href} className="inline-block w-full text-center px-4 py-3 rounded-full border border-line font-bold text-xs text-ink hover:bg-surface-raised transition-colors">
-                    Explore {plan.name}
-                  </a>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+        {/* The cheapest yes on the page, straight after the food. */}
+        <SectionTrialPush />
 
         {/* No ServiceabilityBar here. The Header's is the only instance allowed
             to exist — its verdict/pincode is per-instance state read from
             localStorage once at mount with no `storage` listener, so a second
             copy desynced permanently from sm up: check a pincode in one and
             the other kept saying "Select your location" all session. */}
-        <Section02QualificationChips />
 
         <Section04ProtocolsGrid dishes={planDishes} />
 
         <Section04bMarketplace />
 
-        {/* Pillar 9: On-page assessment stepper — main door for the hero's
-            "60-second assessment" CTA, which only dispatches
-            open_tanmatra_assessment and relies on this mounting to listen. */}
-        <Section09AssessmentSection />
-
-        {/* Recipes Bridge: DIY vs Done-for-You */}
-        <Section09bRecipesBridge />
-
-        {/* Proofs: Macros, RD Panel & Certified Kitchen */}
-        <div id="proofs" className="flex flex-col gap-10 sm:gap-16">
-          <Section05ProofMacros />
-          <Section06ProofRdPanel />
-          <Section07ProofKitchen />
-        </div>
-
-        {/* Supporting Pillars: B2B Enterprise & Telehealth */}
-        <Section03B2BEnterprise />
-        <Section04TelehealthTracking />
-        <Section05LogisticsMoat />
-        <Section03AgitationPanel />
-
-        {/* No "Smart Match" card here (owner decision, 2026-08-13). It read
-            "Based on your goals, adding the Matcha Focus protocol will
-            stabilize your 3PM glucose dip" — a per-visitor clinical finding,
-            hardcoded in a Server Component, shown identically to every
-            anonymous visitor including ones with no goals set and no order
-            history. Its "Add to Today" button had no handler and could not
-            have one here, so the one thing it invited you to do was the one
-            thing it could not do.
-
-            Restoring it needs a real recommendation from the API keyed to a
-            real profile, and a client island to act on it — not a second
-            literal. Until then the page says nothing rather than something
-            untrue, which matters more here than on most surfaces: this page
-            also claims ISO 22000, FSSAI licensing and RD supervision, and a
-            visitor who catches one invented claim has no reason to believe
-            the audited ones. */}
+        <Section07ProofKitchen />
 
         {/* FAQ Accordion */}
         <Section10FaqAccordion />

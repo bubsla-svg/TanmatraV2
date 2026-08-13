@@ -35,9 +35,9 @@ export function Section07ProofKitchen() {
         <div className="flex flex-col gap-2 border-b border-line pb-6 sm:flex-row sm:items-baseline sm:justify-between">
           <div>
             <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
-              Triple Verification Pillar 3
+              Our kitchen
             </span>
-            <h3 className="text-2xl font-bold text-ink">Noida Kitchen Credentials &amp; Thermal Dispatch</h3>
+            <h3 className="text-2xl font-bold text-ink">Where your lunch is actually cooked</h3>
           </div>
           <span className="rounded-md border border-line bg-surface-subtle px-3 py-1 text-xs font-bold text-ink">
             Noida Sectors Active

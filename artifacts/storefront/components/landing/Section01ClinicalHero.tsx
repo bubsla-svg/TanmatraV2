@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { emitLpEvent } from "@/lib/lpEvents";
 import type { HeroContent } from "@/lib/heroContent";
+import type { HeroCampaign } from "@/lib/heroCampaign";
 
 // deriveHeroContent used to live here. app/page.tsx is a Server Component and
 // calls it, which a "use client" module cannot serve — it 500'd the homepage in
@@ -58,22 +59,22 @@ function TrustItem({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
-  const handleAssessmentClick = () => {
-    emitLpEvent("hero_cta_click", { page: "/", label: "Take Metabolic Assessment" });
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("open_tanmatra_assessment"));
-    }
-  };
-
-  // No Stitch markers on this section. It used to carry a screen id from a
-  // naming scheme that predates the 74-screen manifest ("MOB-10-Home-Dark"),
-  // declared in no entry of it and with no data-screen-state beside it. The
-  // home screen's real marker (5.1) is on the route root in
-  // app/(global)/page.tsx, where the manifest claims it. That orphan was the
-  // ONLY source id of 49 the manifest did not declare, and the sole reason
-  // scripts/lint-stitch-markers.ts had to run one-directional; retiring it
-  // turned the reverse sweep on, so an invented id now fails the build.
+// No Stitch markers on this section. It used to carry a screen id from a
+// naming scheme that predates the 74-screen manifest ("MOB-10-Home-Dark"),
+// declared in no entry of it and with no data-screen-state beside it. The
+// home screen's real marker (5.1) is on the route root in
+// app/(global)/page.tsx, where the manifest claims it. That orphan was the
+// ONLY source id of 49 the manifest did not declare, and the sole reason
+// scripts/lint-stitch-markers.ts had to run one-directional; retiring it
+// turned the reverse sweep on, so an invented id now fails the build.
+export function Section01ClinicalHero({
+  hero,
+  campaign = null,
+}: {
+  hero: HeroContent;
+  /** Live announcement / offer, resolved server-side. See lib/heroCampaign.ts. */
+  campaign?: HeroCampaign | null;
+}) {
   return (
     <section className="mx-auto w-full max-w-screen-xl px-4 py-section-py sm:px-6">
       <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
@@ -82,6 +83,24 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
             SafeImage: SafeImage's props are {src, alt, className, imgClassName,
             priority} and it spreads nothing, so an `aria-hidden` handed to the
             component itself is silently dropped on the floor. */}
+        {/* Announcement / offer strip. Sits above the headline because that is
+            where a "this week only" has to be seen before the reader commits to
+            reading anything else. Absent when no campaign is running — the slot
+            is empty by default rather than filled with a sample offer. */}
+        {campaign && (
+          <div className="mb-6 flex w-full max-w-2xl flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-2xl border border-gold/30 bg-gold/10 px-4 py-2.5 text-sm">
+            <span className="font-semibold text-ink">{campaign.message}</span>
+            {campaign.cta && (
+              <Link
+                href={campaign.cta.href}
+                onClick={() => emitLpEvent("hero_campaign_click", { page: "/", label: campaign.id })}
+                className="font-bold text-gold-text underline underline-offset-4 hover:opacity-80"
+              >
+                {campaign.cta.label}
+              </Link>
+            )}
+          </div>
+        )}
         <div aria-hidden className="mb-6">
           <SafeImage
             src="/brand/hero-plate.jpg"
@@ -97,45 +116,41 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
             {hero.blurb}
           </p>
 
+          {/* One primary action, one escape. This row had three — menu, plans,
+              and a "60-second assessment" that opened a five-step quiz — so the
+              first thing the page asked a hungry visitor to do was choose how
+              to choose. Today's food is the thing worth clicking; the trial and
+              the plans get their own sections further down, where someone who
+              has seen the food is ready for them. */}
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3.5 sm:mt-9">
             <Button asChild shape="pill" size="fluid" className="px-8 py-3.5 font-bold shadow-lg shadow-gold/20 transition-transform duration-300 hover:scale-105 hover:shadow-gold/40 active:scale-95">
               <Link
                 href="/menu"
-                onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "Explore Today's Menu" })}
+                onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "See today's menu" })}
               >
-                Explore menu
+                See today&apos;s menu
               </Link>
             </Button>
             <Button asChild variant="outline" shape="pill" size="fluid" className="border-line-strong px-7 py-3.5 font-semibold transition-transform duration-300 hover:bg-surface hover:scale-105 active:scale-95">
               <Link
-                href="/plans"
-                onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "Find a Therapeutic Plan" })}
+                href="/trial"
+                onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "Try 3 lunches" })}
               >
-                View plans
+                Try 3 lunches
               </Link>
             </Button>
-            <button
-              type="button"
-              onClick={handleAssessmentClick}
-              className="-mx-1 px-2 py-2 text-sm font-medium text-ink-muted underline-offset-4 transition-colors hover:text-ink hover:underline"
-            >
-              60-second assessment
-            </button>
           </div>
 
-          {/* Clinical authority trust bar */}
+          {/* No star rating here. This row opened with a five-star row and
+              "4.9/5" typed as a literal — no review count, no source, no
+              endpoint behind it. A rating is the single easiest claim on the
+              page for a visitor to test against Google, and it sat next to the
+              three certifications that ARE real, borrowing their credibility.
+              Bring it back when reviews are a number we can read. */}
           <div className="mt-9 flex flex-wrap justify-center items-center gap-x-3 gap-y-1.5 border-t border-line pt-5 text-xs font-medium text-ink-muted">
-            <span className="flex items-center gap-1 text-gold-text">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <svg key={i} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
-                  <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
-                </svg>
-              ))}
-              <span className="ml-1 text-ink">4.9/5</span>
-            </span>
-            <TrustItem>ISO 22000 Certified</TrustItem>
-            <TrustItem>FSSAI Verified</TrustItem>
-            <TrustItem>Dietitian Supervised</TrustItem>
+            <TrustItem>Cooked after you order</TrustItem>
+            <TrustItem>FSSAI licensed kitchen</TrustItem>
+            <TrustItem>Checked by our dietitians</TrustItem>
           </div>
         </div>
 
@@ -150,18 +165,18 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
             <div className="relative aspect-[16/9] w-full">
               <SafeImage
                 src="/brand/hero-dish.jpg"
-                alt="Chef-plated clinical meal, photographed from above"
+                alt="A Tanmatra lunch plated from above"
                 className="h-full w-full"
                 imgClassName="transition-transform duration-700 hover:scale-105"
               />
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-2xl border border-line bg-[var(--glass)] p-4 backdrop-blur-md shadow-xl max-w-sm mx-auto">
-                <div>
-                  <div className="text-3xs font-mono uppercase tracking-widest text-primary mb-0.5">MACRO PROFILE</div>
-                  <p className="font-mono text-sm font-bold text-ink tracking-tight">32P · 41C · 12F</p>
-                  <div className="mt-2 h-1 w-28 bg-surface-raised rounded-full overflow-hidden">
-                    <div className="h-full bg-primary w-[70%]" />
-                  </div>
-                </div>
+              {/* The overlay used to be a "MACRO PROFILE" readout — "32P · 41C
+                  · 12F" over a progress bar stuck at 70%. Neither belonged to
+                  this photograph or to any dish: the numbers were literals and
+                  the bar measured nothing. It also spoke in macros to someone
+                  who is, at this point, simply deciding whether the food looks
+                  good. What earns the space is the invitation. */}
+              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between gap-3 rounded-2xl border border-line bg-[var(--glass)] p-4 backdrop-blur-md shadow-xl max-w-sm mx-auto">
+                <p className="text-sm font-semibold text-ink">Today&apos;s menu is up.</p>
                 <Button asChild variant="outline" shape="pill" size="fluid" className="shrink-0 border-line-strong bg-transparent px-3.5 py-1.5 text-xs font-bold hover:bg-surface">
                   <Link href="/menu">Order</Link>
                 </Button>

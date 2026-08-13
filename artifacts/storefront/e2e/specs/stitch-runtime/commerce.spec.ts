@@ -25,12 +25,19 @@ import { CartDrawer } from "../../support/pages/CartDrawer";
 test.describe("stitch-runtime: commerce (5.x)", () => {
   test("5.1 home clinical feed is wired", async ({ page }) => {
     await page.goto("/");
-    // Primary order action: the hero's gold CTA into the menu. exact â the
-    // page also renders "View menu" and a bare "Order" link.
-    await expect(page.getByRole("link", { name: "Explore menu", exact: true })).toBeVisible();
+    // Primary order action: the hero's gold CTA into the menu.
+    // Asserted by DESTINATION, not label: the label is marketing copy (it was
+    // "Explore menu", it is now "See today's menu"), while "the home surface
+    // offers a way into the menu" is what 5.1 actually claims.
+    //
+    // `:visible` is load-bearing, not decoration. Eleven elements match
+    // a[href="/menu"] on this page and the FIRST in DOM order is the desktop
+    // TopNav item, which is display:none at the mobile viewport this project
+    // runs — so a bare .first() asserts a hidden element and fails.
+    await expect(page.locator('a[href="/menu"]:visible').first()).toBeVisible();
     // The hero h1 binds DTR-personalised copy; assert the stable curated rail
     // heading instead of a cookie-dependent string.
-    await expect(page.getByRole("heading", { name: "Curated for today" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "On the menu today" })).toBeVisible();
     await expect(marker(page, "5.1", "default")).toBeVisible();
     await evidenceShot(page, "5.1");
   });
