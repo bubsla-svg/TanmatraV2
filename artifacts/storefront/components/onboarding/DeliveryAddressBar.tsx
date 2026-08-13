@@ -135,7 +135,7 @@ export function DeliveryAddressBar() {
             header's ~208px slot. The full explanation lives in the sheet this
             button already opens. */}
         {deliveryKind === "undeliverable" && (
-          <span className="shrink-0 rounded-md bg-[var(--danger)]/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--danger)]">
+          <span className="shrink-0 rounded-md bg-[var(--danger)]/10 px-1.5 py-0.5 text-3xs font-bold uppercase tracking-wide text-[var(--danger)]">
             Not served
           </span>
         )}

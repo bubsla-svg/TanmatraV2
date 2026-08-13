@@ -128,7 +128,7 @@ export function ProductDetailView({ dish }: ProductDetailViewProps) {
               <dl className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {macros.map(([label, value]) => (
                   <div key={label} className="p-3 rounded-lg bg-surface-raised border border-line">
-                    <dt className="text-[10px] font-bold uppercase tracking-wider text-ink-faint">{label}</dt>
+                    <dt className="text-3xs font-bold uppercase tracking-wider text-ink-faint">{label}</dt>
                     <dd className="mt-1 text-sm font-semibold text-ink tabular-nums">{value}</dd>
                   </div>
                 ))}

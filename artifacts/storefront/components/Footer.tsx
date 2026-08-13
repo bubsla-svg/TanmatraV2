@@ -49,7 +49,7 @@ export async function Footer() {
                   return (
                     <Fragment key={l.href + l.label}>
                       {openSection && (
-                        <p className="mt-2 text-[11px] font-medium uppercase tracking-wide text-ink-faint">
+                        <p className="mt-2 text-2xs font-medium uppercase tracking-wide text-ink-faint">
                           {l.section}
                         </p>
                       )}

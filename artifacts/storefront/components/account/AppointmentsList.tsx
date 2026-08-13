@@ -84,7 +84,7 @@ export function AppointmentsList() {
               Dietitian Specialist: {a.rdSlug.replace("rd-", "").replace(/-/g, " ")}
             </span>
             {a.pricePaise === 0 ? (
-              <span className="inline-flex items-center rounded-full bg-gold px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--gold-ink)]">
+              <span className="inline-flex items-center rounded-full bg-gold px-2.5 py-0.5 text-3xs font-bold uppercase tracking-wide text-[var(--gold-ink)]">
                 Free Intro
               </span>
             ) : (

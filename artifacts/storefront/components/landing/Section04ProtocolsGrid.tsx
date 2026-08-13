@@ -69,7 +69,7 @@ export function Section04ProtocolsGrid() {
         <div className="group flex flex-col justify-between rounded-2xl border border-line bg-surface p-6 shadow-sm overflow-hidden transition-transform duration-700 ease-out hover:scale-105 hover:shadow-xl hover:border-gold/30">
           <div>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-ink-faint">
+              <span className="text-2xs font-bold uppercase tracking-wider text-ink-faint">
                 Plan 1 · Weight Loss
               </span>
               <span className="tabular text-xs font-bold text-ink-muted">{deskFuelMonthly}/mo</span>
@@ -117,7 +117,7 @@ export function Section04ProtocolsGrid() {
         <div className="group flex flex-col justify-between rounded-2xl border-2 border-gold-text bg-surface p-6 shadow-md overflow-hidden transition-transform duration-700 ease-out hover:scale-105 hover:shadow-xl hover:border-gold/80">
           <div>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-gold-text">
+              <span className="text-2xs font-bold uppercase tracking-wider text-gold-text">
                 Plan 2 · Recommended Care
               </span>
               <span className="tabular text-xs font-bold text-ink">{steadyMonthly}/mo</span>
@@ -166,7 +166,7 @@ export function Section04ProtocolsGrid() {
         <div className="group flex flex-col justify-between rounded-2xl border border-line bg-surface-raised p-6 shadow-sm overflow-hidden transition-transform duration-700 ease-out hover:scale-105 hover:shadow-xl hover:border-gold/30">
           <div>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-ink-faint">
+              <span className="text-2xs font-bold uppercase tracking-wider text-ink-faint">
                 Plan 3 · Strength &amp; Recovery
               </span>
               <span className="tabular text-xs font-bold text-ink-muted">{proteinMonthly}/mo</span>

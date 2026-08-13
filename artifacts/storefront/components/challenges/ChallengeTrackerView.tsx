@@ -104,7 +104,7 @@ export function ChallengeTrackerView() {
                     <p className="mt-2 text-xs leading-relaxed text-ink-muted">{c.description}</p>
                   </div>
                   <div>
-                    <div className="mb-1.5 flex justify-between text-[11px] font-semibold text-ink-muted">
+                    <div className="mb-1.5 flex justify-between text-2xs font-semibold text-ink-muted">
                       <span>Progress</span>
                       <span className="tabular text-ink">{pct}%</span>
                     </div>

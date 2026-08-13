@@ -73,7 +73,7 @@ export function DishDrawer({ dish }: { dish: DishData }) {
             {macros.map(([label, value]) => (
               <div key={label} className="rounded-lg border border-line bg-surface p-2.5 text-center">
                 <dd className="tabular text-sm font-semibold text-ink">{value}</dd>
-                <dt className="text-[11px] uppercase tracking-wide text-ink-faint">{label}</dt>
+                <dt className="text-2xs uppercase tracking-wide text-ink-faint">{label}</dt>
               </div>
             ))}
           </dl>

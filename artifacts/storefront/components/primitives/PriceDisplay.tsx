@@ -29,7 +29,7 @@ export const PriceDisplay: React.FC<PriceDisplayProps> = ({
 
   return (
     <div className={`inline-flex flex-col ${className}`}>
-      {label && <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-0.5">{label}</span>}
+      {label && <span className="text-3xs uppercase font-bold tracking-wider text-slate-400 mb-0.5">{label}</span>}
       <div className="flex items-baseline gap-2">
         <span className={`text-slate-100 ${sizeClasses[size]}`}>
           {formatRupees(pricePaise)}

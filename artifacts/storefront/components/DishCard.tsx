@@ -43,7 +43,7 @@ function RatingStars({ average, count }: { average?: number | null; count?: numb
         {"★".repeat(Math.min(filled, 5))}
         <span className="opacity-30">{"★".repeat(Math.max(0, 5 - filled))}</span>
       </span>
-      <span aria-hidden className="font-mono text-[11px] text-ink-muted">
+      <span aria-hidden className="font-mono text-2xs text-ink-muted">
         {average.toFixed(1)} ({count})
       </span>
     </span>
@@ -66,7 +66,7 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
         </div>
         <div className="flex flex-col gap-1">
           <h3 className="font-bold text-body-lg text-ink-primary truncate">{dish.name}</h3>
-          <span className="font-mono text-[11px] text-ink-muted">
+          <span className="font-mono text-2xs text-ink-muted">
             {est}{dish.macros.calories} kcal · {est}{dish.macros.protein}g P
           </span>
           <div className="relative z-10 mt-3 flex justify-between items-center">
@@ -99,7 +99,7 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
             {dish.tasteDescription || dish.description}
           </Text>
           <RatingStars average={dish.averageRating} count={dish.reviewCount} />
-          <span className="font-mono text-[11px] text-ink-muted">
+          <span className="font-mono text-2xs text-ink-muted">
             {est}{dish.macros.calories} kcal · {est}{dish.macros.protein}g P
           </span>
         </div>

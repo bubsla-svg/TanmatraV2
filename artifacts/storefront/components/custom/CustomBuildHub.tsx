@@ -69,13 +69,13 @@ const DishPickRow = memo(function DishPickRow({
           <span className="tabular text-xs font-bold text-ink">{formatPaise(dish.price)}</span>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="tabular rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[10px] text-ink-muted">
+          <span className="tabular rounded-full border border-line bg-surface-raised px-2 py-0.5 text-3xs text-ink-muted">
             {dish.macros.calories} kcal
           </span>
-          <span className="tabular rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[10px] text-ink-muted">
+          <span className="tabular rounded-full border border-line bg-surface-raised px-2 py-0.5 text-3xs text-ink-muted">
             {dish.macros.protein}g protein
           </span>
-          <span className="rounded-full border border-line bg-surface-raised px-2 py-0.5 text-[10px] text-ink-muted">
+          <span className="rounded-full border border-line bg-surface-raised px-2 py-0.5 text-3xs text-ink-muted">
             {dish.kitchen.toUpperCase()} kitchen
           </span>
         </div>

@@ -35,9 +35,9 @@ export default async function MarketplacePage() {
                 <SafeImage src={item.image ?? ""} alt={item.name} className="aspect-square w-full" />
               </div>
               <div className="flex flex-col gap-1 flex-1">
-                <span className="font-label-caps text-[10px] text-ink-muted uppercase tracking-widest">{item.supplierName}</span>
+                <span className="font-label-caps text-3xs text-ink-muted uppercase tracking-widest">{item.supplierName}</span>
                 <h3 className="font-bold text-sm text-ink-primary line-clamp-2 leading-tight">{item.name}</h3>
-                {item.weightLabel && <span className="font-mono text-[10px] text-ink-muted">{item.weightLabel}</span>}
+                {item.weightLabel && <span className="font-mono text-3xs text-ink-muted">{item.weightLabel}</span>}
                 <div className="relative z-10 mt-auto pt-3 flex justify-between items-center">
                   <span className="font-clinical-data text-ink-primary">{formatPaise(item.pricePaise)}</span>
                 </div>

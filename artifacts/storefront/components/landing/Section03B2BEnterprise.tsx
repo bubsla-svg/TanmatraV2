@@ -36,15 +36,15 @@ export function Section03B2BEnterprise() {
 
             <ul className="mt-6 flex flex-col gap-3 text-xs text-ink">
               <li className="flex items-center gap-2.5">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold/20 text-gold-text font-bold text-[10px]">⚡</span>
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold/20 text-gold-text font-bold text-3xs">⚡</span>
                 <span>Easy integration with employee benefits and meal allowances</span>
               </li>
               <li className="flex items-center gap-2.5">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold/20 text-gold-text font-bold text-[10px]">⚡</span>
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold/20 text-gold-text font-bold text-3xs">⚡</span>
                 <span>Fresh, group deliveries straight to your office</span>
               </li>
               <li className="flex items-center gap-2.5">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold/20 text-gold-text font-bold text-[10px]">⚡</span>
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold/20 text-gold-text font-bold text-3xs">⚡</span>
                 <span>Boost focus and reduce afternoon fatigue for your team</span>
               </li>
             </ul>
@@ -71,17 +71,17 @@ export function Section03B2BEnterprise() {
                 </div>
                 <div>
                   <p className="text-xs font-bold text-ink">Corporate ID Badge Sync</p>
-                  <p className="text-[10px] text-ink-faint">Tanmatra Enterprise API Gateway</p>
+                  <p className="text-3xs text-ink-faint">Tanmatra Enterprise API Gateway</p>
                 </div>
               </div>
-              <span className="rounded-full bg-sage-soft px-2.5 py-1 text-[10px] font-bold text-sage-text">
+              <span className="rounded-full bg-sage-soft px-2.5 py-1 text-3xs font-bold text-sage-text">
                 CONNECTED
               </span>
             </div>
 
             <div className="mt-4 flex flex-col gap-3">
               <div className="rounded-xl border border-line/80 bg-surface-raised p-3 text-xs">
-                <div className="flex justify-between text-ink-muted font-medium text-[11px]">
+                <div className="flex justify-between text-ink-muted font-medium text-2xs">
                   <span>Daily Subsidy Applied</span>
                   <span className="font-bold text-gold-text">₹180 / meal</span>
                 </div>
@@ -92,10 +92,10 @@ export function Section03B2BEnterprise() {
 
               <div className="rounded-xl border border-line/80 bg-surface-raised p-3 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-ink">Thermal Bulk Dispatch</span>
-                  <span className="text-[10px] font-bold text-sage-text">Sector 135 IT Park</span>
+                  <span className="text-2xs font-semibold text-ink">Thermal Bulk Dispatch</span>
+                  <span className="text-3xs font-bold text-sage-text">Sector 135 IT Park</span>
                 </div>
-                <p className="mt-1 text-[10px] text-ink-faint">Arriving at 12:45 PM · Internal Temp 65°C Logged</p>
+                <p className="mt-1 text-3xs text-ink-faint">Arriving at 12:45 PM · Internal Temp 65°C Logged</p>
               </div>
             </div>
           </div>

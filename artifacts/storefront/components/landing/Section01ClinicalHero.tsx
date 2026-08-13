@@ -152,7 +152,7 @@ export function Section01ClinicalHero({ hero }: { hero: HeroContent }) {
               />
               <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-2xl border border-line bg-[var(--glass)] p-4 backdrop-blur-md shadow-xl max-w-sm mx-auto">
                 <div>
-                  <div className="text-[10px] font-mono uppercase tracking-widest text-primary mb-0.5">MACRO PROFILE</div>
+                  <div className="text-3xs font-mono uppercase tracking-widest text-primary mb-0.5">MACRO PROFILE</div>
                   <p className="font-mono text-sm font-bold text-ink tracking-tight">32P · 41C · 12F</p>
                   <div className="mt-2 h-1 w-28 bg-surface-raised rounded-full overflow-hidden">
                     <div className="h-full bg-primary w-[70%]" />

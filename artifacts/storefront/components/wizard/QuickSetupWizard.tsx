@@ -116,7 +116,7 @@ export function QuickSetupWizard() {
     <div className="rounded-3xl border border-line bg-surface p-5 flex flex-col gap-6 shadow-sm">
       <div className="flex flex-col gap-4 border-b border-line pb-5">
         <StepDots current={step} total={3} />
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-ink-muted">
+        <span className="text-2xs font-semibold uppercase tracking-widest text-ink-muted">
           Step {step} of 3 &mdash; {STEP_LABELS[step]}
         </span>
       </div>
@@ -194,7 +194,7 @@ export function QuickSetupWizard() {
             only as a low-emphasis text link, never the primary exit. */}
         <Link
           href="/menu"
-          className="text-center text-[11px] font-medium text-ink-faint hover:text-ink-muted hover:underline"
+          className="text-center text-2xs font-medium text-ink-faint hover:text-ink-muted hover:underline"
         >
           Skip &mdash; just browse matching dishes
         </Link>

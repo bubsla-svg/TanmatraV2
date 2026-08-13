@@ -39,7 +39,7 @@ export function Section05LogisticsMoat() {
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
               We monitor your meal's temperature every step of the way to ensure it arrives fresh and safe.
             </p>
-            <span className="mt-4 rounded-full bg-sage-soft px-2.5 py-1 text-[10px] font-bold text-sage-text">
+            <span className="mt-4 rounded-full bg-sage-soft px-2.5 py-1 text-3xs font-bold text-sage-text">
               Freshness Guaranteed
             </span>
           </div>
@@ -53,7 +53,7 @@ export function Section05LogisticsMoat() {
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
               Scheduled lunch and dinner deliveries mean your food arrives exactly when you expect it, ready to eat.
             </p>
-            <span className="mt-4 rounded-full bg-gold/10 px-2.5 py-1 text-[10px] font-bold text-gold-text">
+            <span className="mt-4 rounded-full bg-gold/10 px-2.5 py-1 text-3xs font-bold text-gold-text">
               Predictable Slots
             </span>
           </div>
@@ -67,7 +67,7 @@ export function Section05LogisticsMoat() {
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
               Easily switch delivery between home and office with one click before 9:00 PM the night before.
             </p>
-            <span className="mt-4 rounded-full bg-sage-soft px-2.5 py-1 text-[10px] font-bold text-sage-text">
+            <span className="mt-4 rounded-full bg-sage-soft px-2.5 py-1 text-3xs font-bold text-sage-text">
               Easy Location Switch
             </span>
           </div>

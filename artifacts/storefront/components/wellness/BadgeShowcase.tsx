@@ -47,7 +47,7 @@ export const BadgeShowcase: React.FC = () => {
             >
               <span className="text-2xl block">{b.icon}</span>
               <strong className="text-xs font-bold text-ink block font-heading">{b.title}</strong>
-              <p className="text-[10px] text-ink-muted leading-tight font-medium">{b.description}</p>
+              <p className="text-3xs text-ink-muted leading-tight font-medium">{b.description}</p>
             </div>
           ))}
         </div>
@@ -67,7 +67,7 @@ export const BadgeShowcase: React.FC = () => {
           <div className="w-full bg-line h-2 rounded-full overflow-hidden">
             <div className="bg-gold h-full" style={{ width: '72.5%' }}></div>
           </div>
-          <p className="text-[10px] text-ink-faint font-medium">Earn 550 more points to unlock Free Doctor Consultation Pass!</p>
+          <p className="text-3xs text-ink-faint font-medium">Earn 550 more points to unlock Free Doctor Consultation Pass!</p>
         </div>
 
         <button className="w-full py-2.5 rounded-xl bg-gold hover:brightness-110 text-[var(--gold-ink)] font-black text-xs uppercase tracking-wider shadow-md transition-all">

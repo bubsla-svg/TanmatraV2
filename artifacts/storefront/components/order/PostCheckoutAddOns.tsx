@@ -73,7 +73,7 @@ export function PostCheckoutAddOns({ subscriptionId }: { subscriptionId: number 
             >
               <div className="min-w-0">
                 <p className="text-xs font-bold text-ink">{item.title}</p>
-                <p className="text-[11px] text-ink-muted">{item.description}</p>
+                <p className="text-2xs text-ink-muted">{item.description}</p>
                 <p className="tabular mt-0.5 text-xs font-semibold text-gold-text">
                   {priceLine(item.view)}
                 </p>

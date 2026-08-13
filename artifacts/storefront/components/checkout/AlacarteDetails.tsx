@@ -307,7 +307,7 @@ export function AlacarteDetails({
 
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
 
-      <p className="text-center text-[11px] text-ink-faint">
+      <p className="text-center text-2xs text-ink-faint">
         UPI · FSSAI licensed · RD-reviewed kitchen · you won&rsquo;t be charged until you confirm in the payment step.
       </p>
 
@@ -321,7 +321,7 @@ export function AlacarteDetails({
           )}
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 flex-col">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-ink-muted">Payable now</span>
+              <span className="text-3xs font-bold uppercase tracking-widest text-ink-muted">Payable now</span>
               <span className="tabular text-lg font-bold text-ink">
                 {quoteState === "active" && quote ? formatPaise(quote.payableNowPaise) : formatPaise(subtotalPaise(cart))}
                 {quoteState !== "active" && <span className="ml-1 text-xs font-medium text-ink-faint">est.</span>}

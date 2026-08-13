@@ -72,7 +72,7 @@ export function SymptomTrackerView() {
         )}
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <label className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Symptom Classification</label>
+          <label className="text-2xs font-semibold uppercase tracking-wider text-ink-muted">Symptom Classification</label>
           <select
             value={symptom}
             onChange={(e) => setSymptom(e.target.value)}
@@ -87,7 +87,7 @@ export function SymptomTrackerView() {
 
         <div className="flex flex-col gap-1.5 text-xs">
           <div className="flex justify-between items-center">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Reaction Severity</span>
+            <span className="text-2xs font-semibold uppercase tracking-wider text-ink-muted">Reaction Severity</span>
             <span className="tabular text-sm font-semibold text-ink">{severity} / 5</span>
           </div>
           <input
@@ -105,7 +105,7 @@ export function SymptomTrackerView() {
         </div>
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <label className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Related Dish or Meal (Optional)</label>
+          <label className="text-2xs font-semibold uppercase tracking-wider text-ink-muted">Related Dish or Meal (Optional)</label>
           <input
             type="text"
             value={dishSlug}
@@ -116,7 +116,7 @@ export function SymptomTrackerView() {
         </div>
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <label className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Clinical Annotations</label>
+          <label className="text-2xs font-semibold uppercase tracking-wider text-ink-muted">Clinical Annotations</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -155,7 +155,7 @@ export function SymptomTrackerView() {
             {logsQuery.data.map((l) => (
               <div key={l.id} className="rounded-2xl border border-line bg-surface p-5 flex flex-col gap-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-sage-text">
+                  <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-2xs font-bold uppercase tracking-wide text-sage-text">
                     {l.symptomType.replace("_", " ")}
                   </span>
                   <span className="text-xs font-medium text-ink-muted">{l.loggedDate}</span>

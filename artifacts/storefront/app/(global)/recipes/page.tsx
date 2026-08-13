@@ -25,7 +25,7 @@ export default async function RecipesPage() {
               </div>
               <div className="flex flex-col gap-1">
                 <h3 className="font-bold text-lg text-ink-primary">{recipe.title}</h3>
-                <span className="font-mono text-[11px] text-ink-muted">
+                <span className="font-mono text-2xs text-ink-muted">
                   {recipe.calories ?? 0} kcal · {recipe.proteinGrams ?? 0}g P
                 </span>
                 <p className="text-ink-secondary text-sm mt-1">{recipe.summary}</p>

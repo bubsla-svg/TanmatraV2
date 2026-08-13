@@ -86,6 +86,15 @@
  * neutrals, and whichever layer lands last silently wins. */
 
 @theme inline {
+  /* Micro tier — registers the names with Tailwind so `text-2xs` / `text-3xs`
+     exist as utilities at all. The VALUES live in @workspace/tokens (see its
+     header for who owns what); this only points at them, same pattern as the
+     radii below. Without this block the tokens are declared but unreachable
+     from a class name, which is exactly how 232 sites ended up hardcoding
+     `text-[10px]`. */
+  --text-3xs: var(--text-3xs);
+  --text-2xs: var(--text-2xs);
+
   /* Fluid Typography Architecture (Phase 2) */
   --text-3xl: clamp(1.75rem, 4vw, 1.875rem);
   --text-4xl: clamp(2rem, 5vw, 2.25rem);

@@ -24,7 +24,7 @@ export default async function MealDealsPage() {
           <div key={bundle.id} className="rounded-3xl border border-line bg-surface p-5 flex flex-col gap-4 shadow-sm">
             <div className="flex justify-between items-start">
               <div>
-                <span className="inline-block px-2 py-1 rounded-full bg-surface-raised border border-line font-label-caps text-[10px] text-primary uppercase tracking-widest mb-2">
+                <span className="inline-block px-2 py-1 rounded-full bg-surface-raised border border-line font-label-caps text-3xs text-primary uppercase tracking-widest mb-2">
                   {bundle.badge}
                 </span>
                 <h2 className="font-headline-md text-xl text-ink-primary mb-1">{bundle.title}</h2>
@@ -34,7 +34,7 @@ export default async function MealDealsPage() {
                 <div className="font-clinical-data text-lg text-gold-text">
                   {formatPaise(bundle.totalPaise)}
                 </div>
-                <div className="font-label-caps text-[10px] text-ink-muted uppercase mt-1">
+                <div className="font-label-caps text-3xs text-ink-muted uppercase mt-1">
                   {bundle.mealCount} Meals
                 </div>
               </div>

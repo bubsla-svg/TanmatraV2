@@ -91,15 +91,15 @@ export const PrecisionPlanResults: React.FC<PrecisionPlanResultsProps> = ({ plan
           <div className="grid grid-cols-3 gap-2 bg-surface-raised p-3.5 rounded-2xl border border-line backdrop-blur-md shrink-0 text-center">
             <div>
               <strong className="text-lg font-black text-sage-text block">{plan.targetProteinG}g</strong>
-              <span className="text-[10px] text-ink-faint font-bold uppercase">Protein</span>
+              <span className="text-3xs text-ink-faint font-bold uppercase">Protein</span>
             </div>
             <div>
               <strong className="text-lg font-black text-[var(--gold-text)] block">{plan.targetCarbsG}g</strong>
-              <span className="text-[10px] text-ink-faint font-bold uppercase">Carbs</span>
+              <span className="text-3xs text-ink-faint font-bold uppercase">Carbs</span>
             </div>
             <div>
               <strong className="text-lg font-black text-[var(--gold-text)] block">{plan.targetFatG}g</strong>
-              <span className="text-[10px] text-ink-faint font-bold uppercase">Fat</span>
+              <span className="text-3xs text-ink-faint font-bold uppercase">Fat</span>
             </div>
           </div>
         </div>
@@ -138,12 +138,12 @@ export const PrecisionPlanResults: React.FC<PrecisionPlanResultsProps> = ({ plan
                       <CheckCircle2 className="w-3.5 h-3.5 text-sage-text shrink-0" />
                       <span className="font-bold text-ink">{m.name}</span>
                     </div>
-                    <span className="text-[10px] text-ink-faint font-medium">{m.calories} kcal</span>
+                    <span className="text-3xs text-ink-faint font-medium">{m.calories} kcal</span>
                   </div>
                 ))}
               </div>
 
-              <div className="flex justify-between items-center text-[11px] text-ink-muted pt-1 font-medium">
+              <div className="flex justify-between items-center text-2xs text-ink-muted pt-1 font-medium">
                 <span>P: {thali.totals.proteinGrams}g • C: {thali.totals.carbsGrams}g • F: {thali.totals.fatGrams}g</span>
                 <span className="font-bold text-ink">₹{Math.round(thali.totals.pricePaise / 100)}</span>
               </div>

@@ -22,7 +22,7 @@ export default async function MealRecommendationsPage() {
         {recommendations.slice(0, 10).map(({ dish, badge, rationale }) => (
           <div key={dish.id} className="flex flex-col gap-3">
             <div className="px-1">
-              <span className="inline-block px-2 py-1 rounded-full bg-surface-raised border border-line font-label-caps text-[10px] text-primary uppercase tracking-widest mb-1">
+              <span className="inline-block px-2 py-1 rounded-full bg-surface-raised border border-line font-label-caps text-3xs text-primary uppercase tracking-widest mb-1">
                 {badge}
               </span>
               <p className="text-xs text-ink-secondary italic">{rationale}</p>

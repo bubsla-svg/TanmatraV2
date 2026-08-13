@@ -73,7 +73,7 @@ export function Section03AgitationPanel() {
                 </span>
                 <h3 className="mt-1 text-lg font-bold text-ink">Our Healthy Meal Plans</h3>
               </div>
-              <span className="rounded-full bg-surface-raised px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-ink">
+              <span className="rounded-full bg-surface-raised px-2.5 py-1 text-3xs font-bold uppercase tracking-wide text-ink">
                 Verified
               </span>
             </div>

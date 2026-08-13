@@ -112,7 +112,7 @@ export function PartnerWizard() {
             The padded RD- form is the same lookup key support needs, presented
             as a reference. (A server-issued opaque ref would be better still —
             that's an API change, out of this surface's reach.) */}
-        <p className="tabular mt-4 text-[10px] font-semibold uppercase tracking-widest text-ink-faint">
+        <p className="tabular mt-4 text-3xs font-semibold uppercase tracking-widest text-ink-faint">
           Application reference RD-{String(submitted.id).padStart(5, "0")}
         </p>
       </div>
@@ -135,7 +135,7 @@ export function PartnerWizard() {
                 />
                 <span
                   aria-current={current ? "step" : undefined}
-                  className={`text-[10px] font-semibold uppercase tracking-widest ${
+                  className={`text-3xs font-semibold uppercase tracking-widest ${
                     current ? "text-gold-text" : done ? "text-ink-muted" : "text-ink-faint"
                   }`}
                 >
@@ -185,7 +185,7 @@ export function PartnerWizard() {
             onClick={() => void (step === LAST_STEP ? submit() : next())}
             shape="pill"
             size="fluid"
-            className="order-1 w-full px-8 py-4 text-[10px] font-semibold uppercase tracking-widest disabled:opacity-40 sm:order-2 sm:w-auto"
+            className="order-1 w-full px-8 py-4 text-3xs font-semibold uppercase tracking-widest disabled:opacity-40 sm:order-2 sm:w-auto"
           >
             {busy ? "Submitting…" : step === LAST_STEP ? "Submit application" : "Continue"}
           </Button>

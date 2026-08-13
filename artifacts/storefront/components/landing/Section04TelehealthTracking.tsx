@@ -41,14 +41,14 @@ export function Section04TelehealthTracking() {
 
             <div className="mt-4 grid grid-cols-2 gap-3 text-center">
               <div className="rounded-xl border border-line bg-surface p-3">
-                <span className="text-[10px] uppercase font-bold text-ink-faint">Protein Goal</span>
+                <span className="text-3xs uppercase font-bold text-ink-faint">Protein Goal</span>
                 <p className="tabular text-lg font-bold text-ink">104g / 100g</p>
-                <span className="text-[10px] text-sage-text font-semibold">✓ Target Met</span>
+                <span className="text-3xs text-sage-text font-semibold">✓ Target Met</span>
               </div>
               <div className="rounded-xl border border-line bg-surface p-3">
-                <span className="text-[10px] uppercase font-bold text-ink-faint">Sugar Control</span>
+                <span className="text-3xs uppercase font-bold text-ink-faint">Sugar Control</span>
                 <p className="tabular text-lg font-bold text-ink">Balanced</p>
-                <span className="text-[10px] text-sage-text font-semibold">✓ Steady Energy</span>
+                <span className="text-3xs text-sage-text font-semibold">✓ Steady Energy</span>
               </div>
             </div>
 
@@ -57,10 +57,10 @@ export function Section04TelehealthTracking() {
                 <span className="text-base">👩‍⚕️</span>
                 <div>
                   <p className="font-bold text-ink">Dr. Anjali Nair, RD</p>
-                  <p className="text-[10px] text-ink-muted">ADA Diabetes Educator</p>
+                  <p className="text-3xs text-ink-muted">ADA Diabetes Educator</p>
                 </div>
               </div>
-              <span className="rounded-md bg-gold/10 px-2 py-1 text-[10px] font-bold text-gold-text">
+              <span className="rounded-md bg-gold/10 px-2 py-1 text-3xs font-bold text-gold-text">
                 Review Synced
               </span>
             </div>

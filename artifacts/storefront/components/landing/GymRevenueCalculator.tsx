@@ -39,7 +39,7 @@ export function GymRevenueCalculator() {
         <div>
           <label
             htmlFor="gym-members"
-            className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-widest text-ink-faint"
+            className="flex items-center justify-between text-3xs font-semibold uppercase tracking-widest text-ink-faint"
           >
             Active gym members
             <span className="tabular text-base font-semibold text-ink">{members}</span>
@@ -57,7 +57,7 @@ export function GymRevenueCalculator() {
         </div>
 
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-ink-faint">Commission tier</p>
+          <p className="text-3xs font-semibold uppercase tracking-widest text-ink-faint">Commission tier</p>
           <div className="mt-4 -mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
             {C.tiers.map((t) => {
               const on = tier === t.pct;
@@ -87,7 +87,7 @@ export function GymRevenueCalculator() {
           <div className="flex items-end justify-between gap-4">
             <p className="text-base text-ink">
               Monthly payout
-              <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-widest text-ink-faint">
+              <span className="mt-0.5 block text-3xs font-semibold uppercase tracking-widest text-ink-faint">
                 Estimate only
               </span>
             </p>
@@ -95,7 +95,7 @@ export function GymRevenueCalculator() {
               {formatPaise(monthlyPaise)}
             </span>
           </div>
-          <p className="text-[11px] leading-relaxed text-ink-faint">
+          <p className="text-2xs leading-relaxed text-ink-faint">
             Assumes a conservative {Math.round(C.adoptionRate * 100)}% adoption rate among gym members on
             our standard 30-day ({formatPaise(C.standardPlanRupees * 100)}/mo) plan. Actual numbers vary
             with member profile.

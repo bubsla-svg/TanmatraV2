@@ -41,12 +41,12 @@ export function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
           />
         )}
         <span
-          className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${STATUS_PILL_CLASS[status]}`}
+          className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-3xs font-bold uppercase tracking-wide ${STATUS_PILL_CLASS[status]}`}
         >
           {STATUS_LABEL[status]}
         </span>
         {c.featured > 0 && (
-          <span className="absolute right-3 top-3 rounded-full bg-gold px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--gold-ink)]">
+          <span className="absolute right-3 top-3 rounded-full bg-gold px-2.5 py-1 text-3xs font-bold uppercase tracking-wide text-[var(--gold-ink)]">
             Featured
           </span>
         )}
@@ -56,14 +56,14 @@ export function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
         <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-ink-muted">{c.tagline}</p>
         <div className="mt-3 flex flex-wrap gap-1.5">
           {c.goalTags.slice(0, 3).map((t) => (
-            <span key={t} className="rounded-full bg-surface-raised px-2.5 py-1 text-[10px] font-medium text-ink-muted">{t}</span>
+            <span key={t} className="rounded-full bg-surface-raised px-2.5 py-1 text-3xs font-medium text-ink-muted">{t}</span>
           ))}
         </div>
-        <dl className="tabular mt-4 flex gap-3 border-t border-line pt-3 text-[11px] font-medium text-ink-faint">
+        <dl className="tabular mt-4 flex gap-3 border-t border-line pt-3 text-2xs font-medium text-ink-faint">
           <span>{c.durationDays} days</span>
           <span>{c.memberCount} joined</span>
         </dl>
-        <p className="mt-1.5 text-[11px] text-ink-faint">Led by {c.rdName} · {fmtRange(c.startsAt, c.endsAt)}</p>
+        <p className="mt-1.5 text-2xs text-ink-faint">Led by {c.rdName} · {fmtRange(c.startsAt, c.endsAt)}</p>
       </div>
     </Link>
   );

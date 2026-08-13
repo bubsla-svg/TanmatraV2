@@ -58,7 +58,7 @@ export function LogMealDialog({ onClose, onLogged }: { onClose: () => void; onLo
           </label>
           <div className="mt-3 grid grid-cols-3 gap-2">
             {FIELDS.map((f) => (
-              <label key={f.key} className="text-[11px] text-ink-muted">{f.label}
+              <label key={f.key} className="text-2xs text-ink-muted">{f.label}
                 <input type="number" min="0" inputMode="numeric" value={nums[f.key] ?? ""} onChange={(e) => setNums((n) => ({ ...n, [f.key]: e.target.value }))} className={`mt-1 ${cls}`} />
               </label>
             ))}

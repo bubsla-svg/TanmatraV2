@@ -143,7 +143,7 @@ export const HydrationCircadianTracker: React.FC = () => {
             <Droplets className="w-8 h-8 text-[var(--gold-text)] animate-bounce" />
             <div>
               <strong className="text-2xl font-black text-ink font-heading block">{totalWaterLoggedMl} <span className="text-xs text-[var(--gold-text)]">/ {dailyGoalMl} mL</span></strong>
-              <span className="text-[10px] text-ink-faint uppercase tracking-wider font-bold">Daily Hydration Index: {hydrationPercentage}%</span>
+              <span className="text-3xs text-ink-faint uppercase tracking-wider font-bold">Daily Hydration Index: {hydrationPercentage}%</span>
             </div>
           </div>
         </div>

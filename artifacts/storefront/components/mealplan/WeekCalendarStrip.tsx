@@ -35,7 +35,7 @@ export function WeekCalendarStrip({ calendar, onCycle }: {
           );
         })}
       </div>
-      <p className="mt-2 text-[11px] text-ink-faint">Tap a day to mark gym / travel / WFH — applied next time you regenerate.</p>
+      <p className="mt-2 text-2xs text-ink-faint">Tap a day to mark gym / travel / WFH — applied next time you regenerate.</p>
     </div>
   );
 }

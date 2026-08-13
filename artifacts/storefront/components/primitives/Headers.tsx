@@ -39,7 +39,7 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
           </div>
           <div>
             <span className="text-lg font-black tracking-tight text-slate-100">TANMATRA</span>
-            <span className="hidden md:inline-block text-[10px] text-amber-400 font-semibold ml-2 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+            <span className="hidden md:inline-block text-3xs text-amber-400 font-semibold ml-2 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
               Therapeutic Nutrition
             </span>
           </div>

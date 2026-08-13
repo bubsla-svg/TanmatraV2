@@ -72,7 +72,7 @@ export function CommandMenu() {
             <path d="m21 21-4.3-4.3" />
           </svg>
           <span className="hidden sm:inline">Search</span>
-          <kbd className="hidden rounded border border-line px-1.5 text-[10px] leading-4 text-ink-faint md:inline">⌘K</kbd>
+          <kbd className="hidden rounded border border-line px-1.5 text-3xs leading-4 text-ink-faint md:inline">⌘K</kbd>
         </button>
       </Dialog.Trigger>
       <Dialog.Portal>
@@ -103,7 +103,7 @@ export function CommandMenu() {
                   className="flex w-full items-center justify-between gap-4 px-4 py-2 text-left hover:bg-bg"
                 >
                   <span className="text-sm text-ink">{e.label}</span>
-                  <span className="text-[11px] text-ink-faint">{e.group}</span>
+                  <span className="text-2xs text-ink-faint">{e.group}</span>
                 </button>
               </li>
             ))}

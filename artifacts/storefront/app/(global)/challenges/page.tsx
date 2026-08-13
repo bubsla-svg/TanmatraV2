@@ -25,7 +25,7 @@ export default async function ChallengesPage() {
       data-screen-state="default"
       className="mx-auto max-w-5xl px-4 py-10"
     >
-      <p className="text-[11px] font-bold uppercase tracking-widest text-gold-text">Community</p>
+      <p className="text-2xs font-bold uppercase tracking-widest text-gold-text">Community</p>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">Challenges</h1>
       <p className="mt-3 max-w-xl text-base leading-relaxed text-ink-muted">
         RD-led programmes with a cohort, scheduled check-ins, and a shared feed. Join one and stay

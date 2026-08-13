@@ -16,7 +16,7 @@ export default function NotFound() {
       <Header />
       <main id="main" className="pb-[calc(8rem+env(safe-area-inset-bottom))] md:pb-0">
         <section className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-24 text-center">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-gold-text">404</p>
+          <p className="text-2xs font-bold uppercase tracking-widest text-gold-text">404</p>
           <h1 className="text-2xl font-semibold tracking-tight text-ink">We couldn&rsquo;t find that page</h1>
           <p className="text-sm text-ink-muted">
             The link might be old, or the page may have moved. Here are a couple of places to pick back

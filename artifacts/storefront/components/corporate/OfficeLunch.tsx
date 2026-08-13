@@ -61,7 +61,7 @@ export function OfficeLunch({ id }: { id: number }) {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-3">
-        <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${open ? "bg-sage text-sage-foreground" : "bg-[color-mix(in_srgb,var(--ink)_10%,transparent)] text-ink-muted"}`}>{open ? "Picks open" : order.status}</span>
+        <span className={`rounded-full px-2.5 py-0.5 text-2xs font-semibold ${open ? "bg-sage text-sage-foreground" : "bg-[color-mix(in_srgb,var(--ink)_10%,transparent)] text-ink-muted"}`}>{open ? "Picks open" : order.status}</span>
         <h1 className="text-xl font-semibold tracking-tight text-ink">{order.title}</h1>
         <div className="flex flex-col gap-1 text-sm text-ink-muted">
           <p>{fmtWhen(order.scheduledFor)} · {order.address.line}, {order.address.city}</p>

@@ -29,7 +29,7 @@ export const StickyLedger: React.FC<StickyLedgerProps> = ({
             label={itemCount ? `Payable Today (${itemCount} meals)` : "Total Payable Today"}
             size="lg"
           />
-          <p className="text-[10px] text-slate-400 mt-0.5">Includes taxes & free delivery</p>
+          <p className="text-3xs text-slate-400 mt-0.5">Includes taxes & free delivery</p>
         </div>
 
         {/* Single Primary Gold CTA Contract */}

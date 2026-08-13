@@ -50,7 +50,7 @@ export const FilterChip: React.FC<FilterChipProps> = ({
     >
       <span>{label}</span>
       {count !== undefined && (
-        <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${isSelected ? "bg-slate-950/20 text-slate-950" : "bg-slate-800 text-slate-400"}`}>
+        <span className={`px-1.5 py-0.5 rounded-full text-3xs ${isSelected ? "bg-slate-950/20 text-slate-950" : "bg-slate-800 text-slate-400"}`}>
           {count}
         </span>
       )}

@@ -51,13 +51,13 @@ export default async function MealGuidePage({ params }: { params: Promise<{ dish
           <h3 className="font-headline-md text-xl text-ink-primary mb-4">Clinical Breakdown</h3>
           <div className="grid gap-3">
             <div className="rounded-2xl border border-line bg-surface p-4">
-              <h4 className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-1">Blood Sugar Impact</h4>
+              <h4 className="font-label-caps text-3xs text-primary uppercase tracking-widest mb-1">Blood Sugar Impact</h4>
               <p className="text-sm text-ink-secondary leading-relaxed">
                 Formulated with {dish.macros?.fiber ?? 0}g of dietary fiber to blunt insulin spikes. Best consumed during peak metabolic windows (12 PM - 3 PM).
               </p>
             </div>
             <div className="rounded-2xl border border-line bg-surface p-4">
-              <h4 className="font-label-caps text-[10px] text-primary uppercase tracking-widest mb-1">Satiety Index</h4>
+              <h4 className="font-label-caps text-3xs text-primary uppercase tracking-widest mb-1">Satiety Index</h4>
               <p className="text-sm text-ink-secondary leading-relaxed">
                 High protein density ({dish.macros?.protein ?? 0}g) ensures prolonged satiety without gastric distress.
               </p>

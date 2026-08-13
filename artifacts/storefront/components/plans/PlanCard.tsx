@@ -27,7 +27,7 @@ export function PlanCard({ id }: { id: PlanId }) {
       style={{ borderColor: q.launchable ? "var(--line-strong)" : "var(--line)" }}
     >
       {d.clinical && (
-        <span className="mb-6 w-max rounded-full border border-blue/30 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-blue">
+        <span className="mb-6 w-max rounded-full border border-blue/30 px-3 py-1 text-3xs font-semibold uppercase tracking-widest text-blue">
           RD-reviewed
         </span>
       )}

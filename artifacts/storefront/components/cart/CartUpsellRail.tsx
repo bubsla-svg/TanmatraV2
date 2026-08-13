@@ -57,7 +57,7 @@ export function CartUpsellRail({
           >
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-semibold text-ink">{item.name}</p>
-              <p className="truncate text-[10px] text-ink-muted">{item.description}</p>
+              <p className="truncate text-3xs text-ink-muted">{item.description}</p>
               <p className="tabular text-xs font-medium text-gold-text">
                 {formatPaise(item.pricePaise)}
               </p>

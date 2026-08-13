@@ -33,7 +33,7 @@ function pick(dishes: MetabolicDish[], goal: MetabolicGoal): MetabolicDish[] {
 }
 
 const chipCls =
-  "tabular rounded-full border border-line bg-bg px-2.5 py-1 text-[10px] text-ink-muted";
+  "tabular rounded-full border border-line bg-bg px-2.5 py-1 text-3xs text-ink-muted";
 
 /**
  * Macro chips are labelled in full ("42g protein", not "42P"). The compressed
@@ -111,7 +111,7 @@ export function MetabolicExplorer({ dishes }: { dishes: MetabolicDish[] }) {
                 <div className="flex flex-wrap gap-2">
                   <span className={chipCls}>{Math.round(d.protein)}g protein</span>
                   <span className={chipCls}>{Math.round(d.fiber)}g fibre</span>
-                  <span className="tabular rounded-full border border-[var(--gold)]/30 bg-[color-mix(in_srgb,var(--gold)_10%,transparent)] px-2.5 py-1 text-[10px] text-gold-text">
+                  <span className="tabular rounded-full border border-[var(--gold)]/30 bg-[color-mix(in_srgb,var(--gold)_10%,transparent)] px-2.5 py-1 text-3xs text-gold-text">
                     GI {d.gi}
                   </span>
                   <span className={chipCls}>{Math.round(d.calories)} kcal</span>

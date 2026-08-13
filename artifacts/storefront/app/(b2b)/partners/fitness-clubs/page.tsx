@@ -50,7 +50,7 @@ export default function FitnessClubsPage() {
           {FITNESS_MENU.map((d) => (
             <div key={d.name} className="rounded-2xl border border-line bg-surface p-5">
               <h3 className="text-sm font-semibold text-ink">{d.name}</h3>
-              <p className="tabular mt-1 text-[11px] font-medium text-gold-text">{d.macros}</p>
+              <p className="tabular mt-1 text-2xs font-medium text-gold-text">{d.macros}</p>
               <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">{d.body}</p>
             </div>
           ))}

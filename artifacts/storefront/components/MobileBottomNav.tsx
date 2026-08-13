@@ -161,7 +161,7 @@ export function MobileBottomNav() {
                     }`}
                   >
                     {tab.icon}
-                    <span className="text-[10px] tracking-tight">{tab.label}</span>
+                    <span className="text-3xs tracking-tight">{tab.label}</span>
                   </button>
                 </li>
               );
@@ -180,7 +180,7 @@ export function MobileBottomNav() {
                   }`}
                 >
                   {tab.icon}
-                  <span className="text-[10px] tracking-tight">{tab.label}</span>
+                  <span className="text-3xs tracking-tight">{tab.label}</span>
                 </Link>
               </li>
             );
@@ -243,7 +243,7 @@ export function MobileBottomNav() {
               </div>
             </div>
 
-            <div className="mt-6 text-center text-[10px] text-ink-faint">
+            <div className="mt-6 text-center text-3xs text-ink-faint">
               {SITE.brand} · FSSAI {SITE.fssai}
             </div>
           </div>

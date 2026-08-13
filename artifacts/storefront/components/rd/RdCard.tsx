@@ -29,7 +29,7 @@ export function RdCard({ rd }: { rd: RdProfile }) {
 
       <div className="mt-4 flex flex-wrap gap-2">
         {rd.specialties.slice(0, 4).map((s) => (
-          <span key={s} className="rounded-full border border-line px-2 py-0.5 text-[11px] text-ink-muted">
+          <span key={s} className="rounded-full border border-line px-2 py-0.5 text-2xs text-ink-muted">
             {s}
           </span>
         ))}

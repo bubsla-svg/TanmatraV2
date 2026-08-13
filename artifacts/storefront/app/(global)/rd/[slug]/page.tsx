@@ -90,7 +90,7 @@ export default async function RdProfilePage({ params }: Params) {
           </p>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {rd.credentials.map((c) => (
-              <span key={c} className="rounded-full border border-line bg-surface px-3 py-1 text-[11px] font-medium text-ink-muted">
+              <span key={c} className="rounded-full border border-line bg-surface px-3 py-1 text-2xs font-medium text-ink-muted">
                 {c}
               </span>
             ))}

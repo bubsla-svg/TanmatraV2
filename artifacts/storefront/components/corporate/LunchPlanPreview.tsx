@@ -28,10 +28,10 @@ export function LunchPlanPreview({ proposal, onSchedule, scheduling, perEmployee
     <div className="flex flex-col gap-5 rounded-2xl border border-line bg-surface p-6">
       <div className="flex flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${plan.generatedBy === "ai" ? "bg-[color-mix(in_srgb,var(--gold)_14%,transparent)] text-gold-text" : "bg-sage-soft text-sage-text"}`}>
+          <span className={`rounded-full px-2.5 py-0.5 text-2xs font-semibold ${plan.generatedBy === "ai" ? "bg-[color-mix(in_srgb,var(--gold)_14%,transparent)] text-gold-text" : "bg-sage-soft text-sage-text"}`}>
             {plan.generatedBy === "ai" ? "AI-generated" : "Rule-based"}
           </span>
-          {scheduled && <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-[11px] font-semibold text-sage-text">Scheduled</span>}
+          {scheduled && <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-2xs font-semibold text-sage-text">Scheduled</span>}
         </div>
         <h3 className="text-base font-semibold tracking-tight text-ink">Week of {dayLabel(plan.weekStartDate)}</h3>
         {plan.summary && <p className="text-sm text-ink-muted">{plan.summary}</p>}

@@ -150,14 +150,14 @@ export function HealthInfoHub() {
         This clinical data is used exclusively for metabolic optimisation and nutritional
         bio-individualisation. Under DPDP Act 2023, you can remove any of it at any time.
       </p>
-      <p className="text-[11px] leading-relaxed text-ink-faint">
+      <p className="text-2xs leading-relaxed text-ink-faint">
         Tanmatra personalises food recommendations and is not a medical service. This is not medical advice — consult a clinician for diagnosis or treatment.
       </p>
 
       {!granted ? (
         <>
           <div className="relative overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--gold)_35%,transparent)] bg-[color-mix(in_srgb,var(--gold)_7%,transparent)] p-6">
-            <span className="tabular absolute top-4 right-4 rounded bg-[color-mix(in_srgb,var(--gold)_12%,transparent)] px-2 py-1 text-[10px] uppercase tracking-widest text-gold-text">
+            <span className="tabular absolute top-4 right-4 rounded bg-[color-mix(in_srgb,var(--gold)_12%,transparent)] px-2 py-1 text-3xs uppercase tracking-widest text-gold-text">
               {DPDP_HEALTH_CONSENT_VERSION}
             </span>
             <div className="mb-4 flex items-center gap-2 pr-28">
