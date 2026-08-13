@@ -4,7 +4,7 @@ import { fetchMenu } from "@/lib/catalog";
 import { ProtocolVaultGrid } from "@/components/account/ProtocolVaultGrid";
 
 export const metadata: Metadata = {
-  title: "My Protocol Vault & Favorites | Tanmatra",
+  title: "My Protocol Vault & Favorites",
   description: "Manage your personal bookmarked therapeutic meal prescriptions, custom annotations, and rapid recurring order presets.",
 };
 

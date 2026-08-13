@@ -153,6 +153,8 @@ export function VoucherRedeem() {
           <div className="mx-auto max-w-md px-4 py-3">
             <Button
               type="button" onClick={doRedeem} disabled={redeemMutation.isPending || !code.trim()}
+              aria-busy={redeemMutation.isPending}
+              aria-live="polite"
               shape="pill"
               size="fluid"
               className="w-full px-8 py-4 text-center text-base font-semibold disabled:opacity-40"

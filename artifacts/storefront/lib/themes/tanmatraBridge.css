@@ -73,7 +73,7 @@
   --blue: light-dark(#506072, #99adc6);
   --success: light-dark(#4e6357, #7d9e7e);
   --warning: light-dark(#79693f, #b6892f);
-  --danger: light-dark(#775751, #b0655a);
+  --danger: light-dark(#775751, #c97b6c);
 
   /* Translucent chrome for the sticky bars that float over content — the buy
      bars, the mini-cart, the planner footer (all `bg-[var(--glass)]` +

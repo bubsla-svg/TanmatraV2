@@ -240,6 +240,7 @@ export function PhoneAuth({
           </Field>
           <Button
             type="button" disabled={busy} onClick={() => void send()}
+            aria-busy={busy} aria-live="polite"
             shape="pill" size="fluid" className="px-6 py-3 font-semibold disabled:opacity-40"
           >
             {busy ? "Sending…" : "Send code"}
@@ -256,6 +257,7 @@ export function PhoneAuth({
           <div className="flex items-center gap-3">
             <Button
               type="button" disabled={busy} onClick={() => void verify()}
+              aria-busy={busy} aria-live="polite"
               shape="pill" size="fluid" className="px-6 py-3 font-semibold disabled:opacity-40"
             >
               {busy ? "Verifying…" : "Verify"}

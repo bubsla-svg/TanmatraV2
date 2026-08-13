@@ -167,7 +167,7 @@ export function AddressForm({
       </Field>
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
       <div className="mt-1 flex items-center gap-3 border-t border-line pt-3">
-        <Button type="button" disabled={!valid || busy} onClick={submit} shape="xl" size="fluid" className="px-5 py-3 font-semibold disabled:opacity-40">
+        <Button type="button" disabled={!valid || busy} aria-busy={busy} aria-live="polite" onClick={submit} shape="xl" size="fluid" className="px-5 py-3 font-semibold disabled:opacity-40">
           {busy ? "Saving…" : submitLabel}
         </Button>
         {onCancel && (

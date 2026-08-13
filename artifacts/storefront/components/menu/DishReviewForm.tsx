@@ -110,6 +110,8 @@ export function DishReviewForm({ slug, onSubmitted }: { slug: string; onSubmitte
       <Button
         type="submit"
         disabled={rating === 0 || submitting}
+        aria-busy={submitting}
+        aria-live="polite"
         shape="pill"
         size="fluid"
         className="mt-3 min-h-11 px-5 py-2 font-semibold disabled:opacity-50"

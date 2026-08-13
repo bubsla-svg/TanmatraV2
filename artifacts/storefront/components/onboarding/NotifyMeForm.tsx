@@ -106,6 +106,8 @@ export function NotifyMeForm({ pincode, onReset }: NotifyMeFormProps) {
         <Button
           type="submit"
           disabled={busy || phone.trim().length < 10}
+          aria-busy={busy}
+          aria-live="polite"
           size="fluid"
           className="rounded-lg px-4 py-2 text-xs font-semibold shadow-sm disabled:opacity-40"
         >

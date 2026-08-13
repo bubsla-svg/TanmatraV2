@@ -3,7 +3,7 @@ import { AccountNav } from "@/components/account/AccountNav";
 import { SymptomTrackerView } from "@/components/symptoms/SymptomTrackerView";
 
 export const metadata: Metadata = {
-  title: "Health Symptom & Reaction Tracker | Tanmatra",
+  title: "Health Symptom & Reaction Tracker",
   description: "Correlate post-meal digestive comfort, glycemic alertness, and satiety levels directly with your dietary prescriptions.",
 };
 

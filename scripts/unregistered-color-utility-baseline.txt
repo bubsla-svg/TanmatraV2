@@ -1,0 +1,11 @@
+# Baseline for scripts/lint-unregistered-color-utility.ts.
+#
+# Format: path/to/file.tsx:LINE:prefix-suffix (one per line), same
+# shrink-only discipline as scripts/dark-forks-baseline.txt.
+#
+# Empty by design: the 2026-08-13 sweep that introduced this gate fixed
+# every instance found (10 distinct phantom class names, ~137 sites,
+# spanning bg/text/border AND their paired font- weight classes), so the
+# gate starts at zero debt. Add an entry ONLY for a pre-existing
+# violation discovered later that isn't being fixed in the same change —
+# never for new code.

@@ -66,7 +66,7 @@ export function LogMealDialog({ onClose, onLogged }: { onClose: () => void; onLo
           {error && <p role="alert" className="mt-2 text-xs font-medium text-[var(--danger)]">{error}</p>}
           <div className="mt-5 flex justify-end gap-3">
             <Dialog.Close className="rounded-lg px-4 py-2 text-sm font-medium text-ink-muted hover:brightness-110">Cancel</Dialog.Close>
-            <Button type="button" onClick={save} disabled={busy} size="fluid" className="rounded-lg px-4 py-2 font-semibold disabled:opacity-60">{busy ? "Saving…" : "Save log"}</Button>
+            <Button type="button" onClick={save} disabled={busy} aria-busy={busy} aria-live="polite" size="fluid" className="rounded-lg px-4 py-2 font-semibold disabled:opacity-60">{busy ? "Saving…" : "Save log"}</Button>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

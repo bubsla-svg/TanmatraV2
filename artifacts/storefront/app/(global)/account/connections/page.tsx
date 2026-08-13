@@ -3,7 +3,7 @@ import { AccountNav } from "@/components/account/AccountNav";
 import { WearablesHub } from "@/components/account/WearablesHub";
 
 export const metadata: Metadata = {
-  title: "Health Connections | Tanmatra",
+  title: "Health Connections",
   robots: { index: false },
 };
 

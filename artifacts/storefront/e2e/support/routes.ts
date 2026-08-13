@@ -27,13 +27,13 @@
  *     in the repo yet (PR #496). Sweeping a route that is about to be deleted
  *     spends gate time on nothing.
  *   • BARE `/checkout` — it is a redirect stub, not a screen.
- *     `app/checkout/page.tsx:56` is `if (!id) redirect("/plans")`, and Next
- *     serves that as a streamed 200 followed by a CLIENT navigation after
- *     hydration (curl sees 200 at `/checkout`; the browser ends up on
- *     `/plans`). Probing it therefore raced the bounce and died with
- *     "Execution context was destroyed" — the harness's own first run caught
- *     this. The real checkout screen needs a plan param, so that is what is
- *     swept below.
+ *     `app/(focus)/checkout/page.tsx` is `if (!id) redirect("/checkout?mode=alacarte")`,
+ *     and Next serves that as a streamed 200 followed by a CLIENT navigation
+ *     after hydration (curl sees 200 at `/checkout`; the browser ends up on
+ *     `/checkout?mode=alacarte`). Probing it therefore raced the bounce and
+ *     died with "Execution context was destroyed" — the harness's own first
+ *     run caught this. The real checkout screen needs a plan param, so that
+ *     is what is swept below.
  */
 export const FUNNEL_ROUTES: readonly string[] = [
   "/",

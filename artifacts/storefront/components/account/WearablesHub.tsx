@@ -64,7 +64,7 @@ export function WearablesHub() {
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-muted text-gold-text">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-subtle text-gold-text">
                   {p.id === "apple_health" ? (
                     <Heart size={20} />
                   ) : p.id === "ultrahuman" ? (

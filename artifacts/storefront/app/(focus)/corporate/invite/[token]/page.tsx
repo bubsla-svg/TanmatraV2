@@ -8,7 +8,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { token } = await params;
   return {
-    title: `Corporate Invite ${token} | Tanmatra`,
+    title: `Corporate Invite ${token}`,
     robots: { index: false },
   };
 }

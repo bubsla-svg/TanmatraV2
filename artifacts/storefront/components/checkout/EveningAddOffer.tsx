@@ -69,6 +69,8 @@ export function EveningAddOffer({
       <button
         type="button"
         disabled={state === "busy"}
+        aria-busy={state === "busy"}
+        aria-live="polite"
         onClick={() => void add()}
         className="mt-1 self-start rounded-full border border-sage/50 px-4 py-2 text-sm font-semibold text-sage-text transition-colors hover:bg-[color-mix(in_srgb,var(--sage)_10%,transparent)] active:scale-[0.98] disabled:opacity-40"
       >

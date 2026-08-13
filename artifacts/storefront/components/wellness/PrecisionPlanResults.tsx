@@ -165,6 +165,8 @@ export const PrecisionPlanResults: React.FC<PrecisionPlanResultsProps> = ({ plan
           type="button"
           onClick={checkoutPrecisionPlan}
           disabled={addingToCart}
+          aria-busy={addingToCart}
+          aria-live="polite"
           className="px-6 py-3 rounded-2xl bg-surface text-sage-text font-black text-xs uppercase tracking-wider shadow-lg hover:bg-sage-soft transition-all shrink-0 flex items-center gap-2 disabled:opacity-60"
         >
           <ShoppingBag className="w-4 h-4 text-sage-text" />

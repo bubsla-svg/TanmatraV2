@@ -149,6 +149,8 @@ export function WhatsAppOptIn({
         <Button
           type="button"
           disabled={busy || (phase === "idle" ? !canSend : code.trim().length === 0)}
+          aria-busy={busy}
+          aria-live="polite"
           onClick={() => void (phase === "sent" ? verify() : send())}
           shape="pill"
           size="fluid"

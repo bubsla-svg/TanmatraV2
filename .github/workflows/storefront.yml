@@ -164,6 +164,15 @@ jobs:
       - name: Theme-blindness gate — no new dark:/palette/raw-white drift
         if: ${{ !cancelled() }}
         run: pnpm --filter @workspace/storefront run lint:dark-forks
+      # A 2026-08-13 audit found a fourth theme-blindness shape none of the
+      # gates above catch: a bare bg-/text-/border-/ring- class whose name was
+      # never registered in @theme inline. Tailwind emits no rule for it, so
+      # the class is silently inert — no raw hex, no dark: fork, nothing the
+      # other gates can see. Shipped with an empty baseline (the sweep fixed
+      # all ~137 sites it found), so any new phantom class fails outright.
+      - name: Unregistered-color-utility gate — no silently-inert bg-/text-/border-/ring- class
+        if: ${{ !cancelled() }}
+        run: pnpm --filter @workspace/storefront run lint:unregistered-color-utility
       # Stitch traceability gates. The manifest verifier proves the 74-entry
       # manifest is schema-valid; the wiring verifier proves its filesystem
       # claims match the repo. Honest missing/partial/blocked entries PASS —

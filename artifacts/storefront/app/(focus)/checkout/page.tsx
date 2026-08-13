@@ -59,7 +59,12 @@ export default async function CheckoutPage({ searchParams }: Props) {
   }
 
   const id = plan && plan in PLAN_CATALOG ? (plan as PlanId) : null;
-  if (!id) redirect("/plans");
+  // A bare /checkout (no ?plan, and already past the mode==="alacarte" branch
+  // above) used to bounce to /plans — but the à-la-carte leg above is the one
+  // that actually has a designed empty-cart state and, being a client island,
+  // can reflect a real cart if one exists. /plans can't do either; it just
+  // strands a customer who followed a bookmark or a bare link.
+  if (!id) redirect("/checkout?mode=alacarte");
   if (!planIsSelfServiceLaunchable(id)) redirect(`/plan/${id}?waitlist=1`);
 
   const q = planQuoteView(id);

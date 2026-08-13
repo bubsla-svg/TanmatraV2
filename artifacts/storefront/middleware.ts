@@ -35,7 +35,9 @@ function checkoutPlanRedirect(request: NextRequest): NextResponse | null {
 
   const plan = url.searchParams.get("plan");
   const id = plan && plan in PLAN_CATALOG ? (plan as PlanId) : null;
-  if (!id) return NextResponse.redirect(new URL("/plans", request.url));
+  // Mirrors app/checkout/page.tsx's redirect target: /plans can't reflect a
+  // real cart and has no empty-cart state, where the à-la-carte leg has both.
+  if (!id) return NextResponse.redirect(new URL("/checkout?mode=alacarte", request.url));
   if (!planIsSelfServiceLaunchable(id)) {
     return NextResponse.redirect(new URL(`/plan/${id}?waitlist=1`, request.url));
   }

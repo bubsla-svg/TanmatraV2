@@ -146,6 +146,8 @@ export function AccountHub() {
           type="button"
           onClick={() => signOut.mutate()}
           disabled={signOut.isPending}
+          aria-busy={signOut.isPending}
+          aria-live="polite"
           className="-m-1 p-1 text-sm font-medium text-ink-muted transition-colors hover:text-ink disabled:opacity-50"
         >
           {signOut.isPending ? "Signing out…" : "Sign out"}

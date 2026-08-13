@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CommunityQaForum } from "@/components/qa/CommunityQaForum";
 
 export const metadata: Metadata = {
-  title: "Community Clinical Q&A & Social Forum | Tanmatra",
+  title: "Community Clinical Q&A & Social Forum",
   description: "Browse peer dietary inquiries and inspect official therapeutic answers authored by certified Registered Dietitians.",
 };
 

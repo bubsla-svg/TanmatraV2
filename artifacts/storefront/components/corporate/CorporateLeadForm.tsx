@@ -200,6 +200,7 @@ export function CorporateLeadForm({
       {error && <p role="alert" className="text-sm font-medium text-[var(--danger)]">{error}</p>}
       <Button
         type="button" disabled={!valid || busy} onClick={() => void submit()}
+        aria-busy={busy} aria-live="polite"
         shape="pill" size="fluid"
         className="mt-2 inline-flex w-full items-center justify-center px-8 py-4 font-semibold disabled:opacity-40"
       >

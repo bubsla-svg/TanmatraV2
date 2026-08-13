@@ -214,6 +214,8 @@ export function PartnerLeadForm({
         type="button"
         disabled={busy}
         onClick={() => void submit()}
+        aria-busy={busy}
+        aria-live="polite"
         shape="pill"
         size="fluid"
         className="mt-2 inline-flex w-full items-center justify-center px-8 py-4 font-semibold disabled:opacity-40"

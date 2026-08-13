@@ -42,7 +42,11 @@ export const tanmatraTheme = defineTheme({
     '--color-sage': ['#4e6357', '#7d9e7e'],
     '--color-success': ['#4e6357', '#7d9e7e'],
     '--color-warning': ['#79693f', '#b6892f'],
-    '--color-danger': ['#775751', '#b0655a'],
+    // Dark arm was #b0655a — 4.14:1 on --color-background-surface, below AA's
+    // 4.5:1 (2026-08-13 audit). Lightened/saturated slightly at the same hue
+    // (~8° red, was washed out at L 52%) to 5.1-6.2:1 across bg/surface/raised,
+    // matching --color-success and --color-warning's dark-arm contrast range.
+    '--color-danger': ['#775751', '#c97b6c'],
 
     /* ── Background & Surface Ramp ───────────────────────────────────────── */
     // Light: Stone. Dark: Stitch's canvas / surface / container ramp.

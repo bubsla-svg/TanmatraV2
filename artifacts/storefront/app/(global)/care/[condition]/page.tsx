@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { condition } = await params;
   const name = conditionDisplayName(condition);
   const known = isCareConditionKnown(condition);
-  return { title: known ? `${name} Therapeutic Care Plan | Tanmatra` : `${name} | Tanmatra` };
+  return { title: known ? `${name} Therapeutic Care Plan` : `${name}` };
 }
 
 export default async function CareConditionPage({ params }: Props) {

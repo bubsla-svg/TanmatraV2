@@ -8,7 +8,7 @@ import { TrialEntryCard } from "@/components/care/TrialEntryCard";
 import { ClinicalSupportEntry } from "@/components/care/ClinicalSupportEntry";
 
 export const metadata: Metadata = {
-  title: "Care | Tanmatra",
+  title: "Care",
   description: "Find the right Tanmatra plan for your goal or condition.",
 };
 

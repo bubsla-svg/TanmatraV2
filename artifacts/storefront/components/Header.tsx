@@ -49,7 +49,7 @@ export function Header() {
                 <DeliveryAddressBar />
               </div>
               <div className="hidden md:flex items-center gap-2 border-l border-line pl-3 ml-1">
-                <div className="flex items-center gap-1.5 rounded-full border border-sage-strong/20 bg-sage-soft/30 px-2 py-1 shadow-sm">
+                <div className="flex items-center gap-1.5 rounded-full border border-[var(--sage)]/20 bg-sage-soft/30 px-2 py-1 shadow-sm">
                   <svg className="w-3.5 h-3.5 text-sage-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -64,8 +64,12 @@ export function Header() {
                     accounted for it ("heading + this + ⌘K + ThemeToggle"
                     at 44px), it just never actually landed in the tree. */}
                 <ThemeToggle />
-                <Link href="/account" className="flex items-center justify-center w-8 h-8 rounded-full border border-line bg-surface hover:bg-surface-raised transition-colors overflow-hidden">
-                  <svg className="w-4 h-4 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <Link
+                  href="/account"
+                  aria-label="Account"
+                  className="flex min-h-11 min-w-11 items-center justify-center rounded-full border border-line bg-surface hover:bg-surface-raised transition-colors overflow-hidden"
+                >
+                  <svg aria-hidden className="w-4 h-4 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </Link>

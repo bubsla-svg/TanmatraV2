@@ -95,14 +95,14 @@ export default function MealFeedback({
                         <div className="w-14 h-14 rounded-full bg-sage/10 border border-sage/30 text-sage flex items-center justify-center mx-auto">
                             <span className="material-symbols-outlined text-2xl">check</span>
                         </div>
-                        <h3 className="font-headline-md text-xl font-bold text-ink">Thank you for your feedback!</h3>
+                        <h3 className="font-bold text-xl font-bold text-ink">Thank you for your feedback!</h3>
                         <p className="font-body-sm text-xs text-ink-muted">Your telemetry helps calibrate your metabolic nutrition plan.</p>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
-                            <span className="font-label-caps text-xs text-gold uppercase tracking-widest font-bold">MEAL FEEDBACK</span>
-                            <h2 className="font-headline-md text-xl font-bold text-ink mt-1">{mealName}</h2>
+                            <span className="font-bold text-xs text-gold uppercase tracking-widest font-bold">MEAL FEEDBACK</span>
+                            <h2 className="font-bold text-xl font-bold text-ink mt-1">{mealName}</h2>
                             <p className="font-body-sm text-xs text-ink-muted mt-1">How was this meal in your dietary protocol?</p>
                         </div>
 
@@ -139,7 +139,7 @@ export default function MealFeedback({
                         {/* Structured Reasons (if selected) */}
                         {rating && (
                             <div className="space-y-2 animate-in fade-in duration-200">
-                                <label className="font-label-caps text-xs text-ink-muted uppercase tracking-wider block">
+                                <label className="font-bold text-xs text-ink-muted uppercase tracking-wider block">
                                     {rating === 'loved-it' ? 'What stood out?' : 'What could be improved?'}
                                 </label>
                                 <div className="flex flex-wrap gap-2">
@@ -163,7 +163,7 @@ export default function MealFeedback({
                         {/* Additional Notes */}
                         {rating && (
                             <div className="space-y-2">
-                                <label className="font-label-caps text-xs text-ink-muted uppercase tracking-wider block">
+                                <label className="font-bold text-xs text-ink-muted uppercase tracking-wider block">
                                     Additional details (Optional)
                                 </label>
                                 <textarea
@@ -179,7 +179,7 @@ export default function MealFeedback({
                         <button
                             type="submit"
                             disabled={!rating}
-                            className="w-full bg-gold text-[var(--gold-ink)] font-label-caps text-xs uppercase tracking-widest font-bold py-3.5 rounded-full hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="w-full bg-gold text-[var(--gold-ink)] font-bold text-xs uppercase tracking-widest font-bold py-3.5 rounded-full hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             Submit Feedback
                         </button>

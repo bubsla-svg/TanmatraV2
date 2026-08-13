@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ChallengeTrackerView } from "@/components/challenges/ChallengeTrackerView";
 
 export const metadata: Metadata = {
-  title: "Dietary Regimen & Challenge Tracker | Tanmatra",
+  title: "Dietary Regimen & Challenge Tracker",
   description: "Monitor consecutive daily health streaks, evaluate metabolic regimen consistency, and attend live dietitian cohort check-ins.",
 };
 

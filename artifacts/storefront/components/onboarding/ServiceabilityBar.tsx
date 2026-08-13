@@ -178,6 +178,8 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
           <Button
             type="submit"
             disabled={busy || inputVal.trim().length !== 6}
+            aria-busy={busy}
+            aria-live="polite"
             shape="xl"
             size="fluid"
             className="px-5 py-2.5 font-semibold shadow-sm disabled:opacity-40"

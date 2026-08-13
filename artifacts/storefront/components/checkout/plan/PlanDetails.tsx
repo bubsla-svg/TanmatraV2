@@ -217,6 +217,7 @@ export function PlanDetails({
           <Button
             type="button" disabled={!valid || busy}
             onClick={() => onSubmit({ member: draftToMember(member), address: { line1: line1.trim(), city: city.trim(), pincode: pincode.replace(/\D/g, "") } })}
+            aria-busy={verifying || busy} aria-live="polite"
             shape="pill" size="fluid" className="px-8 py-3.5 text-center font-semibold disabled:opacity-40 shadow-lg shadow-gold/20 transition-transform duration-300 hover:scale-[1.02] hover:shadow-gold/40 active:scale-95"
           >
             {/* Once the modal resolves, money is already captured — "Opening

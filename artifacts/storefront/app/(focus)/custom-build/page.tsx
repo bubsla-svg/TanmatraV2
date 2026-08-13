@@ -4,7 +4,7 @@ import { fetchMenu } from "@/lib/catalog";
 import { CustomBuildHub } from "@/components/custom/CustomBuildHub";
 
 export const metadata: Metadata = {
-  title: "Order Customization & Macro Build Hub | Tanmatra",
+  title: "Order Customization & Macro Build Hub",
   description: "Pick a dish, adjust its real customisation options — bread, sauce, portion size and more where available — and add it to your order.",
 };
 

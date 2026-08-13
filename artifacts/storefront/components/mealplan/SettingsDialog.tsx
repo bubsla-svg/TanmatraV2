@@ -85,7 +85,7 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
           </div>
           <div className="mt-5 flex justify-end gap-3">
             <Dialog.Close className="rounded-full px-4 py-2 text-sm font-medium text-ink-muted hover:text-ink">Cancel</Dialog.Close>
-            <Button type="button" onClick={save} disabled={busy} shape="pill" size="fluid" className="px-4 py-2 font-semibold disabled:opacity-60">{busy ? "Saving…" : "Save"}</Button>
+            <Button type="button" onClick={save} disabled={busy} aria-busy={busy} aria-live="polite" shape="pill" size="fluid" className="px-4 py-2 font-semibold disabled:opacity-60">{busy ? "Saving…" : "Save"}</Button>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

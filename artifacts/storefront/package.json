@@ -14,7 +14,8 @@
     "lint:component-drift": "node --experimental-strip-types ../../scripts/lint-component-drift.ts artifacts/storefront",
     "lint:landmarks": "node --experimental-strip-types ../../scripts/lint-landmarks.ts artifacts/storefront",
     "lint:placeholder-assets": "node --experimental-strip-types ../../scripts/lint-placeholder-assets.ts artifacts/storefront",
-    "lint:dark-forks": "node --experimental-strip-types ../../scripts/lint-dark-forks.ts artifacts/storefront"
+    "lint:dark-forks": "node --experimental-strip-types ../../scripts/lint-dark-forks.ts artifacts/storefront",
+    "lint:unregistered-color-utility": "node --experimental-strip-types ../../scripts/lint-unregistered-color-utility.ts artifacts/storefront"
   },
   "dependencies": {
     "@astryxdesign/core": "0.1.8",

@@ -99,7 +99,7 @@ export function GroupOrderView({ code }: { code: string }) {
       <div className="rounded-2xl border border-line bg-surface px-6 py-10 text-center">
         <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load this group order</p>
         <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-ink-faint">Something went wrong on our end — this usually clears up on retry.</p>
-        <button type="button" onClick={() => void refetch()} disabled={isFetching} className="mt-4 rounded-lg border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-opacity hover:opacity-80 disabled:opacity-50">
+        <button type="button" onClick={() => void refetch()} disabled={isFetching} aria-busy={isFetching} aria-live="polite" className="mt-4 rounded-lg border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-opacity hover:opacity-80 disabled:opacity-50">
           {isFetching ? "Retrying…" : "Try again"}
         </button>
       </div>
@@ -152,7 +152,7 @@ export function GroupOrderView({ code }: { code: string }) {
         <p className="rounded-xl border border-line bg-surface px-4 py-3 text-center text-sm text-ink-muted">This group order is closed.</p>
       ) : isHost ? (
         <div>
-          <Button type="button" onClick={closeAndCheckout} disabled={busy} shape="xl" size="fluid" className="w-full px-6 py-3.5 font-semibold disabled:opacity-60">{busy ? "Closing…" : "Close & checkout"}</Button>
+          <Button type="button" onClick={closeAndCheckout} disabled={busy} aria-busy={busy} aria-live="polite" shape="xl" size="fluid" className="w-full px-6 py-3.5 font-semibold disabled:opacity-60">{busy ? "Closing…" : "Close & checkout"}</Button>
           <p className="mt-2 text-center text-2xs text-ink-faint">Only you (the host) can close this order and pay for everyone.</p>
         </div>
       ) : (

@@ -58,19 +58,19 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
       <Link href={`/menu?dish=${dish.slug}`} scroll={false} className="group flex flex-col rounded-2xl border border-line bg-surface p-3 transition-transform active:scale-[0.98]">
         <div className="relative mb-4 overflow-hidden rounded-xl bg-surface-raised border border-line">
           <div className="absolute top-2 left-2 flex gap-1 z-10">
-            <span className="px-2 py-1 rounded-full bg-sage-soft/90 backdrop-blur-md border border-sage-strong/20 font-label-caps text-3xs text-sage-text uppercase tracking-widest">
+            <span className="px-2 py-1 rounded-full bg-sage-soft/90 backdrop-blur-md border border-[var(--sage)]/20 font-bold text-3xs text-sage-text uppercase tracking-widest">
               {dish.isVeg ? "Veg" : "Non-Veg"}
             </span>
           </div>
           <SafeImage src={dish.image} alt={dish.name} className="aspect-[4/3] w-full" />
         </div>
         <div className="flex flex-col gap-1">
-          <h3 className="font-bold text-body-lg text-ink-primary truncate">{dish.name}</h3>
+          <h3 className="font-bold text-lg text-ink truncate">{dish.name}</h3>
           <span className="font-mono text-2xs text-ink-muted">
             {est}{dish.macros.calories} kcal · {est}{dish.macros.protein}g P
           </span>
           <div className="relative z-10 mt-3 flex justify-between items-center">
-            <span className="font-clinical-data text-ink-primary text-gold-text">{formatPaise(dish.price)}</span>
+            <span className="font-clinical-data text-ink text-gold-text">{formatPaise(dish.price)}</span>
             <AddToCart dish={dish} />
           </div>
         </div>
