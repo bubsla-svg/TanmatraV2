@@ -2,7 +2,7 @@
 // Tap-to-flip clinical dish photo card revealing specification sheet
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { formatPaise } from "@/lib/format";
+import { formatMacroLine, formatPaise } from "@/lib/format";
 import { emitLpEvent } from "@/lib/lpEvents";
 import { SpecSheetCard, type ClinicalDishSpec } from "./SpecSheetCard";
 import { SafeImage } from "@/components/ui/SafeImage";
@@ -52,7 +52,6 @@ export function FlipCard({ spec, initialFlipped = false }: FlipCardProps) {
   // Reads the dish's own flag. The old expression was `spec.macros ? "~" : ""`
   // — and `macros` is a required field, so it was always truthy: every dish
   // got the approximation tilde, including ones whose macros are exact.
-  const est = spec.macrosEstimated ? "~" : "";
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-[var(--shadow-card)] transition-transform hover:-translate-y-0.5">
@@ -106,9 +105,7 @@ export function FlipCard({ spec, initialFlipped = false }: FlipCardProps) {
             {formatPaise(spec.price)}
           </span>
           <span className="tabular text-2xs text-ink-faint">
-            {est}
-            {spec.macros.calories} kcal · {est}
-            {spec.macros.protein}g P
+            {formatMacroLine(spec.macros, spec.macrosEstimated)}
           </span>
         </div>
         <Button

@@ -5,7 +5,7 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { isAlaCarteEnabled, type DishData } from "@workspace/menu-catalog";
-import { formatPaise } from "@/lib/format";
+import { formatGrams, formatKcal, formatPaise } from "@/lib/format";
 import { itemCount, subtotalPaise } from "@/lib/cartStore";
 import { useCart } from "@/components/cart/CartProvider";
 import { Button } from "@/components/ui/button";
@@ -32,12 +32,15 @@ export function DishDrawer({ dish }: { dish: DishData }) {
   const { cart, setCartOpen } = useCart();
   const count = itemCount(cart);
   const subtotal = subtotalPaise(cart);
-  const est = dish.macrosEstimated ? "~" : "";
+  // Same spellings as the card, the cart and the PDP — lib/format.ts is the
+  // one dialect (N5.7). The label carries the nutrient, the value carries its
+  // unit; energy used to render as a bare "135" under a "kcal" label while
+  // protein rendered "3 g" under a "P" label, in the same four-up row.
   const macros: Array<[string, string]> = [
-    ["kcal", `${est}${dish.macros.calories}`],
-    ["P", `${est}${dish.macros.protein} g`],
-    ["C", `${est}${dish.macros.carbs} g`],
-    ["F", `${est}${dish.macros.fat} g`],
+    ["Energy", formatKcal(dish.macros.calories, dish.macrosEstimated)],
+    ["Protein", formatGrams(dish.macros.protein, dish.macrosEstimated)],
+    ["Carbs", formatGrams(dish.macros.carbs, dish.macrosEstimated)],
+    ["Fat", formatGrams(dish.macros.fat, dish.macrosEstimated)],
   ];
 
   return (

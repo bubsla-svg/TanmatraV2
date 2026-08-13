@@ -8,7 +8,7 @@ import { Divider } from "@astryxdesign/core/Divider";
 import { Collapsible, CollapsibleGroup } from "@astryxdesign/core/Collapsible";
 import { fetchMenu, findDish } from "@/lib/catalog";
 import { SafeImage } from "@/components/ui/SafeImage";
-import { formatPaise } from "@/lib/format";
+import { formatGrams, formatKcal, formatPaise } from "@/lib/format";
 import { ingredientSummary } from "@/lib/dishText";
 import { PdpBuyLedger } from "@/components/menu/PdpBuyLedger";
 import { FallbackMenuBanner } from "@/components/menu/FallbackMenuBanner";
@@ -76,7 +76,6 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
   const dish = findDish(resolvedParams.slug, dishes);
   if (!dish) notFound();
 
-  const est = dish.macrosEstimated ? "~" : "";
 
   return (
     // pb-32 (128px), not pb-24: the sticky ledger card measures ~90px plus
@@ -137,9 +136,9 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
           <Divider />
 
           <HStack gap={6}>
-            <Macro label="Calories" value={`${est}${dish.macros.calories} kcal`} />
-            <Macro label="Protein" value={`${est}${dish.macros.protein} g`} />
-            <Macro label="Carbs" value={`${est}${dish.macros.carbs} g`} />
+            <Macro label="Calories" value={formatKcal(dish.macros.calories, dish.macrosEstimated)} />
+            <Macro label="Protein" value={formatGrams(dish.macros.protein, dish.macrosEstimated)} />
+            <Macro label="Carbs" value={formatGrams(dish.macros.carbs, dish.macrosEstimated)} />
           </HStack>
 
           <CollapsibleGroup type="multiple" defaultValue={["nutrition"]}>
@@ -149,11 +148,11 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
                 {/* Genuinely every macro — this section used to be labelled
                     "Full macronutrient breakdown" while listing only the two
                     the summary row above omits. */}
-                <NutritionRow label="Energy" value={`${est}${dish.macros.calories} kcal`} />
-                <NutritionRow label="Protein" value={`${est}${dish.macros.protein} g`} />
-                <NutritionRow label="Carbohydrate" value={`${est}${dish.macros.carbs} g`} />
-                <NutritionRow label="Total fat" value={`${est}${dish.macros.fat} g`} />
-                <NutritionRow label="Fibre" value={`${est}${dish.macros.fiber} g`} />
+                <NutritionRow label="Energy" value={formatKcal(dish.macros.calories, dish.macrosEstimated)} />
+                <NutritionRow label="Protein" value={formatGrams(dish.macros.protein, dish.macrosEstimated)} />
+                <NutritionRow label="Carbohydrate" value={formatGrams(dish.macros.carbs, dish.macrosEstimated)} />
+                <NutritionRow label="Total fat" value={formatGrams(dish.macros.fat, dish.macrosEstimated)} />
+                <NutritionRow label="Fibre" value={formatGrams(dish.macros.fiber, dish.macrosEstimated)} />
                 {dish.sugarPerServing && <NutritionRow label="Sugar" value={dish.sugarPerServing} />}
               </VStack>
             </Collapsible>

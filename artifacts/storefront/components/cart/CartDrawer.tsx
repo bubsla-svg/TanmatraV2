@@ -6,7 +6,7 @@
 import "@/lib/themes/stitch.css";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { addLine, qtyOf, setQty, subtotalPaise } from "@/lib/cartStore";
-import { formatPaise } from "@/lib/format";
+import { formatMacroLine, formatPaise } from "@/lib/format";
 import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
 import { fetchQuote, type QuoteSnapshot } from "@/lib/quoteApi";
 import { useCart } from "@/components/cart/CartProvider";
@@ -137,7 +137,7 @@ export function CartDrawer({
                       existed). "~" prefix matches DishCard/PDP's own convention. */}
                   {l.macros && (
                     <p className="tabular text-xs text-ink-faint">
-                      {l.macros.estimated ? "~" : ""}{l.macros.calories} kcal · {l.macros.estimated ? "~" : ""}{l.macros.protein}g P
+                      {formatMacroLine(l.macros, l.macros.estimated)}
                     </p>
                   )}
                 </div>
