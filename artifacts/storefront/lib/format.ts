@@ -18,14 +18,23 @@ export function formatPaise(paise: number): string {
  */
 const approx = (estimated?: boolean): string => (estimated ? "~" : "");
 
+/**
+ * The space between a value and its unit is NON-BREAKING (U+00A0). These
+ * strings render in narrow columns — the checkout line item is ~150px wide —
+ * and an ordinary space let "~2 g P" wrap as "~2" / "g P", orphaning the unit
+ * from its number on the screen right before payment. A quantity and its unit
+ * are one token typographically; they must not be separable by a line break.
+ */
+const NBSP = "\u00a0";
+
 /** `~686 kcal` — energy, always with its unit. */
 export function formatKcal(calories: number, estimated?: boolean): string {
-  return `${approx(estimated)}${Math.round(calories)} kcal`;
+  return `${approx(estimated)}${Math.round(calories)}${NBSP}kcal`;
 }
 
-/** `~42 g` — a macro weight. Spaced, the typographic norm for a unit. */
+/** `~42 g` — a macro weight. */
 export function formatGrams(grams: number, estimated?: boolean): string {
-  return `${approx(estimated)}${Math.round(grams)} g`;
+  return `${approx(estimated)}${Math.round(grams)}${NBSP}g`;
 }
 
 /**
@@ -37,5 +46,5 @@ export function formatMacroLine(
   macros: { calories: number; protein: number },
   estimated?: boolean,
 ): string {
-  return `${formatKcal(macros.calories, estimated)} · ${formatGrams(macros.protein, estimated)} P`;
+  return `${formatKcal(macros.calories, estimated)} · ${formatGrams(macros.protein, estimated)}${NBSP}P`;
 }

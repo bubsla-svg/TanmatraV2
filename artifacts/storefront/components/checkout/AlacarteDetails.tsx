@@ -215,18 +215,20 @@ export function AlacarteDetails({
         <p className="mb-1 text-xs font-bold uppercase tracking-[0.2em] text-ink-muted">Current order</p>
         <ul className="divide-y divide-line">
           {cart.lines.map((l) => (
-            <li key={`${l.kind}-${l.dishId}-${(l.customizations ?? []).join("|")}`} className="flex items-start justify-between gap-3 py-3">
-              <div className="min-w-0">
-                {/* Wraps to two lines rather than truncating, matching the
-                    cart drawer. This is the LAST look before money changes
-                    hands, and it is the surface least able to afford
-                    ambiguity: "Grilled Paneer Tikka with Quinoa…" and
-                    "…with Millet…" clip to the same string, and vertical
-                    space in a list of a few lines is free. */}
-                <p className="line-clamp-2 text-sm font-medium text-ink">{l.name}</p>
-                {l.customizations && l.customizations.length > 0 && (
-                  <p className="line-clamp-2 text-xs text-ink-muted">{l.customizations.join(", ")}</p>
-                )}
+            <li key={`${l.kind}-${l.dishId}-${(l.customizations ?? []).join("|")}`} className="py-3">
+              {/* Name on its OWN full-width line, stepper and total below.
+                  Rendered at 390px the previous two-column row left the text
+                  column ~150px wide — narrower than this card's own padding
+                  allows for a dish name — so "Activated Charcoal Smoothie"
+                  clipped even across two lines. The cart drawer gets away with
+                  the side-by-side shape because it only pays px-4; this card
+                  pays the section gutter AND its own padding on top. */}
+              <p className="line-clamp-2 text-sm font-medium text-ink">{l.name}</p>
+              {l.customizations && l.customizations.length > 0 && (
+                <p className="line-clamp-2 text-xs text-ink-muted">{l.customizations.join(", ")}</p>
+              )}
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <div className="min-w-0">
                 <p className="tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
                 {/* D-14: the last look before money shows more than name +
                     price — same figures the menu card already showed, in the
@@ -247,9 +249,10 @@ export function AlacarteDetails({
                   <span aria-live="polite" className="tabular min-w-6 text-center text-sm font-semibold text-ink">{l.qty}</span>
                   <button type="button" aria-label="Increase" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) + 1, l.customizations))} className="touch-target-critical text-ink transition-transform active:scale-[0.98]">+</button>
                 </div>
-                <span className="tabular w-16 text-right text-sm font-semibold text-ink">
-                  {formatPaise(l.pricePaise * l.qty)}
-                </span>
+                  <span className="tabular w-16 text-right text-sm font-semibold text-ink">
+                    {formatPaise(l.pricePaise * l.qty)}
+                  </span>
+                </div>
               </div>
             </li>
           ))}
