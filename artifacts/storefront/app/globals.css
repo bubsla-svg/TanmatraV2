@@ -333,6 +333,21 @@ html, body {
   contain-intrinsic-size: auto 280px auto 320px;
 }
 
+/* Same mechanism (N3.1), calibrated for a block-stacked vertical list (the
+   menu grid's dish rows) instead of a fixed-width rail card. Height is what
+   matters here and is a real measurement, not a guess: DishCard's non-compact
+   row rendered at 191px in every one of 20 sampled live dishes (photo-bound —
+   the 104px photo box + p-3 padding + footer dominates over the text column
+   in the sampled catalog). Width does NOT need the same precision: rows are
+   100% of a block-level single-column list, never side-by-side, so an
+   off-by-some-px width fallback cannot itself cause a vertical scroll-range
+   jump the way a wrong height would — the risk `.cv-auto`'s own comment
+   warns about doesn't apply on this axis for this layout. */
+.cv-auto-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px auto 191px;
+}
+
 /* 16px Minimum Input Rule to prevent iOS Safari auto-zoom */
 input[type="text"],
 input[type="tel"],
