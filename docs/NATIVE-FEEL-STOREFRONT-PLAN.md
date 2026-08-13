@@ -214,7 +214,7 @@ where it feels like a website.
 - **Effort:** S for cross-fade, M for directional. **Risk:** low (experimental flag,
   but failure mode is "no transition", which is the status quo).
 
-### N2.2 Skeleton coverage is 2 routes out of ~50
+### N2.2 Skeleton coverage is 2 routes out of ~50 — **Shipped 2026-08-13**
 
 - **Tell:** tap → nothing happens → whole page appears. The dead frames between tap
   and paint are the single biggest "web" feel on slow connections, and the absence
@@ -222,11 +222,36 @@ where it feels like a website.
 - **Evidence:** exactly two `loading.tsx` files exist — `app/(global)/menu/` and
   `app/(global)/account/orders/` (Glob). WAEP flagged zero; two have landed since —
   the pattern is established, the coverage isn't.
-- **Fix:** extend `loading.tsx` skeletons to the hot navigation targets first:
-  `dish/[slug]`, `/plans`, `/care` + condition pages, `/account` hub, `/trial`,
-  `/checkout` entry. Skeletons must reserve real layout geometry (card heights,
-  image aspect boxes) — a centered spinner is not the idiom; the two existing files
-  are the reference.
+- **Fix (shipped):** `loading.tsx` added to all seven named targets —
+  `dish/[slug]`, `plans`, `care`, `care/[condition]`, `account`, `trial`,
+  `checkout`. Each was built by reading the real page's actual markup first
+  (and, where a page composes shared primitives — `HorizontalSnapRail`,
+  `AccordionItem`, `NavEntryCard` — those component's own geometry), so
+  skeleton boxes match real box heights rather than approximating. Static,
+  data-free interactive elements render for REAL rather than as a skeleton
+  placeholder, matching `OrdersLoading`'s existing `AccountNav` precedent:
+  the PDP and `/trial`/`/checkout`'s back buttons, and `AccountHub`'s own
+  `userPending` skeleton is reused verbatim for `/account`'s route-level
+  loading state (identical shape, so the handoff between "route loading" and
+  "island still pending" is not a visible re-layout).
+- **Observed, not fixed here (pre-existing, out of scope):** verified by
+  rendering all seven (plus both existing reference files) through a
+  throwaway preview route, matching each route's real light/dark canvas
+  (`lib/stitchRoutes.ts`) rather than trusting a single screenshot — `Skeleton`'s
+  `bg-muted` resolves to `#ffffff` against `--bg: #fbfaf7` in LIGHT mode, so
+  skeleton bars are nearly invisible on any light-canvas route. This is not
+  new: `OrdersLoading` (`/account/orders`, already shipped, light canvas) has
+  the identical characteristic — confirmed side-by-side in the same preview
+  pass. Affects this fix's two light-canvas targets (`care`, `account`)
+  the same way it already affects the existing reference file. Left
+  unchanged rather than hand-rolling a different treatment only for the new
+  files, which would make `care`/`account` inconsistent with `account/orders`
+  instead of consistent with it — a `Skeleton`-component-level contrast fix
+  is a separate, small, cleanly-scoped follow-up if the owner wants it.
+- **Verified:** build, typecheck, all 7 lint gates (including a full,
+  independent-eyes visual pass — the `data-stitch` canvas-matching detail
+  above is exactly the kind of thing a single unscoped screenshot would have
+  missed), full unit suite.
 - **Effort:** M (mechanical but many files; each is small under the 400-line cap).
   **Risk:** minimal.
 
@@ -484,14 +509,18 @@ the coherence sweep's network trace gave it the freshest and strongest evidence
 (a measured 12.8s render-blocking hang) of anything in this tier. N1.2 shipped
 right after, back in its originally-planned #1 slot, and N1.1 closed out the
 tier last — see each item's entry in §2 for the shipped fix. **All of Tier N1
-is now shipped.**
+is now shipped.** N2.2 shipped next, in its planned #4 slot, ahead of N2.1
+(#5) rather than alongside it — the two were noted as pairing well, not as
+required to land together, and N2.2 had no open design questions (N2.1 is an
+experimental Next/React flag; see its own entry for why it's evaluated, not
+assumed, before being bundled in).
 
 | Order | Item | Why this order |
 |---|---|---|
 | 1 | N1.2 offline route + SW version bump — **shipped 2026-08-13** | It's a bug; smallest diff; completes an already-shipped feature |
 | 2 | N1.1 manifest + icons — **shipped 2026-08-13** | The single biggest perceived jump; unblocks N4.5 |
 | 3 | N1.3 self-hosted Satoshi — **shipped 2026-08-13, out of turn** | First-paint stability; independent of everything |
-| 4 | N2.2 skeleton coverage (hot paths) | Pairs naturally with 5 |
+| 4 | N2.2 skeleton coverage (hot paths) — **shipped 2026-08-13** | Pairs naturally with 5 |
 | 5 | N2.1 view-transition cross-fade | The two together transform perceived navigation |
 | 6 | N2.3 menu state → URL | Contained to menu components + one e2e |
 | 7 | N3.1 menu grid containment | One CSS utility + class application |
