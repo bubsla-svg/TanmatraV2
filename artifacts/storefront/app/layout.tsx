@@ -95,6 +95,15 @@ export const metadata: Metadata = {
     title: TITLE,
     description: DESCRIPTION,
   },
+  // N1.1: "default" (opaque status bar, content below it), not
+  // "black-translucent" — the latter draws content edge-to-edge UNDER a
+  // transparent status bar, which this app's safe-area handling was never
+  // built to expect. Revisit only after a deliberate scroll-under pass.
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Tanmatra",
+  },
 };
 
 // NO colorScheme here — the root color-scheme is driven by CSS off

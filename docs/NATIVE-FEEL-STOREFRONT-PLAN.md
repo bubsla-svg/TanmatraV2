@@ -52,7 +52,7 @@ re-implement rows of this table worse.
 These are the giveaways visible before a single interaction: browser chrome around
 the page, a font that pops in, an offline story that 404s.
 
-### N1.1 No web app manifest — not installable, never standalone  **[the #1 tell]**
+### N1.1 No web app manifest — not installable, never standalone  **[the #1 tell]** — **Shipped 2026-08-13**
 
 - **Tell:** the URL bar and browser chrome are permanently visible; no Add-to-Home-
   Screen install prompt; a home-screen shortcut opens as a browser tab, not an app.
@@ -60,17 +60,50 @@ the page, a font that pops in, an offline story that 404s.
   `metadata.appleWebApp` anywhere (`grep manifest|appleWebApp app/layout.tsx
   next.config.ts` → only unrelated `routes-manifest` comments). `public/` contains
   exactly three files — two brand JPGs and `sw.js`. **No app icons exist at all.**
-- **Fix:** `app/manifest.ts` (Next metadata route) with `display: "standalone"`,
+- **Fix (shipped):** `app/manifest.ts` with `display: "standalone"`,
   `name`/`short_name` ("Tanmatra"), `start_url: "/"`, `background_color`/
-  `theme_color` from `lib/stitchRoutes.ts`'s `THEME_COLOR` (import, don't hand-copy),
-  plus generated icons: 192/512 PNG + a maskable variant + 180px `apple-touch-icon`,
-  and `metadata.appleWebApp` (`capable: true`, `statusBarStyle: "default"`; revisit
-  `black-translucent` only after testing scroll-under). Icon generation from the
-  brand wordmark is part of this task — there is no existing asset to point at.
+  `theme_color` importing `lib/stitchRoutes.ts`'s `THEME_COLOR.dark` (not hand-copied
+  — matches the same value the live theme-color meta tag already uses), plus
+  `metadata.appleWebApp` in `app/layout.tsx` (`capable: true`,
+  `statusBarStyle: "default"`, per this section's own note — `black-translucent`
+  stays deferred until a deliberate scroll-under pass, not bundled into this fix).
+  **Correction to this section's own original claim**: "there is no existing asset
+  to point at" was wrong — `artifacts/tanmatra/src/components/layout/Logo.tsx`
+  (the legacy app) already carries an approved logomark (a "clinical hexagon
+  enclosing a rising leaf," in the locked gold→sage brand meaning) with a
+  `markOnly` prop the component's own doc comment says exists "for tight
+  spaces / app icon" — i.e. it was already designed with exactly this use in
+  mind, just never used for it. Reused that geometry rather than commissioning
+  new art, recoloured to the **storefront's own current tokens**
+  (`--gold #d4af37`, `--sage #7d9e7e` from `lib/tokens`) rather than the legacy
+  file's slightly different gradient stops, since this icon represents the
+  storefront as it looks today. Rendered via a headless-Chromium screenshot
+  (no image-processing lib was available in-sandbox) at `app/icon.png` (512,
+  Next's favicon/general-icon convention file), `app/apple-icon.png` (180, iOS
+  home-screen convention file), and `public/icons/icon-{192,512,512-maskable}.png`
+  (manifest-referenced — `public/`, not `app/`, because only Next's exact-match
+  convention filenames are served from `app/`; a manifest `src` pointing into
+  `app/` 404s). The maskable variant uses deep safe-area padding (mark occupies
+  the center ~56% of the canvas) so it survives circle/squircle/rounded-square
+  OS masks without clipping. `sw.js`'s `STATIC_PREFIXES` already listed
+  `/icons/` before this fix — the icons fall under the existing cache-first
+  static-asset path with no service-worker changes needed.
+- **Verified:** built and typechecked clean, all 7 lint gates, full unit suite.
+  Then a live-server check (same self-contained-process pattern as N1.2, run
+  by itself since nothing here needed genuine offline): `/manifest.webmanifest`
+  serves `application/manifest+json` with the exact expected name/short_name/
+  display/theme_color/background_color and all 3 icons declared; all 3
+  manifest icon URLs and both convention-file icons (`/icon.png`,
+  `/apple-icon.png`) serve real 200 PNG responses; the rendered homepage
+  `<head>` was checked directly (not assumed from the files' existence) and
+  carries `<link rel="manifest">`, `<link rel="icon">`, and
+  `<link rel="apple-touch-icon">`, all pointing at the files actually shipped.
 - **Effort:** M (S for the manifest, the icons are the real work). **Risk:** low —
-  affects only users who install; browser behaviour unchanged. Verify standalone
-  back-navigation on iOS before shipping (overlay back-gesture already handled by
-  `useOverlayHistory`; page-level back in standalone relies on edge-swipe).
+  affects only users who install; browser behaviour unchanged. Standalone
+  back-navigation on iOS (overlay back-gesture already handled by
+  `useOverlayHistory`; page-level back in standalone relies on edge-swipe) is
+  **not yet verified on-device** — noted as follow-up, not blocking this fix,
+  since it requires a real iOS install rather than anything testable headless.
 
 ### N1.2 `sw.js` falls back to an `/offline` route that does not exist  **[bug, not polish]** — **Shipped 2026-08-13**
 
@@ -278,7 +311,7 @@ where it feels like a website.
 | N4.2 | Long-press a dish photo → browser image-save sheet | `select-none-ui`'s `-webkit-touch-callout: none` on `SafeImage`'s wrapper for product imagery | S |
 | N4.3 | Sharing a dish means copying the URL from the browser bar | `navigator.share` button on the PDP (title + `/dish/[slug]` URL), rendered only when the API exists — the native share sheet is a strong "app" signal on both platforms | S |
 | N4.4 | Autocorrect fighting inputs that aren't prose (voucher code is already handled with `autoCapitalize="characters"`) | Audit name/address/search inputs for `autoCorrect`/`autoCapitalize`/`spellCheck` appropriateness | S |
-| N4.5 | Status-bar area in future standalone mode | After N1.1 lands, verify notch-area colour against `THEME_COLOR` on device; revisit `statusBarStyle` | S (blocked by N1.1) |
+| N4.5 | Status-bar area in future standalone mode | N1.1 shipped (`statusBarStyle: "default"`) — **unblocked**; still needs an on-device iOS install to verify notch-area colour against `THEME_COLOR`, which nothing headless can check | S |
 
 ---
 
@@ -449,13 +482,14 @@ Suggested order — each row is one PR-sized concern per the working agreement.
 Actual shipping order diverged at #3: N1.3 shipped first, out of turn, because
 the coherence sweep's network trace gave it the freshest and strongest evidence
 (a measured 12.8s render-blocking hang) of anything in this tier. N1.2 shipped
-right after, back in its originally-planned #1 slot — see each item's entry in
-§2 for the shipped fix. N1.1 remains open.
+right after, back in its originally-planned #1 slot, and N1.1 closed out the
+tier last — see each item's entry in §2 for the shipped fix. **All of Tier N1
+is now shipped.**
 
 | Order | Item | Why this order |
 |---|---|---|
 | 1 | N1.2 offline route + SW version bump — **shipped 2026-08-13** | It's a bug; smallest diff; completes an already-shipped feature |
-| 2 | N1.1 manifest + icons | The single biggest perceived jump; unblocks N4.5 |
+| 2 | N1.1 manifest + icons — **shipped 2026-08-13** | The single biggest perceived jump; unblocks N4.5 |
 | 3 | N1.3 self-hosted Satoshi — **shipped 2026-08-13, out of turn** | First-paint stability; independent of everything |
 | 4 | N2.2 skeleton coverage (hot paths) | Pairs naturally with 5 |
 | 5 | N2.1 view-transition cross-fade | The two together transform perceived navigation |
