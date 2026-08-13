@@ -7,6 +7,11 @@
 export type LpEventName =
   | "lp_view"
   | "hero_cta_click"
+  // Clicks on the hero's announcement/offer strip. Separate from
+  // hero_cta_click so campaign performance is measurable on its own —
+  // "did the Diwali banner sell anything" is the question this slot exists
+  // to answer. `label` carries the campaign id (see lib/heroCampaign.ts).
+  | "hero_campaign_click"
   | "sticky_cta_click"
   | "plan_card_select"
   | "menu_preview_interact"

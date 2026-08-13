@@ -70,13 +70,13 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
     <section id="protocols" className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
       <div className="mx-auto max-w-3xl text-center">
         <span className="text-xs font-bold uppercase tracking-wider text-gold-text">
-          Healthy Meal Subscriptions
+          Eat like this every day
         </span>
         <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-          Meal Plans Designed for Real Results.
+          Pick a plan, we cook the rest.
         </h2>
         <p className="mt-3 text-sm text-ink-muted sm:text-base">
-          Choose a plan tailored to your health goals, whether it's sustainable weight loss, hormone balance, or building strength.
+          Lunch sorted for the month — 22 weekday plates, swapped or skipped whenever you need.
         </p>
         {/* No scarcity badge here. This slot held "Only 14 trial slots left this
             week" as a hardcoded string with no capacity source behind it — a

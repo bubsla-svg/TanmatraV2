@@ -8,20 +8,36 @@ import { PLAN_PRICE_TABLE } from "@workspace/subscription-rules";
 
 const basePrice = formatPaise(PLAN_PRICE_TABLE.desk_fuel.veg.perMealPaise!);
 
-test("an RD/clinic referral cookie yields the clinical-adherence hero", () => {
+// These two assert ROUTING — which cookie class reaches which variant — not
+// the wording, which is marketing's to change. They match the eyebrow on the
+// referral SOURCE (the one thing each variant must always name) and pin the
+// badge only against the other variants, so a copy edit does not turn into a
+// test edit but a mis-routed cookie still fails.
+const dietitianHero = deriveHeroContent("rd_sharma");
+const gymHero = deriveHeroContent("gym_cult");
+
+test("an RD/clinic referral cookie yields the dietitian hero", () => {
   for (const ref of ["rd_sharma", "dietitian_kaur", "apollo_clinic", "dr_mehta", "DIET_partner"]) {
     const hero = deriveHeroContent(ref);
-    assert.equal(hero.badge, "Priority Health Plan", `${ref} should read as clinical`);
-    assert.match(hero.eyebrow, /Registered Dietitian/);
+    assert.deepEqual(hero, dietitianHero, `${ref} should reach the dietitian variant`);
+    assert.match(hero.eyebrow, /dietitian/i, "the eyebrow must name the referral source");
+    assert.ok(hero.badge, "a referred visitor gets a badge on the hero photo");
   }
 });
 
-test("a gym/trainer referral cookie yields the performance hero", () => {
+test("a gym/trainer referral cookie yields the training hero", () => {
   for (const ref of ["gym_cult", "trainer_47", "fitfirst", "coach_raj"]) {
     const hero = deriveHeroContent(ref);
-    assert.equal(hero.badge, "Workout Recovery Plan", `${ref} should read as performance`);
-    assert.match(hero.eyebrow, /Fitness Club/);
+    assert.deepEqual(hero, gymHero, `${ref} should reach the training variant`);
+    assert.match(hero.eyebrow, /gym/i, "the eyebrow must name the referral source");
+    assert.ok(hero.badge, "a referred visitor gets a badge on the hero photo");
   }
+});
+
+test("the three variants are actually different copy, not the same hero thrice", () => {
+  const variants = [deriveHeroContent(), dietitianHero, gymHero];
+  const headlines = new Set(variants.map((v) => v.headline));
+  assert.equal(headlines.size, 3, "personalisation that renders identical copy is not personalisation");
 });
 
 test("no cookie, an empty cookie and an unrecognised cookie all fall back to the default hero", () => {
