@@ -124,6 +124,7 @@ export function PersonalizedMenu({
                 key={opt.key}
                 type="button"
                 onClick={() => setChip(opt.key)}
+                aria-pressed={active}
                 // D-08: selection state, not a rival action colour — border +
                 // tint + marker, never a solid --gold fill (the mini-cart bar
                 // is this screen's one gold action).

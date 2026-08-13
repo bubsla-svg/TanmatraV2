@@ -24,7 +24,11 @@ export function CheckoutIdentity({
   onSubmitPhone: (phone: string) => void;
 }) {
   const [phone, setPhone] = useState("");
-  const valid = phone.replace(/\D/g, "").length >= 10;
+  // Fix-first status line (AlacarteDetails.tsx's blockedReason idiom) — the
+  // Continue button used to just stay dead with no explanation.
+  const blockedReason =
+    phone.replace(/\D/g, "").length >= 10 ? null : "Enter your 10-digit mobile number";
+  const valid = blockedReason === null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -56,6 +60,9 @@ export function CheckoutIdentity({
         </Field>
       </Card>
       <p className="text-xs font-medium text-sage-text">{CERTAINTY.identity}</p>
+      {blockedReason !== null && (
+        <p role="status" className="text-xs font-medium text-ink-muted">{blockedReason}</p>
+      )}
       <Button
         type="button"
         disabled={!valid}

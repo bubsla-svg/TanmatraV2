@@ -69,8 +69,22 @@ export function AddressForm({
 
   const pinValid = /^[0-9]{4,10}$/.test(pincode.trim());
   const phoneValid = phone.replace(/\D/g, "").length >= 10;
-  const valid =
-    label.trim().length > 0 && line1.trim().length > 2 && city.trim().length > 0 && pinValid && phoneValid;
+  // Fix-first status line (AlacarteDetails.tsx's blockedReason idiom) — the
+  // PIN field already carries aria-invalid, but nothing explained why the
+  // save button stayed dead. Order matches field order.
+  const blockedReason =
+    label.trim().length === 0
+      ? "Add a label for this address"
+      : line1.trim().length <= 2
+        ? "Enter your flat / house and street"
+        : city.trim().length === 0
+          ? "Enter your city"
+          : !pinValid
+            ? "Enter a valid PIN code"
+            : !phoneValid
+              ? "Enter a valid 10-digit phone number"
+              : null;
+  const valid = blockedReason === null;
 
   function submit() {
     onSubmit({
@@ -166,6 +180,9 @@ export function AddressForm({
         />
       </Field>
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
+      {blockedReason !== null && !busy && (
+        <p role="status" className="text-xs font-medium text-ink-muted">{blockedReason}</p>
+      )}
       <div className="mt-1 flex items-center gap-3 border-t border-line pt-3">
         <Button type="button" disabled={!valid || busy} aria-busy={busy} aria-live="polite" onClick={submit} shape="xl" size="fluid" className="px-5 py-3 font-semibold disabled:opacity-40">
           {busy ? "Saving…" : submitLabel}
