@@ -54,7 +54,17 @@ export function DrawerContent({
         // missing the attribute a screen reader needs to announce "modal".
         aria-modal="true"
         {...props}
-        className="fixed inset-x-0 bottom-0 z-[var(--z-modal)] mx-auto flex max-h-[100dvh] w-full max-w-2xl flex-col rounded-t-2xl border border-line bg-[var(--glass)] backdrop-blur-[12px] shadow-[var(--shadow-card)] outline-none pb-[env(safe-area-inset-bottom)]"
+        // max-h-[88dvh], not 100: at 100 a content-rich sheet (the dish
+        // quick-view is the worst case — image, macros, spec, allergens) grew
+        // to the full viewport and stopped reading as a sheet at all. Nothing
+        // of the page it came from was visible, so the scrim had no surface to
+        // act on, there was no "outside" left to tap to dismiss, and the only
+        // exits were the drag handle and the back gesture. Leaving ~12dvh of
+        // the originating page visible restores all three at once — and it is
+        // what a native sheet does. Safe for every consumer: each sheet's body
+        // is already its own overflow-y-auto region with a shrink-0 footer, so
+        // the cap shortens the scroll area rather than clipping the actions.
+        className="fixed inset-x-0 bottom-0 z-[var(--z-modal)] mx-auto flex max-h-[88dvh] w-full max-w-2xl flex-col rounded-t-2xl border border-line bg-[var(--glass)] backdrop-blur-[12px] shadow-[var(--shadow-card)] outline-none pb-[env(safe-area-inset-bottom)]"
       >
         {/* Drag handle — always visible per §6. */}
         <div aria-hidden className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-line-strong" />
