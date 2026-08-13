@@ -20,7 +20,7 @@ export const StickyLedger: React.FC<StickyLedgerProps> = ({
   itemCount,
 }) => {
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/80 px-6 py-4 shadow-2xl">
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-[var(--glass)] backdrop-blur-xl border-t border-line px-6 py-4 shadow-2xl">
       <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
         <div>
           <PriceDisplay
@@ -29,7 +29,7 @@ export const StickyLedger: React.FC<StickyLedgerProps> = ({
             label={itemCount ? `Payable Today (${itemCount} meals)` : "Total Payable Today"}
             size="lg"
           />
-          <p className="text-3xs text-slate-400 mt-0.5">Includes taxes & free delivery</p>
+          <p className="text-3xs text-ink-muted mt-0.5">Includes taxes & free delivery</p>
         </div>
 
         {/* Single Primary Gold CTA Contract */}

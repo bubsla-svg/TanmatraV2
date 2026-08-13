@@ -21,7 +21,7 @@ export function DraftRestorationBoundary({ children }: { children: React.ReactNo
   if (hasDraft) {
     return (
       <div className="relative">
-        <div className="bg-surface border-b border-white/5 p-4 flex justify-between items-center text-ink">
+        <div className="bg-surface border-b border-line p-4 flex justify-between items-center text-ink">
           <span className="text-sm font-medium">You have an unsaved plan draft.</span>
           <div className="flex gap-3">
             <button 

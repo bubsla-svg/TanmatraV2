@@ -33,12 +33,14 @@ import { fileURLToPath } from "node:url";
 //
 // Follows the baseline pattern from lint-component-drift.ts / lint-test-reach.ts:
 // a rule with existing violations at introduction time gets a baseline instead
-// of failing the build, and the register may only SHRINK. Unlike the
-// component-drift gate this one does NOT start empty — migrating 794 call sites
-// requires a token-mapping decision per Tailwind hue (which token replaces
-// sky-900? is cyan-400 even allowed, given gold is the only action colour?),
-// and that is a design call, not a mechanical rename. The baseline freezes that
-// debt so no NEW component can join it while the mapping is decided.
+// of failing the build, and the register may only SHRINK.
+//
+// This gate shipped with 522 frozen entries, because migrating them needed a
+// token-mapping decision per Tailwind hue (which token replaces sky-900? is
+// cyan-400 even allowed, given gold is the only action colour?) — a design
+// call, not a mechanical rename. That decision was made and the migration
+// landed, so the baseline is now EMPTY: every violation this gate reports is
+// new debt and fails the build.
 //
 // components/ui/ is exempt (SKIP_DIRS): it is the shadcn/Radix bridge layer
 // where the alias-to-token mapping is DEFINED, same carve-out the
@@ -126,7 +128,13 @@ function readBaseline(): Set<string> {
 }
 
 function stripComments(src: string): string {
-  const noBlock = src.replace(/\/\*[\s\S]*?\*\//g, "");
+  // Blank the comment but KEEP its newlines. Deleting a block comment outright
+  // (what the sibling gates do) collapses those lines, so every line number
+  // after it shifts: a violation reported at :37 is not at :37 in the file, and
+  // editing an unrelated comment silently invalidates every baseline entry
+  // below it. Line-for-line replacement keeps reported numbers real and keeps
+  // the baseline stable against comment edits.
+  const noBlock = src.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "));
   return noBlock.replace(/(^|[^:])\/\/.*$/gm, "$1");
 }
 

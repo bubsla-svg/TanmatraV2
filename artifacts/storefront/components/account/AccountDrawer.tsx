@@ -11,9 +11,9 @@ export function AccountDrawer() {
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
-      <div className="relative w-[85vw] max-w-sm bg-surface h-full border-l border-white/5 p-6 animate-in slide-in-from-right">
-        <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-4">
+      <div className="absolute inset-0 bg-[var(--scrim)] backdrop-blur-sm" onClick={() => setIsOpen(false)} />
+      <div className="relative w-[85vw] max-w-sm bg-surface h-full border-l border-line p-6 animate-in slide-in-from-right">
+        <div className="flex justify-between items-center mb-8 border-b border-line pb-4">
           <h2 className="text-xl font-bold text-ink">Account</h2>
           <button onClick={() => setIsOpen(false)} className="text-ink-muted hover:text-ink">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

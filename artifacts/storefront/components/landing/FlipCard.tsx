@@ -78,7 +78,7 @@ export function FlipCard({ spec = DEFAULT_SPEC, initialFlipped = false }: FlipCa
           <span
             role="img"
             aria-label={spec.isVeg ? "Vegetarian" : "Non-vegetarian"}
-            className={`absolute left-2 top-2 inline-block h-3 w-3 ring-2 ring-white ${
+            className={`absolute left-2 top-2 inline-block h-3 w-3 ring-2 ring-[var(--surface)] ${
               spec.isVeg ? "rounded-full" : "rounded-[2px]"
             }`}
             style={{ backgroundColor: spec.isVeg ? "var(--sage)" : "var(--danger)" }}

@@ -56,7 +56,7 @@ export const SecondaryCTA: React.FC<CTAProps> = ({
       disabled={disabled}
       className={`px-8 py-4 rounded-full font-semibold tracking-tight 
         text-ink bg-transparent
-        border border-white/10 hover:bg-white/5
+        border border-line hover:bg-surface-subtle
         active:scale-[0.98] transition-all duration-150
         min-h-[44px] min-w-[44px] inline-flex items-center justify-center gap-2
         disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
