@@ -67,7 +67,17 @@ export function Header() {
                 <Link
                   href="/account"
                   aria-label="Account"
-                  className="flex min-h-11 min-w-11 items-center justify-center rounded-full border border-line bg-surface hover:bg-surface-raised transition-colors overflow-hidden"
+                  // Desktop-only, matching this file's own header comment
+                  // ("Primary links are desktop-only — on mobile the
+                  // BottomNav carries them") — MobileBottomNav.tsx already
+                  // renders its own "Account" tab. Giving this link a real
+                  // accessible name (above) is what surfaced the gap:
+                  // single-chrome.spec.ts counts visible "Account" nav
+                  // affordances per viewport and expects exactly one, and
+                  // this link had no responsive class at all, so once it
+                  // became name-able it counted as a second one on mobile
+                  // alongside MobileBottomNav's.
+                  className="hidden md:flex min-h-11 min-w-11 items-center justify-center rounded-full border border-line bg-surface hover:bg-surface-raised transition-colors overflow-hidden"
                 >
                   <svg aria-hidden className="w-4 h-4 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
