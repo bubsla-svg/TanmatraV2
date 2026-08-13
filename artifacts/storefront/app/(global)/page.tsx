@@ -12,12 +12,20 @@ import { Section05ProofMacros } from "@/components/landing/Section05ProofMacros"
 import { fetchMenu } from "@/lib/catalog";
 import { formatPaise } from "@/lib/format";
 import { pickPlanCardDishes } from "@/lib/planCardDish";
+import { planDisplay } from "@/lib/planCopy";
+import { PROTOCOL_CONFIG, type ProtocolKey } from "@/content/landing/protocol";
 import { DishCard } from "@/components/DishCard";
 import { Section06ProofRdPanel } from "@/components/landing/Section06ProofRdPanel";
 import { Section07ProofKitchen } from "@/components/landing/Section07ProofKitchen";
 import { Section09AssessmentSection } from "@/components/landing/Section09AssessmentSection";
 import { Section09bRecipesBridge } from "@/components/landing/Section09bRecipesBridge";
 import { Section10FaqAccordion } from "@/components/landing/Section10FaqAccordion";
+/** Protocol landers that exist as routes today. `/wellness` does not yet. */
+const LANDING_PROTOCOLS: { key: ProtocolKey; href: string }[] = [
+  { key: "clinical", href: "/clinical" },
+  { key: "performance", href: "/performance" },
+];
+
 /**
  * Consumer Home — 3-Pillar Revenue Architecture.
  * Server Component implementing DTR (Dynamic Tailored Referrals) personalization,
@@ -82,18 +90,34 @@ export default async function HomePage() {
           </ul>
         </section>
 
-        {/* Horizontal section: "Built for longer goals" */}
+        {/* Horizontal section: "Built for longer goals".
+            This rail listed 'Metabolic Reset' and 'Performance Protocol' as
+            subscriptions. Only one of those is real: PROTOCOL_CONFIG defines
+            three protocol landers (Wellness / Clinical / Performance), each
+            pointing at a plan you can actually buy. "Metabolic Reset" is not a
+            plan, a protocol, or a route — it named nothing. Both cards then
+            linked to /plans rather than to themselves, and described a "4-week
+            targeted clinical intervention with daily deliveries" — the real
+            plans are 22 weekday lunches a month, not daily.
+            Wellness has no lander route yet, so the two with routes are the
+            two rendered; add it here when /wellness ships. */}
         <section className="px-gutter py-6">
           <h2 className="font-bold text-3xl text-ink mb-6">Built for longer goals</h2>
           <ul className="flex gap-4 overflow-x-auto snap-x no-scrollbar pb-4 -mx-gutter px-gutter">
-            {['Metabolic Reset', 'Performance Protocol'].map((plan, i) => (
-              <li key={i} className="flex-none w-[300px] snap-start rounded-3xl border border-line bg-surface p-6">
-                <div className="font-bold text-xs text-primary mb-2">SUBSCRIPTION</div>
-                <h3 className="text-lg font-bold text-ink mb-2">{plan}</h3>
-                <p className="text-ink-muted text-sm mb-6">4-week targeted clinical intervention with daily deliveries.</p>
-                <a href="/plans" className="inline-block w-full text-center px-4 py-3 rounded-full border border-line font-bold text-xs text-ink hover:bg-surface-raised transition-colors">Explore Plan</a>
-              </li>
-            ))}
+            {LANDING_PROTOCOLS.map(({ key, href }) => {
+              const protocol = PROTOCOL_CONFIG[key];
+              const plan = planDisplay(protocol.planId);
+              return (
+                <li key={key} className="flex-none w-[300px] snap-start rounded-3xl border border-line bg-surface p-6">
+                  <div className="font-bold text-xs text-primary mb-2">{protocol.eyebrow.toUpperCase()}</div>
+                  <h3 className="text-lg font-bold text-ink mb-2">{plan.name}</h3>
+                  <p className="text-ink-muted text-sm mb-6">{plan.subtitle}</p>
+                  <a href={href} className="inline-block w-full text-center px-4 py-3 rounded-full border border-line font-bold text-xs text-ink hover:bg-surface-raised transition-colors">
+                    Explore {plan.name}
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         </section>
 

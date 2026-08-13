@@ -6,6 +6,7 @@ import { SafeImage } from "@/components/ui/SafeImage";
 import { formatPaise } from "@/lib/format";
 import { emitLpEvent } from "@/lib/lpEvents";
 import type { PlanCardDish, PlanDishMap } from "@/lib/planCardDish";
+import { planDisplay } from "@/lib/planCopy";
 import { TRIAL_PRICE_PAISE } from "@/lib/trial";
 import { computePlanQuote } from "@workspace/subscription-rules";
 import { FlipCard } from "./FlipCard";
@@ -47,6 +48,15 @@ function PlanPhotoFrame({ dish }: { dish: PlanCardDish | null | undefined }) {
  */
 export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
   const steadyDish = dishes.steady;
+  // The plan's ONE name, from lib/planCopy.ts. These three cards used to
+  // invent their own — "Weight-Loss Jumpstart", "PCOS Hormone Balance",
+  // "Lean Muscle Builder" — so a buyer who picked one by name landed on a
+  // page titled something else ("Desk Fuel", "Steady", "Protein Build") with
+  // no explanation, at the exact step where they were deciding to pay. The
+  // goal framing those names carried survives in each card's kicker.
+  const deskFuel = planDisplay("desk_fuel");
+  const steady = planDisplay("steady");
+  const proteinBuild = planDisplay("protein_build");
   const trialPrice = formatPaise(TRIAL_PRICE_PAISE);
   const deskFuelMonthly = formatPaise(computePlanQuote("desk_fuel").cycleTotalPaise);
   const steadyMonthly = formatPaise(computePlanQuote("steady").cycleTotalPaise);
@@ -98,7 +108,7 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
        *    is the house hover for a bordered control on a card (AccountHub,
        *    BillingPanel, VoucherRedeem, …). */}
       <div className="mt-12 grid grid-flow-dense gap-8 lg:grid-cols-3">
-        {/* Card 1: Weight-Loss Jumpstart */}
+        {/* Card 1: Desk Fuel */}
         <div className="group flex flex-col justify-between rounded-2xl border border-line bg-surface p-6 shadow-sm overflow-hidden transition-transform duration-700 ease-out hover:scale-105 hover:shadow-xl hover:border-gold/30">
           <div>
             <div className="flex items-center justify-between gap-2">
@@ -108,13 +118,21 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
               <span className="tabular text-xs font-bold text-ink-muted">{deskFuelMonthly}/mo</span>
             </div>
             <PlanPhotoFrame dish={dishes.desk_fuel} />
-            <h3 className="mt-2 text-xl font-bold text-ink">Weight-Loss Jumpstart</h3>
+            <h3 className="mt-2 text-xl font-bold text-ink">{deskFuel.name}</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
               Focus: Shed weight without feeling tired. Keeps you full and energized all day.
             </p>
+            {/* Real plan copy, not invented specs. This block held
+                "1,500 kcal · 90g protein · 25g+ fiber" and two similar
+                lines on the other cards. PLAN_CATALOG carries no macro
+                targets — no calorie, protein or fibre figure exists for
+                any plan — so those numbers had no source, and the plan
+                page they link to shows nothing like them. Under the
+                correct plan name they would read as verified plan specs,
+                which is the more dangerous version of the same bug. */}
             <div className="mt-6 border-y border-line py-4">
-              <span className="tabular text-lg font-bold text-ink">1,500 kcal · 90g protein · 25g+ fiber</span>
-              <p className="mt-1 text-xs text-ink-muted">Keeps blood sugar steady</p>
+              <span className="text-sm font-semibold text-ink">{deskFuel.promise}</span>
+              <p className="mt-1 text-xs text-ink-muted">{deskFuel.subtitle}</p>
             </div>
             <ul className="mt-6 flex flex-col gap-2.5 text-xs text-ink-muted">
               <li className="flex items-center gap-2">✓ 100% cold-pressed olive oil &amp; desi ghee</li>
@@ -140,7 +158,7 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
           </div>
         </div>
 
-        {/* Card 2: PCOS Hormone Balance */}
+        {/* Card 2: Steady */}
         <div className="group flex flex-col justify-between rounded-2xl border-2 border-gold-text bg-surface p-6 shadow-md overflow-hidden transition-transform duration-700 ease-out hover:scale-105 hover:shadow-xl hover:border-gold/80">
           <div>
             <div className="flex items-center justify-between gap-2">
@@ -150,13 +168,13 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
               <span className="tabular text-xs font-bold text-ink">{steadyMonthly}/mo</span>
             </div>
             <PlanPhotoFrame dish={dishes.steady} />
-            <h3 className="mt-2 text-xl font-bold text-ink">PCOS Hormone Balance</h3>
+            <h3 className="mt-2 text-xl font-bold text-ink">{steady.name}</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
               Focus: Supports hormone balance and manages energy levels naturally. Approved by experts.
             </p>
             <div className="mt-6 border-y border-line py-4">
-              <span className="tabular text-lg font-bold text-ink">1,700 kcal · 100g protein</span>
-              <p className="mt-1 text-xs text-ink-muted">Healthy fats, slow-burning carbs</p>
+              <span className="text-sm font-semibold text-ink">{steady.promise}</span>
+              <p className="mt-1 text-xs text-ink-muted">{steady.subtitle}</p>
             </div>
             {/* The whole block is gated on a real dish. It used to render
                 unconditionally around a FlipCard with no props, and that
@@ -204,7 +222,7 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
           </div>
         </div>
 
-        {/* Card 3: Lean Muscle Builder */}
+        {/* Card 3: Protein Build */}
         <div className="group flex flex-col justify-between rounded-2xl border border-line bg-surface-raised p-6 shadow-sm overflow-hidden transition-transform duration-700 ease-out hover:scale-105 hover:shadow-xl hover:border-gold/30">
           <div>
             <div className="flex items-center justify-between gap-2">
@@ -214,13 +232,13 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
               <span className="tabular text-xs font-bold text-ink-muted">{proteinMonthly}/mo</span>
             </div>
             <PlanPhotoFrame dish={dishes.protein_build} />
-            <h3 className="mt-2 text-xl font-bold text-ink">Lean Muscle Builder</h3>
+            <h3 className="mt-2 text-xl font-bold text-ink">{proteinBuild.name}</h3>
             <p className="mt-2 text-xs leading-relaxed text-ink-muted">
               Focus: Fuel your workouts and recover faster with high-protein, energy-packed meals.
             </p>
             <div className="mt-6 border-y border-line py-4">
-              <span className="tabular text-lg font-bold text-ink">2,400 kcal · 160g protein</span>
-              <p className="mt-1 text-xs text-ink-muted">High-quality protein for muscle growth</p>
+              <span className="text-sm font-semibold text-ink">{proteinBuild.promise}</span>
+              <p className="mt-1 text-xs text-ink-muted">{proteinBuild.subtitle}</p>
             </div>
             <ul className="mt-6 flex flex-col gap-2.5 text-xs text-ink-muted">
               <li className="flex items-center gap-2">✓ High amino-acid completeness</li>
