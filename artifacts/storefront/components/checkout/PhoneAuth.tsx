@@ -1,6 +1,8 @@
 "use client";
 // Client: Firebase phone-auth is browser-only (reCAPTCHA + SMS confirmation).
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Card } from "@astryxdesign/core/Card";
+import { Field } from "@astryxdesign/core/Field";
 import { Button } from "@/components/ui/button";
 import { firebaseConfigured, friendlyFirebaseError } from "@/lib/firebase";
 import { sendPhoneOtp, toE164, type PhoneVerification } from "@/lib/phoneAuth";
@@ -216,15 +218,26 @@ export function PhoneAuth({
 
   const resendReady = canResend(lastSentAt, now);
 
+  /* Stage-5 Astryx adoption (login-card, chrome only): the hand-rolled card
+   * div became Astryx Card and the bare label+input pairs became Field shells
+   * around the SAME native inputs. The inputs stay native on purpose —
+   * TextInput's type is text|password|email and its BaseProps omit
+   * inputMode/autoComplete/pattern/maxLength, all load-bearing here (#pa-phone
+   * and autocomplete=one-time-code are e2e contracts). login-card's page
+   * shell, social buttons, password/forgot/sign-up chrome are deliberately NOT
+   * taken: PhoneAuth is an inline island, never a page, and hosts announce
+   * their own sign-in copy (a card heading would duplicate it). No handler,
+   * copy, or redirect changes. */
   return (
-    <div className="flex flex-col gap-3 rounded-3xl border border-line bg-surface p-6">
+    <Card padding={6} className="flex flex-col gap-3 rounded-3xl">
       {stage === "phone" ? (
         <>
-          <label htmlFor="pa-phone" className="text-sm font-medium text-ink">Mobile number</label>
-          <input
-            id="pa-phone" type="tel" inputMode="numeric" autoComplete="tel" value={phone}
-            onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" className={inputCls}
-          />
+          <Field label="Mobile number" inputID="pa-phone">
+            <input
+              id="pa-phone" type="tel" inputMode="numeric" autoComplete="tel" value={phone}
+              onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" className={inputCls}
+            />
+          </Field>
           <Button
             type="button" disabled={busy} onClick={() => void send()}
             shape="pill" size="fluid" className="px-6 py-3 font-semibold disabled:opacity-40"
@@ -234,11 +247,12 @@ export function PhoneAuth({
         </>
       ) : (
         <>
-          <label htmlFor="pa-code" className="text-sm font-medium text-ink">Enter the 6-digit code</label>
-          <input
-            id="pa-code" type="text" inputMode="numeric" pattern="[0-9]*" autoComplete="one-time-code" maxLength={6} value={code}
-            onChange={(e) => setCode(e.target.value)} placeholder="123456" className={inputCls}
-          />
+          <Field label="Enter the 6-digit code" inputID="pa-code">
+            <input
+              id="pa-code" type="text" inputMode="numeric" pattern="[0-9]*" autoComplete="one-time-code" maxLength={6} value={code}
+              onChange={(e) => setCode(e.target.value)} placeholder="123456" className={inputCls}
+            />
+          </Field>
           <div className="flex items-center gap-3">
             <Button
               type="button" disabled={busy} onClick={() => void verify()}
@@ -272,6 +286,6 @@ export function PhoneAuth({
       {notice && <p role="status" className="text-xs text-ink-muted">{notice}</p>}
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
       <div ref={recaptcha} />
-    </div>
+    </Card>
   );
 }

@@ -1,5 +1,10 @@
 "use client"; // Justification: client-side form field state and network lead submission.
 import { useState } from "react";
+import { Grid } from "@astryxdesign/core/Grid";
+import { Selector } from "@astryxdesign/core/Selector";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { TextArea } from "@astryxdesign/core/TextArea";
+import { Field } from "@astryxdesign/core/Field";
 import { ApiError } from "@/lib/apiClient";
 import { emitLpEvent } from "@/lib/lpEvents";
 import {
@@ -15,10 +20,21 @@ const KINDS: { id: CorporateLeadKind; label: string }[] = [
   { id: "gym", label: "Gym" },
   { id: "fitness_club", label: "Fitness club" },
 ];
-const inputCls =
-  "w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none transition-colors focus-visible:border-[var(--gold)] focus-visible:ring-1 focus-visible:ring-[var(--gold)]";
-const labelCls = "flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-faint";
+/* Stage-4 Astryx adoption: field chrome only. The hand-rolled inputCls/labelCls
+ * strings and label-nested inputs became TextInput/TextArea/Selector (each
+ * renders its own label + Field shell — never wrap them in Field again), and
+ * the `flex-col md:flex-row` pair rows became the contact-form skeleton's
+ * Grid columns={{minWidth}} idiom, which collapses responsively for free.
+ * The PHONE field stays a native <input> inside Astryx Field: TextInput's
+ * type is text|password|email only and its BaseProps deliberately omit
+ * inputMode/autoComplete, so a swap would cost the tel keyboard + autofill.
+ * htmlName carries autofill semantics for the Astryx fields (browsers key
+ * autofill off name/type). Submission logic, validation gate, 429 copy,
+ * lpEvents ordering and the role="alert" error line are untouched. */
 const emailOk = (e: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e.trim());
+
+const phoneInputCls =
+  "w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none transition-colors focus-visible:border-[var(--gold)] focus-visible:ring-1 focus-visible:ring-[var(--gold)]";
 
 export interface CorporateLeadFormProps {
   /** Pre-select the segment (a landing page implies its own kind). */
@@ -108,50 +124,79 @@ export function CorporateLeadForm({
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-6 md:p-8">
       {!lockKind && (
-        <label className={labelCls}>
-          You&rsquo;re a
-          <select value={kind} onChange={(e) => setKind(e.target.value as CorporateLeadKind)} className={inputCls}>
-            {KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}
-          </select>
-        </label>
+        <Selector
+          label="You're a"
+          value={kind}
+          onChange={(v) => setKind(v as CorporateLeadKind)}
+          options={KINDS.map((k) => ({ value: k.id, label: k.label }))}
+        />
       )}
-      <div className="flex flex-col gap-4 md:flex-row">
-        <label className={`${labelCls} md:flex-1`}>
-          Your name
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Priya Sharma" className={inputCls} />
-        </label>
-        <label className={`${labelCls} md:flex-1`}>
-          Work email
-          <input type="email" autoComplete="email" value={workEmail} onChange={(e) => setWorkEmail(e.target.value)} placeholder="you@company.com" className={inputCls} />
-        </label>
-      </div>
-      <div className="flex flex-col gap-4 md:flex-row">
-        <label className={`${labelCls} md:flex-1`}>
-          Company
-          <input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Company / organisation" className={inputCls} />
-        </label>
-        <label className={`${labelCls} md:flex-1`}>
-          Team size
-          <select value={teamSizeBand} onChange={(e) => setTeamSizeBand(e.target.value as TeamSizeBand)} className={inputCls}>
-            <option value="" disabled>Select team size</option>
-            {TEAM_SIZE_BANDS.map((b) => <option key={b} value={b}>{b} people</option>)}
-          </select>
-        </label>
-      </div>
-      <div className="flex flex-col gap-4 md:flex-row">
-        <label className={`${labelCls} md:flex-1`}>
-          Office park / sector <span className="normal-case tracking-normal text-ink-faint">(optional)</span>
-          <input value={parkOrSector} onChange={(e) => setParkOrSector(e.target.value)} placeholder="Candor TechSpace, Sector 62" className={inputCls} />
-        </label>
-        <label className={`${labelCls} md:flex-1`}>
-          Phone <span className="normal-case tracking-normal text-ink-faint">(optional)</span>
-          <input type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" className={inputCls} />
-        </label>
-      </div>
-      <label className={labelCls}>
-        Anything we should know? <span className="normal-case tracking-normal text-ink-faint">(optional)</span>
-        <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Order windows, floors, dietary constraints…" rows={3} className={inputCls} />
-      </label>
+      <Grid gap={4} columns={{ minWidth: 260 }}>
+        <TextInput
+          label="Your name"
+          value={name}
+          onChange={setName}
+          placeholder="Priya Sharma"
+          htmlName="name"
+          isRequired
+        />
+        <TextInput
+          label="Work email"
+          type="email"
+          value={workEmail}
+          onChange={setWorkEmail}
+          placeholder="you@company.com"
+          htmlName="email"
+          isRequired
+        />
+      </Grid>
+      <Grid gap={4} columns={{ minWidth: 260 }}>
+        <TextInput
+          label="Company"
+          value={company}
+          onChange={setCompany}
+          placeholder="Company / organisation"
+          htmlName="organization"
+          isRequired
+        />
+        <Selector
+          label="Team size"
+          placeholder="Choose team size"
+          value={teamSizeBand === "" ? undefined : teamSizeBand}
+          onChange={(v) => setTeamSizeBand(v as TeamSizeBand)}
+          options={TEAM_SIZE_BANDS.map((b) => ({ value: b, label: `${b} people` }))}
+          isRequired
+        />
+      </Grid>
+      <Grid gap={4} columns={{ minWidth: 260 }}>
+        <TextInput
+          label="Office park / sector"
+          value={parkOrSector}
+          onChange={setParkOrSector}
+          placeholder="Candor TechSpace, Sector 62"
+          isOptional
+        />
+        <Field label="Phone" inputID="cl-phone" isOptional>
+          <input
+            id="cl-phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="Phone"
+            className={phoneInputCls}
+          />
+        </Field>
+      </Grid>
+      <TextArea
+        label="Anything we should know?"
+        value={message}
+        onChange={setMessage}
+        placeholder="Order windows, floors, dietary constraints…"
+        rows={3}
+        isOptional
+      />
       {error && <p role="alert" className="text-sm font-medium text-[var(--danger)]">{error}</p>}
       <Button
         type="button" disabled={!valid || busy} onClick={() => void submit()}

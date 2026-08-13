@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { DishData } from "@workspace/menu-catalog";
+import { Card } from "@astryxdesign/core/Card";
+import { Field } from "@astryxdesign/core/Field";
 import { Button } from "@/components/ui/button";
 import { formatPaise } from "@/lib/format";
 import { qtyOf, setQty, subtotalPaise, type CartState } from "@/lib/cartStore";
@@ -203,7 +205,13 @@ export function AlacarteDetails({
       data-screen-state={verifying ? "payment-processing" : undefined}
       data-testid={verifying ? "checkout-payment-processing" : undefined}
     >
-      <div className="rounded-3xl border border-line bg-surface p-5">
+      {/* Stage-5 Astryx adoption (payment-form donor, chrome only): the order
+          summary is a genuinely discrete unit, so it becomes Card; the address
+          fields get Field shells around the SAME native inputs (every one
+          carries autoComplete/inputMode/readOnly the Astryx TextInput cannot —
+          and alc-* ids + the "Mobile number" label are e2e contracts). Money
+          figures, qty steppers, consent, sticky pay bar: untouched. */}
+      <Card padding={5} className="rounded-3xl">
         <p className="mb-1 text-xs font-bold uppercase tracking-[0.2em] text-ink-muted">Current order</p>
         <ul className="divide-y divide-line">
           {cart.lines.map((l) => (
@@ -241,33 +249,29 @@ export function AlacarteDetails({
         </ul>
 
         <QuoteBreakdown quote={quote} quoteState={quoteState} quoteError={quoteError} quoteRetryable={quoteRetryable} onRefreshQuote={onRefreshQuote} />
-      </div>
+      </Card>
 
-      <div>
-        <label htmlFor="alc-phone" className="mb-1.5 block text-sm font-medium text-ink">Mobile number</label>
+      <Field label="Mobile number" inputID="alc-phone">
         <input
           id="alc-phone" type="tel" inputMode="numeric" autoComplete="tel" value={phone}
           onChange={(e) => onPhoneChange(e.target.value)} readOnly={phoneLocked} placeholder="98765 43210"
           className={phoneLocked ? `${inputCls} opacity-70` : inputCls}
         />
-      </div>
-      <div>
-        <label htmlFor="alc-line1" className="mb-1.5 block text-sm font-medium text-ink">Flat / house · street</label>
+      </Field>
+      <Field label="Flat / house · street" inputID="alc-line1">
         <input id="alc-line1" autoComplete="street-address" value={line1} onChange={(e) => setLine1(e.target.value)} placeholder="Flat 3B, Sector 62" className={inputCls} />
-      </div>
+      </Field>
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label htmlFor="alc-city" className="mb-1.5 block text-sm font-medium text-ink">City</label>
+        <Field label="City" inputID="alc-city">
           <input id="alc-city" autoComplete="address-level2" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Noida" className={inputCls} />
-        </div>
-        <div>
-          <label htmlFor="alc-pin" className="mb-1.5 block text-sm font-medium text-ink">PIN code</label>
+        </Field>
+        <Field label="PIN code" inputID="alc-pin">
           <input
             id="alc-pin" inputMode="numeric" autoComplete="postal-code" value={pincode}
             onChange={(e) => { setPincode(e.target.value); onPincodeChange(e.target.value); }} placeholder="201301"
             aria-invalid={pincode.length > 0 && !pinValid} className={inputCls}
           />
-        </div>
+        </Field>
       </div>
 
       {/* Serviceability + timing, from the quote (server-validated — the same
