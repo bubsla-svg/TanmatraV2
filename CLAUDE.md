@@ -14,7 +14,7 @@ pnpm install
 pnpm --filter @workspace/api-server run dev        # Express API server
 pnpm --filter @workspace/storefront run dev        # Customer web app (Next.js) — new customer work goes here
 pnpm --filter @workspace/tanmatra run dev          # Legacy customer SPA (Vite) — still serves tanmatra.food
-pnpm --filter @workspace/tanmatra-mobile run dev   # Expo mobile app
+pnpm --filter @workspace/tanmatra-mobile run start # Expo mobile app — `start`, not `dev` (expo start; also `run ios` / `run android`)
 ```
 
 **Type-checking and build**
