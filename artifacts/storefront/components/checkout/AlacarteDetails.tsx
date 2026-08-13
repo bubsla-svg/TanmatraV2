@@ -6,7 +6,7 @@ import type { DishData } from "@workspace/menu-catalog";
 import { Card } from "@astryxdesign/core/Card";
 import { Field } from "@astryxdesign/core/Field";
 import { Button } from "@/components/ui/button";
-import { formatPaise } from "@/lib/format";
+import { formatMacroLine, formatPaise } from "@/lib/format";
 import { qtyOf, setQty, subtotalPaise, type CartState } from "@/lib/cartStore";
 import { useCart } from "@/components/cart/CartProvider";
 import { DPDP_CONSENT_COPY, DPDP_SCOPE_NOTE } from "@/lib/consent";
@@ -215,18 +215,25 @@ export function AlacarteDetails({
         <p className="mb-1 text-xs font-bold uppercase tracking-[0.2em] text-ink-muted">Current order</p>
         <ul className="divide-y divide-line">
           {cart.lines.map((l) => (
-            <li key={`${l.kind}-${l.dishId}-${(l.customizations ?? []).join("|")}`} className="flex items-center justify-between gap-3 py-3">
+            <li key={`${l.kind}-${l.dishId}-${(l.customizations ?? []).join("|")}`} className="flex items-start justify-between gap-3 py-3">
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-ink">{l.name}</p>
+                {/* Wraps to two lines rather than truncating, matching the
+                    cart drawer. This is the LAST look before money changes
+                    hands, and it is the surface least able to afford
+                    ambiguity: "Grilled Paneer Tikka with Quinoa…" and
+                    "…with Millet…" clip to the same string, and vertical
+                    space in a list of a few lines is free. */}
+                <p className="line-clamp-2 text-sm font-medium text-ink">{l.name}</p>
                 {l.customizations && l.customizations.length > 0 && (
-                  <p className="truncate text-xs text-ink-muted">{l.customizations.join(", ")}</p>
+                  <p className="line-clamp-2 text-xs text-ink-muted">{l.customizations.join(", ")}</p>
                 )}
                 <p className="tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
                 {/* D-14: the last look before money shows more than name +
-                    price — same figures the menu card already showed. */}
+                    price — same figures the menu card already showed, in the
+                    same spelling (lib/format.ts, N5.7). */}
                 {l.macros && (
                   <p className="tabular text-xs text-ink-faint">
-                    {l.macros.estimated ? "~" : ""}{l.macros.calories} kcal · {l.macros.estimated ? "~" : ""}{l.macros.protein}g P
+                    {formatMacroLine(l.macros, l.macros.estimated)}
                   </p>
                 )}
               </div>
