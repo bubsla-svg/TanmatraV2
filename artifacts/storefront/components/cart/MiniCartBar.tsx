@@ -1,11 +1,11 @@
 "use client";
-// "use client" justification: reads live cart state; hosts the cart drawer
-// open state (local, not URL — a cart is not shareable state).
+// "use client" justification: reads live cart state; renders the cart drawer
+// (whose open state is provider-held, not URL — a cart is not shareable
+// state, and the dish sheet needs to open it too; see CartProvider).
 // Stitch dark scope (component-scoped — the bar floats over light and dark
 // routes alike, so data-stitch sits on the bar root, not a page wrapper) —
 // see lib/themes/stitch.css.
 import "@/lib/themes/stitch.css";
-import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { itemCount, subtotalPaise } from "@/lib/cartStore";
@@ -39,8 +39,10 @@ const CartDrawer = dynamic(
  * DishBuyBar swapped out for this bar.
  */
 export function MiniCartBar() {
-  const { cart, hydrated } = useCart();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  // Open state now lives in CartProvider, not here: the dish drawer's
+  // post-add CTA also opens this drawer, and its overlay covers this bar —
+  // see CartProvider's `cartOpen` note.
+  const { cart, hydrated, cartOpen, setCartOpen } = useCart();
   const count = itemCount(cart);
 
   if (!hydrated || count === 0) return null;
@@ -60,14 +62,14 @@ export function MiniCartBar() {
           </p>
           <Button
             type="button"
-            onClick={() => setDrawerOpen(true)}
+            onClick={() => setCartOpen(true)}
             shape="pill" size="fluid" className="min-h-11 px-5 py-2 font-semibold"
           >
             View cart
           </Button>
         </div>
       </div>
-      <CartDrawer open={drawerOpen} onOpenChange={setDrawerOpen} />
+      <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />
     </>
   );
 }
