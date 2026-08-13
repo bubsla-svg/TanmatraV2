@@ -34,9 +34,14 @@ import { fileURLToPath } from "node:url";
 //  - data-screen-id only. data-screen-state is NOT gated: state strings
 //    already drift (14.2 emits "no-match", manifest says "no-matching-meals")
 //    and reconciling them is manifest work, not a build blocker.
-//  - One-directional (manifest → source). A reverse sweep would fail on the
-//    orphan id "MOB-10-Home-Dark" (Section01ClinicalHero.tsx), which predates
-//    the manifest's naming scheme. Retiring it is tracked work, not a gate.
+//  - BIDIRECTIONAL as of the orphan retirement: the reverse sweep also fails
+//    a data-screen-id in source that no manifest entry declares. That catches
+//    an invented or mistyped id, which the forward sweep cannot see (it only
+//    knows the ids the manifest already lists). It shipped one-directional
+//    because "MOB-10-Home-Dark" in Section01ClinicalHero.tsx — an id from a
+//    naming scheme predating the manifest, the only one of 49 not declared —
+//    would have failed it; that marker has since been removed in favour of
+//    the route root's real 5.1.
 //  - Presence-in-source only. A marker on a never-rendered branch still
 //    passes; runtime reachability stays an e2e concern (stitch-runtime specs).
 //
@@ -87,7 +92,7 @@ function findMissing(): string[] {
     for (const rel of artifacts) {
       const abs = path.join(REPO_ROOT, rel);
       // Missing-on-disk is verify-stitch-wiring's failure to report, not ours.
-      if (fs.existsSync(abs)) union += fs.readFileSync(abs, "utf8");
+      if (fs.existsSync(abs)) union += stripComments(fs.readFileSync(abs, "utf8"));
     }
 
     const literal = union.includes(`data-screen-id="${entry.promptId}"`);
@@ -97,6 +102,45 @@ function findMissing(): string[] {
     if (!literal && !computed) missing.push(entry.promptId);
   }
   return missing.sort();
+}
+
+const SCAN_ROOTS = ["artifacts/storefront/components", "artifacts/storefront/app"];
+const SKIP_DIRS = new Set(["node_modules", ".next", "dist", ".turbo", "quarantine"]);
+
+/**
+ * Strip comments before matching — in BOTH directions, and both matter:
+ * a commented-out marker must not satisfy the forward sweep (it renders
+ * nothing), and a marker quoted inside an explanatory comment must not trip
+ * the reverse sweep (this file's own retirement note for "MOB-10-Home-Dark"
+ * did exactly that). `//` is only treated as a line comment when it does not
+ * follow a colon, so "https://…" in a JSX attribute survives.
+ */
+function stripComments(src: string): string {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+}
+
+/** Every literal data-screen-id="…" in the storefront's own source. */
+function sourceIds(): Map<string, string> {
+  const found = new Map<string, string>();
+  const walk = (dir: string): void => {
+    if (!fs.existsSync(dir)) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const abs = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (!SKIP_DIRS.has(entry.name)) walk(abs);
+      } else if (/\.tsx?$/.test(entry.name)) {
+        const src = stripComments(fs.readFileSync(abs, "utf8"));
+        for (const m of src.matchAll(/data-screen-id="([^"]+)"/g)) {
+          const id = m[1];
+          if (id && !found.has(id)) {
+            found.set(id, path.relative(REPO_ROOT, abs).split(path.sep).join("/"));
+          }
+        }
+      }
+    }
+  };
+  for (const root of SCAN_ROOTS) walk(path.join(REPO_ROOT, root));
+  return found;
 }
 
 const HEADER = `# Stitch marker debt register — implemented screens whose data-screen-id
@@ -145,6 +189,20 @@ for (const id of [...baseline].sort()) {
     problems.push(
       `  screen ${id}: STALE BASELINE — the marker exists now (or the entry left the verified set).\n` +
         `      Delete this line from ${path.basename(BASELINE_PATH)}.`,
+    );
+  }
+}
+
+// Reverse sweep: an id in source that the manifest never declares. The forward
+// pass above cannot see this class at all — it iterates manifest entries, so a
+// typo'd or invented id is simply a screen it never looks for.
+const declared = new Set(manifest.map((e) => e.promptId));
+for (const [id, file] of [...sourceIds()].sort(([a], [b]) => a.localeCompare(b))) {
+  if (!declared.has(id)) {
+    problems.push(
+      `  ${file}: data-screen-id="${id}" matches no entry in the manifest.\n` +
+        `      Either it is a typo, or the screen needs a manifest entry. An id no\n` +
+        `      manifest row claims is untraceable — the e2e specs key on promptIds.`,
     );
   }
 }

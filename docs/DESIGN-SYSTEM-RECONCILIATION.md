@@ -45,9 +45,18 @@ read source files. The new gate closes exactly that gap:
   12.6/12.7 split id and attribute across two files.
 - **Does not gate** `data-screen-state` (state strings already drift: 14.2
   emits `no-match`, manifest says `no-matching-meals` — reconciling that is
-  manifest work) and runs one-directional, manifest → source (the orphan id
-  `MOB-10-Home-Dark` in `Section01ClinicalHero.tsx` predates the manifest's
-  naming scheme; retiring it is tracked work).
+  manifest work).
+- **Runs both directions.** Forward: every verified screen's id must exist in
+  source. Reverse: every id in source must be declared by a manifest entry —
+  which catches an invented or mistyped id, a class the forward sweep is blind
+  to (it only looks for ids the manifest already lists). It shipped
+  one-directional because of the single orphan `MOB-10-Home-Dark` in
+  `Section01ClinicalHero.tsx`, an id predating the manifest's naming scheme;
+  that marker has since been retired in favour of the route root's real 5.1,
+  and the reverse sweep turned on. Comments are stripped before matching in
+  both directions: a commented-out marker renders nothing and must not satisfy
+  the forward sweep, and an id quoted in an explanatory comment must not trip
+  the reverse one.
 - **Baseline** `scripts/stitch-marker-baseline.txt` seeded with the single
   honest gap (10.9, `DEF-10.9-FEEDBACK-001`); shrink-only, stale entries fail.
 - **Scope**: presence-in-source only. A marker on a never-rendered branch still
@@ -99,33 +108,50 @@ adopted, and follows the primitives out as they retire.
 What "seamless" concretely requires, ranked by visibility. Consistent already:
 Satoshi everywhere; `#D4AF37`/dark-ink action colour without exception.
 
-1. **The app is two apps.** 5 routes paint `#0a0a0a`, 4 paint `#f3f3f5`, in one
-   session — `lib/stitchRoutes.ts`'s dark allowlist covers 15 routes and
-   excludes `/care`, `/account`, `/legal`, `/faq`. Menu → Care flips black→white.
-   **Decision: finish the migration — dark is the brand canvas; extend the
-   allowlist to all customer routes** (the tokens are `light-dark()`-resolved,
-   so this is allowlist work + per-route visual verification, not a redesign).
-2. **The bottom nav is welded dark** (`MobileBottomNav.tsx` hardcodes
-   `data-stitch="dark"`) — on light routes it reads as a component that failed
-   to theme. Resolves automatically with (1); until then it stays, as the
-   lesser evil vs a nav that flickers theme per tab.
+1. ~~**The app is two apps.**~~ **FIXED.** 5 routes painted `#0a0a0a` and 4
+   painted `#f3f3f5` in one session; Menu → Care flipped black→white. Dark is
+   the brand canvas: `/care`, `/account`, `/legal`, `/faq` and their families
+   joined the allowlist. Verified at 390×844 — all seven report body `#0a0a0a`
+   with header and nav resolving to the same `#171717`, and an explicit
+   "light" toggle choice still wins.
+2. ~~**The bottom nav is welded dark.**~~ **RESOLVED by (1)** — there are no
+   light customer routes left for it to clash with.
 3. **Card radius is route-dependent**: 28px on /menu, 34px on /dish and /plans,
    22px on /care and /account; `/` alone uses five values. **Decision: a card
    is `rounded-2xl` (28px)** — /menu's 232-card coherence wins; 34/22 retire
    with each surface's next touch. The `2px` veg-dot bracket value gets a
    token; `rounded-full` vs Astryx `999px` unify on the Tailwind spelling.
-4. **8 gold-CTA geometries across 4 routes; 5 routes have no primary action at
-   all.** "Start the taste test" is an outline pill on /plans and a 56px solid
-   pill on /trial. **Decision: primary CTA = Astryx Button (gold-repointed),
-   pill, one height scale (44 standard / 56 pay-bar)** — adopted per surface
-   with the button-concept migration.
-5. **Same four goals, two components** (/plans list vs /care carousel, the
-   carousel clipping mid-word at 390px). **Decision: one shared goal-card
-   component; the /care rail becomes a stack at mobile width** (N5.12 already
-   tracks the rail-clipping half).
-6. Lower severity, tracked: translucent-bar ghosting on /plans, /legal, /faq,
-   /trial (N5.1's pattern, remaining instances); eyebrow tracking 0.3px vs
-   2.4px; `/plans` has no visible h1; h1 scale is 4 sizes × 2 weights.
+   *Open.*
+4. **8 gold-CTA geometries across 4 routes.** **Decision: primary CTA = Astryx
+   Button (gold-repointed), pill, one height scale (44 standard / 56 pay-bar)**
+   — adopted per surface with the button-concept migration. *Open.*
+   Note the audit's "5 routes have no primary action" is **not** all defect:
+   /menu's action is the per-card Add (outline at list density is the category
+   convention), and /plans' outline trial CTA is deliberately secondary to the
+   goal router — same words as /trial's gold pill, but a different job on a
+   different page. Only the geometry spread is being unified.
+5. **Same four goals, two components** (/plans list vs /care carousel).
+   **Clipping half FIXED**: the /care rails now render every option in a
+   two-column grid (`HorizontalSnapRail layout="grid"`) — 4 goals and 6
+   conditions in one viewport, no horizontal overflow. The shared goal-card
+   between /plans and /care is still *open*.
+6. Lower severity, tracked: eyebrow tracking 0.3px vs 2.4px; `/plans` has no
+   visible h1 (its `h1` is `sr-only` and the visible headline is an `h2`); h1
+   scale is 4 sizes × 2 weights. The audit's "translucent-bar ghosting" is
+   **not** a clearance bug — `(global)/layout.tsx` already pays
+   `pb-[calc(8rem+env(safe-area-inset-bottom))]`; what it saw is mid-scroll
+   content behind a 90%-opaque glass bar, which is the intended treatment.
+
+Shipped alongside, from the same 390px pass but outside the audit's axes:
+
+- **Bottom sheets cap at 88dvh.** The dish quick-view filled the whole
+  viewport, so it read as a page swap, the scrim had nothing to act on, and no
+  "outside" remained to tap. Fixed in the shared primitive, not by darkening
+  `--scrim` (whose dark-in-both-arms invariant is deliberate and tested).
+- **Menu cards tell dishes apart.** The catalog derives `description` from a
+  dish's first three ingredients, which across a family are the shared base —
+  Aglio Olio Veg/Chicken/Prawns printed one identical line. `dishCardSummary()`
+  drops pantry staples so the differentiating ingredient reaches the card.
 
 ## What this supersedes
 
