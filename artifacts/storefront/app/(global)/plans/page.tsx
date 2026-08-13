@@ -27,7 +27,10 @@ export default function PlansPage() {
       className="min-h-dvh"
     >
       <section className="mx-auto flex max-w-md flex-col gap-10 px-4 py-10">
-        <h1 className="sr-only">Choose your plan</h1>
+        {/* No sr-only h1 here any more — GoalRouter's "What's lunch for?" is
+            the page's h1. A hidden heading that disagreed with the visible one
+            gave the document two competing titles and left the visible one
+            ranked below it. */}
         <GoalRouter />
         <TrialCard />
 
