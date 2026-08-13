@@ -88,7 +88,7 @@ the page, a font that pops in, an offline story that 404s.
   the bad cache entry indefinitely.
 - **Effort:** S. **Risk:** minimal; the page is static by construction.
 
-### N1.3 Satoshi loads as a render-blocking third-party CSS import  **[font pop-in]**
+### N1.3 Satoshi loads as a render-blocking third-party CSS import  **[font pop-in]** — **Shipped 2026-08-13**
 
 - **Tell:** first paint on a cold mobile connection shows fallback glyphs, then the
   whole page's type swaps (`display=swap` FOUT) — apps never do this. Also chains
@@ -97,12 +97,27 @@ the page, a font that pops in, an offline story that 404s.
   `@import url('https://api.fontshare.com/v2/css?f[]=satoshi@...&display=swap')` —
   the very first line of the main stylesheet. Contrast: JetBrains Mono is already
   self-hosted via `next/font` (`app/layout.tsx:46-51`), so the pattern to match
-  exists in the same file.
-- **Fix:** self-host Satoshi via `next/font/local` (woff2, weights 400/500/700/900,
-  `display: "swap"`, exposed as the same CSS variable `--font-sans` consumes) and
-  delete the `@import`. One caveat to clear first: Satoshi ships under Fontshare's
-  ITF Free Font License — self-hosting is permitted, but confirm and vendor the
-  license file alongside the woff2s.
+  exists in the same file. Strengthened during the coherence sweep
+  (`docs/audit/COHERENCE-SWEEP-2026-08-13.md` addendum): a live network trace
+  measured `api.fontshare.com` taking **~12.8s** to fail closed
+  (`net::ERR_CONNECTION_RESET`) when unreachable — this was the actual mechanism
+  behind that sweep's route-timeout deaths, on every route, not just plan pages.
+- **Fix (shipped):** self-hosted via `next/font/local` — same four static weights
+  the CDN request asked for (400/500/700/900, normal style only, matching
+  `f[]=satoshi@900,700,500,400`), `display: "swap"`, exposed as `--font-satoshi`
+  and wired into `--font-sans` the same way `--font-mono` already wraps
+  `--font-jetbrains-mono`. The `@import` is deleted from `globals.css:1`.
+  Licensing was resolved definitively, not inferred: Fontshare's official
+  download package bundles the verbatim Free Font EULA
+  (`app/fonts/satoshi/LICENSE.txt`) — §01 Grant of License explicitly permits
+  free commercial/personal use "in any media (including Print, Web, Mobile,
+  Digital, Apps...) at any scale, at any location worldwide"; only modification
+  and standalone redistribution of the font itself are prohibited, neither of
+  which applies to self-hosting these files to render this site's own text.
+  Verified post-fix with a live network trace on both a light and a dark
+  (Stitch) route: zero requests to `fontshare.com`, and `document.fonts`
+  confirms the self-hosted faces genuinely reach `status: "loaded"` for every
+  weight the page actually renders.
 - **Effort:** S–M. **Risk:** low; visual output identical, loading behaviour better.
 
 ---
@@ -393,13 +408,17 @@ Named so nobody "fixes" them later:
 
 ## 8. Sequencing and verification
 
-Suggested order — each row is one PR-sized concern per the working agreement:
+Suggested order — each row is one PR-sized concern per the working agreement.
+Actual shipping order diverged at #3: N1.3 went first, out of turn, because the
+coherence sweep's network trace gave it the freshest and strongest evidence
+(a measured 12.8s render-blocking hang) of anything in this tier — see its
+entry in §2 for the shipped fix. N1.2 and N1.1 remain open, in original order.
 
 | Order | Item | Why this order |
 |---|---|---|
 | 1 | N1.2 offline route + SW version bump | It's a bug; smallest diff; completes an already-shipped feature |
 | 2 | N1.1 manifest + icons | The single biggest perceived jump; unblocks N4.5 |
-| 3 | N1.3 self-hosted Satoshi | First-paint stability; independent of everything |
+| 3 | N1.3 self-hosted Satoshi — **shipped 2026-08-13, out of turn** | First-paint stability; independent of everything |
 | 4 | N2.2 skeleton coverage (hot paths) | Pairs naturally with 5 |
 | 5 | N2.1 view-transition cross-fade | The two together transform perceived navigation |
 | 6 | N2.3 menu state → URL | Contained to menu components + one e2e |
