@@ -1,5 +1,4 @@
 import { cookies } from "next/headers";
-import { Sparkles } from "lucide-react";
 import { Section01ClinicalHero } from "@/components/landing/Section01ClinicalHero";
 import { deriveHeroContent } from "@/lib/heroContent";
 import { Section02QualificationChips } from "@/components/landing/Section02QualificationChips";
@@ -130,22 +129,22 @@ export default async function HomePage() {
         <Section05LogisticsMoat />
         <Section03AgitationPanel />
 
-        {/* Compact AI recommendation card */}
-        <section className="px-gutter pb-8">
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 relative overflow-hidden">
-            <div aria-hidden className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
-            <div className="flex gap-3 items-center mb-4">
-              {/* Was a `material-symbols-outlined` ligature span for a font
-                  this app never loads, so it shipped the literal string
-                  "auto_awesome" to every visitor on the entry route. */}
-              <Sparkles aria-hidden className="h-5 w-5 text-primary" />
-              <span className="font-bold text-xs text-primary uppercase tracking-widest">Smart Match</span>
-            </div>
-            <h3 className="text-lg font-bold text-ink mb-2">Optimize your Afternoon</h3>
-            <p className="text-ink-muted text-sm mb-6">Based on your goals, adding the Matcha Focus protocol will stabilize your 3PM glucose dip.</p>
-            <button className="px-6 py-2.5 rounded-full bg-primary text-primary-foreground font-bold text-xs hover:opacity-90 active:scale-[0.98] transition-all">Add to Today</button>
-          </div>
-        </section>
+        {/* No "Smart Match" card here (owner decision, 2026-08-13). It read
+            "Based on your goals, adding the Matcha Focus protocol will
+            stabilize your 3PM glucose dip" — a per-visitor clinical finding,
+            hardcoded in a Server Component, shown identically to every
+            anonymous visitor including ones with no goals set and no order
+            history. Its "Add to Today" button had no handler and could not
+            have one here, so the one thing it invited you to do was the one
+            thing it could not do.
+
+            Restoring it needs a real recommendation from the API keyed to a
+            real profile, and a client island to act on it — not a second
+            literal. Until then the page says nothing rather than something
+            untrue, which matters more here than on most surfaces: this page
+            also claims ISO 22000, FSSAI licensing and RD supervision, and a
+            visitor who catches one invented claim has no reason to believe
+            the audited ones. */}
 
         {/* FAQ Accordion */}
         <Section10FaqAccordion />
