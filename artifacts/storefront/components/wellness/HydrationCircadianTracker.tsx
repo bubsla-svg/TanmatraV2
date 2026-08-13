@@ -95,55 +95,55 @@ export const HydrationCircadianTracker: React.FC = () => {
   let metabolicStage = {
     title: 'Anabolic Digestion Stage',
     desc: 'Blood sugar is being normalized and glucose is stored as glycogen.',
-    color: 'text-cyan-400'
+    color: 'text-[var(--gold-text)]'
   };
 
   if (elapsedHours >= 12) {
     metabolicStage = {
       title: 'Autophagy & Cellular Repair Active',
       desc: 'Damaged cellular proteins are cleared & mitochondrial biogenesis is triggered!',
-      color: 'text-emerald-400'
+      color: 'text-sage-text'
     };
   } else if (elapsedHours >= 8) {
     metabolicStage = {
       title: 'Ketosis & Accelerated Fat Oxidation',
       desc: 'Glycogen is depleted and liver synthesizes ketone bodies for energy.',
-      color: 'text-amber-400'
+      color: 'text-[var(--gold-text)]'
     };
   } else if (elapsedHours >= 4) {
     metabolicStage = {
       title: 'Insulin Drop & Glycogen Depletion',
       desc: 'Circulating insulin levels drop, enabling fat stores to be unlocked.',
-      color: 'text-blue-400'
+      color: 'text-[var(--gold)]'
     };
   }
 
   return (
     <div className="space-y-8">
       {/* Top Banner Header */}
-      <div className="bg-gradient-to-r from-sky-900 via-sky-950 to-slate-950 text-white p-6 sm:p-8 rounded-3xl shadow-2xl relative overflow-hidden border border-sky-800/30">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-400/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="bg-gradient-to-r from-[var(--gold)]/15 via-[var(--gold)]/10 to-[var(--surface)] text-ink p-6 sm:p-8 rounded-3xl shadow-2xl relative overflow-hidden border border-[var(--gold)]/30">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-gold/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 font-extrabold text-xs border border-cyan-500/30 flex items-center gap-1.5 shadow-sm">
-                <Droplets className="w-3.5 h-3.5 text-cyan-400" /> Circadian Rhythm & Electrolyte Studio
+              <span className="px-3 py-1 rounded-full bg-gold/20 text-[var(--gold-text)] font-extrabold text-xs border border-[var(--gold)]/30 flex items-center gap-1.5 shadow-sm">
+                <Droplets className="w-3.5 h-3.5 text-[var(--gold-text)]" /> Circadian Rhythm & Electrolyte Studio
               </span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black font-heading tracking-tight">
               AI Hydration & Circadian Timing Tracker
             </h2>
-            <p className="text-xs sm:text-sm text-slate-200 font-medium max-w-xl">
+            <p className="text-xs sm:text-sm text-ink-faint font-medium max-w-xl">
               Track daily hydration, log water intake, monitor intermittent fasting metabolic stages, and optimize your digestive circadian rhythm with ICMR clinical guidelines.
             </p>
           </div>
 
-          <div className="flex items-center gap-3 bg-white/10 p-4 rounded-2xl border border-white/15 backdrop-blur-md shrink-0">
-            <Droplets className="w-8 h-8 text-cyan-400 animate-bounce" />
+          <div className="flex items-center gap-3 bg-surface-raised p-4 rounded-2xl border border-line backdrop-blur-md shrink-0">
+            <Droplets className="w-8 h-8 text-[var(--gold-text)] animate-bounce" />
             <div>
-              <strong className="text-2xl font-black text-white font-heading block">{totalWaterLoggedMl} <span className="text-xs text-cyan-300">/ {dailyGoalMl} mL</span></strong>
-              <span className="text-[10px] text-slate-300 uppercase tracking-wider font-bold">Daily Hydration Index: {hydrationPercentage}%</span>
+              <strong className="text-2xl font-black text-ink font-heading block">{totalWaterLoggedMl} <span className="text-xs text-[var(--gold-text)]">/ {dailyGoalMl} mL</span></strong>
+              <span className="text-[10px] text-ink-faint uppercase tracking-wider font-bold">Daily Hydration Index: {hydrationPercentage}%</span>
             </div>
           </div>
         </div>

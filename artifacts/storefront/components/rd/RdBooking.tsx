@@ -106,7 +106,7 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
           return (
             <button key={k.kind} type="button" aria-pressed={on} disabled={!!pending}
               onClick={() => { setKind(k.kind); setBooked(null); }}
-              className={`rounded-full px-4 py-2.5 text-xs font-semibold transition-colors disabled:opacity-40 ${on ? "bg-gold text-[var(--gold-ink)]" : "border border-line text-ink-muted hover:border-line-strong hover:text-ink"}`}>
+              className={`rounded-full px-4 py-2.5 text-xs font-semibold transition-colors disabled:opacity-40 ${on ? "bg-gold text-[var(--gold-ink)]" : "border border-line text-ink-muted hover:border-line-strong hover:brightness-110"}`}>
               {k.label} · {p === 0 ? "Free" : formatPaise(p)}
             </button>
           );
@@ -125,7 +125,7 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
                     const on = sel?.startAt === s.startAt;
                     return (
                       <button key={s.startAt} type="button" aria-pressed={on} onClick={() => setSel(s)}
-                        className={`tabular rounded-xl border px-2.5 py-1.5 text-[11px] transition-colors ${on ? "border-[var(--gold)] bg-[color-mix(in_srgb,var(--gold)_12%,transparent)] text-ink" : "border-line text-ink-muted hover:border-line-strong hover:text-ink"}`}>
+                        className={`tabular rounded-xl border px-2.5 py-1.5 text-[11px] transition-colors ${on ? "border-[var(--gold)] bg-[color-mix(in_srgb,var(--gold)_12%,transparent)] text-ink" : "border-line text-ink-muted hover:border-line-strong hover:brightness-110"}`}>
                         {fmt(s.startAt)}
                       </button>
                     );

@@ -17,15 +17,15 @@ interface DailyQuestsCardProps {
 
 export const DailyQuestsCard: React.FC<DailyQuestsCardProps> = ({ quests, onToggleQuest }) => {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+    <div className="bg-surface rounded-3xl p-6 sm:p-8 border border-line shadow-xl space-y-6">
+      <div className="flex items-center justify-between border-b border-line pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold">
+          <div className="w-10 h-10 rounded-2xl bg-sage/10 text-sage-text flex items-center justify-center font-bold">
             <Zap className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-slate-900 dark:text-white font-heading">Daily Wellness Quests</h3>
-            <span className="text-xs text-slate-500 font-medium">Complete daily actions to earn points & badges</span>
+            <h3 className="text-lg font-black text-ink font-heading">Daily Wellness Quests</h3>
+            <span className="text-xs text-ink-muted font-medium">Complete daily actions to earn points & badges</span>
           </div>
         </div>
       </div>
@@ -37,22 +37,22 @@ export const DailyQuestsCard: React.FC<DailyQuestsCardProps> = ({ quests, onTogg
             onClick={() => onToggleQuest(quest.id)}
             className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between gap-4 ${
               quest.completed 
-                ? 'border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/20' 
-                : 'border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 hover:border-emerald-500/30'
+                ? 'border-[var(--sage)]/50 bg-sage-soft' 
+                : 'border-line bg-surface-subtle hover:border-[var(--sage)]/30'
             }`}
           >
             <div className="flex items-center gap-3">
               <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${
-                quest.completed ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'
+                quest.completed ? 'bg-sage text-[var(--sage-ink)]' : 'bg-surface-raised text-ink-faint'
               }`}>
                 <CheckCircle2 className="w-4 h-4" />
               </div>
-              <span className={`text-xs font-bold ${quest.completed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white'}`}>
+              <span className={`text-xs font-bold ${quest.completed ? 'line-through text-ink-faint' : 'text-ink'}`}>
                 {quest.title}
               </span>
             </div>
 
-            <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-black shrink-0">
+            <span className="px-3 py-1 rounded-full bg-gold/10 text-[var(--gold-text)] text-xs font-black shrink-0">
               +{quest.points} Pts
             </span>
           </div>

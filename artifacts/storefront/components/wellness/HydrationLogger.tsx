@@ -29,22 +29,22 @@ export const HydrationLogger: React.FC<HydrationLoggerProps> = ({
   handleRemoveLog,
 }) => {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+    <div className="bg-surface rounded-3xl p-6 sm:p-8 border border-line shadow-xl space-y-6">
+      <div className="flex items-center justify-between border-b border-line pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center font-bold">
+          <div className="w-10 h-10 rounded-2xl bg-gold/10 text-[var(--gold-text)] flex items-center justify-center font-bold">
             <Droplets className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-slate-900 dark:text-white font-heading">Water & Fluid Logger</h3>
-            <span className="text-xs text-slate-500 font-medium">Daily Goal: 3.0 Liters (3,000 mL)</span>
+            <h3 className="text-lg font-black text-ink font-heading">Water & Fluid Logger</h3>
+            <span className="text-xs text-ink-muted font-medium">Daily Goal: 3.0 Liters (3,000 mL)</span>
           </div>
         </div>
 
         {waterLogs.length > 0 && (
           <button 
             onClick={handleResetWater}
-            className="text-xs font-bold text-slate-400 hover:text-rose-500 transition-colors flex items-center gap-1"
+            className="text-xs font-bold text-ink-faint hover:text-[var(--danger)] transition-colors flex items-center gap-1"
           >
             <Trash2 className="w-3.5 h-3.5" /> Reset
           </button>
@@ -52,10 +52,10 @@ export const HydrationLogger: React.FC<HydrationLoggerProps> = ({
       </div>
 
       {/* Visual Hydration Meter Ring */}
-      <div className="bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-slate-950 dark:to-slate-900 p-6 rounded-3xl border border-cyan-100 dark:border-slate-800 text-center space-y-4 relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[var(--gold)]/10 to-[var(--gold)]/10 p-6 rounded-3xl border border-[var(--gold)] text-center space-y-4 relative overflow-hidden">
         <div className="relative w-44 h-44 mx-auto flex items-center justify-center">
           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="42" stroke="currentColor" strokeWidth="8" className="text-slate-200 dark:text-slate-800" fill="transparent" />
+            <circle cx="50" cy="50" r="42" stroke="currentColor" strokeWidth="8" className="text-ink-faint" fill="transparent" />
             <circle 
               cx="50" cy="50" r="42" 
               stroke="currentColor" 
@@ -63,18 +63,18 @@ export const HydrationLogger: React.FC<HydrationLoggerProps> = ({
               strokeDasharray="263.89" 
               strokeDashoffset={263.89 - (263.89 * hydrationPercentage) / 100}
               strokeLinecap="round"
-              className="text-cyan-500 transition-all duration-700 ease-out" 
+              className="text-[var(--gold-text)] transition-all duration-700 ease-out" 
               fill="transparent" 
             />
           </svg>
 
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <strong className="text-3xl font-black text-slate-900 dark:text-white font-heading">{hydrationPercentage}%</strong>
-            <span className="text-[11px] font-extrabold text-cyan-600 dark:text-cyan-400 mt-0.5">{totalWaterLoggedMl} mL Logged</span>
+            <strong className="text-3xl font-black text-ink font-heading">{hydrationPercentage}%</strong>
+            <span className="text-[11px] font-extrabold text-[var(--gold-text)] mt-0.5">{totalWaterLoggedMl} mL Logged</span>
           </div>
         </div>
 
-        <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+        <p className="text-xs text-ink-muted font-medium">
           {hydrationPercentage >= 100 
             ? '🎉 Congratulations! You have achieved 100% of your daily clinical hydration goal!' 
             : `Drink ${dailyGoalMl - totalWaterLoggedMl} mL more to reach optimal hydration.`}
@@ -83,33 +83,33 @@ export const HydrationLogger: React.FC<HydrationLoggerProps> = ({
 
       {/* Quick Add Buttons */}
       <div className="space-y-3">
-        <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">Quick Log Presets:</label>
+        <label className="text-xs font-extrabold uppercase tracking-wider text-ink-muted block">Quick Log Presets:</label>
         <div className="grid grid-cols-3 gap-3">
           <button
             onClick={() => handleAddWater(250)}
-            className="p-3 rounded-2xl bg-cyan-50 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white text-slate-800 dark:text-slate-200 border border-cyan-200 dark:border-slate-700 transition-all text-center space-y-1 group"
+            className="p-3 rounded-2xl bg-[var(--gold)]/10 hover:bg-gold hover:text-[var(--gold-ink)] text-ink border border-[var(--gold)] transition-all text-center space-y-1 group"
           >
             <span className="text-xl block group-hover:scale-110 transition-transform">🥛</span>
             <strong className="text-xs font-black block">+250 mL</strong>
-            <span className="text-[10px] text-slate-500 group-hover:text-cyan-100 block">Glass</span>
+            <span className="text-[10px] text-ink-muted group-hover:text-[var(--gold-text)] block">Glass</span>
           </button>
 
           <button
             onClick={() => handleAddWater(500)}
-            className="p-3 rounded-2xl bg-cyan-50 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white text-slate-800 dark:text-slate-200 border border-cyan-200 dark:border-slate-700 transition-all text-center space-y-1 group"
+            className="p-3 rounded-2xl bg-[var(--gold)]/10 hover:bg-gold hover:text-[var(--gold-ink)] text-ink border border-[var(--gold)] transition-all text-center space-y-1 group"
           >
             <span className="text-xl block group-hover:scale-110 transition-transform">🧴</span>
             <strong className="text-xs font-black block">+500 mL</strong>
-            <span className="text-[10px] text-slate-500 group-hover:text-cyan-100 block">Sports Bottle</span>
+            <span className="text-[10px] text-ink-muted group-hover:text-[var(--gold-text)] block">Sports Bottle</span>
           </button>
 
           <button
             onClick={() => handleAddWater(1000)}
-            className="p-3 rounded-2xl bg-cyan-50 dark:bg-slate-800 hover:bg-cyan-500 hover:text-white text-slate-800 dark:text-slate-200 border border-cyan-200 dark:border-slate-700 transition-all text-center space-y-1 group"
+            className="p-3 rounded-2xl bg-[var(--gold)]/10 hover:bg-gold hover:text-[var(--gold-ink)] text-ink border border-[var(--gold)] transition-all text-center space-y-1 group"
           >
             <span className="text-xl block group-hover:scale-110 transition-transform">🫖</span>
             <strong className="text-xs font-black block">+1,000 mL</strong>
-            <span className="text-[10px] text-slate-500 group-hover:text-cyan-100 block">Jug</span>
+            <span className="text-[10px] text-ink-muted group-hover:text-[var(--gold-text)] block">Jug</span>
           </button>
         </div>
       </div>
@@ -121,12 +121,12 @@ export const HydrationLogger: React.FC<HydrationLoggerProps> = ({
           value={customMlInput}
           onChange={(e) => setCustomMlInput(e.target.value)}
           placeholder="Enter custom mL (e.g., 350)..."
-          className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-cyan-500"
+          className="flex-1 bg-surface-subtle border border-line rounded-xl px-4 py-2 text-xs text-ink focus:outline-none focus:border-[var(--gold)]"
         />
         <button
           type="submit"
           disabled={!customMlInput}
-          className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white text-xs font-bold shadow-md transition-all flex items-center gap-1"
+          className="px-4 py-2 rounded-xl bg-gold hover:brightness-110 disabled:opacity-50 text-[var(--gold-ink)] text-xs font-bold shadow-md transition-all flex items-center gap-1"
         >
           <Plus className="w-3.5 h-3.5" /> Log
         </button>
@@ -134,20 +134,20 @@ export const HydrationLogger: React.FC<HydrationLoggerProps> = ({
 
       {/* Water Log History Feed */}
       {waterLogs.length > 0 && (
-        <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-          <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 block">Today&apos;s Log History:</span>
+        <div className="space-y-2 pt-2 border-t border-line">
+          <span className="text-[11px] font-extrabold uppercase tracking-wider text-ink-muted block">Today&apos;s Log History:</span>
           <div className="max-h-40 overflow-y-auto space-y-2 pr-1 no-scrollbar">
             {waterLogs.map(log => (
-              <div key={log.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 text-xs">
+              <div key={log.id} className="flex items-center justify-between p-2.5 rounded-xl bg-surface-subtle border border-line text-xs">
                 <div className="flex items-center gap-2">
-                  <Droplets className="w-3.5 h-3.5 text-cyan-500" />
-                  <span className="font-bold text-slate-800 dark:text-slate-200">{log.waterMl} mL Logged</span>
+                  <Droplets className="w-3.5 h-3.5 text-[var(--gold-text)]" />
+                  <span className="font-bold text-ink">{log.waterMl} mL Logged</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-[10px] text-slate-400 font-medium">
+                  <span className="text-[10px] text-ink-faint font-medium">
                     {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
-                  <button onClick={() => handleRemoveLog(log.id)} className="text-slate-400 hover:text-rose-500">
+                  <button onClick={() => handleRemoveLog(log.id)} className="text-ink-faint hover:text-[var(--danger)]">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
