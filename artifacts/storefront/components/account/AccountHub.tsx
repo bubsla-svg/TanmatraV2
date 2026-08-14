@@ -116,7 +116,7 @@ export function AccountHub() {
       return <SignInOffer onVerified={(u) => queryClient.setQueryData(ME_KEY, u)} />;
     }
     return (
-      <div className="mt-4 rounded-xl border border-line bg-surface p-6 text-center">
+      <div className="mt-4 rounded-card border border-line bg-surface p-6 text-center">
         <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load your account</p>
         <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-ink-faint">
           Something went wrong on our end — this usually clears up on retry.

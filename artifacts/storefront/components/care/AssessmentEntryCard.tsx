@@ -12,7 +12,7 @@ export function AssessmentEntryCard({ condition }: { condition?: string }) {
   return (
     <Link
       href={href}
-      className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface p-5 transition-colors hover:border-line-strong"
+      className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface p-5 transition-colors hover:border-line-strong"
     >
       <span className="text-sm font-semibold text-ink">Find my starting point</span>
       <ArrowRight size={18} className="shrink-0 text-gold-text" aria-hidden />

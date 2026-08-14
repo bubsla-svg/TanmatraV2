@@ -118,6 +118,21 @@
   --radius-3xl: 34px;
   --radius-full: 999px;
 
+  /* SEMANTIC, not another step: the corner of "a card" — the repeated
+     surface-on-surface unit a route is built from. It exists because the
+     t-shirt names carry no meaning about WHAT is being rounded, so a card got
+     whichever step its author reached for: a 390px audit measured "a card" at
+     28px on /menu, 34px on /dish and /plans, 22px on /care and /account, and
+     all of 22/28/34/16/full on the home page alone. Walking menu → dish →
+     plans → care therefore changed the corner of the same concept three
+     times.
+
+     Card containers use `rounded-card`. Things INSIDE a card keep a numeric
+     step and a smaller one — a nested corner must be tighter than its parent
+     or the inner block looks like it is bulging out of it — and so do controls
+     (inputs, chips, pills), which are not cards. */
+  --radius-card: var(--radius-2xl);
+
   /* ── Shadows (light) ───────────────────────────────────────────────────── */
   --shadow-card: 0 1px 2px rgba(26, 28, 30, 0.06), 0 4px 12px rgba(26, 28, 30, 0.05);
   --shadow-raised: 0 6px 24px rgba(26, 28, 30, 0.1);

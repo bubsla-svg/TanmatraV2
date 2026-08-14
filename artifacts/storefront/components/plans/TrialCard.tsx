@@ -11,7 +11,7 @@ export function TrialCard() {
   return (
     <Link
       href="/trial"
-      className="flex flex-col gap-3 rounded-3xl border border-line-strong bg-transparent p-6 transition-colors hover:border-gold active:scale-[0.98]"
+      className="flex flex-col gap-3 rounded-card border border-line-strong bg-transparent p-6 transition-colors hover:border-gold active:scale-[0.98]"
     >
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-base font-semibold text-ink">Not sure yet? Try 3 days first</h3>

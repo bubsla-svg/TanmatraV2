@@ -15,7 +15,7 @@ export function DishAllergens({ dish }: { dish: DishData }) {
 
   return (
     <section
-      className={`mt-6 rounded-3xl border bg-surface p-5 ${
+      className={`mt-6 rounded-card border bg-surface p-5 ${
         warn ? "border-[var(--danger)]" : "border-line"
       }`}
     >

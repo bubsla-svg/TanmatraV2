@@ -27,7 +27,7 @@ export function SectionTrialPush() {
 
   return (
     <section className="mx-auto w-full max-w-5xl px-4 sm:px-6">
-      <div className="overflow-hidden rounded-3xl border-2 border-gold/40 bg-surface-raised p-6 shadow-md sm:p-10">
+      <div className="overflow-hidden rounded-card border-2 border-gold/40 bg-surface-raised p-6 shadow-md sm:p-10">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-xl">
             <span className="text-xs font-bold uppercase tracking-wider text-gold-text">

@@ -51,7 +51,7 @@ export function SubscriptionCard({
   const [showDeliveries, setShowDeliveries] = useState(false);
   const [showChangePlan, setShowChangePlan] = useState(false);
   return (
-    <li className="rounded-3xl border border-line bg-surface p-5">
+    <li className="rounded-card border border-line bg-surface p-5">
       <div className="flex items-start justify-between gap-3">
         <span className="text-base font-semibold text-ink">
           {sub.cadence} · {sub.mealsPerDelivery} meals / delivery

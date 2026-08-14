@@ -193,7 +193,7 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
               straight through the card as it scrolled past — which is what
               N5.6 actually reported. The mask band below handles the 16px
               float gap; this handles the card itself. */}
-          <div className="relative z-10 w-full rounded-3xl border border-line bg-bg p-4 shadow-2xl">
+          <div className="relative z-10 w-full rounded-card border border-line bg-bg p-4 shadow-2xl">
             <div className="flex items-center justify-between gap-3">
               <VStack gap={0}>
                 <Text type="supporting" color="secondary">

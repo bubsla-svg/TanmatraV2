@@ -54,7 +54,7 @@ export function FlipCard({ spec, initialFlipped = false }: FlipCardProps) {
   // got the approximation tilde, including ones whose macros are exact.
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-[var(--shadow-card)] transition-transform hover:-translate-y-0.5">
+    <article className="group flex flex-col overflow-hidden rounded-card border border-line bg-surface shadow-[var(--shadow-card)] transition-transform hover:-translate-y-0.5">
       <button
         type="button"
         onClick={() => toggleFlip(true)}

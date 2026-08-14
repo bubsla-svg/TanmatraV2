@@ -21,8 +21,17 @@ test.describe("stitch-runtime · plan discovery", () => {
     // GoalRouter leads the page (manifest implementationComponent); the
     // primary action is picking a goal — desk_fuel's promise is a stable
     // routerPlans() entry (lib/plans.ts).
+    //
+    // Asserted as a LINK, and by substring. The answer used to be a <button>
+    // that called router.push; it is now a real <a href="/plan/desk_fuel">
+    // (GoalCard, shared with /care), so middle-click and open-in-new-tab work
+    // and the destination is visible on hover. The manifest's contract for
+    // this screen is `expectedPrimaryAction: "Pick your goal"` — the action,
+    // not the element type — so pinning `button` was pinning the old
+    // implementation. Substring because the card's accessible name now also
+    // carries the plan name subtitle it routes to.
     await expect(page.getByRole("heading", { name: /what.s lunch for\?/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Get me through the workday" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Get me through the workday/ })).toBeVisible();
     await expect(marker(page, "6.1", "default")).toBeVisible();
     expect(errors).toEqual([]);
     await evidenceShot(page, "6.1");

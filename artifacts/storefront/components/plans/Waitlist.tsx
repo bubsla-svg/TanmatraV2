@@ -46,7 +46,7 @@ export function Waitlist({ planId, planName, reason }: { planId: string; planNam
 
   if (done) {
     return (
-      <div className="rounded-xl border border-line bg-surface p-6">
+      <div className="rounded-card border border-line bg-surface p-6">
         <p className="text-lg font-semibold text-ink">You&rsquo;re on the list</p>
         <p className="mt-2 text-sm text-ink-muted">
           We&rsquo;ll message you the moment {planName} opens for your preference.
@@ -56,7 +56,7 @@ export function Waitlist({ planId, planName, reason }: { planId: string; planNam
   }
 
   return (
-    <form onSubmit={submit} className="rounded-xl border border-line bg-surface p-6">
+    <form onSubmit={submit} className="rounded-card border border-line bg-surface p-6">
       {/* Plan name is the page's FocusHeader h1 (app/(focus)/plan/[planId]/page.tsx) —
           this used to duplicate it as a second h1. */}
       <p className="text-lg font-semibold text-ink">{planName} isn&rsquo;t open yet</p>

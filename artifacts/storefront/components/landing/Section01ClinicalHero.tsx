@@ -161,7 +161,7 @@ export function Section01ClinicalHero({
               {hero.badge}
             </span>
           )}
-          <div className="overflow-hidden rounded-3xl border border-line bg-surface-raised shadow-2xl shadow-black/40">
+          <div className="overflow-hidden rounded-card border border-line bg-surface-raised shadow-2xl shadow-black/40">
             <div className="relative aspect-[16/9] w-full">
               <SafeImage
                 src="/brand/hero-dish.jpg"

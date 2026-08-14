@@ -169,6 +169,9 @@
      @workspace/tokens for how that inverted the ladder. */
   --radius-2xl: var(--radius-2xl);
   --radius-3xl: var(--radius-3xl);
+  /* Emits `rounded-card` — the semantic corner for a card container. See the
+     token's own comment in @workspace/tokens for the rule it encodes. */
+  --radius-card: var(--radius-card);
 
   /* Overlay/disclosure motion — COMPOSITOR PROPERTIES ONLY (transform +
      opacity). Never animate height/width/top/left here: those run on the main

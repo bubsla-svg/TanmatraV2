@@ -269,13 +269,13 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
       </div>
 
       <div className="mt-12 grid gap-6 md:grid-cols-2 border-t border-line pt-8">
-        <div className="flex flex-col items-center text-center p-4 bg-surface rounded-xl border border-line">
+        <div className="flex flex-col items-center text-center p-4 bg-surface rounded-card border border-line">
           <span className="text-lg font-bold text-ink">Don't go it alone.</span>
           <p className="mt-1 text-xs text-ink-muted max-w-sm">
             Join an upcoming RD-led <Link href="/challenges" className="font-bold text-gold-text underline">Community Challenge</Link> for real-time accountability and group support.
           </p>
         </div>
-        <div className="flex flex-col items-center text-center p-4 bg-surface rounded-xl border border-line">
+        <div className="flex flex-col items-center text-center p-4 bg-surface rounded-card border border-line">
           <span className="text-lg font-bold text-ink">Need something specific?</span>
           <p className="mt-1 text-xs text-ink-muted max-w-sm">
             Customize your macros, calorie targets, and dietary preferences in our <Link href="/custom-build" className="font-bold text-gold-text underline">Custom Plan Builder</Link>.
