@@ -26,7 +26,16 @@
 // an update and re-run install()/precacheShell() at all; an already-active
 // worker never spontaneously notices that a previously-404ing precache route
 // started returning 200. New cache names are a side effect, not the point.
-const VERSION = "v2";
+//
+// v3: the offline page's JS chunks join the precache (SHELL_ASSET_URL below).
+// The bump is not strictly required to re-run install — editing this file at
+// all does that — but it earns its keep twice. It renames ASSET_CACHE, and
+// `activate` deletes every key outside EXPECTED_CACHES, which is the ONLY
+// thing that ever evicts assets from it: entries are hash-named and immutable,
+// so within one VERSION every deploy's orphaned chunks accumulate forever. It
+// also guarantees no client is left on a v2 asset cache that predates the JS
+// precache and would still fail the offline render this fixes.
+const VERSION = "v3";
 const SHELL_CACHE = `tnm-shell-${VERSION}`;
 const ASSET_CACHE = `tnm-assets-${VERSION}`;
 const EXPECTED_CACHES = [SHELL_CACHE, ASSET_CACHE];
@@ -57,10 +66,19 @@ const NEVER_CACHE = [/^\/api\//, /^\/checkout(\/|$)/, /^\/account(\/|$)/];
 const STATIC_PREFIXES = ["/_next/static/", "/images/", "/icons/", "/fonts/"];
 const STATIC_EXTENSIONS = /\.(?:woff2?|ttf|otf|png|jpe?g|webp|avif|gif|svg|ico)$/;
 
-// Next emits the layout stylesheet and the self-hosted next/font files as
-// content-hashed hrefs in every document it renders. Read them out of the
-// offline page rather than hardcoding hashes that change on every build.
-const SHELL_ASSET_HREF = /href="(\/_next\/static\/[^"]+\.(?:css|woff2))"/g;
+// Next emits the layout stylesheet, the self-hosted next/font files AND the
+// route's JS chunks as content-hashed URLs in every document it renders. Read
+// them out of the offline page rather than hardcoding hashes that change on
+// every build.
+//
+// Two attributes, because Next uses both: `href` for stylesheets, fonts and
+// preloads, `src` for the scripts. Only `href` was read here, so the offline
+// page's own JavaScript was never precached — it was fetched on demand, which
+// works exactly until the moment the page is needed. A visitor who lost
+// connectivity got the offline HTML with its scripts 404ing into
+// `cacheFirst`, which is the origin of the "Failed to fetch" pairs in the
+// console. The fallback could not hydrate offline; now it can.
+const SHELL_ASSET_URL = /(?:href|src)="(\/_next\/static\/[^"]+\.(?:css|woff2|js))"/g;
 
 function isNeverCache(pathname) {
   return NEVER_CACHE.some((pattern) => pattern.test(pathname));
@@ -89,11 +107,13 @@ async function precacheShell() {
 }
 
 /**
- * The offline page is HTML that references a hashed stylesheet and hashed font
- * files. Without them it paints unstyled the very first time it is shown: the
- * worker installs on the user's first load, before anything has populated
- * ASSET_CACHE. Fetching it once here and precaching what it links to makes the
- * fallback self-sufficient from the moment it exists.
+ * The offline page is HTML that references a hashed stylesheet, hashed font
+ * files and its own hashed JS chunks. Without them it paints unstyled and
+ * never hydrates the very first time it is shown: the worker installs on the
+ * user's first load, before anything has populated ASSET_CACHE. Fetching it
+ * once here and precaching everything it links to makes the fallback
+ * self-sufficient from the moment it exists — which is the only state that
+ * matters, since by definition it renders when the network is gone.
  */
 async function precacheOfflineAssets() {
   try {
@@ -101,7 +121,7 @@ async function precacheOfflineAssets() {
     if (!response.ok) return;
     const html = await response.text();
     const hrefs = new Set();
-    for (const match of html.matchAll(SHELL_ASSET_HREF)) hrefs.add(match[1]);
+    for (const match of html.matchAll(SHELL_ASSET_URL)) hrefs.add(match[1]);
     const assets = await caches.open(ASSET_CACHE);
     await Promise.allSettled([...hrefs].map((href) => assets.add(href)));
   } catch {
@@ -182,17 +202,36 @@ async function handleNavigation(request, url) {
   }
 }
 
-/** Static assets: cache-first. Hashed filenames make them immutable. */
+/**
+ * Static assets: cache-first. Hashed filenames make them immutable.
+ *
+ * The catch is not defensive padding. `respondWith()` takes ownership of this
+ * promise, so an uncaught rejection becomes "The FetchEvent for <url> resulted
+ * in a network error response: the promise was rejected" plus an unhandled
+ * `TypeError: Failed to fetch` in the page's console — and the request fails
+ * as a NETWORK ERROR rather than a response the browser can reason about.
+ * That is the state a miss + no network always produced: exactly the moment
+ * the worker exists for, spent throwing.
+ *
+ * Returning `Response.error()` is still a failure — there is genuinely nothing
+ * to serve for an uncached asset offline — but it is the failure the platform
+ * expects, it is silent, and the caller sees a rejected fetch rather than an
+ * unhandled rejection at the worker's top level.
+ */
 async function cacheFirst(request) {
   const cache = await caches.open(ASSET_CACHE);
   const cached = await cache.match(request, { ignoreVary: true });
   if (cached) return cached;
 
-  const response = await fetch(request);
-  // Only whole, same-origin 200s. A 206 range or an opaque redirect replays
-  // badly from cache and is better re-fetched every time.
-  if (response.status === 200 && response.type === "basic") {
-    await cache.put(request, response.clone());
+  try {
+    const response = await fetch(request);
+    // Only whole, same-origin 200s. A 206 range or an opaque redirect replays
+    // badly from cache and is better re-fetched every time.
+    if (response.status === 200 && response.type === "basic") {
+      await cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    return Response.error();
   }
-  return response;
 }
