@@ -84,6 +84,46 @@ export async function getRdOrReason(
   }
 }
 
+/**
+ * Avatar initials for an RD, derived from the name the SERVER returned.
+ *
+ * `RdProfile` carries no `initials` field, and the surfaces that show an
+ * avatar used to satisfy that by hardcoding a local roster — which is how a
+ * page ends up asserting a name the directory no longer holds. Deriving the
+ * initials keeps the server's roster the only thing naming anyone.
+ *
+ * Honorifics are dropped so "Dr. Anjali Nair" and "Anjali Nair" — the same
+ * person, spelled two ways by two different server records — produce the same
+ * "AN" rather than "DA".
+ */
+const HONORIFICS = new Set(["dr", "dt", "mr", "mrs", "ms", "prof"]);
+
+function nameWords(name: string): string[] {
+  return name
+    .split(/\s+/)
+    .map((w) => w.replace(/[.,]/g, ""))
+    .filter((w) => w.length > 0 && !HONORIFICS.has(w.toLowerCase()));
+}
+
+export function initialsOf(name: string): string {
+  return nameWords(name)
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("");
+}
+
+/**
+ * The name to greet someone by — "Anjali", not "Dr.".
+ *
+ * The naive `name.split(" ")[0]` renders "Meet Dr. →" the moment the directory
+ * returns an honorific, and the two server records for this roster disagree on
+ * exactly that (`teamProfiles.ts` says "Dr. Anjali Nair", `rdAdvisory.ts` says
+ * "Anjali Nair"). Falls back to the full name rather than an empty string.
+ */
+export function givenNameOf(name: string): string {
+  return nameWords(name)[0] ?? name;
+}
+
 /** Whether the RD offers a free 15-minute intro. */
 export function hasFreeIntro(p: RdPricing): boolean {
   return p.intro_15m === 0;

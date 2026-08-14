@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { getRds, initialsOf, givenNameOf } from "@/lib/rdApi";
 
 export const metadata: Metadata = {
   title: "Our Story",
@@ -14,15 +15,30 @@ const STEPS = [
   { n: 3, title: "You Receive", body: "Fresh, hot meals arrive at your doorstep in Noida, ready to support your health journey." },
 ];
 
-// Seed dietitian names mirror the /rd directory; replace with the real team
-// (titles/credentials/photos) before launch. Generic titles only here.
-const DIETITIANS = [
-  { slug: "rd-anjali-nair", initials: "AN", name: "Anjali Nair", title: "Registered Dietitian" },
-  { slug: "rd-vikram-sethi", initials: "VS", name: "Vikram Sethi", title: "Registered Dietitian" },
-  { slug: "rd-kavya-menon", initials: "KM", name: "Kavya Menon", title: "Registered Dietitian" },
-];
+// Matches /rd, the other page backed by this directory: hourly ISR rather than
+// a per-request fetch. The roster changes when someone is hired, not per visit.
+export const revalidate = 3600;
 
-export default function AboutPage() {
+/**
+ * The roster comes from the SERVER, not from this file.
+ *
+ * It used to be a hardcoded array of three dietitians whose own comment read
+ * "Seed dietitian names mirror the /rd directory; replace with the real team
+ * before launch" — a page introducing three named people to customers while
+ * admitting in-source that it did not know whether they were the team. It also
+ * gave all three the same flat title ("Registered Dietitian") where the
+ * directory has real ones, and it could not notice anyone joining or leaving.
+ *
+ * `/rd` already reads `GET /api/rd/directory`. This page now reads the same
+ * endpoint, so there is exactly one answer to "who are our dietitians" and
+ * these two pages cannot disagree. `getRds()` degrades to `[]` on any failure,
+ * and an empty roster renders NO section at all — a page that briefly omits
+ * the team is honest, a page that names three people who may not work here is
+ * not.
+ */
+export default async function AboutPage() {
+  const dietitians = await getRds();
+
   return (
     <div className="mx-auto max-w-5xl px-4">
       <section className="mx-auto flex max-w-2xl flex-col items-center gap-4 pb-12 pt-20 text-center sm:pt-28">
@@ -78,26 +94,28 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="border-t border-line py-16">
-        <h2 className="text-center text-xs font-semibold uppercase tracking-wide text-ink-faint">Our Dietitian Experts</h2>
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
-          {DIETITIANS.map((d) => (
-            <div
-              key={d.slug}
-              className="flex flex-col items-center rounded-2xl border border-line bg-surface p-8 text-center shadow-sm transition-shadow hover:shadow-md"
-            >
-              <div className="tabular mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gold font-mono text-xl font-bold text-[var(--gold-ink)]">
-                {d.initials}
+      {dietitians.length > 0 && (
+        <section className="border-t border-line py-16">
+          <h2 className="text-center text-xs font-semibold uppercase tracking-wide text-ink-faint">Our Dietitian Experts</h2>
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            {dietitians.map((d) => (
+              <div
+                key={d.slug}
+                className="flex flex-col items-center rounded-2xl border border-line bg-surface p-8 text-center shadow-sm transition-shadow hover:shadow-md"
+              >
+                <div className="tabular mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gold font-mono text-xl font-bold text-[var(--gold-ink)]">
+                  {initialsOf(d.name)}
+                </div>
+                <h3 className="text-lg font-semibold text-ink">{d.name}</h3>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-gold-text">{d.title}</p>
+                <Link href={`/rd/${d.slug}`} className="mt-5 text-sm font-semibold text-gold-text hover:underline">
+                  Meet {givenNameOf(d.name)} &rarr;
+                </Link>
               </div>
-              <h3 className="text-lg font-semibold text-ink">{d.name}</h3>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-gold-text">{d.title}</p>
-              <Link href={`/rd/${d.slug}`} className="mt-5 text-sm font-semibold text-gold-text hover:underline">
-                Meet {d.name.split(" ")[0]} &rarr;
-              </Link>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="border-t border-line py-24 text-center">
         <h2 className="text-3xl font-bold text-ink sm:text-4xl">Ready to start?</h2>
