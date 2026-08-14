@@ -65,9 +65,9 @@ test("bar stays revealed at the very top of the page regardless of small jitter"
   await expect(nav).toHaveClass(/translate-y-0/);
 });
 
-test("bar is hidden and inert while the account sheet is open", async ({ page }) => {
+test("bar slides away while the account sheet is open, and does NOT inert itself", async ({ page }) => {
   await page.goto("/");
-  // A raw attribute selector, not getByRole: the account sheet is now a real
+  // A raw attribute selector, not getByRole: the account sheet is a real
   // Radix/Vaul modal dialog (components/ui/drawer.tsx), and a modal dialog
   // correctly marks its background siblings aria-hidden="true" while open —
   // exactly the accessibility improvement this bar's own `inert` prop always
@@ -78,8 +78,42 @@ test("bar is hidden and inert while the account sheet is open", async ({ page })
   const nav = page.locator('nav[aria-label="Native Mobile Navigation"]');
   await expect(nav).toHaveClass(/translate-y-0/);
 
-  await page.getByRole("button", { name: /^Account$/ }).click();
+  const trigger = page.getByRole("button", { name: /^Account$/ });
+  await trigger.click();
   await expect(page.getByText("Account & Information")).toBeVisible();
+  await expect(nav).toHaveClass(/translate-y-full/);
+
+  // This assertion INVERTED, deliberately. The bar used to inert itself here
+  // too, and the comment above already spotted why it should not: Radix marks
+  // the background hidden, so our `inert` was redundant. It was also harmful,
+  // because the Account trigger LIVES IN THIS BAR — inerting it inerted the
+  // element that still held focus, which Chrome refuses outright:
+  //
+  //   Blocked aria-hidden on an element because its descendant retained
+  //   focus. […] Ancestor with aria-hidden: <nav …>
+  //
+  // and which broke focus restore, asserted below. Sliding away is presentation
+  // and stays; inertness while a dialog is open belongs to the dialog.
+  await expect(nav).toHaveJSProperty("inert", false);
+
+  // The reason it matters. Radix returns focus to the trigger on close; an
+  // inert trigger cannot receive it, so this used to land on <body> and a
+  // keyboard user lost their place in the tab bar entirely.
+  await page.keyboard.press("Escape");
+  await expect(page.getByText("Account & Information")).toBeHidden();
+  await expect(trigger).toBeFocused();
+});
+
+test("scroll-hide still inerts the bar — nothing else is managing it there", async ({ page }) => {
+  await page.goto("/menu");
+  const nav = page.locator('nav[aria-label="Native Mobile Navigation"]');
+  await expect(nav).toHaveJSProperty("inert", false);
+
+  // Unlike the dialog case there is no Radix here: the bar is simply gone from
+  // the layout, so its links must leave the tab order or a keyboard user tabs
+  // into a control that is translated off-screen.
+  await page.mouse.wheel(0, 600);
+  await page.waitForTimeout(300);
   await expect(nav).toHaveClass(/translate-y-full/);
   await expect(nav).toHaveJSProperty("inert", true);
 });

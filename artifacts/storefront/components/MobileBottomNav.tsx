@@ -113,9 +113,32 @@ export function MobileBottomNav() {
   const pathname = usePathname();
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
   const scrollHidden = useScrollHide(accountSheetOpen);
-  // The bar hides for two independent reasons: scrolled away, or the account
-  // sheet covers where it sits — either one hides and inerts it.
+  // The bar slides away for two independent reasons: scrolled away, or the
+  // account sheet covers where it sits.
   const barHidden = scrollHidden || accountSheetOpen;
+
+  // …but only ONE of those may also `inert` it, and it is not the sheet.
+  //
+  // The Account tab's trigger button lives inside this bar. Marking the bar
+  // inert while the sheet is open therefore inerts the very element that
+  // still holds focus at that instant, and Chrome refuses:
+  //
+  //   Blocked aria-hidden on an element because its descendant retained
+  //   focus. […] Ancestor with aria-hidden: <nav …>
+  //
+  // (The `aria-hidden` in that message is not ours — the sheet is a Radix
+  // Dialog via Vaul, and Radix marks background content hidden itself. Our
+  // `inert` is what pinned a focused node inside it.)
+  //
+  // It also broke focus RESTORE: Radix returns focus to the trigger on close,
+  // and an inert trigger cannot receive it, so dismissing the sheet dropped
+  // focus to <body> and a keyboard user lost their place in the tab bar.
+  //
+  // Scroll-hide still inerts, and must: that bar is genuinely gone from the
+  // layout with no dialog managing anything, so its links must leave the tab
+  // order. The dialog case needs no help from us — Radix already makes the
+  // background inert while it is open.
+  const barInert = scrollHidden;
 
   // Back gesture closes the account sheet, not the page.
   useOverlayHistory(accountSheetOpen, () => setAccountSheetOpen(false));
@@ -141,7 +164,7 @@ export function MobileBottomNav() {
       <nav
         data-stitch="dark"
         aria-label="Native Mobile Navigation"
-        inert={barHidden || undefined}
+        inert={barInert || undefined}
         className={`fixed bottom-0 inset-x-0 z-50 border-t border-line bg-[color-mix(in_srgb,var(--surface)_90%,transparent)] backdrop-blur-xl pb-[env(safe-area-inset-bottom)] md:hidden select-none-ui transition-transform duration-200 ${
           barHidden ? "translate-y-full" : "translate-y-0"
         }`}
