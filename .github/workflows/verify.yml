@@ -267,6 +267,29 @@ jobs:
         run: |
           node --test --import tsx \
             ./src/lib/sendError.test.ts
+      # RD identity — one name, title, credential list and years-of-experience
+      # per dietitian, shared by the two surfaces that show them. They used to
+      # be declared twice and disagreed on all four: teamProfiles.ts (which
+      # seeds /team, and which orders.ts joins to label an order's RD) said
+      # "Dr. Anjali Nair, PhD Clinical Nutrition AIIMS, 17 years" where
+      # rdAdvisory.ts (which serves /rd/directory, the record a customer books
+      # and pays against) said "Anjali Nair, MSc Clinical Nutrition, 12 years".
+      # Same for the other two RDs. A customer could read a doctorate on one
+      # page and a master's on the next, for the person they were booking.
+      #
+      # The suite pins the surviving values and asserts the shape that caused
+      # the visible bug: no honorific in a name, no doctorate or named
+      # institution in a credential.
+      #
+      # DB-free by construction — rdIdentity.ts imports nothing, which is also
+      # why /rd/directory can serve the roster while Postgres is down. Its own
+      # step so a failure reads as "someone changed a dietitian's credentials".
+      - name: RD identity single-source contract
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: |
+          node --test --import tsx \
+            ./src/lib/rdIdentity.test.ts
 
 
   money-integration:

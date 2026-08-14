@@ -76,14 +76,26 @@ export const TEAM: TeamMember[] = [
     initials: "MB",
     accent: "gold",
   },
+  // RD identity fields below MIRROR artifacts/api-server/src/lib/rdIdentity.ts,
+  // which is canonical. They are copied rather than imported because this is a
+  // separate package that cannot reach into the api-server's source; if these
+  // ever have a live consumer again, promote rdIdentity.ts to a shared lib/*
+  // package and import it here instead of maintaining a second copy.
+  //
+  // This file held a third, higher set of claims — "Dr." on all three names,
+  // "PhD Clinical Nutrition, AIIMS", 17 years for Anjali and 12 for Kavya —
+  // that neither server record agreed with. Nothing routes TEAM in this app any
+  // more (customer routes were removed 2026-07-26; no /team route exists in
+  // src/routes.ts), so it rendered nowhere, but a credential claim that strong
+  // should not sit in the repo waiting to be re-mounted.
   {
     slug: "rd-anjali-nair",
-    name: "Dr. Anjali Nair",
+    name: "Anjali Nair",
     role: "rd",
-    title: "Lead RD — Cardiometabolic",
-    credentials: ["PhD Clinical Nutrition, AIIMS", "Registered Dietitian (IDA)", "ADA Diabetes Educator"],
-    bio: "Dr. Anjali designs our heart-healthy and diabetes-management protocols. She reviews every dish for sodium load, glycaemic index, and saturated-fat ratio, and signs off the daily macro targets used across the app.",
-    yearsExperience: 17,
+    title: "Lead Registered Dietitian",
+    credentials: ["RD (India)", "MSc Clinical Nutrition", "CDE"],
+    bio: "Anjali designs our heart-healthy and diabetes-management protocols. She reviews every dish for sodium load, glycaemic index, and saturated-fat ratio, and signs off the daily macro targets used across the app.",
+    yearsExperience: 12,
     signatureLine: "Every plate signed off for sodium, GI, and saturated-fat ratio.",
     lifestyles: ["heart-healthy", "diabetes-management"],
     initials: "AN",
@@ -91,10 +103,10 @@ export const TEAM: TeamMember[] = [
   },
   {
     slug: "rd-vikram-sethi",
-    name: "Dr. Vikram Sethi",
+    name: "Vikram Sethi",
     role: "rd",
-    title: "Performance RD",
-    credentials: ["MSc Sports Nutrition, Loughborough", "ISAK Level 2 Anthropometrist", "CSCS"],
+    title: "Performance Dietitian",
+    credentials: ["RD", "ISAK Level 2", "CISSN"],
     bio: "Vikram owns the fitness-gains protocol. He sets protein floors per category, designs our high-protein bowls, and writes the post-workout recovery notes you see on dishes flagged for muscle-gain goals.",
     yearsExperience: 9,
     signatureLine: "Protein floors, recovery windows, and zero hidden carbs.",
@@ -104,12 +116,12 @@ export const TEAM: TeamMember[] = [
   },
   {
     slug: "rd-kavya-menon",
-    name: "Dr. Kavya Menon",
+    name: "Kavya Menon",
     role: "rd",
-    title: "Family & Gut Health RD",
-    credentials: ["MSc Nutrition & Dietetics, KMC Manipal", "Paediatric Nutrition Cert (BPNI)"],
+    title: "Family & Gut-Health Dietitian",
+    credentials: ["RD", "MSc Nutrition & Dietetics", "Monash FODMAP-trained"],
     bio: "Kavya curates our junior-explorers and silver-vitality lines. She reviews every kid-friendly dish for hidden sugar, fibre adequacy, and digestibility, and signs off on the gentle-textured options used by our older guests.",
-    yearsExperience: 12,
+    yearsExperience: 8,
     signatureLine: "Gentle on the gut, friendly on the palate, honest on the label.",
     lifestyles: ["junior-explorers", "silver-vitality"],
     initials: "KM",

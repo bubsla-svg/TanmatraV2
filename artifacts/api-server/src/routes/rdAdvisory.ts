@@ -6,6 +6,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { emitRdMessage } from "../lib/realtime";
 import { emitServerEvent } from "../lib/serverEvents";
 import { razorpayCredentials, razorpayBasicAuth } from "../lib/razorpayRecurring";
+import { rdIdentity, RD_IDENTITIES } from "../lib/rdIdentity";
 import {
   db,
   rdAppointmentsTable,
@@ -43,6 +44,21 @@ const RD_PRICING: Record<string, Record<string, number>> = {
 };
 function priceFor(rdSlug: string, kind: string): number | null {
   return RD_PRICING[rdSlug]?.[kind] ?? null;
+}
+
+/**
+ * The priced roster and the named roster must be the same roster.
+ *
+ * Adding an RD to RD_IDENTITIES but not to RD_PRICING is the quiet failure:
+ * they appear in the directory, a customer picks them, and `priceFor` returns
+ * null at booking time. The reverse (priced but unnamed) already throws inside
+ * `rdIdentity()`. Checked at import so a mismatch stops the server on boot
+ * rather than at someone's checkout.
+ */
+for (const { slug } of RD_IDENTITIES) {
+  if (!RD_PRICING[slug]) {
+    throw new Error(`rdAdvisory: RD "${slug}" has an identity but no pricing`);
+  }
 }
 
 /**
@@ -284,37 +300,29 @@ const RD_DIRECTORY: Array<{
   bookable: boolean;
   pricing: { intro_15m: number; follow_up_30m: number; follow_up_45m: number };
 }> = [
+  // Name, title, credentials and years come from rdIdentity.ts, which
+  // teamProfiles.ts seeds `/team` from as well. These were spelled out here a
+  // second time and the two copies disagreed — on the honorific, the degree,
+  // and the years of experience — for all three RDs. See rdIdentity.ts.
   {
-    slug: "rd-anjali-nair",
-    name: "Anjali Nair",
-    title: "Lead Registered Dietitian",
-    credentials: ["RD (India)", "MSc Clinical Nutrition", "CDE"],
+    ...rdIdentity("rd-anjali-nair"),
     bio: "Anjali leads our metabolic health desk and has spent the last decade tightening glycaemic control for adults with Type 2 diabetes, PCOS, and dyslipidaemia.",
-    yearsExperience: 12,
     languages: ["English", "Hindi", "Malayalam"],
     specialties: ["Type 2 diabetes", "PCOS", "Cardiometabolic", "Cholesterol"],
     bookable: true,
     pricing: { intro_15m: 0, follow_up_30m: 120000, follow_up_45m: 180000 },
   },
   {
-    slug: "rd-vikram-sethi",
-    name: "Vikram Sethi",
-    title: "Performance Dietitian",
-    credentials: ["RD", "ISAK Level 2", "CISSN"],
+    ...rdIdentity("rd-vikram-sethi"),
     bio: "Vikram works with athletes and recreational lifters on body recomposition, periodised fuelling, and protein distribution that fits Indian household kitchens.",
-    yearsExperience: 9,
     languages: ["English", "Hindi", "Punjabi"],
     specialties: ["Sports nutrition", "Lean muscle", "Body recomposition"],
     bookable: true,
     pricing: { intro_15m: 0, follow_up_30m: 100000, follow_up_45m: 150000 },
   },
   {
-    slug: "rd-kavya-menon",
-    name: "Kavya Menon",
-    title: "Family & Gut-Health Dietitian",
-    credentials: ["RD", "MSc Nutrition & Dietetics", "Monash FODMAP-trained"],
+    ...rdIdentity("rd-kavya-menon"),
     bio: "Kavya plans meals for whole households — from school lunchboxes to senior renal-friendly trays — and runs our IBS / FODMAP elimination protocols.",
-    yearsExperience: 8,
     languages: ["English", "Hindi", "Tamil", "Malayalam"],
     specialties: [
       "Family nutrition",

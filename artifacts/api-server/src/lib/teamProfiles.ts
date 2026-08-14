@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db, teamProfilesTable, type TeamProfile } from "@workspace/db";
+import { rdIdentity } from "./rdIdentity";
 
 export type TeamProfileRow = TeamProfile;
 
@@ -56,51 +57,34 @@ const SEED: Array<typeof teamProfilesTable.$inferInsert> = [
     initials: "MB",
     accent: "gold",
   },
+  // The RD entries take their name, title, credentials and years from
+  // rdIdentity.ts — the same values `/rd/directory` serves. They used to be
+  // spelled out here a second time and disagreed with that record on every one
+  // of those fields; see rdIdentity.ts for the conflict and which side won.
+  // The bio and signature line stay local: they describe what this person does
+  // for Tanmatra, which is this surface's job to say.
   {
-    slug: "rd-anjali-nair",
-    name: "Dr. Anjali Nair",
+    ...rdIdentity("rd-anjali-nair"),
     role: "rd",
-    title: "Lead RD — Cardiometabolic",
-    credentials: [
-      "PhD Clinical Nutrition, AIIMS",
-      "Registered Dietitian (IDA)",
-      "ADA Diabetes Educator",
-    ],
-    bio: "Dr. Anjali designs our heart-healthy and diabetes-management protocols. She reviews every dish for sodium load, glycaemic index, and saturated-fat ratio, and signs off the daily macro targets used across the app.",
-    yearsExperience: 17,
+    bio: "Anjali designs our heart-healthy and diabetes-management protocols. She reviews every dish for sodium load, glycaemic index, and saturated-fat ratio, and signs off the daily macro targets used across the app.",
     signatureLine: "Every plate signed off for sodium, GI, and saturated-fat ratio.",
     lifestyles: ["heart-healthy", "diabetes-management"],
     initials: "AN",
     accent: "sage",
   },
   {
-    slug: "rd-vikram-sethi",
-    name: "Dr. Vikram Sethi",
+    ...rdIdentity("rd-vikram-sethi"),
     role: "rd",
-    title: "Performance RD",
-    credentials: [
-      "MSc Sports Nutrition, Loughborough",
-      "ISAK Level 2 Anthropometrist",
-      "CSCS",
-    ],
     bio: "Vikram owns the fitness-gains protocol. He sets protein floors per category, designs our high-protein bowls, and writes the post-workout recovery notes you see on dishes flagged for muscle-gain goals.",
-    yearsExperience: 9,
     signatureLine: "Protein floors, recovery windows, and zero hidden carbs.",
     lifestyles: ["fitness-gains"],
     initials: "VS",
     accent: "blue",
   },
   {
-    slug: "rd-kavya-menon",
-    name: "Dr. Kavya Menon",
+    ...rdIdentity("rd-kavya-menon"),
     role: "rd",
-    title: "Family & Gut Health RD",
-    credentials: [
-      "MSc Nutrition & Dietetics, KMC Manipal",
-      "Paediatric Nutrition Cert (BPNI)",
-    ],
     bio: "Kavya curates our junior-explorers and silver-vitality lines. She reviews every kid-friendly dish for hidden sugar, fibre adequacy, and digestibility, and signs off on the gentle-textured options used by our older guests.",
-    yearsExperience: 12,
     signatureLine: "Gentle on the gut, friendly on the palate, honest on the label.",
     lifestyles: ["junior-explorers", "silver-vitality"],
     initials: "KM",
@@ -110,13 +94,41 @@ const SEED: Array<typeof teamProfilesTable.$inferInsert> = [
 
 let seeded = false;
 
+/**
+ * UPSERT, not insert-if-absent.
+ *
+ * This used to be `onConflictDoNothing`, which meant that once a row existed
+ * the SEED above could never correct it — so fixing the RD credentials in code
+ * would have changed nothing on any environment that had already booted once,
+ * and `/team` would have gone on serving "Dr. Anjali Nair, PhD AIIMS, 17 years"
+ * against a directory saying MSc and 12. A reconciliation that cannot reach the
+ * data it is reconciling is not one.
+ *
+ * Safe because SEED is the only writer of these columns: nothing in the repo
+ * updates team_profiles (orders.ts and the /team routes only read it), so there
+ * is no hand-edited value for this to clobber. These rows are code-owned.
+ *
+ * The set list is deliberate rather than a blanket overwrite: it covers the
+ * display facts, and leaves `initials`, `accent`, `kitchens`, `lifestyles` and
+ * `ownedDishSlugs` alone — `ownedDishSlugs` in particular is not in SEED at all
+ * and a blanket write would blank it.
+ */
 export async function ensureTeamProfileSeeds(): Promise<void> {
   if (seeded) return;
   for (const p of SEED) {
     await db
       .insert(teamProfilesTable)
       .values(p)
-      .onConflictDoNothing({ target: teamProfilesTable.slug });
+      .onConflictDoUpdate({
+        target: teamProfilesTable.slug,
+        set: {
+          name: p.name,
+          title: p.title,
+          bio: p.bio ?? "",
+          yearsExperience: p.yearsExperience ?? 0,
+          credentials: p.credentials ?? [],
+        },
+      });
   }
   seeded = true;
 }
