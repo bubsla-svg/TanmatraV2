@@ -20,7 +20,7 @@ export function PlanCardStitch({ id }: { id: PlanId }) {
   return (
     <Link
       href={href}
-      className="flex flex-col gap-6 rounded-3xl border border-line bg-surface p-6 transition-colors hover:border-line-strong active:scale-[0.98]"
+      className="flex flex-col gap-6 rounded-card border border-line bg-surface p-6 transition-colors hover:border-line-strong active:scale-[0.98]"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-1">

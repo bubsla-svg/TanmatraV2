@@ -162,7 +162,7 @@ export function PlanDetails({
         <span>{DPDP_CONSENT_COPY}</span>
       </label>
 
-      <div className="flex flex-col gap-2 rounded-3xl border border-line bg-surface p-5">
+      <div className="flex flex-col gap-2 rounded-card border border-line bg-surface p-5">
         {addOnLine && <p className="tabular text-xs font-medium text-ink-muted">{addOnLine}</p>}
         {!!creditAppliedPaise && (
           <p className="flex items-baseline justify-between gap-3 border-y border-line py-2 text-xs font-medium text-sage-text">

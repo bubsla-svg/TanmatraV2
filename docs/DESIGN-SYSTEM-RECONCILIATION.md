@@ -116,12 +116,32 @@ Satoshi everywhere; `#D4AF37`/dark-ink action colour without exception.
    "light" toggle choice still wins.
 2. ~~**The bottom nav is welded dark.**~~ **RESOLVED by (1)** — there are no
    light customer routes left for it to clash with.
-3. **Card radius is route-dependent**: 28px on /menu, 34px on /dish and /plans,
-   22px on /care and /account; `/` alone uses five values. **Decision: a card
-   is `rounded-2xl` (28px)** — /menu's 232-card coherence wins; 34/22 retire
-   with each surface's next touch. The `2px` veg-dot bracket value gets a
-   token; `rounded-full` vs Astryx `999px` unify on the Tailwind spelling.
-   *Open.*
+3. ~~**Card radius is route-dependent**~~ **FIXED.** 28px on /menu, 34px on
+   /dish and /plans, 22px on /care and /account, five values on `/` alone — so
+   walking menu → dish → plans → care changed the corner of the same concept
+   three times. A card now carries `rounded-card`, a SEMANTIC token
+   (`--radius-card`, = 28px) rather than another t-shirt step, because the
+   numbered names say nothing about *what* is being rounded and a card got
+   whichever step its author reached for.
+
+   The rule the token encodes is a three-step ladder, not one value: a **card**
+   is `rounded-card`; a block **inside** a card keeps a numeric step and a
+   smaller one (a nested corner must be tighter than its parent or it looks
+   like it is bulging out); **controls** — inputs, chips, pills — are not cards
+   and keep their own. That distinction is why this was not a blanket sweep:
+   of 350 elements carrying the card signature, the ones left alone include
+   buttons (`inline-flex … py-3.5 font-bold`), a textarea, and the dish-image
+   frames nested inside cards.
+
+   Verified by measuring computed `border-radius` per route at 390×844, with
+   the page scrolled through first so `content-visibility` sections actually
+   lay out (without that step the measurement reports phantom values for
+   unrendered sections). Every top-level card on `/`, `/menu`, `/dish`,
+   `/plans`, `/care`, `/legal` and `/faq` is now 28px; the only other values
+   left are nested blocks at 22px, correctly tighter than their parents.
+
+   Still open from this item: the `2px` veg-dot bracket value wants a token,
+   and `rounded-full` vs Astryx's `999px` are two spellings of one pill.
 4. **8 gold-CTA geometries across 4 routes.** **Decision: primary CTA = Astryx
    Button (gold-repointed), pill, one height scale (44 standard / 56 pay-bar)**
    — adopted per surface with the button-concept migration. *Open.*
@@ -130,11 +150,24 @@ Satoshi everywhere; `#D4AF37`/dark-ink action colour without exception.
    convention), and /plans' outline trial CTA is deliberately secondary to the
    goal router — same words as /trial's gold pill, but a different job on a
    different page. Only the geometry spread is being unified.
-5. **Same four goals, two components** (/plans list vs /care carousel).
-   **Clipping half FIXED**: the /care rails now render every option in a
-   two-column grid (`HorizontalSnapRail layout="grid"`) — 4 goals and 6
-   conditions in one viewport, no horizontal overflow. The shared goal-card
-   between /plans and /care is still *open*.
+5. ~~**Same four goals, two components**~~ **FIXED.** /plans rendered them as
+   `<button>`s at 34px with a gold arrow and no subtitle; /care as `<a>`s at
+   22px with a subtitle and no arrow — same words, same `routerPlans()`, same
+   destination, two components, so a fix to one silently skipped the other.
+   Both now render `components/plans/GoalCard.tsx`, which keeps the better half
+   of each: a real `<Link>` (middle-click, open-in-new-tab and prefetch work
+   again, and the destination shows on hover) over button + `router.push`; the
+   plan name as a subtitle, so an answer says what it routes to; the gold
+   arrow; and the funnel event — which **only /plans emitted**, leaving /care's
+   identical taps invisible to the scoreboard. A `source` prop separates them,
+   so the two entry surfaces can be compared instead of silently pooled.
+
+   /care's goal rail is a `stack` to match /plans (those labels wrapped to
+   three lines in a two-column cell once the card gained its subtitle and
+   arrow); the conditions stay a grid, their labels being one short word.
+   `HorizontalSnapRail` became **`CardSection`** in the process: it now carries
+   three layouts, and the old name meant every new caller inherited a
+   horizontal scroller whether the content wanted one or not.
 6. Lower severity, tracked: eyebrow tracking 0.3px vs 2.4px; `/plans` has no
    visible h1 (its `h1` is `sr-only` and the visible headline is an `h2`); h1
    scale is 4 sizes × 2 weights. The audit's "translucent-bar ghosting" is

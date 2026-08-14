@@ -66,7 +66,7 @@ export function LoyaltyProgressPanel() {
       <p className="text-xs font-semibold uppercase tracking-wider text-ink-faint">Plan rewards</p>
       <ul className="flex flex-col gap-3">
         {rows.map(({ sub, progress: p }) => (
-          <li key={p.subscriptionId} className="rounded-xl border border-line bg-surface p-5">
+          <li key={p.subscriptionId} className="rounded-card border border-line bg-surface p-5">
             <p className="text-base font-semibold text-ink">
               {sub.cadence} · {sub.mealsPerDelivery} meals / delivery
             </p>

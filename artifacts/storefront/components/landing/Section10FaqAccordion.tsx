@@ -81,7 +81,7 @@ export function Section10FaqAccordion() {
       </div>
 
       {/* Mandatory Medical Treatment Disclaimer */}
-      <div className="mt-12 rounded-xl border border-line bg-surface-raised p-5 shadow-inner">
+      <div className="mt-12 rounded-card border border-line bg-surface-raised p-5 shadow-inner">
         <h3 className="text-xs font-bold uppercase tracking-wider text-ink">
           ⚠️ Mandatory Medical Treatment &amp; Dietary Disclaimer
         </h3>

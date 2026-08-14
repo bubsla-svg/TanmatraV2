@@ -6,7 +6,7 @@ import { IconButton, CompactAction } from "@/components/primitives/ActionButtons
 import { ClinicalBadge, FilterChip } from "@/components/primitives/Badges";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
-import { HorizontalSnapRail } from "@/components/primitives/HorizontalSnapRail";
+import { CardSection } from "@/components/primitives/CardSection";
 import { StickyLedger } from "@/components/primitives/StickyLedger";
 import { PriceDisplay } from "@/components/primitives/PriceDisplay";
 import { GlobalHeader } from "@/components/primitives/Headers";

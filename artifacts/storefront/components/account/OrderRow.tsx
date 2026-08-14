@@ -26,7 +26,7 @@ export function OrderRow({ order }: { order: OrderSummary }) {
 
   return (
     <li
-      className={`rounded-xl border border-line bg-surface p-4 transition-transform active:scale-[0.98] ${
+      className={`rounded-card border border-line bg-surface p-4 transition-transform active:scale-[0.98] ${
         tone === "failed" ? "opacity-60" : ""
       }`}
     >
