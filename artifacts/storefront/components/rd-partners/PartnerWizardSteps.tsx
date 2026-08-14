@@ -73,7 +73,11 @@ function ProfileStep({ draft, errors, patch }: StepProps) {
           autoComplete="name"
           value={draft.fullName}
           onChange={(v) => patch({ fullName: v })}
-          placeholder="Dt. Anjali Nair"
+          // Shows the FORMAT, not a person. This used to read "Dt. Anjali
+          // Nair" — a name from our own RD directory, offered to an applicant
+          // as the example they type over. The sibling email field already
+          // does it the right way with "you@clinic.com".
+          placeholder="Dt. Firstname Lastname"
           invalid={!!errors.fullName}
         />
       </Field>

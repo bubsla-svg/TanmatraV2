@@ -49,10 +49,25 @@ export function DeliveryAddressBar() {
   // `retry: false` because the expected failure here is a 401, and retrying an
   // unauthenticated read three times just delays the fallback the signed-out
   // visitor is waiting to see.
+  //
+  // `refetchOnReconnect: false` for the same reason, one layer out. This bar
+  // is in the Header, so it mounts on every route: for a signed-out visitor
+  // the 401 is the steady state, not a transient failure, and coming back
+  // online cannot change it. The default (true) re-fired the request on every
+  // network blip and put a second and third red 401 in the console of anyone
+  // whose connection wavered, which reads like a bug in a surface that is
+  // working exactly as designed.
+  //
+  // Deliberately scoped to THIS query rather than the QueryProvider default:
+  // reconnect-refetch is right for most of what the client cache holds (an
+  // order's live status, cart contents, wellness logs), where the answer
+  // genuinely may have moved while the tab was offline. It is wrong only where
+  // the failure is an auth verdict.
   const { data, isPending, isError } = useQuery({
     queryKey: ["addresses"],
     queryFn: () => getAddresses(),
     retry: false,
+    refetchOnReconnect: false,
     staleTime: 60_000,
   });
 

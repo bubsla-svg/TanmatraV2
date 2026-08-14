@@ -1,6 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { getRds, getRd, hasFreeIntro, fromPricePaise, type RdProfile } from "./rdApi";
+import {
+  getRds,
+  getRd,
+  hasFreeIntro,
+  fromPricePaise,
+  initialsOf,
+  givenNameOf,
+  type RdProfile,
+} from "./rdApi";
 
 const RD: RdProfile = {
   slug: "rd-anjali-nair",
@@ -57,4 +65,42 @@ test("hasFreeIntro / fromPricePaise: derive display facts from pricing", () => {
   assert.equal(hasFreeIntro(RD.pricing), true);
   assert.equal(fromPricePaise(RD.pricing), 120000);
   assert.equal(fromPricePaise({ intro_15m: 0, follow_up_30m: 0, follow_up_45m: 0 }), null);
+});
+
+test("initialsOf: two letters from the first two name words", () => {
+  assert.equal(initialsOf("Anjali Nair"), "AN");
+  assert.equal(initialsOf("Vikram Sethi"), "VS");
+});
+
+// The whole reason this is derived rather than stored: the two server records
+// for this roster spell the same person with and without the honorific, and an
+// avatar reading "DA" next to one reading "AN" is two people to a reader.
+test("initialsOf: honorifics are not initials", () => {
+  assert.equal(initialsOf("Dr. Anjali Nair"), "AN");
+  assert.equal(initialsOf("Dt. Anjali Nair"), "AN");
+  assert.equal(initialsOf("Prof. Anjali Nair"), "AN");
+  assert.equal(initialsOf("dr anjali nair"), "AN");
+});
+
+test("initialsOf: degenerate names do not throw or emit junk", () => {
+  assert.equal(initialsOf("Anjali"), "A");
+  assert.equal(initialsOf("  Anjali   Nair  "), "AN");
+  assert.equal(initialsOf(""), "");
+  assert.equal(initialsOf("Dr."), "");
+});
+
+test("initialsOf: a third name is ignored, not concatenated", () => {
+  assert.equal(initialsOf("Anjali Priya Nair"), "AP");
+});
+
+test("givenNameOf: greets the person, never the title", () => {
+  assert.equal(givenNameOf("Anjali Nair"), "Anjali");
+  assert.equal(givenNameOf("Dr. Anjali Nair"), "Anjali");
+  assert.equal(givenNameOf("Anjali"), "Anjali");
+});
+
+// Falls back to the whole string rather than rendering "Meet  →".
+test("givenNameOf: an honorific-only name falls back instead of emptying", () => {
+  assert.equal(givenNameOf("Dr."), "Dr.");
+  assert.equal(givenNameOf(""), "");
 });
