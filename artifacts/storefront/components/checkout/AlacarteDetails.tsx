@@ -6,7 +6,7 @@ import type { DishData } from "@workspace/menu-catalog";
 import { Card } from "@astryxdesign/core/Card";
 import { Field } from "@astryxdesign/core/Field";
 import { Button } from "@/components/ui/button";
-import { formatPaise } from "@/lib/format";
+import { formatMacroLine, formatPaise } from "@/lib/format";
 import { qtyOf, setQty, subtotalPaise, type CartState } from "@/lib/cartStore";
 import { useCart } from "@/components/cart/CartProvider";
 import { DPDP_CONSENT_COPY, DPDP_SCOPE_NOTE } from "@/lib/consent";
@@ -215,18 +215,27 @@ export function AlacarteDetails({
         <p className="mb-1 text-xs font-bold uppercase tracking-[0.2em] text-ink-muted">Current order</p>
         <ul className="divide-y divide-line">
           {cart.lines.map((l) => (
-            <li key={`${l.kind}-${l.dishId}-${(l.customizations ?? []).join("|")}`} className="flex items-center justify-between gap-3 py-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-ink">{l.name}</p>
-                {l.customizations && l.customizations.length > 0 && (
-                  <p className="truncate text-xs text-ink-muted">{l.customizations.join(", ")}</p>
-                )}
+            <li key={`${l.kind}-${l.dishId}-${(l.customizations ?? []).join("|")}`} className="py-3">
+              {/* Name on its OWN full-width line, stepper and total below.
+                  Rendered at 390px the previous two-column row left the text
+                  column ~150px wide — narrower than this card's own padding
+                  allows for a dish name — so "Activated Charcoal Smoothie"
+                  clipped even across two lines. The cart drawer gets away with
+                  the side-by-side shape because it only pays px-4; this card
+                  pays the section gutter AND its own padding on top. */}
+              <p className="line-clamp-2 text-sm font-medium text-ink">{l.name}</p>
+              {l.customizations && l.customizations.length > 0 && (
+                <p className="line-clamp-2 text-xs text-ink-muted">{l.customizations.join(", ")}</p>
+              )}
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <div className="min-w-0">
                 <p className="tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
                 {/* D-14: the last look before money shows more than name +
-                    price — same figures the menu card already showed. */}
+                    price — same figures the menu card already showed, in the
+                    same spelling (lib/format.ts, N5.7). */}
                 {l.macros && (
                   <p className="tabular text-xs text-ink-faint">
-                    {l.macros.estimated ? "~" : ""}{l.macros.calories} kcal · {l.macros.estimated ? "~" : ""}{l.macros.protein}g P
+                    {formatMacroLine(l.macros, l.macros.estimated)}
                   </p>
                 )}
               </div>
@@ -240,9 +249,10 @@ export function AlacarteDetails({
                   <span aria-live="polite" className="tabular min-w-6 text-center text-sm font-semibold text-ink">{l.qty}</span>
                   <button type="button" aria-label="Increase" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) + 1, l.customizations))} className="touch-target-critical text-ink transition-transform active:scale-[0.98]">+</button>
                 </div>
-                <span className="tabular w-16 text-right text-sm font-semibold text-ink">
-                  {formatPaise(l.pricePaise * l.qty)}
-                </span>
+                  <span className="tabular w-16 text-right text-sm font-semibold text-ink">
+                    {formatPaise(l.pricePaise * l.qty)}
+                  </span>
+                </div>
               </div>
             </li>
           ))}

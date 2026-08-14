@@ -428,7 +428,11 @@ before being filed — screenshots raised the question; the tree answered it.
   luck — framed as hardening against a real, plausible failure mode, not as
   a fix for a confirmed-broken today. See the coherence-sweep addendum for
   the parallel note on `/legal`.
-- **N5.2 The ₹50 → ₹112 ambush.** `CartDrawer.tsx` contains no delivery or
+- **N5.2 The ₹50 → ₹112 ambush.** ✅ SHIPPED — `CartDrawer` now fetches the
+  same `POST /orders/quote` checkout uses (dish lines only, debounced) and
+  renders the fee + "Add ₹X more for free delivery" with a gold progress bar
+  whose width is the only derived value. Silent no-op when the API is down.
+  Original finding: `CartDrawer.tsx` contains no delivery or
   threshold signal (grep-verified) while checkout renders "Add ₹450 more for
   free delivery" — a +124% fee reveal on the final screen, with the softening
   nudge one screen too late. Fix: threshold hint in the cart drawer, fed by the
@@ -459,10 +463,21 @@ before being filed — screenshots raised the question; the tree answered it.
   "~2 g". En-dash on the PDP subtitle vs em-dash in the drawer for the same
   ingredient–qty pairs. Fix: every macro/quantity string renders through one
   formatter in `lib/format.ts`, unit-tested, both surfaces consuming it.
-- **N5.8 Crowding nits.** Cart line prints ₹50 twice at qty 1 (unit price +
+- **N5.8 Crowding nits.** ✅ SHIPPED (unit-price half) — the "each" line now
+  renders only at qty > 1, where it is arithmetic input rather than a repeat
+  of the line total. The checkout name-truncation half is still open.
+  Original finding: Cart line prints ₹50 twice at qty 1 (unit price +
   line total); checkout truncates "Activated Charcoal S…" beside its stepper —
   wrap to two lines instead.
-- **N5.9 The dark scrim is mathematically invisible.** `--scrim`'s dark arm is
+- **N5.9 The dark scrim is mathematically invisible.** ✅ SHIPPED — but NOT at
+  the token, and the diagnosis needed correcting. Measured in a browser at
+  390×844: the dish sheet filled the ENTIRE viewport, so the scrim had no page
+  left to dim — "invisible scrim" was really "nothing to scrim". Bottom sheets
+  now cap at 88dvh in the shared primitive, which restores the dimmed page,
+  the tap-outside target and the sheet reading as a sheet. `--scrim` is
+  unchanged: its dark-in-both-arms invariant is deliberate and unit-tested
+  (Radix/Vaul overlays portal to body and escape every `data-stitch` scope).
+  Original finding: `--scrim`'s dark arm is
   `rgba(0,0,0,0.6)` layered over `#0a0a0a` surfaces
   (`lib/themes/tanmatraBridge.css:92`) — modals on dark routes barely dim
   their background, so sheets don't read as modal (owner shot: account sheet
@@ -470,18 +485,34 @@ before being filed — screenshots raised the question; the tree answered it.
   perceptible dark arm (higher alpha, subtle blur, or a white-tinted scrim),
   verified across all three consumers (drawers, ⌘K, address switcher) in
   `layout-vrt` both themes.
-- **N5.10 "SECURE UPI CHECKOUT" on the OTP step.** `components/FocusHeader.tsx`
+- **N5.10 "SECURE UPI CHECKOUT" on the OTP step.** ✅ SHIPPED — dropped from
+  the plan branch's `FocusHeader` AND from the shared checkout skeleton (which
+  shields the identity stage too and cannot know which branch it covers). The
+  claim now lives beside the actual pay CTA in `PlanDetails`' bar, which was
+  also restructured: the trust line was a third flex column squeezed beside
+  the button instead of centred beneath it. Original finding: `components/FocusHeader.tsx`
   renders the label on the identity gate, where the only transaction is an SMS
   code (owner shot: "Start your Desk Fuel plan"). Make the label stage-aware
   or drop it from the auth step — a trust label that misdescribes the moment
   costs trust.
-- **N5.11 The auth gate answers none of the buyer's questions.** The plan
+- **N5.11 The auth gate answers none of the buyer's questions.** ✅ SHIPPED —
+  `PlanIdentityGate` renders a recap card (meals · cadence · cycle total)
+  above `PhoneAuth`, computed server-side from `computePlanQuote` — the same
+  spine figures /plans shows anonymous visitors. No invented cadence default:
+  the trial's `one_off` cycle reads "one-time", never "billed monthly" over
+  no-auto-renew fine print. Original finding: The plan
   sign-in step renders a phone field in ~65% empty canvas with no plan name
   context beyond the heading, no price, no recap — the customer is asked for
   their number before being reminded what they're buying. Checkout's CURRENT
   ORDER card is the existing pattern; render a compact plan recap above
   `PhoneAuth`.
-- **N5.12 Rails built for two items.** `/care` renders two
+- **N5.12 Rails built for two items.** ✅ SHIPPED — `HorizontalSnapRail` gained
+  `layout="grid"` (two visible columns for DECIDING among a few; the rail stays
+  the default for BROWSING many), and both /care rails take it. All 4 goals and
+  all 6 conditions now fit one 390px viewport with zero horizontal overflow.
+  The differing card anatomies between the two rails remain, as does the
+  shared goal-card with /plans — see docs/DESIGN-SYSTEM-RECONCILIATION.md
+  seam #5. Original finding: `/care` renders two
   `HorizontalSnapRail`s (`NeedStateRail.tsx`, `ConditionRail.tsx`) of ~2 cards
   each; the only scroll affordance is the second card clipped mid-word
   ("Keep my sug…", "Type 2 Diab…"), and the two rails use different card

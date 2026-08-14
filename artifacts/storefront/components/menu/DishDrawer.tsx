@@ -5,7 +5,10 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { isAlaCarteEnabled, type DishData } from "@workspace/menu-catalog";
-import { formatPaise } from "@/lib/format";
+import { formatGrams, formatKcal, formatPaise } from "@/lib/format";
+import { itemCount, subtotalPaise } from "@/lib/cartStore";
+import { useCart } from "@/components/cart/CartProvider";
+import { Button } from "@/components/ui/button";
 import { AddToCart } from "@/components/cart/AddToCart";
 import {
   Drawer,
@@ -26,12 +29,18 @@ import { SafeImage } from "@/components/ui/SafeImage";
  */
 export function DishDrawer({ dish }: { dish: DishData }) {
   const router = useRouter();
-  const est = dish.macrosEstimated ? "~" : "";
+  const { cart, setCartOpen } = useCart();
+  const count = itemCount(cart);
+  const subtotal = subtotalPaise(cart);
+  // Same spellings as the card, the cart and the PDP — lib/format.ts is the
+  // one dialect (N5.7). The label carries the nutrient, the value carries its
+  // unit; energy used to render as a bare "135" under a "kcal" label while
+  // protein rendered "3 g" under a "P" label, in the same four-up row.
   const macros: Array<[string, string]> = [
-    ["kcal", `${est}${dish.macros.calories}`],
-    ["P", `${est}${dish.macros.protein} g`],
-    ["C", `${est}${dish.macros.carbs} g`],
-    ["F", `${est}${dish.macros.fat} g`],
+    ["Energy", formatKcal(dish.macros.calories, dish.macrosEstimated)],
+    ["Protein", formatGrams(dish.macros.protein, dish.macrosEstimated)],
+    ["Carbs", formatGrams(dish.macros.carbs, dish.macrosEstimated)],
+    ["Fat", formatGrams(dish.macros.fat, dish.macrosEstimated)],
   ];
 
   return (
@@ -90,16 +99,43 @@ export function DishDrawer({ dish }: { dish: DishData }) {
             comment above. shrink-0 keeps it from being squeezed as content
             grows; the safe-area pad matches DishBuyBar's fixed bar since this
             sheet already runs to the physical bottom edge on most phones. */}
-        <div className="shrink-0 flex items-center justify-between border-t border-line bg-surface px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-4">
-          <Link
-            href={`/dish/${dish.slug}`}
-            className="text-sm font-medium text-ink-muted underline-offset-4 hover:text-ink hover:underline"
-          >
-            Open full page
-          </Link>
-          {/* §4.2 footer Add — server price beside the sole action colour;
-              only for à-la-carte-orderable dishes (no dead buttons). */}
-          {isAlaCarteEnabled(dish) && <AddToCart dish={dish} />}
+        <div className="shrink-0 border-t border-line bg-surface px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-4">
+          <div className="flex items-center justify-between gap-3">
+            <Link
+              href={`/dish/${dish.slug}`}
+              className="text-sm font-medium text-ink-muted underline-offset-4 hover:text-ink hover:underline"
+            >
+              Open full page
+            </Link>
+            {/* §4.2 footer Add — server price beside the sole action colour;
+                only for à-la-carte-orderable dishes (no dead buttons). */}
+            {isAlaCarteEnabled(dish) && <AddToCart dish={dish} />}
+          </div>
+          {/* THE WAY OUT. Adding a dish here used to turn Add into a bare
+              qty stepper and stop — the mini-cart bar that normally carries
+              "View cart" sits UNDER this sheet's overlay, so the only exit
+              was to dismiss the sheet by hand and go find it. Once the cart
+              has anything in it, the forward action is offered right here,
+              in the sole action colour, with the live count and subtotal so
+              it states what it will show. */}
+          {count > 0 && (
+            <Button
+              type="button"
+              onClick={() => {
+                // Close this sheet first, then open the cart: two Vaul
+                // drawers must never be open at once (each locks scroll and
+                // traps focus — stacking them strands the focus ring in the
+                // dismissed one).
+                router.replace("/menu", { scroll: false });
+                setCartOpen(true);
+              }}
+              shape="pill"
+              size="fluid"
+              className="mt-3 min-h-12 w-full font-semibold"
+            >
+              View cart · {count} {count === 1 ? "item" : "items"} · {formatPaise(subtotal)}
+            </Button>
+          )}
         </div>
       </DrawerContent>
     </Drawer>

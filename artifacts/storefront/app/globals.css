@@ -108,6 +108,16 @@
   /* Fluid Spacing (Phase 2) */
   --spacing-section-py: clamp(4rem, 8vw, 8rem);
   --spacing-section-gap: clamp(2rem, 5vw, 4rem);
+  /* The page gutter. `px-gutter` was already in use across five routes
+     (dish/[slug], marketplace, marketplace/[slug], recipes, and the PDP
+     skeleton) but NO `--spacing-gutter` was ever registered — so the class
+     emitted no CSS at all and those pages have been rendering their content
+     hard against both screen edges. Verified by grepping the built
+     stylesheet for a `.px-gutter{...}` rule: there isn't one. 1rem matches
+     the `px-4` every other surface (drawer, checkout, account) uses, so
+     registering it here brings those five routes into line rather than
+     inventing a new measure. */
+  --spacing-gutter: 1rem;
   
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -331,6 +341,21 @@ html, body {
 .cv-auto {
   content-visibility: auto;
   contain-intrinsic-size: auto 280px auto 320px;
+}
+
+/* Same mechanism (N3.1), calibrated for a block-stacked vertical list (the
+   menu grid's dish rows) instead of a fixed-width rail card. Height is what
+   matters here and is a real measurement, not a guess: DishCard's non-compact
+   row rendered at 191px in every one of 20 sampled live dishes (photo-bound —
+   the 104px photo box + p-3 padding + footer dominates over the text column
+   in the sampled catalog). Width does NOT need the same precision: rows are
+   100% of a block-level single-column list, never side-by-side, so an
+   off-by-some-px width fallback cannot itself cause a vertical scroll-range
+   jump the way a wrong height would — the risk `.cv-auto`'s own comment
+   warns about doesn't apply on this axis for this layout. */
+.cv-auto-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px auto 191px;
 }
 
 /* 16px Minimum Input Rule to prevent iOS Safari auto-zoom */

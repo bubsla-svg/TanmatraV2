@@ -38,7 +38,7 @@ test("cart drawer line shows kcal/protein macros for the added dish", async ({ p
 
   const drawerLine = cart.root.getByText(ORDERABLE_DISH.name).locator("..");
   await expect(drawerLine.getByText(/kcal/)).toBeVisible();
-  await expect(drawerLine.getByText(/g P$/)).toBeVisible();
+  await expect(drawerLine.getByText(/g\sP$/)).toBeVisible();
 });
 
 test("à-la-carte checkout line shows kcal/protein macros for the added dish", async ({ page }) => {
@@ -50,5 +50,5 @@ test("à-la-carte checkout line shows kcal/protein macros for the added dish", a
 
   const checkoutLine = page.getByText(ORDERABLE_DISH.name).locator("..");
   await expect(checkoutLine.getByText(/kcal/)).toBeVisible();
-  await expect(checkoutLine.getByText(/g P$/)).toBeVisible();
+  await expect(checkoutLine.getByText(/g\sP$/)).toBeVisible();
 });

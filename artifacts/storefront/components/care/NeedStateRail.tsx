@@ -11,7 +11,7 @@ import { routerPlans } from "@/lib/plans";
 export function NeedStateRail() {
   const plans = routerPlans();
   return (
-    <HorizontalSnapRail title="By goal">
+    <HorizontalSnapRail title="By goal" layout="grid">
       {plans.map((p) => (
         <Link
           key={p.id}

@@ -23,6 +23,20 @@ interface CartContextValue {
   setCart: (next: CartState) => void;
   /** True after the guarded storage read — prevents hydration mismatch. */
   hydrated: boolean;
+  /**
+   * Whether the cart drawer is open. Lives here, not in MiniCartBar's local
+   * state, because more than one island needs to open it: the mini-bar's own
+   * "View cart", and the dish drawer's post-add CTA — the dish sheet covers
+   * the mini-bar with its overlay, so once a dish was added from there the
+   * cart was genuinely unreachable without dismissing the sheet by hand and
+   * finding the bar again.
+   *
+   * Deliberately NOT the URL (MiniCartBar's original note stands — a cart is
+   * not shareable state); this is shared *client* state between two islands,
+   * which is exactly what this provider is for.
+   */
+  cartOpen: boolean;
+  setCartOpen: (open: boolean) => void;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -30,6 +44,7 @@ const CartContext = createContext<CartContextValue | null>(null);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCartState] = useState<CartState>(EMPTY_CART);
   const [hydrated, setHydrated] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
 
   // Server render and first client render both show the empty cart; the
   // stored cart applies after mount (guarded read — never throws).
@@ -51,7 +66,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <CartContext.Provider value={{ cart, setCart, hydrated }}>
+    <CartContext.Provider value={{ cart, setCart, hydrated, cartOpen, setCartOpen }}>
       {children}
     </CartContext.Provider>
   );

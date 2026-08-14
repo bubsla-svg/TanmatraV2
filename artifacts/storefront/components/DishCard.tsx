@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Text } from "@astryxdesign/core/Text";
 import { type DishData } from "@workspace/menu-catalog";
-import { formatPaise } from "@/lib/format";
+import { formatMacroLine, formatPaise } from "@/lib/format";
+import { dishCardSummary } from "@/lib/dishText";
 import { AddToCart } from "@/components/cart/AddToCart";
 
 import { SafeImage } from "@/components/ui/SafeImage";
@@ -51,8 +52,6 @@ function RatingStars({ average, count }: { average?: number | null; count?: numb
 }
 
 export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean }) {
-  const est = dish.macrosEstimated ? "~" : "";
-  
   if (compact) {
     return (
       <Link href={`/menu?dish=${dish.slug}`} scroll={false} className="group flex flex-col rounded-2xl border border-line bg-surface p-3 transition-transform active:scale-[0.98]">
@@ -67,7 +66,7 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
         <div className="flex flex-col gap-1">
           <h3 className="font-bold text-lg text-ink truncate">{dish.name}</h3>
           <span className="font-mono text-2xs text-ink-muted">
-            {est}{dish.macros.calories} kcal · {est}{dish.macros.protein}g P
+            {formatMacroLine(dish.macros, dish.macrosEstimated)}
           </span>
           <div className="relative z-10 mt-3 flex justify-between items-center">
             <span className="font-clinical-data text-ink text-gold-text">{formatPaise(dish.price)}</span>
@@ -95,12 +94,17 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
             <Text type="body" weight="bold" as="h3" maxLines={1} className="font-bold">{dish.name}</Text>
           </span>
 
+          {/* dishCardSummary, not `description`: the catalog derives that
+              field from the first three ingredients, which across a dish
+              FAMILY are the shared base — "Aglio Olio - Veg / - Chicken /
+              - Prawns" all printed the identical line, so three consecutive
+              cards differed only by name and price. See lib/dishText.ts. */}
           <Text type="supporting" color="secondary" maxLines={2}>
-            {dish.tasteDescription || dish.description}
+            {dishCardSummary(dish)}
           </Text>
           <RatingStars average={dish.averageRating} count={dish.reviewCount} />
           <span className="font-mono text-2xs text-ink-muted">
-            {est}{dish.macros.calories} kcal · {est}{dish.macros.protein}g P
+            {formatMacroLine(dish.macros, dish.macrosEstimated)}
           </span>
         </div>
 

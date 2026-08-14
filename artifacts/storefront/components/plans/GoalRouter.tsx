@@ -22,7 +22,13 @@ export function GoalRouter() {
 
   return (
     <section aria-label="What's lunch for?" className="flex flex-col gap-4">
-      <h2 className="text-2xl font-semibold tracking-tight text-ink">What&rsquo;s lunch for?</h2>
+      {/* The page's h1, not an h2. /plans used to hide an h1 ("Choose your
+          plan") with sr-only and show this as an h2 — so the document's one
+          top-level heading was invisible, its visible headline outranked, and
+          the two said different things. This question IS the page's subject
+          and it is what a visitor reads first; /plans renders GoalRouter
+          exactly once, so promoting it here keeps one h1 per document. */}
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">What&rsquo;s lunch for?</h1>
       <div className="flex flex-col gap-3">
         {plans.map((p) => (
           <button

@@ -70,6 +70,12 @@ export function MenuGrid({
         <div
           key={dishId}
           role="listitem"
+          // N3.1: content-visibility:auto skips layout+paint for rows the
+          // viewport hasn't reached yet — the 116-dish grid otherwise builds
+          // full layout for every card up front. See globals.css's .cv-auto-row
+          // for why this is a SEPARATE utility from .cv-auto (horizontal rails)
+          // rather than a reuse.
+          className="cv-auto-row"
           style={order ? { order: order.get(dishId) } : undefined}
           hidden={visibleIds ? !visibleIds.has(dishId) : false}
         >

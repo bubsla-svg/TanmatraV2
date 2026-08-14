@@ -16,7 +16,8 @@
     "lint:placeholder-assets": "node --experimental-strip-types ../../scripts/lint-placeholder-assets.ts artifacts/storefront",
     "lint:dark-forks": "node --experimental-strip-types ../../scripts/lint-dark-forks.ts artifacts/storefront",
     "lint:unregistered-color-utility": "node --experimental-strip-types ../../scripts/lint-unregistered-color-utility.ts artifacts/storefront",
-    "lint:icon-font": "node --experimental-strip-types ../../scripts/lint-icon-font.ts artifacts/storefront"
+    "lint:icon-font": "node --experimental-strip-types ../../scripts/lint-icon-font.ts artifacts/storefront",
+    "lint:stitch-markers": "node --experimental-strip-types ../../scripts/lint-stitch-markers.ts"
   },
   "dependencies": {
     "@astryxdesign/core": "0.1.8",

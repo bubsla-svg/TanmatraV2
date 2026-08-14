@@ -16,7 +16,11 @@ export default function CheckoutLoading() {
         Loading checkout…
       </p>
       <section className="mx-auto max-w-md px-4 pt-6 pb-44">
-        <FocusHeader title="Checkout" backLabel="Back" trustSignal="Secure UPI checkout" />
+        {/* No trustSignal: this skeleton shields the PLAN identity stage too
+            (N5.10 — "Secure UPI checkout" over an OTP field misdescribes the
+            moment), and a skeleton can't know which branch it's covering.
+            The à-la-carte page restores its own trust line on resolve. */}
+        <FocusHeader title="Checkout" backLabel="Back" />
         <div aria-hidden className="mt-6 flex flex-col gap-4">
           <div className="rounded-2xl border border-line bg-surface p-4">
             <Skeleton className="h-4 w-32" />

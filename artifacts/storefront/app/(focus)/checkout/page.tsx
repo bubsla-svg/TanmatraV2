@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import {
   PLAN_CATALOG,
+  computePlanQuote,
   planIsSelfServiceLaunchable,
   type DietTrack,
   type PlanId,
@@ -95,6 +96,22 @@ export default async function CheckoutPage({ searchParams }: Props) {
     // own default, never a guess.
     const requestedCadence = asBuilderCycle(cycle);
     const withRdBump = bump === "1" && planAllowsAddOn(id, "rd_bump");
+    // N5.11: the sign-in gate used to be a bare phone field in empty canvas —
+    // the customer was asked for their number before being reminded what they
+    // were buying. This recap is the SPINE's list quote for the exact
+    // (plan, track, cadence) selection — the same server-owned figures /plans
+    // already shows anonymous visitors — so the gate can restate the offer
+    // without inventing a number. The post-auth server quote (net of credit)
+    // remains the billed amount.
+    // No invented cadence fallback: absent ?cycle=, computePlanQuote uses the
+    // plan's OWN cycle — which for trial_3day is "one_off". Forcing "monthly"
+    // here would caption a no-auto-renew ₹399 trial as "billed monthly",
+    // contradicting the noAutoConvert fine print on the very next screen.
+    const recapQuote = computePlanQuote(
+      id,
+      requestedTrack ?? q.servedTracks[0] ?? "veg",
+      requestedCadence,
+    );
     return (
       <div data-ui-generation="stitch-74" data-screen-id="8.1" data-screen-state="quote-active" className="min-h-dvh">
         <section className="mx-auto max-w-md px-4 pt-10 pb-44">
@@ -104,8 +121,14 @@ export default async function CheckoutPage({ searchParams }: Props) {
               instance rather than a reset one. No `title`: PlanIdentityGate
               and PlanCheckout each already render their own contextual h1
               ("Start your X plan" / the plan name) — FocusHeader's own doc
-              comment names this exact case as the reason `title` is optional. */}
-          <FocusHeader backLabel="Back to plan" trustSignal="Secure UPI checkout" />
+              comment names this exact case as the reason `title` is optional.
+
+              N5.10: no trustSignal here any more. This header renders on the
+              IDENTITY stage too, where the only transaction is an SMS code —
+              "Secure UPI checkout" over an OTP field misdescribes the moment.
+              The pay stage carries its own trust line beside the actual pay
+              CTA (PlanDetails' bar), which is where the claim is true. */}
+          <FocusHeader backLabel="Back to plan" />
           <PlanCheckout
             planId={id}
             planName={d.name}
@@ -115,6 +138,11 @@ export default async function CheckoutPage({ searchParams }: Props) {
             addOns={withRdBump ? ["rd_bump"] : undefined}
             finePrint={isTrial ? [TRIAL_COPY.creditLine, TRIAL_COPY.noAutoConvert] : undefined}
             successPerks={isTrial ? { trialCreditbackPaise: TRIAL_CREDITBACK_PAISE } : undefined}
+            recap={{
+              mealsPerCycle: recapQuote.mealsPerCycle,
+              cycleTotalPaise: recapQuote.cycleTotalPaise,
+              cadence: recapQuote.cycle,
+            }}
           />
         </section>
       </div>

@@ -59,6 +59,14 @@ function TrustItem({ children }: { children: React.ReactNode }) {
   );
 }
 
+// No Stitch markers on this section. It used to carry a screen id from a
+// naming scheme that predates the 74-screen manifest ("MOB-10-Home-Dark"),
+// declared in no entry of it and with no data-screen-state beside it. The
+// home screen's real marker (5.1) is on the route root in
+// app/(global)/page.tsx, where the manifest claims it. That orphan was the
+// ONLY source id of 49 the manifest did not declare, and the sole reason
+// scripts/lint-stitch-markers.ts had to run one-directional; retiring it
+// turned the reverse sweep on, so an invented id now fails the build.
 export function Section01ClinicalHero({
   hero,
   campaign = null,
@@ -68,11 +76,7 @@ export function Section01ClinicalHero({
   campaign?: HeroCampaign | null;
 }) {
   return (
-    <section 
-      data-ui-generation="stitch-74" 
-      data-screen-id="MOB-10-Home-Dark"
-      className="mx-auto w-full max-w-screen-xl px-4 py-section-py sm:px-6"
-    >
+    <section className="mx-auto w-full max-w-screen-xl px-4 py-section-py sm:px-6">
       <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
         {/* Centered Hero Architecture */}
         {/* Decorative only, and hidden from AT on the wrapper rather than on

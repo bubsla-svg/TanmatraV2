@@ -4,10 +4,11 @@
 // routes alike, so data-stitch sits on the sheet root, not a page wrapper) —
 // see lib/themes/stitch.css.
 import "@/lib/themes/stitch.css";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { addLine, qtyOf, setQty, subtotalPaise } from "@/lib/cartStore";
-import { formatPaise } from "@/lib/format";
+import { formatMacroLine, formatPaise } from "@/lib/format";
 import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
+import { fetchQuote, type QuoteSnapshot } from "@/lib/quoteApi";
 import { useCart } from "@/components/cart/CartProvider";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
@@ -34,6 +35,53 @@ export function CartDrawer({
   // Back gesture closes the drawer, not the page (Vaul owns the slide;
   // history ownership lives here).
   useOverlayHistory(open, () => onOpenChange(false));
+
+  // N5.2 — the ₹50→₹112 ambush. Checkout renders "Add ₹X more for free
+  // delivery" from the server quote, but the CART never did: a customer
+  // first learned a delivery fee existed on the pay screen, +124% over the
+  // subtotal they had just been shown. The threshold signal belongs at the
+  // moment quantities are still being decided — here.
+  //
+  // Same source of truth as checkout: POST /orders/quote, dish-kind lines
+  // only, the identical item mapping AlacarteCheckout uses. Never derived
+  // client-side. On any failure the hint simply doesn't render (status quo
+  // ante) — a cart must keep working with the API down.
+  const [quote, setQuote] = useState<QuoteSnapshot | null>(null);
+  const quoteSeq = useRef(0);
+  const dishKey = JSON.stringify(
+    cart.lines
+      .filter((l) => l.kind === "dish")
+      .map((l) => [l.dishId, l.qty, l.customizationSelections ?? null]),
+  );
+  useEffect(() => {
+    const dishLines = cart.lines.filter((l) => l.kind === "dish");
+    if (!open || dishLines.length === 0) {
+      setQuote(null);
+      return;
+    }
+    const seq = ++quoteSeq.current;
+    // Debounced — steppers click fast, and each click is a priced input.
+    const id = setTimeout(() => {
+      fetchQuote(
+        dishLines.map((l) => ({
+          dishId: l.dishId,
+          qty: l.qty,
+          ...(l.customizationSelections && l.customizationSelections.length > 0
+            ? { customizations: l.customizationSelections }
+            : {}),
+        })),
+      )
+        .then((q) => {
+          if (seq === quoteSeq.current) setQuote(q);
+        })
+        .catch(() => {
+          if (seq === quoteSeq.current) setQuote(null);
+        });
+    }, 350);
+    return () => clearTimeout(id);
+    // dishKey is the serialised priced inputs — lines/qty/customisations.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, dishKey]);
 
   let footer: ReactNode;
   if (LIVE_CHECKOUT_ENABLED) {
@@ -76,14 +124,20 @@ export function CartDrawer({
                   {l.customizations && l.customizations.length > 0 && (
                     <p className="line-clamp-2 text-xs text-ink-muted">{l.customizations.join(", ")}</p>
                   )}
-                  <p className="tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
+                  {/* N5.8: at qty 1 the unit price IS the line total on the
+                      right — printing ₹50 twice for one smoothie read as a
+                      glitch. The unit price earns its row only once it's
+                      arithmetic input (qty > 1). */}
+                  {l.qty > 1 && (
+                    <p className="tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)} each</p>
+                  )}
                   {/* D-14: "Andaaza nahi, likha hua" — the same figures the
                       menu card shows, absent only for a line with none captured
                       (marketplace items, or a cart written before this field
                       existed). "~" prefix matches DishCard/PDP's own convention. */}
                   {l.macros && (
                     <p className="tabular text-xs text-ink-faint">
-                      {l.macros.estimated ? "~" : ""}{l.macros.calories} kcal · {l.macros.estimated ? "~" : ""}{l.macros.protein}g P
+                      {formatMacroLine(l.macros, l.macros.estimated)}
                     </p>
                   )}
                 </div>
@@ -121,6 +175,41 @@ export function CartDrawer({
             }}
           />
           <div className="mt-3 border-t border-line pt-3">
+            {/* N5.2 — the fee is disclosed HERE, while quantities are still
+                being decided, not sprung on the pay screen. Every number is
+                the server quote's; the progress-bar width is the only derived
+                value and it states no amount. */}
+            {quote && quote.deliveryFeePaise > 0 && quote.amountToFreeDeliveryPaise > 0 && (
+              <div className="mb-3 rounded-xl border border-line bg-surface-raised px-3 py-2.5">
+                <div className="flex items-center justify-between gap-3 text-xs">
+                  <span className="text-ink-muted">
+                    Delivery <span className="tabular font-semibold text-ink">{formatPaise(quote.deliveryFeePaise)}</span>
+                  </span>
+                  <span className="text-ink">
+                    Add <span className="tabular font-semibold">{formatPaise(quote.amountToFreeDeliveryPaise)}</span> more for free delivery
+                  </span>
+                </div>
+                <div className="mt-2 h-1 overflow-hidden rounded-full bg-line" aria-hidden>
+                  <div
+                    className="h-full rounded-full bg-gold"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        Math.round(
+                          (quote.subtotalPaise * 100) /
+                            (quote.subtotalPaise + quote.amountToFreeDeliveryPaise),
+                        ),
+                      )}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+            {quote && quote.deliveryFeePaise === 0 && cart.lines.length > 0 && (
+              <p className="mb-3 rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-center text-xs font-medium text-sage-text">
+                Free delivery unlocked
+              </p>
+            )}
             <div className="mb-3 flex items-center justify-between gap-3 text-sm">
               <span className="text-xs uppercase tracking-wider text-ink-muted">Subtotal (before delivery &amp; GST)</span>
               <span className="tabular text-base font-semibold text-ink">{formatPaise(subtotalPaise(cart))}</span>

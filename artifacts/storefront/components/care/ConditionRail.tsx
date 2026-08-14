@@ -7,7 +7,7 @@ import { CARE_CONDITIONS } from "@/lib/careConditions";
  *  entry with nowhere to land. */
 export function ConditionRail() {
   return (
-    <HorizontalSnapRail title="By condition">
+    <HorizontalSnapRail title="By condition" layout="grid">
       {CARE_CONDITIONS.map((c) => (
         <Link
           key={c.slug}
