@@ -163,6 +163,9 @@ export const menuItemsTable = pgTable(
 
 export const insertMenuItemSchema = createInsertSchema(menuItemsTable, {
   fulfillmentType: z.enum(fulfillmentTypeValues).optional(),
+  // drizzle-zod widens a $type'd varchar back to z.string(); re-narrow so
+  // InsertMenuItem stays assignable to the column's literal union.
+  vegClass: z.enum(["veg", "non-veg", "egg"]).nullable().optional(),
 }).omit({
   id: true,
   createdAt: true,
