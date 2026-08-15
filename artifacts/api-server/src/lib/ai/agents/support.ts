@@ -246,9 +246,6 @@ const SEVERE_ALLERGY_TEXT =
 registerAgent<SupportPromptContext>({
   name: "support",
   description: "Customer support agent (read-only menu, orders, riders).",
-  // Latest-stable alias — see the DEFAULT_MODEL_ID note in ../model.ts for
-  // why pinning "gemini-2.5-flash" here caused a full agent outage.
-  defaultModel: "gemini-flash-latest",
   maxSteps: 4,
   systemPrompt: SUPPORT_PROMPT,
   tools: supportTools,

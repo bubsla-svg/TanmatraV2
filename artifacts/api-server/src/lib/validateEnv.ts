@@ -47,8 +47,11 @@ export function validateEnv(): void {
     if (!process.env["RAZORPAY_WEBHOOK_SECRET"]) {
       warnings.push("RAZORPAY_WEBHOOK_SECRET unset — Razorpay webhooks cannot be verified");
     }
+    if (!process.env["GOOGLE_VERTEX_PROJECT"]) {
+      warnings.push("GOOGLE_VERTEX_PROJECT unset — AI agents (coach/support/ops/reorder/CMS) run on Vertex AI and will return errors");
+    }
     if (!process.env["GOOGLE_API_KEY"]) {
-      warnings.push("GOOGLE_API_KEY unset — Gemini AI agents (coach/support/ops/reorder/CMS) and server-side geocoding return errors");
+      warnings.push("GOOGLE_API_KEY unset — dish imagery (Gemini image API) and server-side geocoding return errors");
     }
     // Maps geocoding rides on GOOGLE_API_KEY unless GOOGLE_MAPS_API_KEY is
     // set. A Gemini-only rotation of GOOGLE_API_KEY without the Maps var

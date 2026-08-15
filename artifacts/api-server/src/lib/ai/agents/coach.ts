@@ -450,8 +450,6 @@ registerAgent<CoachPromptContext>({
   name: "coach",
   description:
     "Customer-facing nutrition coach. Read-only menu and macro tools, with cart and RD-booking action cards.",
-  // Latest-stable alias — see DEFAULT_MODEL_ID in ../model.ts.
-  defaultModel: "gemini-flash-latest",
   maxSteps: 6,
   systemPrompt: COACH_PROMPT,
   tools: [
