@@ -267,7 +267,7 @@ function ApplicationDetail({
     setBusy(label);
     try {
       const res = await fetch(
-        `/api/admin/rd-applications/${application.id}`,
+        `${API_BASE}/admin/rd-applications/${application.id}`,
         {
           method: "PATCH",
           headers,
