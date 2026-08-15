@@ -386,7 +386,8 @@ registerAgent({
   name: "reorder",
   description:
     "Forecast-aware reorder agent — recommends, drafts, approves, and exports purchase orders.",
-  defaultModel: "gemini-2.5-flash",
+  // Latest-stable alias — see DEFAULT_MODEL_ID in ../model.ts.
+  defaultModel: "gemini-flash-latest",
   maxSteps: 8,
   systemPrompt: REORDER_PROMPT,
   tools: [
