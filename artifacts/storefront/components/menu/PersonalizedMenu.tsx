@@ -36,6 +36,7 @@ import { mergeMenuUrlState, parseMenuUrlState } from "@/lib/menuUrlState";
 import { MenuFilterSheet } from "@/components/menu/MenuFilterSheet";
 import { SectionChipBar, useStickyAnchorOffset } from "@/components/menu/SectionChipBar";
 import { groupBySection, sectionAnchorId } from "@/lib/menuSections";
+import { useScrollRestore } from "@/lib/useScrollRestore";
 
 // N2.3: URL sync is debounced, not immediate — chip/filter changes are
 // discrete clicks (a 400ms delay before the address bar updates is
@@ -190,6 +191,12 @@ export function PersonalizedMenu({
 
   const stickyRef = useRef<HTMLDivElement>(null);
   useStickyAnchorOffset(stickyRef);
+
+  // §3.9 / Law 3. Disabled while a dish drawer is open (`?dish=`): that is a
+  // same-route overlay whose own close already restores position, and
+  // writing a position while it is open would capture the scroll of the
+  // drawer, not of the list underneath it.
+  useScrollRestore("menu", !searchParams.get("dish"));
 
   return (
     <div className="flex flex-col gap-4">
