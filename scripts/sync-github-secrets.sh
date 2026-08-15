@@ -51,6 +51,13 @@ for arg in "$@"; do
   esac
 done
 
+# Resolve the repo root from this script's own location rather than trusting
+# cwd, so the script works from anywhere (mirrors scripts/lint-workflow-secrets.ts).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+WORKFLOW_DIR="$REPO_ROOT/.github/workflows"
+[ -d "$WORKFLOW_DIR" ] || { echo "cannot find $WORKFLOW_DIR" >&2; exit 2; }
+
 need() { command -v "$1" >/dev/null 2>&1 || { echo "missing required tool: $1" >&2; exit 2; }; }
 need gcloud; need python3
 [ "$APPLY" -eq 1 ] && need gh
@@ -67,7 +74,7 @@ fi
 # deploy.yml documents the interpolation rule using a literal `secrets.X`,
 # which is prose, not a secret.
 mapfile -t REQUIRED < <(
-  find .github/workflows -name '*.yml' -print0 \
+  find "$WORKFLOW_DIR" -name '*.yml' -print0 \
   | xargs -0 sed 's/#.*$//' \
   | grep -oE 'secrets\.[A-Z_][A-Z0-9_]+' \
   | sed 's/secrets\.//' \
