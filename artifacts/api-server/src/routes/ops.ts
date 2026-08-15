@@ -16,7 +16,7 @@ import {
   kitchenStockTable,
   supplierBatchesTable,
 } from "@workspace/db";
-import { and, asc, eq, ilike, or, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, or, inArray } from "drizzle-orm";
 import { isPaidLive } from "../lib/paidGate";
 import { z } from "zod/v4";
 import {
@@ -354,6 +354,21 @@ const deliveryBatchSchema = z.object({
   harvestDate: z.string().min(1),
   batchCode: z.string().min(1),
   quantity: z.number().positive(),
+});
+
+// Traceability history: farm origin, harvest date, and batch code are
+// captured on every /supplier/deliver call for FSSAI Rule 14 compliance, but
+// until this route existed nothing ever read supplier_batches back —
+// AdminSupplier.tsx's "Log Crate & Generate Barcode" wrote the audit trail
+// into a table no page, report, or endpoint ever displayed again.
+router.get("/supplier/batches", async (req: Request, res: Response) => {
+  const limit = Math.max(1, Math.min(200, Number(req.query.limit ?? 50)));
+  const rows = await db
+    .select()
+    .from(supplierBatchesTable)
+    .orderBy(desc(supplierBatchesTable.createdAt))
+    .limit(limit);
+  res.json({ batches: rows });
 });
 
 router.post("/supplier/deliver", async (req: Request, res: Response) => {

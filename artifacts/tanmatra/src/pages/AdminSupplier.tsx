@@ -25,6 +25,18 @@ interface StockItem {
   buyingPricePaise: number;
 }
 
+interface SupplierBatch {
+  id: number;
+  product: string;
+  farmOrigin: string;
+  harvestDate: string;
+  batchCode: string;
+  quantity: number;
+  barcodeToken: string;
+  status: string;
+  createdAt: string;
+}
+
 export default function AdminSupplier() {
   const [token, setToken] = useState(
     typeof window === "undefined"
@@ -44,6 +56,7 @@ export default function AdminSupplier() {
   const [activeBarcode, setActiveBarcode] = useState<BarcodeCrate | null>(null);
   const [intakeLoading, setIntakeLoading] = useState(false);
   const [inventoryList, setInventoryList] = useState<StockItem[]>([]);
+  const [batchHistory, setBatchHistory] = useState<SupplierBatch[]>([]);
 
   // Fetch list of products in catalog to verify matching names
   const loadInventory = useCallback(async () => {
@@ -61,9 +74,28 @@ export default function AdminSupplier() {
     }
   }, [token]);
 
+  // Traceability history: every crate logged via "Log Crate & Generate
+  // Barcode" is durable (farm origin, harvest date, batch code, for FSSAI
+  // Rule 14), but until this existed nothing ever displayed it back.
+  const loadBatchHistory = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/ops/supplier/batches?limit=25`, {
+        headers: { "x-admin-token": token },
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBatchHistory(data.batches || []);
+      }
+    } catch {
+      // Ignored
+    }
+  }, [token]);
+
   useEffect(() => {
     void loadInventory();
-  }, [loadInventory]);
+    void loadBatchHistory();
+  }, [loadInventory, loadBatchHistory]);
 
   // Handle Vendor Form Submit
   const handleGenerateBarcode = async (e: React.FormEvent) => {
@@ -100,6 +132,7 @@ export default function AdminSupplier() {
       const data = await res.json();
       setActiveBarcode(data);
       toast.success("Delivery batch logged. Scannable crate barcode generated!");
+      void loadBatchHistory();
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -133,6 +166,7 @@ export default function AdminSupplier() {
       toast.success(`Crate verified. ${activeBarcode.quantity}kg of ${activeBarcode.product} added to kitchen stock!`);
       setActiveBarcode(null);
       void loadInventory();
+      void loadBatchHistory();
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -350,6 +384,55 @@ export default function AdminSupplier() {
               </CardContent>
             </Card>
           )}
+
+          {/* Traceability history: every crate ever logged, farm origin
+              through intake status. Read-only audit view over the same
+              records the form above writes. */}
+          <Card className="bg-nn-surface border-white/[0.08]">
+            <CardHeader className="py-3 px-4 border-b border-white/[0.04]">
+              <CardTitle className="text-xs font-semibold uppercase tracking-wider text-nn-on-surface-variant">
+                Recent Deliveries (Traceability Log)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              {batchHistory.length === 0 ? (
+                <p className="text-xs text-nn-on-surface-variant">
+                  No delivery batches logged yet.
+                </p>
+              ) : (
+                <div className="max-h-64 overflow-y-auto space-y-2 pr-1 text-xs">
+                  {batchHistory.map((b) => (
+                    <div
+                      key={b.id}
+                      className="p-2 rounded border border-white/[0.024] space-y-0.5"
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="text-white font-medium">
+                          {b.product} — {b.quantity}kg
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className={`text-[9px] uppercase ${
+                            b.status === "received"
+                              ? "border-clinical-sage/30 text-clinical-sage"
+                              : "border-amber-500/30 text-amber-400"
+                          }`}
+                        >
+                          {b.status}
+                        </Badge>
+                      </div>
+                      <div className="text-nn-on-surface-variant text-[10px]">
+                        {b.farmOrigin} · Harvested {b.harvestDate}
+                      </div>
+                      <div className="text-nn-on-surface-variant font-mono text-[10px]">
+                        {b.batchCode}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
