@@ -4,6 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { db, supportTicketsTable, ordersTable } from "@workspace/db";
 import {
   draftReply,
+  emailTicketReply,
   getMetrics,
   listRejectedForEval,
   listTickets,
@@ -244,7 +245,12 @@ router.post(
         res.status(404).json({ error: "ticket not found" });
         return;
       }
-      res.json({ ticket });
+      const emailResult = await emailTicketReply(ticket);
+      res.json({
+        ticket,
+        emailSent: emailResult.delivered,
+        emailReason: emailResult.delivered ? undefined : emailResult.reason,
+      });
     } catch (err) {
       sendError(req, res, err);
     }

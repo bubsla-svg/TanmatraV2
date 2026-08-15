@@ -214,6 +214,18 @@ jobs:
             ./src/routes/payments.gate.test.ts \
             ./src/routes/rdPartners.gate.test.ts \
             ./src/routes/supportTickets.gate.test.ts
+      # Support-ticket reply email dispatch. DB-free: only the two guard
+      # clauses that must short-circuit BEFORE any DB query are covered here
+      # (no userId, no sentReply) — the "does the customer actually have an
+      # email on file" and "did SMTP accept it" branches need a live DB and
+      # are exercised by hand, not asserted in CI. Its own step so a failure
+      # reads as "reply emails broke" rather than being buried elsewhere.
+      - name: Support-ticket reply email dispatch
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: |
+          node --test --import tsx \
+            ./src/lib/supportTriage.test.ts
       # The /delivery access-control contract used to sit here, DB-free. ADM-02
       # moved it: the gate now resolves named roles from the `admin_roles`
       # table, so an AUTHENTICATED non-ops caller — which is exactly what that
