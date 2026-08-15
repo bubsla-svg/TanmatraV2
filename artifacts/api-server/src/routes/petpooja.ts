@@ -44,6 +44,19 @@ function unauthorized(res: Response) {
 // guard deliberately does not run on this insert path; it exists to catch
 // fat-fingered or malicious operator edits via updatePrice, not to validate
 // a first-time POS import.
+//
+// TNM-MENU-01 R-1 extends the same authority principle from price to the
+// curated catalog columns: `name`, `category` and `isVeg` (the veg mark)
+// belong to the own-app catalog and are never touched on an existing row —
+// a POS re-sync must not revert customer-facing curation (display names,
+// taxonomy, veg marks). When the taxonomy migration adds section_order /
+// sort_rank / veg_class / badge / archived, those are curated too and must
+// never join this upsert's `set`. The contract is pinned by
+// petpooja.menuFence.test.ts: on an existing row a replayed push may only
+// change the operational fields (description, imageUrl, tags, allergens,
+// cuisineTags, macros, customizations, isAvailable, updatedAt). A
+// brand-new item still takes every field from the payload — there is no
+// curation to protect yet.
 router.post("/integrations/petpooja/push-menu", async (req: Request, res: Response) => {
   if (!petpoojaAuthOk(req, req.log, "strict")) return unauthorized(res);
   const parsed = petpoojaPushMenuSchema.safeParse(req.body);
@@ -59,6 +72,7 @@ router.post("/integrations/petpooja/push-menu", async (req: Request, res: Respon
     req.log?.info({ itemCount: items.length }, "starting petpooja push-menu sync");
 
     // Process all items in a single transaction
+    let curatedSuppressions = 0;
     await db.transaction(async (tx) => {
       for (const rawItem of items) {
         const mapped = mapPetpoojaItem(
@@ -69,7 +83,12 @@ router.post("/integrations/petpooja/push-menu", async (req: Request, res: Respon
         );
 
         const [existing] = await tx
-          .select({ pricePaise: menuItemsTable.pricePaise })
+          .select({
+            pricePaise: menuItemsTable.pricePaise,
+            name: menuItemsTable.name,
+            category: menuItemsTable.category,
+            isVeg: menuItemsTable.isVeg,
+          })
           .from(menuItemsTable)
           .where(eq(menuItemsTable.slug, mapped.slug))
           .limit(1);
@@ -88,6 +107,15 @@ router.post("/integrations/petpooja/push-menu", async (req: Request, res: Respon
           );
         }
 
+        if (
+          existing &&
+          (existing.name !== mapped.name ||
+            existing.category !== mapped.category ||
+            existing.isVeg !== mapped.isVeg)
+        ) {
+          curatedSuppressions += 1;
+        }
+
         await tx
           .insert(menuItemsTable)
           .values({
@@ -97,12 +125,10 @@ router.post("/integrations/petpooja/push-menu", async (req: Request, res: Respon
           .onConflictDoUpdate({
             target: menuItemsTable.slug,
             set: {
-              name: mapped.name,
               description: mapped.description,
-              // pricePaise intentionally excluded — see the handler's doc
-              // comment above. The catalog owns price, not PetPooja.
-              category: mapped.category,
-              isVeg: mapped.isVeg,
+              // name, category, isVeg and pricePaise are intentionally
+              // excluded — the R-1 fence; see the handler's doc comment
+              // above. The catalog owns curation and price, not PetPooja.
               isAvailable: mapped.isAvailable,
               imageUrl: mapped.imageUrl,
               tags: mapped.tags,
@@ -115,6 +141,13 @@ router.post("/integrations/petpooja/push-menu", async (req: Request, res: Respon
           });
       }
     });
+
+    if (curatedSuppressions > 0) {
+      req.log?.info(
+        { curatedSuppressions },
+        "petpooja push-menu carried curated-field changes; suppressed per TNM-MENU-01 R-1"
+      );
+    }
 
     invalidateMenuCatalogCache();
     req.log?.info("petpooja push-menu sync completed successfully");

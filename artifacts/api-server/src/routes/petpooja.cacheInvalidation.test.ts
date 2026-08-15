@@ -122,13 +122,16 @@ test("item_stock_off invalidates the catalog cache", async () => {
   assert.equal(restore.status, 200);
 });
 
-test("push-menu invalidates the catalog cache — a POS name/description push is visible immediately", async () => {
+test("push-menu invalidates the catalog cache — a POS description push is visible immediately", async () => {
   // TNM-ADM-01 ADM-28: push-menu no longer writes price_paise on an existing
   // row (the catalog is the sole price authority — see priceBands.ts and
   // routes/petpooja.ts's push-menu handler), so this no longer exercises
-  // cache invalidation via a price change. It still exercises the #474
-  // regression this file exists for — push-menu writes bypassing cache
-  // invalidation — via a field push-menu still legitimately owns (name).
+  // cache invalidation via a price change. TNM-MENU-01 R-1 then fenced the
+  // curated columns too (name, category, isVeg — see
+  // petpooja.menuFence.test.ts), which retired `name` as the probe as well.
+  // It still exercises the #474 regression this file exists for — push-menu
+  // writes bypassing cache invalidation — via a field push-menu still
+  // legitimately owns (description).
   const warm = await getMergedCatalog();
   assert.equal(findTestDish(warm)?.name, "Petpooja Cache Test Dish");
   assert.equal(findTestDish(warm)?.price, 10_000);
@@ -146,9 +149,12 @@ test("push-menu invalidates the catalog cache — a POS name/description push is
         // itemname must slugify() back to SLUG — push-menu upserts on the
         // slug conflict target, not the petpooja tag, so this is what makes
         // the payload land on the same row instead of inserting a new one.
-        // The pushed itemname also becomes the new `name` — see below.
+        // The pushed itemname is deliberately NOT expected to land as the
+        // new `name` — that is the R-1 fence, asserted below.
         itemname: SLUG,
         item_attributeid: "1",
+        // The cache-invalidation probe: a field push-menu still owns.
+        itemdescription: "pushed by POS sync",
         // Deliberately mismatched vs. the seeded 10000 paise, to assert
         // push-menu does NOT apply it (ADM-28), in the same request that
         // proves the cache still invalidates for the fields it does own.
@@ -168,9 +174,14 @@ test("push-menu invalidates the catalog cache — a POS name/description push is
 
   const after_ = await getMergedCatalog();
   assert.equal(
+    findTestDish(after_)?.description,
+    "pushed by POS sync",
+    "expected the pushed description immediately — a stale cache here means the storefront shows stale POS-sourced fields",
+  );
+  assert.equal(
     findTestDish(after_)?.name,
-    SLUG,
-    "expected the pushed name immediately — a stale cache here means the storefront shows stale POS-sourced fields",
+    "Petpooja Cache Test Dish",
+    "push-menu must never overwrite an existing item's curated name (TNM-MENU-01 R-1) — a stale cache is not the concern here, an unauthorized curation write is",
   );
   assert.equal(
     findTestDish(after_)?.price,
@@ -179,6 +190,6 @@ test("push-menu invalidates the catalog cache — a POS name/description push is
   );
 
   // Restore.
-  await db.update(menuItemsTable).set({ name: "Petpooja Cache Test Dish" }).where(eq(menuItemsTable.slug, SLUG));
+  await db.update(menuItemsTable).set({ description: "" }).where(eq(menuItemsTable.slug, SLUG));
   _resetMenuCatalogCacheForTests();
 });

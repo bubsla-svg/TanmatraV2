@@ -485,3 +485,18 @@ jobs:
           ./src/routes/planDraftQuoteLifecycle.test.ts
           ./src/routes/deliverySlotOperationalDate.test.ts
           ./src/routes/planDraftConvert.test.ts
+
+      # TNM-MENU-01 M-1 — the push-menu fence contract (ruling R-1, manual
+      # §7.2). A deliberately separate, properly-formed step: the folded
+      # `run: >` list above collapses to a single shell line, so everything
+      # after its first in-scalar `#` comment is commented out — 85 of the
+      # 100 files it names never execute, petpooja.priceAuthority.test.ts
+      # among them (see docs/DEFECT-VERIFY-MONEYPATH-DEADLIST-001.md). The
+      # two fence suites are re-homed here so the price fence (ADM-28) and
+      # the curated-column fence (R-1) provably run on every build.
+      - name: Menu fence replay tests (price + curated columns)
+        working-directory: artifacts/api-server
+        run: |
+          node --test --test-force-exit --import tsx \
+            ./src/routes/petpooja.priceAuthority.test.ts \
+            ./src/routes/petpooja.menuFence.test.ts
