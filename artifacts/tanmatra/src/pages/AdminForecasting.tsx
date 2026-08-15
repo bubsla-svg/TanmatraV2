@@ -141,7 +141,7 @@ export default function AdminForecasting() {
   const downloadPoCsv = async (id: number) => {
     try {
       const res = await fetch(
-        `/api/forecasting/purchase-orders/${id}/export.csv`,
+        `${API_BASE}/forecasting/purchase-orders/${id}/export.csv`,
         { credentials: "include", headers: headers() },
       );
       if (!res.ok) {

@@ -89,7 +89,7 @@ export default function AdminCatalog() {
     setBusy(true);
     try {
       const qs = q ? `?q=${encodeURIComponent(q)}` : "";
-      const res = await fetch(`${API_BASE}/api/menu/items${qs}`, {
+      const res = await fetch(`${API_BASE}/menu/items${qs}`, {
         credentials: "include",
         headers: { "x-admin-token": adminToken },
       });
@@ -114,7 +114,7 @@ export default function AdminCatalog() {
     }
     setUnpausing(true);
     try {
-      const res = await fetch(`${API_BASE}/api/menu/items/bulk/availability`, {
+      const res = await fetch(`${API_BASE}/menu/items/bulk/availability`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -180,7 +180,7 @@ export default function AdminCatalog() {
     setBusy(true);
     try {
       if (isNew) {
-        const res = await fetch(`${API_BASE}/api/menu/items`, {
+        const res = await fetch(`${API_BASE}/menu/items`, {
           method: "POST",
           credentials: "include",
           headers: {
@@ -207,7 +207,7 @@ export default function AdminCatalog() {
           alert("Error: " + body.error);
         }
       } else {
-        const res = await fetch(`${API_BASE}/api/menu/items/${editItem.slug}`, {
+        const res = await fetch(`${API_BASE}/menu/items/${editItem.slug}`, {
           method: "PATCH",
           credentials: "include",
           headers: {

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { z } from "zod/v4";
 import { CaretLeft, CaretRight, Warning } from "@phosphor-icons/react";
+import { API_BASE } from "@/lib/apiBase";
 
 interface AuditLog {
   id: number;
@@ -61,7 +62,9 @@ export default function AdminAudit() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch("/api/admin/audit?limit=100");
+        const res = await fetch(`${API_BASE}/admin/audit?limit=100`, {
+          credentials: "include",
+        });
         if (!res.ok) throw new Error("Failed to load audit logs");
         const data = await res.json();
         setLogs(data.logs);
