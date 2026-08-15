@@ -8,7 +8,7 @@
 // broken image — the browser still attempts to decode it as image bytes,
 // fails, and fires the same `error` event a genuine broken image would, so
 // this needs no special-casing for that disguise.
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ImageOff } from "lucide-react";
 
 export function ImgWithFallback({
@@ -16,15 +16,31 @@ export function ImgWithFallback({
   alt,
   className,
   priority,
+  fallback,
 }: {
   src: string;
   alt: string;
   className: string;
   priority: boolean;
+  /**
+   * Branded replacement for the generic broken-image glyph (M-5 §3.5).
+   * Menu surfaces pass a `DishFallbackTile`; anything that doesn't pass one
+   * keeps the neutral glyph below. Not optional-by-oversight: a caller with
+   * no brand-appropriate substitute genuinely should show the plain state
+   * rather than borrow another surface's.
+   */
+  fallback?: ReactNode;
 }) {
   const [broken, setBroken] = useState(false);
 
   if (broken) {
+    if (fallback) {
+      return (
+        <div role={alt ? "img" : undefined} aria-label={alt || undefined} className={className}>
+          {fallback}
+        </div>
+      );
+    }
     return (
       <div
         role={alt ? "img" : undefined}

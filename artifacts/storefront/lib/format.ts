@@ -12,11 +12,19 @@ export function formatPaise(paise: number): string {
  * through in one session. These are the only spellings; every macro surface
  * consumes them.
  *
- * The "~" prefix is the catalog's `macrosEstimated` flag, kept verbatim: a
+ * The "≈" prefix is the catalog's `macrosEstimated` flag, kept verbatim: a
  * measured value and an estimated one must never render identically on a
  * clinical surface.
+ *
+ * The glyph is U+2248 ALMOST EQUAL TO, not an ASCII tilde (TNM-MENU-01 M-5
+ * §3.4). It was "~", which reads as a stray character next to a number
+ * rather than as a mathematical qualifier — and, since 104 of the 145 live
+ * dishes are estimated, that unexplained mark was on most of the menu.
+ * Pairing the correct glyph with the page-level legend (MacroLegend, shown
+ * on /menu whenever an estimated dish is visible) is what closes defect S-6;
+ * changing the glyph alone would not have.
  */
-const approx = (estimated?: boolean): string => (estimated ? "~" : "");
+const approx = (estimated?: boolean): string => (estimated ? "≈" : "");
 
 /**
  * The space between a value and its unit is NON-BREAKING (U+00A0). These
@@ -27,18 +35,18 @@ const approx = (estimated?: boolean): string => (estimated ? "~" : "");
  */
 const NBSP = "\u00a0";
 
-/** `~686 kcal` — energy, always with its unit. */
+/** `≈686 kcal` — energy, always with its unit. */
 export function formatKcal(calories: number, estimated?: boolean): string {
   return `${approx(estimated)}${Math.round(calories)}${NBSP}kcal`;
 }
 
-/** `~42 g` — a macro weight. */
+/** `≈42 g` — a macro weight. */
 export function formatGrams(grams: number, estimated?: boolean): string {
   return `${approx(estimated)}${Math.round(grams)}${NBSP}g`;
 }
 
 /**
- * `~686 kcal · ~42 g P` — the one-line summary a dense list shows (menu card,
+ * `≈686 kcal · ≈42 g P` — the one-line summary a dense list shows (menu card,
  * cart line). Protein stays abbreviated: these render in a width-constrained
  * column where "protein" spelled out wraps the line.
  */
