@@ -1,28 +1,18 @@
-# TNM-MENU-01 M-3 plan — 2026-08-15T14:52:31.320Z
+# TNM-MENU-01 M-3 plan — 2026-08-15T15:22:49.071Z
 
-> **Rehearsal run** — executed against a staging database seeded to production shape
-> (116 static-seed dishes + 23 db-only rows from the slug map, all flipped available to
-> mirror the F2 state). The production apply re-plans against the live database; the
-> action mix and the seven STOP-AND-ASK ungoverned keeps are expected to match, row
-> counts in the archive set may differ slightly (aggregator-only SKUs absent here).
-> Result: applied in one transaction · re-plan converged to 0 actions · §7.1 checksum
-> MATCH · §7 verify shows the single expected violation (`antioxidant-detox` carries a
-> banned claim word and is an ungoverned KEEP — owner ruling required, see below).
->
-> **Re-run under M-4** (option groups, this log's generation) — the reseed cleared M-4's
-> §6 groups onto the payload's sauce/burrito/addon/protein-choice rows and this apply
-> re-plans to **0** including the customization diffs, which is the regression proof for
-> `jsonEqual`: Postgres's jsonb column does not preserve object key order (confirmed
-> directly against this rehearsal — a stored `{groupName, type, required, options}`
-> group round-tripped as `{type, options, required, groupName}`), and a naive
-> `JSON.stringify` compare treated every applied row as changed on every subsequent
-> plan, breaking idempotency. `jsonEqual` (menuCatalogV2Plan.ts) normalizes object key
-> order — and treats an explicit `key: undefined` as key-absent, matching real JSON
-> semantics — while still comparing array element order positionally, since option and
-> group order drive rendering.
+> **Rehearsal run, post-amendment** — same staging-DB rehearsal harness as the M-3/M-4 logs
+> (production-shaped seed: static catalog + db-only slug-map rows), extended for this run with
+> four manually-seeded rows (`chipotle-chicken-burrito-wrap`, `crispy-peri-peri-chicken-burrito-wrap`,
+> `mushroom-omelette-2-egg`, `cheese-omelette-2-egg`) so the payload amendment's new merge-source
+> folds actually exercise the archive path instead of silently skipping (a slug with no DB row is a
+> no-op in the plan engine). Result: **78 updates / 17 creates / 34 archives / 1 seasonal**, 0
+> blockers, re-plan converges to 0, §7 verify **clean** (the prior run's one violation —
+> `antioxidant-detox` carrying the banned "Detox" claim word — is resolved by this amendment's
+> rename), §7.1 checksum MATCH. The `ungovernedKeeps` report is now empty — see
+> `M0-FINDINGS.md` §12.6 for the per-dish resolution record.
 
-Actions: {"update":75,"create":17,"archive":30,"seasonal":1} · blockers: 0
-Expected §7.1 checksum: `8cc4c88ebc42245d2c45d1c3ac3b21fdc8ab54f0922fff8e7f940c22111fc2fd`
+Actions: {"update":78,"create":17,"archive":34,"seasonal":1} · blockers: 0
+Expected §7.1 checksum: `964a7785af4af20983e99eeac24ace3af3a717c2def3b3aff2e831263331be4b`
 
 ## Blockers — apply refuses while any exist (0)
 
@@ -48,7 +38,7 @@ Expected §7.1 checksum: `8cc4c88ebc42245d2c45d1c3ac3b21fdc8ab54f0922fff8e7f940c
 - `wok-fried-rice-choose-your-protein` ← "Wok Fried Rice — Choose Your Protein" · Off the Wok #4 · 14900p · veg · New
 - `lemon-chicken-dry-tossed` ← "Lemon Chicken — Dry Tossed" · Off the Wok #5 · 21900p · non-veg · New
 
-## Updates (field diffs only) (75)
+## Updates (field diffs only) (78)
 
 - `grilled-chicken-sauteed-veg-mash-potato`: name: "Grilled Chicken With Sautéed Vegetable And Mash Potato High Protein" → "Grilled Chicken with Veggies & Mash" · pricePaise: 33300 → 29900 · sectionOrder: null → 1 · sortRank: null → 1 · vegClass: null → "non-veg" · badge: null → "Bestseller"
 - `grilled-chicken-breast-single-serve`: name: "Grilled Chicken Breast [Single Serve]" → "Chicken Meal — 150 g grilled chicken + veggies + rice" · pricePaise: 36000 → 29900 · sectionOrder: null → 1 · sortRank: null → 2 · vegClass: null → "non-veg" · customizations: [] → [{"groupName":"Choose your sauce","type":"single","required":true,"options":[{"name":"Cilantro Lime","priceModifier":0,"default":true},{"name":"Tandoori","priceModifier":0},{"name":"Chipotle","priceModifier":0},{"name":"BBQ","priceModifier":0},{"name":"Peri Peri","priceModifier":0}]}]
@@ -65,6 +55,7 @@ Expected §7.1 checksum: `8cc4c88ebc42245d2c45d1c3ac3b21fdc8ab54f0922fff8e7f940c
 - `falafal-hummus-wrap`: name: "Falafal Hummus Wrap" → "Falafel Hummus Wrap" · pricePaise: 19900 → 17900 · sectionOrder: null → 3 · sortRank: null → 4 · vegClass: null → "veg" · customizations: [] → [{"groupName":"Make it a burrito","type":"single","options":[{"name":"Burrito upgrade","priceModifier":2000}]}]
 - `crispy-mushroom-burrito-wrap`: name: "Crispy Mushroom Burrito Wrap" → "Mushroom Wrap — choose your sauce" · pricePaise: 19900 → 15900 · sectionOrder: null → 3 · sortRank: null → 5 · vegClass: null → "veg" · customizations: [] → [{"groupName":"Choose your sauce","type":"single","required":true,"options":[{"name":"Cilantro Lime","priceModifier":0,"default":true},{"name":"Tandoori","priceModifier":0},{"name":"Chipotle","priceModifier":0},{"name":"BBQ","priceModifier":0},{"name":"Peri Peri","priceModifier":0}]},{"groupName":"Make it a burrito","type":"single","options":[{"name":"Burrito upgrade","priceModifier":2000}]}]
 - `healthy-whole-wheat-paneer-wrap`: name: "Healthy Whole Wheat Paneer Wrap" → "Paneer Wrap (Whole Wheat)" · pricePaise: 19900 → 17900 · sectionOrder: null → 3 · sortRank: null → 6 · vegClass: null → "veg"
+- `veg-quesadilla`: pricePaise: 24000 → 17900 · sectionOrder: null → 3 · sortRank: null → 7 · vegClass: null → "veg"
 - `grilled-veggie-sandwich-ranch-yoghurt`: name: "Grilled Veggie Sandwich With Ranch Yoghurt" → "Grilled Veggie Sandwich with Ranch Yoghurt" · pricePaise: 26000 → 16900 · sectionOrder: null → 4 · sortRank: null → 1 · vegClass: null → "veg"
 - `grilled-chicken-club-sandwich`: pricePaise: 24000 → 19900 · sectionOrder: null → 4 · sortRank: null → 2 · vegClass: null → "non-veg" · isVeg: true → false
 - `chicken-tikka-sandwich-with-ranch-yoghurt`: pricePaise: 21900 → 18900 · sectionOrder: null → 4 · sortRank: null → 3 · vegClass: null → "non-veg"
@@ -94,6 +85,7 @@ Expected §7.1 checksum: `8cc4c88ebc42245d2c45d1c3ac3b21fdc8ab54f0922fff8e7f940c
 - `exotic-egg-bhurji`: name: "Exotic Egg Bhurji" → "Exotic Egg Bhurji (2 eggs)" · pricePaise: 10900 → 11900 · sectionOrder: null → 6 · sortRank: null → 17 · vegClass: null → "egg"
 - `classic-vegetable-poha`: pricePaise: 10900 → 12900 · sectionOrder: null → 6 · sortRank: null → 18 · vegClass: null → "veg"
 - `four-boiled-egg`: pricePaise: 24000 → 1500 · sectionOrder: null → 6 · sortRank: null → 19 · vegClass: null → "egg" · isVeg: true → false
+- `french-omelette-sweet-savoury-2-egg`: pricePaise: 24000 → 17900 · sectionOrder: null → 6 · sortRank: null → 20 · vegClass: null → "egg" · isVeg: true → false
 - `hummus-pita-classic`: name: "Hummus Pita Classic" → "Classic Hummus Pita" · pricePaise: 6900 → 17900 · sectionOrder: null → 7 · sortRank: null → 1 · vegClass: null → "veg"
 - `hummus-pita-with-falafel`: pricePaise: 19900 → 21900 · sectionOrder: null → 7 · sortRank: null → 2 · vegClass: null → "veg"
 - `chicken-pita-pockets-with-hummus`: name: "Chicken Pita Pockets with Hummus" → "Chicken Pita Pocket with Hummus" · pricePaise: 16900 → 24900 · sectionOrder: null → 7 · sortRank: null → 3 · vegClass: null → "non-veg"
@@ -117,6 +109,7 @@ Expected §7.1 checksum: `8cc4c88ebc42245d2c45d1c3ac3b21fdc8ab54f0922fff8e7f940c
 - `hydrating-watermelon-juice`: name: "Hydrating Watermelon Juice" → "Watermelon Juice" · pricePaise: 6900 → 12900 · sectionOrder: null → 10 · sortRank: null → 8 · vegClass: null → "veg"
 - `lemon-mint-ice-tea-smoothie`: name: "Lemon Mint Ice Tea Smoothie" → "Lemon Mint Iced Tea" · pricePaise: 11900 → 9900 · sectionOrder: null → 10 · sortRank: null → 9 · vegClass: null → "veg"
 - `zero-calorie-mint-mojito`: name: "Zero Calorie Mint Mojito" → "Zero-Calorie Mint Mojito" · pricePaise: 10900 → 9900 · sectionOrder: null → 10 · sortRank: null → 10 · vegClass: null → "veg"
+- `antioxidant-detox`: name: "Antioxidant Detox" → "Antioxidant Boost Smoothie" · pricePaise: 17000 → 14900 · sectionOrder: null → 10 · sortRank: null → 11 · vegClass: null → "veg"
 - `fruity-greek-yogurt`: pricePaise: 24000 → 14900 · sectionOrder: null → 11 · sortRank: null → 1 · vegClass: null → "veg"
 - `ragi-dates-eggless-brownie`: pricePaise: 24000 → 9900 · sectionOrder: null → 11 · sortRank: null → 2 · vegClass: null → "veg"
 - `healthy-tiramisu-box`: pricePaise: 24000 → 17900 · sectionOrder: null → 11 · sortRank: null → 3 · vegClass: null → "veg"
@@ -126,13 +119,17 @@ Expected §7.1 checksum: `8cc4c88ebc42245d2c45d1c3ac3b21fdc8ab54f0922fff8e7f940c
 - `diet-coke-can`: name: "Diet Coke Can" → "Diet Coke" · pricePaise: 10900 → 6000 · sectionOrder: null → 12 · sortRank: null → 5 · vegClass: null → "veg"
 - `thums-up-can`: name: "Thums Up Can" → "Thums Up" · pricePaise: 10900 → 6000 · sectionOrder: null → 12 · sortRank: null → 6 · vegClass: null → "veg"
 
-## Archived as merge-sources (maps_from continuity) (10)
+## Archived as merge-sources (maps_from continuity) (14)
 
 - `chipotle-grilled-chicken-rice-bowl` → barbeque-grilled-chicken-rice-bowl
 - `crispy-peri-peri-chicken-rice-bowl` → barbeque-grilled-chicken-rice-bowl
 - `crispy-peri-peri-mushroom-rice-bowl` → crispy-mushroom-rice-bowl
+- `chipotle-chicken-burrito-wrap` → barbeque-chicken-burrito-wrap
+- `crispy-peri-peri-chicken-burrito-wrap` → barbeque-chicken-burrito-wrap
 - `chilli-chipotle-paneer-burrito-wrap` → paneer-tikka-burrito-wrap
 - `signature-quinoa-salad` → roasted-vegetable-quinoa-salad
+- `mushroom-omelette-2-egg` → make-your-own-omelette-2-eggs
+- `cheese-omelette-2-egg` → make-your-own-omelette-2-eggs
 - `masala-bread-omelette-2-egg` → classic-bread-omelette-2-egg
 - `alfredo-pasta-chicken` → alfredo-pasta-veg
 - `hot-n-sour-soup-chicken` → hot-n-sour-soup-veg
@@ -166,15 +163,9 @@ Expected §7.1 checksum: `8cc4c88ebc42245d2c45d1c3ac3b21fdc8ab54f0922fff8e7f940c
 
 - `broccoli-almond-soup`
 
-## STOP-AND-ASK — ungoverned KEEP rows (in the rationalization keep set but absent from the payload; left untouched) (7)
+## STOP-AND-ASK — ungoverned KEEP rows (in the rationalization keep set but absent from the payload; left untouched) (0)
 
-- Chipotle Chicken Burrito Wrap [KEEP-A]
-- Mushroom Omelette (2 Egg) [KEEP-B]
-- French Omelette (Sweet/Savoury) (2 Egg) [KEEP-B]
-- Cheese Omelette (2 Egg) [KEEP-B]
-- Veg Quesadilla [KEEP-C]
-- Antioxidant Detox [KEEP-C]
-- Crispy Peri Peri Chicken Burrito Wrap [KEEP-C]
+- (none)
 
 ## STOP-AND-ASK — expected rows missing from DB (0)
 
@@ -259,7 +250,7 @@ Expected §7.1 checksum: `8cc4c88ebc42245d2c45d1c3ac3b21fdc8ab54f0922fff8e7f940c
 - Cream Of Chicken Soup [SEASONAL]
 - Cream Of Broccoli Soup [SEASONAL]
 
-## Rows untouched by every pass (informational) (33)
+## Rows untouched by every pass (informational) (30)
 
 - activated-charcoal-smoothie
 - aglio-olio-veg
@@ -268,7 +259,6 @@ Expected §7.1 checksum: `8cc4c88ebc42245d2c45d1c3ac3b21fdc8ab54f0922fff8e7f940c
 - alfredo-pasta-prawns
 - aliya-viral-beetroot-curd
 - amaranth-porridge-with-blueberry-sauce
-- antioxidant-detox
 - arrabbiata-chicken
 - arrabbiata-prawns
 - avocado-toast-with-poached-boiled-egg
@@ -277,10 +267,8 @@ Expected §7.1 checksum: `8cc4c88ebc42245d2c45d1c3ac3b21fdc8ab54f0922fff8e7f940c
 - cheese-omelette
 - cheese-tomato-omelette
 - chia-lemonade-smoothie
-- chipotle-chicken-burrito-wrap
 - cream-of-broccoli
 - cream-of-chicken
-- crispy-peri-peri-chicken-burrito-wrap
 - french-omelette-sweet-savoury
 - greek-roman-chicken-salad
 - greek-roman-veg-salad
@@ -295,6 +283,6 @@ Expected §7.1 checksum: `8cc4c88ebc42245d2c45d1c3ac3b21fdc8ab54f0922fff8e7f940c
 - tomato-basil-omelette
 - two-boiled-eggs
 
-## §7 verification — VIOLATIONS (1)
+## §7 verification — clean (0)
 
-- §7.3 banned claim word active: antioxidant-detox ("Antioxidant Detox")
+- (none)
