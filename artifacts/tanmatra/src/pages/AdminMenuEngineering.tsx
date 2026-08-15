@@ -208,7 +208,7 @@ export default function AdminMenuEngineering() {
     setBusy(true);
     try {
       const res = await fetch(
-        `/api/menu-engineering/pricing-suggestions/${id}/${action}`,
+        `${API_BASE}/menu-engineering/pricing-suggestions/${id}/${action}`,
         {
           method: "POST",
           credentials: "include",

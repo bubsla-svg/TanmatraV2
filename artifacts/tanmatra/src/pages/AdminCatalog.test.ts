@@ -5,7 +5,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * The Menu Catalog "Add/Edit Menu Item" dialog had two independent bugs:
+ * The Menu Catalog "Add/Edit Menu Item" dialog had three independent bugs:
  *
  * 1. Every fetch in this page omitted `credentials: "include"`. In
  *    production this page's API calls go cross-origin (API_BASE points at
@@ -23,20 +23,31 @@ import { fileURLToPath } from "node:url";
  *    so a created dish could never carry the fields the storefront dish
  *    page actually renders (description, tags, ingredients, ...) even
  *    though the API already accepted and returned them.
+ *
+ * 3. Every fetch called `${API_BASE}/api/menu/items...`, doubling the `/api`
+ *    segment: `API_BASE` (lib/apiBase.ts) already resolves to a URL ending
+ *    in `/api` (both "/api" in dev and ".../run.app/api" in prod), and
+ *    `menu.ts` registers its routes as "/menu/items" — mounted globally
+ *    under `/api` by app.ts's `app.use("/api", router)`. The real path is
+ *    therefore "/api/menu/items"; `${API_BASE}/api/menu/items` resolved to
+ *    "/api/api/menu/items", a 404 in every environment. This shipped in the
+ *    original #18 fix without being caught, because the credentials test
+ *    below matched the (buggy) doubled path rather than asserting the
+ *    correct one.
  */
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SRC = fs.readFileSync(path.join(HERE, "AdminCatalog.tsx"), "utf8");
 
 test("every menu/items fetch sends credentials so the admin session cookie is included", () => {
-  const fetchCallCount = (SRC.match(/fetch\(`\$\{API_BASE\}\/api\/menu\/items/g) ?? [])
+  const fetchCallCount = (SRC.match(/fetch\(`\$\{API_BASE\}\/menu\/items/g) ?? [])
     .length;
   assert.equal(fetchCallCount, 4, "expected load/unpause/create/edit fetch calls");
 
   // Scan each fetch call's own option block (up to the next top-level
   // fetch(...) or end of file) rather than the whole file, so this can't
   // pass by finding one correct call while the others regressed.
-  const starts = [...SRC.matchAll(/fetch\(`\$\{API_BASE\}\/api\/menu\/items[^`]*`,\s*\{/g)].map(
+  const starts = [...SRC.matchAll(/fetch\(`\$\{API_BASE\}\/menu\/items[^`]*`,\s*\{/g)].map(
     (m) => m.index,
   );
   assert.equal(starts.length, 4);
@@ -50,6 +61,14 @@ test("every menu/items fetch sends credentials so the admin session cookie is in
       `menu/items fetch call #${i + 1} must send credentials: "include"`,
     );
   }
+});
+
+test("no fetch doubles the /api segment already present in API_BASE", () => {
+  // API_BASE (lib/apiBase.ts) already ends in "/api" — a call built as
+  // `${API_BASE}/api/...` resolves to ".../api/api/..." and 404s against
+  // the real server route ("/api/menu/items", mounted via menu.ts's
+  // "/menu/items" under app.ts's `app.use("/api", router)`).
+  assert.doesNotMatch(SRC, /\$\{API_BASE\}\/api\//);
 });
 
 test("the load-items effect does not gate on a manually-entered admin token", () => {
