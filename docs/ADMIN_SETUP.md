@@ -27,13 +27,59 @@ deploy; the missing ones will be listed at `/admin/_status`.
 | `OPS_USER_IDS` | ⚪ | Comma-separated user UUIDs allowed at `/admin/ops`. |
 | `CATALOG_USER_IDS` | ⚪ | Comma-separated user UUIDs allowed in CMS / catalog edits. |
 | `SESSION_SAMESITE` | ⚪ | Customer session cookie SameSite. Set to `none` for cross-origin Firebase → Cloud Run. |
-| `PRIVATE_OBJECT_DIR` | ⚪ | GCS object-storage prefix for menu-asset uploads. Format `/<bucket>/<prefix>`. |
+| `PRIVATE_OBJECT_DIR` | ⚪ | GCS object-storage prefix for menu-asset uploads. Format `/<bucket>/<prefix>`. Provisioned value: `/brand-tanmatra-menu-assets/prod` — see §1.1. |
 | `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_VERIFY_SID` | ⚪ | Phone OTP. Without them OTPs go to logs only (mock mode). |
 | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | ⚪ | Payment provider. Without them payments fall back to mark-as-paid (dev mode). |
 | `VITE_ENABLE_COD` (frontend build only) | ⚪ | Bake into the Firebase build to surface the Cash-on-Delivery option in checkout. Pair with backend COD work. |
 
 The full list with current state is at **`/admin`** (Deployment status
 panel) once the admin login is up.
+
+### 1.1 `PRIVATE_OBJECT_DIR` — the provisioned bucket
+
+Menu-asset uploads (`/admin/menu-imagery`: upload, AI hero, enhance,
+remove-bg) write through `imageStorage.ts`, which throws
+`PRIVATE_OBJECT_DIR not set` when this is missing — surfacing in the UI
+as a generic `Error: internal error` on every one of those buttons.
+`validateEnv.ts` only warns at boot, so the server starts healthy and the
+failure appears only when someone actually tries to upload.
+
+The bucket is provisioned:
+
+| | |
+|---|---|
+| Bucket | `gs://brand-tanmatra-menu-assets` |
+| Location | `ASIA-SOUTH2` (same region as the `wellness-foods` service) |
+| Access | Uniform bucket-level access, public-access-prevention **enforced** |
+| Value to set | `/brand-tanmatra-menu-assets/prod` |
+| Objects land at | `prod/menu-assets/<slug>/<kind>-<uuid>.<ext>` |
+
+No IAM grant is needed: the Cloud Run runtime service account
+(`475157072474-compute@developer.gserviceaccount.com`) already holds
+project-level `roles/storage.admin`.
+
+Set it as a **GitHub Actions secret**, not just on the service —
+`deploy.yml` passes `PRIVATE_OBJECT_DIR=${PRIVATE_OBJECT_DIR}` through
+`--update-env-vars`, so while the secret is unset that expands to empty
+and **wipes any value set directly on the service** at the next deploy:
+
+```bash
+printf '%s' "/brand-tanmatra-menu-assets/prod" \
+  | gh secret set PRIVATE_OBJECT_DIR --repo bubsla-svg/TanmatraV2
+```
+
+Then redeploy. (`scripts/sync-github-secrets.sh` classifies this one as
+"nowhere automatable" — it exists in neither Cloud Run env nor Secret
+Manager, so it has to be set by hand once.)
+
+To point at a different bucket, create it in the service's region and
+grant the runtime SA `roles/storage.objectAdmin` on it:
+
+```bash
+gcloud storage buckets create gs://<bucket> \
+  --project brand-tanmatra-tmg --location asia-south2 \
+  --uniform-bucket-level-access --public-access-prevention
+```
 
 ---
 
