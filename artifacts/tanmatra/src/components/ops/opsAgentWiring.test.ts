@@ -50,6 +50,25 @@ test("useOpsAgent consumes the ops stream client", () => {
   );
 });
 
+test("stream client records error events instead of throwing past the finish", () => {
+  // The server always follows an `error` event with a `finish` carrying
+  // operator-readable fallback text. Throwing on the error event abandons
+  // the stream before that finish arrives, collapsing every server-side
+  // failure (model-key outage, tool crash) into a generic "connection
+  // failed" — which is how an invalid GOOGLE_API_KEY masqueraded as an
+  // auth bug for a full debugging session.
+  const queries = read("lib/queries.ts");
+  const fnStart = queries.indexOf("export async function streamOpsAgentChat");
+  assert.notEqual(fnStart, -1);
+  const body = queries.slice(fnStart, queries.indexOf("export", fnStart + 10));
+  assert.match(body, /streamError = evt\.message/);
+  assert.doesNotMatch(
+    body,
+    /case "error":\s*\n\s*throw/,
+    "the error event must be recorded, not thrown mid-stream",
+  );
+});
+
 test("no admin ops surface reaches the customer support-agent endpoint", () => {
   // The support endpoint requires a customer session; nothing under the
   // admin-only ops surfaces can authenticate against it.
