@@ -14,6 +14,7 @@
  * a real hierarchy — "what's in it" over "how much of each" — rather than
  * two renderings of one string.
  */
+import { hasStubIngredients } from "./dishTrust";
 
 /** Quantity separator used by the catalog: a spaced en/em dash or hyphen.
  *  Spaced on purpose — "low-fat milk" and "6–8 cloves" must NOT split, and
@@ -91,16 +92,39 @@ const PANTRY_STAPLES = new Set([
  * differentiating ingredient into view without any cross-dish comparison.
  * Falls back to the catalog description when a dish carries no usable
  * ingredients — never to an empty line.
+ *
+ * STUB GUARD (TNM-MENU-01 M-5 §3.4, defect S-3 / finding F8): 18 live dishes
+ * carry `ingredients: ["fresh ingredients"]` — a seed placeholder, not a
+ * recipe. That string is not a pantry staple, so it survived the filter and
+ * became the card's one differentiating line: eighteen cards reading "fresh
+ * ingredients". Those dishes DO carry real authored prose in
+ * `longDescription` (verified: all 18, none of them ingredient-list shaped),
+ * which the card never reached because ingredients won first. So when the
+ * ingredient list is the placeholder, skip it and use that prose instead —
+ * this replaces a meaningless line with a true one rather than blanking it.
  */
 export function dishCardSummary(dish: {
   tasteDescription?: string | null;
   description?: string | null;
+  longDescription?: string | null;
   ingredients?: string[] | null;
 }): string {
   if (dish.tasteDescription && dish.tasteDescription.trim()) return dish.tasteDescription.trim();
-  const distinctive = (dish.ingredients ?? [])
-    .map(ingredientName)
-    .filter((n) => n && !PANTRY_STAPLES.has(n.toLowerCase()));
-  if (distinctive.length > 0) return ingredientSummary(distinctive, 3);
+
+  if (!hasStubIngredients(dish)) {
+    const distinctive = (dish.ingredients ?? [])
+      .map(ingredientName)
+      .filter((n) => n && !PANTRY_STAPLES.has(n.toLowerCase()));
+    if (distinctive.length > 0) return ingredientSummary(distinctive, 3);
+  }
+
+  // Real prose beats the templated `description` ("<Name> - prepared fresh
+  // daily."), but only when it IS prose — on the curated seed catalog
+  // `longDescription` is itself a quantity-bearing ingredient list, and
+  // printing that here would re-create the duplication this file exists to
+  // remove.
+  const long = dish.longDescription?.trim() ?? "";
+  if (long && !QTY_SEPARATOR.test(long)) return long;
+
   return dish.description?.trim() ?? "";
 }

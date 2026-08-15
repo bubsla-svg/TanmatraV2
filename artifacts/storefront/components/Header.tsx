@@ -61,14 +61,20 @@ export async function Header() {
               <div className="min-w-0">
                 <DeliveryAddressBar />
               </div>
-              <div className="hidden md:flex items-center gap-2 border-l border-line pl-3 ml-1">
-                <div className="flex items-center gap-1.5 rounded-full border border-[var(--sage)]/20 bg-sage-soft/30 px-2 py-1 shadow-sm">
-                  <svg className="w-3.5 h-3.5 text-sage-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-3xs font-bold uppercase tracking-wide text-sage-text">RD-Reviewed</span>
-                </div>
-              </div>
+              {/* The "RD-Reviewed" chip that sat here is REMOVED, for the
+                  same reason MenuTrustStrip withholds the identical claim:
+                  finding F5. It rested on `rdVerified`, which is true on all
+                  145 live dishes — and on `rdReviewState`, which is
+                  "reviewed" on all 145 for the same reason (POS imports are
+                  written in pre-reviewed by lib/petpooja.ts). Neither is a
+                  dietitian's sign-off, so a site-wide chip asserting one was
+                  a compliance claim with nothing behind it, sitting above a
+                  menu where 17 dishes cannot even state their macros.
+
+                  Unlike the strip's, this claim was UNCONDITIONAL — it could
+                  not degrade, because it read no data at all. There is
+                  nothing to gate it on, so it comes out entirely; it returns
+                  when F5 is resolved and a real per-dish signal exists. */}
 
               <div className="flex items-center gap-1">
                 <CommandMenu dishes={dishIndex} />
