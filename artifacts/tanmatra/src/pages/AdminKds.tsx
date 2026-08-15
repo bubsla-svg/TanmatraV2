@@ -57,7 +57,6 @@ export default function AdminKds() {
   const [busyOrderId, setBusyOrderId] = useState<number | null>(null);
 
   const loadOrders = useCallback(async () => {
-    if (!token) return;
     setLoading(true);
     setError(null);
     try {
@@ -90,8 +89,18 @@ export default function AdminKds() {
   const handleSimulateDelay = async (orderId: number) => {
     setBusyOrderId(orderId);
     try {
-      await kdsFetch(`/ops/kds/orders/${orderId}/simulate-delay`, { method: "POST" }, token);
-      toast.success("CRM Delay Alert SMS sent to customer!");
+      const result = await kdsFetch<{ smsSent: boolean; reason?: string }>(
+        `/ops/kds/orders/${orderId}/simulate-delay`,
+        { method: "POST" },
+        token,
+      );
+      if (result.smsSent) {
+        toast.success("CRM Delay Alert SMS sent to customer!");
+      } else {
+        toast.warning(
+          `Delay logged, but no SMS was sent (${result.reason ?? "no SMS provider configured"}).`,
+        );
+      }
       void loadOrders();
     } catch (err) {
       toast.error((err as Error).message || "Delay simulation failed");
