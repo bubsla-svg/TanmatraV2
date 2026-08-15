@@ -995,7 +995,8 @@ registerAgent({
   name: "cms",
   description:
     "Catalog editor agent for menu items: create, update price, toggle availability (single + bulk), set image URL.",
-  defaultModel: "gemini-2.5-flash",
+  // Latest-stable alias — see DEFAULT_MODEL_ID in ../model.ts.
+  defaultModel: "gemini-flash-latest",
   maxSteps: 6,
   systemPrompt: CMS_PROMPT,
   tools: [

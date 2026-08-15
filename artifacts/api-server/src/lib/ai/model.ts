@@ -19,7 +19,16 @@ function getProvider(): ReturnType<typeof createGoogleGenerativeAI> {
   return cachedProvider;
 }
 
-export const DEFAULT_MODEL_ID = "gemini-2.5-flash";
+// The `-latest` alias, not a pinned version, and deliberately so. The pinned
+// "gemini-2.5-flash" took every agent down on 2026-08-15: Google retired the
+// 2.5 line for NEW API keys ("no longer available to new users"), and the key
+// had just been re-minted for the account migration. models.list still showed
+// the model — enforcement happens only at generateContent time — so nothing
+// looked wrong until the first call failed. The alias tracks the latest
+// STABLE flash model, which Google keeps callable for every key, making that
+// rot class structurally impossible. Cost telemetry for the alias lives in
+// pricing.ts under the same name.
+export const DEFAULT_MODEL_ID = "gemini-flash-latest";
 
 export function getModel(modelId: string = DEFAULT_MODEL_ID) {
   return getProvider()(modelId);
