@@ -4,12 +4,15 @@ interface ClinicalBadgeProps {
   label: string;
   variant?: "gold" | "emerald" | "amber" | "slate";
   icon?: React.ReactNode;
+  /** Extra classes on the outer span — e.g. `tabular` for a numeric label. */
+  className?: string;
 }
 
 export const ClinicalBadge: React.FC<ClinicalBadgeProps> = ({
   label,
   variant = "emerald",
   icon,
+  className = "",
 }) => {
   const styles = {
     gold: "bg-gold/10 text-[var(--gold-text)] border-[var(--gold)]/20",
@@ -19,7 +22,7 @@ export const ClinicalBadge: React.FC<ClinicalBadgeProps> = ({
   };
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${styles[variant]}`}>
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${styles[variant]} ${className}`}>
       {icon}
       <span>{label}</span>
     </span>

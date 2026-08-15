@@ -136,6 +136,11 @@ async function fetchMergedCatalog(
         stat.allergensReviewed,
         reviewState,
       ),
+      ...(row.sectionOrder != null ? { sectionOrder: row.sectionOrder } : {}),
+      ...(row.sortRank != null ? { sortRank: row.sortRank } : {}),
+      ...(row.vegClass ? { vegClass: row.vegClass } : {}),
+      ...(row.badge ? { badge: row.badge } : {}),
+      archived: row.archived,
     });
   }
 
@@ -183,8 +188,18 @@ async function fetchMergedCatalog(
       ...(row.pairingSlug ? { pairingSlug: row.pairingSlug } : {}),
       isAvailable: row.isAvailable,
       rdReviewState: coerceReviewState(row.allergenReviewState),
+      ...(row.sectionOrder != null ? { sectionOrder: row.sectionOrder } : {}),
+      ...(row.sortRank != null ? { sortRank: row.sortRank } : {}),
+      ...(row.vegClass ? { vegClass: row.vegClass } : {}),
+      ...(row.badge ? { badge: row.badge } : {}),
+      archived: row.archived,
     });
   }
+  // Archived rows (M-3 CUT/MERGE/DELIST) stay in the merged catalog here —
+  // this function backs checkout, subscriptions, meal planning and loyalty
+  // in addition to menu display, and those need to keep resolving dishes a
+  // customer already committed to. Customer-facing menu LISTINGS exclude
+  // `archived` at the route layer instead (see /menu/public, /menu/ranked).
   return merged.map(enrich);
 }
 
