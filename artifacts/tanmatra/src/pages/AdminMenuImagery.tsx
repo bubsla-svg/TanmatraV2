@@ -44,15 +44,15 @@ export default function AdminMenuImagery() {
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
 
   useEffect(() => {
-    if (!adminToken) return;
     loadMissing();
-  }, [adminToken]);
+  }, []);
 
   async function loadMissing() {
     setBusy(true);
     try {
-      const res = await fetch(`${API_BASE}/api/menu/items/missing-images`, {
+      const res = await fetch(`${API_BASE}/menu/items/missing-images`, {
         headers: { "x-admin-token": adminToken },
+        credentials: "include",
       });
       if (res.ok) {
         const data = await res.json();
@@ -69,8 +69,9 @@ export default function AdminMenuImagery() {
     if (!slug) return;
     setBusy(true);
     try {
-      const res = await fetch(`${API_BASE}/api/menu/items/${slug}/assets`, {
+      const res = await fetch(`${API_BASE}/menu/items/${slug}/assets`, {
         headers: { "x-admin-token": adminToken },
+        credentials: "include",
       });
       if (res.ok) {
         const data = await res.json();
@@ -93,12 +94,13 @@ export default function AdminMenuImagery() {
       if (action === "delete") method = "DELETE";
       
       const endpoint = action === "delete" 
-        ? `${API_BASE}/api/menu/assets/${assetId}`
-        : `${API_BASE}/api/menu/assets/${assetId}/${action}`;
+        ? `${API_BASE}/menu/assets/${assetId}`
+        : `${API_BASE}/menu/assets/${assetId}/${action}`;
 
       const res = await fetch(endpoint, {
         method,
         headers: { "x-admin-token": adminToken },
+        credentials: "include",
       });
       
       if (res.ok) {
@@ -121,9 +123,10 @@ export default function AdminMenuImagery() {
     if (!activeSlug) return;
     setBusy(true);
     try {
-      const res = await fetch(`${API_BASE}/api/menu/items/${activeSlug}/assets/hero`, {
+      const res = await fetch(`${API_BASE}/menu/items/${activeSlug}/assets/hero`, {
         method: "POST",
         headers: { "x-admin-token": adminToken, "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ extraInstructions: heroPrompt || undefined })
       });
       if (res.ok) {
@@ -150,9 +153,10 @@ export default function AdminMenuImagery() {
         const result = reader.result as string;
         const b64 = result.split(",")[1];
         
-        const res = await fetch(`${API_BASE}/api/menu/items/${activeSlug}/assets/upload`, {
+        const res = await fetch(`${API_BASE}/menu/items/${activeSlug}/assets/upload`, {
           method: "POST",
           headers: { "x-admin-token": adminToken, "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({
             dataBase64: b64,
             mimeType: fileToUpload.type
@@ -182,9 +186,10 @@ export default function AdminMenuImagery() {
     setBulkProgress([]);
     try {
       const slugs = missingItems.map(m => m.slug).slice(0, 10); // using 10 as cap for demo
-      const res = await fetch(`${API_BASE}/api/menu/items/assets/bulk-hero`, {
+      const res = await fetch(`${API_BASE}/menu/items/assets/bulk-hero`, {
         method: "POST",
         headers: { "x-admin-token": adminToken, "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ slugs, confirm: true })
       });
       
