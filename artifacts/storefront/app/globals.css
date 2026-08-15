@@ -361,6 +361,17 @@ html, body {
   contain-intrinsic-size: auto 600px auto 191px;
 }
 
+/* TNM-MENU-01 M-5 §3.2 — a section jumped to from the chip bar must land
+   BELOW the sticky cluster, not behind it. --menu-anchor-offset is kept in
+   sync with the live cluster height by useStickyAnchorOffset (the cluster
+   grows and shrinks: the filter summary line appears, chips wrap at narrow
+   widths). The fallback matters — the variable only exists while /menu is
+   mounted, and without it every anchor would land flush at viewport top
+   with the header covering the heading. */
+.scroll-anchor-offset {
+  scroll-margin-top: var(--menu-anchor-offset, 5rem);
+}
+
 /* 16px Minimum Input Rule to prevent iOS Safari auto-zoom */
 input[type="text"],
 input[type="tel"],

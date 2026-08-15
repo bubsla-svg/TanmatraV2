@@ -1,6 +1,6 @@
 "use client";
 import type { ReactNode } from "react";
-import { groupBySection, NO_PERSONALIZATION_BOOST_SECTION } from "@/lib/menuSections";
+import { groupBySection, sectionAnchorId, NO_PERSONALIZATION_BOOST_SECTION } from "@/lib/menuSections";
 
 export interface MenuGridRow {
   dishId: number;
@@ -90,10 +90,20 @@ export function MenuGrid({
         // Section 13 never gets the personalization boost — see the file
         // header. Every other section applies `order` normally.
         const boosted = section.order !== NO_PERSONALIZATION_BOOST_SECTION;
+        // §3.3: the count is of what the customer can actually SEE, not what
+        // the section holds. Under an active filter "Bowls · 4" beside two
+        // rendered cards would be the header contradicting the list directly
+        // beneath it.
+        const shown = visibleIds
+          ? section.items.filter((r) => visibleIds.has(r.dishId)).length
+          : section.items.length;
         return (
-          <section key={section.order} aria-label={section.name}>
+          <section key={section.order} id={sectionAnchorId(section.order)} aria-label={section.name} className="scroll-anchor-offset">
             <h2 data-testid="menu-section-heading" className="mb-3 text-lg font-semibold tracking-tight text-ink">
-              {section.name}
+              {section.name}{" "}
+              <span data-testid="menu-section-count" className="tabular font-normal text-ink-faint">
+                · {shown}
+              </span>
             </h2>
             <div className="flex flex-col gap-3" role="list">
               {section.items.map(({ dishId, node }) => (
