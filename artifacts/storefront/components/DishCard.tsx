@@ -4,6 +4,7 @@ import { type DishData } from "@workspace/menu-catalog";
 import { formatMacroLine, formatPaise } from "@/lib/format";
 import { dishCardSummary } from "@/lib/dishText";
 import { AddToCart } from "@/components/cart/AddToCart";
+import { ClinicalBadge } from "@/components/primitives/Badges";
 
 import { SafeImage } from "@/components/ui/SafeImage";
 
@@ -33,6 +34,46 @@ import { SafeImage } from "@/components/ui/SafeImage";
  *   - The fixed-size photo box means a slow image never shifts the row.
  */
 
+/** Tri-state veg mark. `vegClass` (M-5 taxonomy) supersedes the binary
+ *  `isVeg` for display when present; absent falls back to deriving
+ *  veg/non-veg from `isVeg` (every dish carries that field). */
+function resolveVegClass(dish: Pick<DishData, "vegClass" | "isVeg">): "veg" | "non-veg" | "egg" {
+  return dish.vegClass ?? (dish.isVeg ? "veg" : "non-veg");
+}
+
+const VEG_MARK_LABEL: Record<"veg" | "non-veg" | "egg", string> = {
+  veg: "Vegetarian",
+  "non-veg": "Non-vegetarian",
+  egg: "Contains egg",
+};
+
+/** Small inline dot/square mark — circle+sage for veg (matches the legacy
+ *  binary mark), square+danger for non-veg, circle+gold for egg (neither
+ *  strictly veg nor typical non-veg in Indian dietary labeling). */
+function VegMark({ vegClass }: { vegClass: "veg" | "non-veg" | "egg" }) {
+  const color = vegClass === "egg" ? "var(--gold)" : vegClass === "veg" ? "var(--sage)" : "var(--danger)";
+  const shape = vegClass === "non-veg" ? "rounded-[2px]" : "rounded-full";
+  return (
+    <span
+      role="img"
+      aria-label={VEG_MARK_LABEL[vegClass]}
+      data-testid="veg-mark"
+      className={`inline-block h-2.5 w-2.5 shrink-0 ring-1 ring-line-strong ${shape}`}
+      style={{ backgroundColor: color }}
+    />
+  );
+}
+
+/** Merchandising badge chip variant, keyed off the label text — unknown
+ *  labels (any future badge the payload adds) default to gold rather than
+ *  failing to render. */
+function badgeVariant(badge: string): "gold" | "emerald" | "amber" | "slate" {
+  const b = badge.toLowerCase();
+  if (b.includes("new")) return "emerald";
+  if (b.includes("trend")) return "amber";
+  return "gold";
+}
+
 /** Display-only star row (gold = signal here, not an action — the whole row is
  *  the action). Renders nothing when a dish has no reviews yet. */
 function RatingStars({ average, count }: { average?: number | null; count?: number }) {
@@ -53,19 +94,28 @@ function RatingStars({ average, count }: { average?: number | null; count?: numb
 
 export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean }) {
   if (compact) {
+    const vegClass = resolveVegClass(dish);
     return (
       <Link href={`/menu?dish=${dish.slug}`} scroll={false} className="group flex flex-col rounded-2xl border border-line bg-surface p-3 transition-transform active:scale-[0.98]">
         <div className="relative mb-4 overflow-hidden rounded-xl bg-surface-raised border border-line">
-          <div className="absolute top-2 left-2 flex gap-1 z-10">
-            <span className="px-2 py-1 rounded-full bg-sage-soft/90 backdrop-blur-md border border-[var(--sage)]/20 font-bold text-3xs text-sage-text uppercase tracking-widest">
-              {dish.isVeg ? "Veg" : "Non-Veg"}
+          <div className="absolute top-2 left-2 flex items-center gap-1.5 z-10">
+            <span
+              role="img"
+              aria-label={VEG_MARK_LABEL[vegClass]}
+              data-testid="veg-mark"
+              className="px-2 py-1 rounded-full bg-sage-soft/90 backdrop-blur-md border border-[var(--sage)]/20 font-bold text-3xs text-sage-text uppercase tracking-widest"
+            >
+              {vegClass === "egg" ? "Egg" : vegClass === "veg" ? "Veg" : "Non-Veg"}
             </span>
+            {dish.badge && (
+              <ClinicalBadge label={dish.badge} variant={badgeVariant(dish.badge)} className="backdrop-blur-md" />
+            )}
           </div>
           <SafeImage src={dish.image} alt={dish.name} className="aspect-[4/3] w-full" />
         </div>
         <div className="flex flex-col gap-1">
           <h3 className="font-bold text-lg text-ink truncate">{dish.name}</h3>
-          <span className="font-mono text-2xs text-ink-muted">
+          <span className="tabular font-mono text-2xs text-ink-muted">
             {formatMacroLine(dish.macros, dish.macrosEstimated)}
           </span>
           <div className="relative z-10 mt-3 flex justify-between items-center">
@@ -77,22 +127,20 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
     );
   }
 
+  const vegClass = resolveVegClass(dish);
   return (
     <article className="group flex flex-col rounded-2xl border border-line bg-surface p-3 transition-transform active:scale-[0.98]">
       <Link href={`/menu?dish=${dish.slug}`} scroll={false} className="flex gap-4">
         {/* Text column FIRST (v3 mirrored order) */}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="flex items-center gap-2">
-            <span
-              role="img"
-              aria-label={dish.isVeg ? "Vegetarian" : "Non-vegetarian"}
-              className={`inline-block h-2.5 w-2.5 shrink-0 ring-1 ring-line-strong ${
-                dish.isVeg ? "rounded-full" : "rounded-[2px]"
-              }`}
-              style={{ backgroundColor: dish.isVeg ? "var(--sage)" : "var(--danger)" }}
-            />
+            <VegMark vegClass={vegClass} />
             <Text type="body" weight="bold" as="h3" maxLines={1} className="font-bold">{dish.name}</Text>
           </span>
+
+          {dish.badge && (
+            <ClinicalBadge label={dish.badge} variant={badgeVariant(dish.badge)} className="w-fit" />
+          )}
 
           {/* dishCardSummary, not `description`: the catalog derives that
               field from the first three ingredients, which across a dish
@@ -103,9 +151,11 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
             {dishCardSummary(dish)}
           </Text>
           <RatingStars average={dish.averageRating} count={dish.reviewCount} />
-          <span className="font-mono text-2xs text-ink-muted">
-            {formatMacroLine(dish.macros, dish.macrosEstimated)}
-          </span>
+          <ClinicalBadge
+            variant="slate"
+            className="tabular w-fit"
+            label={formatMacroLine(dish.macros, dish.macrosEstimated)}
+          />
         </div>
 
         {/* Photo LAST — square, flush right, fixed box (zero CLS). No `sizes`

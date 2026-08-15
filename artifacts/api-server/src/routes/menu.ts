@@ -29,6 +29,7 @@ import { requireRole, isRoleRequest } from "../lib/adminGate";
 import { PriceValidationError } from "../lib/priceBands";
 import { evaluateDishForPreferences } from "@workspace/preferences-match";
 import { getDecryptedPreferences } from "../lib/userPreferences";
+import { NO_PERSONALIZATION_BOOST_SECTION } from "@workspace/menu-catalog";
 
 const router: IRouter = Router();
 
@@ -47,9 +48,14 @@ router.get("/menu/public", async (_req: Request, res: Response) => {
   // have no `rdReviewState` field set and remain visible. Staff/RD
   // admin routes (e.g. /menu/items) intentionally bypass this filter so
   // pending items can still be inspected and approved.
+  //
+  // `archived` (TNM-MENU-01 M-3 CUT/MERGE/DELIST) is excluded here at the
+  // listing route, not in getMergedCatalog itself — that function also
+  // backs checkout/subscriptions/loyalty, which need to keep resolving a
+  // dish a customer already committed to.
   const dishes = await getMergedCatalog();
   const safe = dishes.filter(
-    (d) => !d.rdReviewState || d.rdReviewState === "reviewed",
+    (d) => (!d.rdReviewState || d.rdReviewState === "reviewed") && !d.archived,
   );
   res.json({ dishes: safe });
 });
@@ -62,6 +68,7 @@ router.get("/menu/alacarte", async (_req: Request, res: Response) => {
   const safe = dishes.filter(
     (d) =>
       (!d.rdReviewState || d.rdReviewState === "reviewed") &&
+      !d.archived &&
       isAlaCarteEnabled(d),
   );
   res.json({ dishes: safe });
@@ -100,9 +107,25 @@ router.get("/menu/ranked", async (req: Request, res: Response) => {
   }
 
   const dishes = await getMergedCatalog();
-  const safe = dishes.filter(
-    (d) => !d.rdReviewState || d.rdReviewState === "reviewed",
-  );
+  const safe = dishes
+    .filter((d) => (!d.rdReviewState || d.rdReviewState === "reviewed") && !d.archived)
+    // Baseline order is the §5 section taxonomy (section_order, then
+    // sort_rank within it) so that with no personalization active the
+    // response already reflects the storefront's 13-section layout.
+    // Ungoverned dishes (no section_order) sort last, in name order.
+    .sort((a, b) => {
+      const sa = a.sectionOrder ?? Number.MAX_SAFE_INTEGER;
+      const sb = b.sectionOrder ?? Number.MAX_SAFE_INTEGER;
+      if (sa !== sb) return sa - sb;
+      const ra = a.sortRank ?? Number.MAX_SAFE_INTEGER;
+      const rb = b.sortRank ?? Number.MAX_SAFE_INTEGER;
+      if (ra !== rb) return ra - rb;
+      return a.name.localeCompare(b.name);
+    });
+  // Kept out of the wire response (dish_id + fit_band only) — internal
+  // lookup so the high-fit promotion below can exclude section 13 without
+  // leaking section_order onto the API surface.
+  const sectionOrderById = new Map(safe.map((d) => [d.id, d.sectionOrder]));
 
   const items = safe.map((dish) => {
     const match = evaluateDishForPreferences(dish, prefsRow);
@@ -147,8 +170,15 @@ router.get("/menu/ranked", async (req: Request, res: Response) => {
     };
   });
 
-  // Sort: fit_band = high first (max 8)
-  const highBand = items.filter((it) => it.fit_band === "high").slice(0, 8);
+  // Sort: fit_band = high first (max 8). Section 13 ("Off the Wok") never
+  // gets the personalization boost — its rows are mostly needs-macros/
+  // needs-cogs gated, so promoting them ahead of the governed catalog
+  // would surface half-verified dishes. It keeps its normal fit_band and
+  // its baseline section position; it is never hidden, only never boosted.
+  const highBand = items
+    .filter((it) => it.fit_band === "high")
+    .filter((it) => sectionOrderById.get(it.dish_id) !== NO_PERSONALIZATION_BOOST_SECTION)
+    .slice(0, 8);
   const highBandIds = new Set(highBand.map((it) => it.dish_id));
   const rest = items.filter((it) => !highBandIds.has(it.dish_id));
 

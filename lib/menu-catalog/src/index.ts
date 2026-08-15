@@ -139,6 +139,32 @@ export interface DishCustomOption {
      * dishes unless the caller is a staff/RD context.
      */
     rdReviewState?: "pending_review" | "reviewed" | "blocked";
+    /**
+     * TNM-MENU-01 M-2/M-5 taxonomy columns. Present only on DB rows the
+     * menu-catalog-v2 plan engine has governed (`docs/TNM-MENU-01/menu-catalog-v2.1-payload.csv`);
+     * absent on the static `DISHES` seed and on any DB row the payload
+     * hasn't claimed yet. `sectionOrder` is one of the 13 fixed storefront
+     * menu sections (1-13); a dish without it does not belong to any of the
+     * fixed 13 and renders in a trailing "More dishes" section instead of
+     * being dropped.
+     */
+    sectionOrder?: number;
+    /** Ordering within `sectionOrder`, ascending. Undefined sorts last. */
+    sortRank?: number;
+    /**
+     * Tri-state veg mark for the storefront card — supersedes the binary
+     * `isVeg` boolean for display only (checkout/allergen logic still reads
+     * `isVeg`). Absent falls back to deriving veg/non-veg from `isVeg`.
+     */
+    vegClass?: "veg" | "non-veg" | "egg";
+    /** Merchandising badge chip (e.g. "Bestseller", "New", "Trending"). */
+    badge?: string;
+    /**
+     * Soft-retired by the M-3 plan engine (CUT/MERGE/DELIST outcome).
+     * Archived rows are excluded from every customer-facing menu listing —
+     * they are kept in the DB for order-history/audit lookups only.
+     */
+    archived?: boolean;
   }
 
   export const CATEGORY_LABELS: Record<DishCategory, string> = {
@@ -152,6 +178,38 @@ export interface DishCustomOption {
     snacks: "Snacks & Bakes",
     mains: "Mains",
   };
+
+  /**
+   * TNM-MENU-01 §5: the thirteen fixed customer-facing menu sections, in
+   * display order. Mirrors `SECTIONS` in
+   * `scripts/src/lib/menuCatalogV2Plan.ts` (the migration script's own
+   * copy, used for payload CSV validation) — kept as a separate constant
+   * here rather than a cross-package import because that file is an
+   * ops-time migration tool, not a runtime dependency of the api-server or
+   * storefront. Both lists change together only when the manual's §5
+   * section order changes, which is rare and deliberate.
+   */
+  export const MENU_SECTIONS: ReadonlyArray<{ order: number; name: string }> = [
+    { order: 1, name: "High-Protein Meals" },
+    { order: 2, name: "Bowls" },
+    { order: 3, name: "Wraps & Burritos" },
+    { order: 4, name: "Sandwiches" },
+    { order: 5, name: "Salads" },
+    { order: 6, name: "Breakfast & Eggs" },
+    { order: 7, name: "Pita & Hummus" },
+    { order: 8, name: "Pasta" },
+    { order: 9, name: "Soups" },
+    { order: 10, name: "Smoothies & Juices" },
+    { order: 11, name: "Desserts" },
+    { order: 12, name: "Sides & Sips" },
+    { order: 13, name: "Off the Wok" },
+  ];
+
+  /** Section 13 ("Off the Wok") is excluded from personalization ranking
+   * boosts (manual M-5 scope) — its rows are mostly needs-macros/needs-cogs
+   * gated and unfinished, so promoting them into a "high fit" band would
+   * surface half-verified dishes ahead of the governed catalog. */
+  export const NO_PERSONALIZATION_BOOST_SECTION = 13;
 
   export const KITCHEN_LABELS: Record<DishKitchen, string> = {
     continental: "Continental",

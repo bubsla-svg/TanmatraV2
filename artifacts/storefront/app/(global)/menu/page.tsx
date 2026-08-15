@@ -61,11 +61,24 @@ export default async function MenuPage({
     fetchMenu(),
     searchParams,
   ]);
-  const orderable = dishes.filter(isAlaCarteEnabled);
+  // TNM-MENU-01 §5: base layout order is the fixed 13-section taxonomy,
+  // sort_rank within a section. Dishes with no section_order (not yet
+  // governed by the M-3 payload) sort last, by name — MenuGrid sinks them
+  // into a trailing "More dishes" bucket rather than dropping them.
+  const orderable = dishes.filter(isAlaCarteEnabled).sort((a, b) => {
+    const sa = a.sectionOrder ?? Number.MAX_SAFE_INTEGER;
+    const sb = b.sectionOrder ?? Number.MAX_SAFE_INTEGER;
+    if (sa !== sb) return sa - sb;
+    const ra = a.sortRank ?? Number.MAX_SAFE_INTEGER;
+    const rb = b.sortRank ?? Number.MAX_SAFE_INTEGER;
+    if (ra !== rb) return ra - rb;
+    return a.name.localeCompare(b.name);
+  });
   const openDish = dishSlug ? findDish(dishSlug, dishes) : undefined;
   const rows: MenuGridRow[] = orderable.map((dish) => ({
     dishId: dish.id,
     node: <DishCard key={dish.id} dish={dish} />,
+    sectionOrder: dish.sectionOrder,
   }));
 
   return (
