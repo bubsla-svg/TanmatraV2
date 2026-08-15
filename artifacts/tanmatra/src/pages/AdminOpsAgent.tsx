@@ -196,6 +196,7 @@ export default function AdminOpsAgent() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buf = "";
+      let streamHadError = false;
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
@@ -223,10 +224,14 @@ export default function AdminOpsAgent() {
             );
           } else if (event.type === "error") {
             setError(event.message);
+            streamHadError = true;
           }
         }
       }
-      void loadAudit();
+      // loadAudit()'s own success path clears `error` — skip it here when the
+      // chat itself just failed, or the fallback message we set above (from
+      // the stream's error event) is wiped before the operator ever sees it.
+      if (!streamHadError) void loadAudit();
       void loadLiveQueue();
     } catch (err) {
       setError((err as Error).message);
