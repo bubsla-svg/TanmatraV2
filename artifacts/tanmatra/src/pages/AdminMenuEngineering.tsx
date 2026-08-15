@@ -219,7 +219,7 @@ export default function AdminMenuEngineering() {
         setMsg(`Decision failed: ${await res.text()}`);
         return;
       }
-      setMsg(`Suggestion ${action}d.`);
+      setMsg(`Suggestion ${action === "approve" ? "approved" : "dismissed"}.`);
       await refresh();
     } finally {
       setBusy(false);
