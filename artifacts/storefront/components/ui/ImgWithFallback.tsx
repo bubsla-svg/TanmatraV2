@@ -8,7 +8,7 @@
 // broken image — the browser still attempts to decode it as image bytes,
 // fails, and fires the same `error` event a genuine broken image would, so
 // this needs no special-casing for that disguise.
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ImageOff } from "lucide-react";
 
 export function ImgWithFallback({
@@ -32,6 +32,28 @@ export function ImgWithFallback({
   fallback?: ReactNode;
 }) {
   const [broken, setBroken] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  // THE HYDRATION RACE, closed.
+  //
+  // `onError` is attached by React at HYDRATION. These images are
+  // server-rendered, so the browser starts fetching them from the raw HTML —
+  // long before the client bundle runs. A photo that fails in that window
+  // has already fired its one `error` event into a tree with no listener,
+  // and React never hears it: the fallback silently does not appear and the
+  // customer sees the browser's own broken-image chrome. That is the exact
+  // defect the fallback exists to remove, so leaving it to a race is not an
+  // option — and it IS a race, which is why it looked fine intermittently.
+  //
+  // `complete && naturalWidth === 0` is the DOM's own record that a load
+  // finished and produced no pixels, readable after the fact. Checking it on
+  // mount converts "did we happen to be listening?" into a deterministic
+  // answer. Runs once: post-hydration failures are handled by `onError`
+  // below, which by then is genuinely attached.
+  useEffect(() => {
+    const el = imgRef.current;
+    if (el && el.complete && el.naturalWidth === 0) setBroken(true);
+  }, []);
 
   if (broken) {
     if (fallback) {
@@ -54,6 +76,7 @@ export function ImgWithFallback({
 
   return (
     <img
+      ref={imgRef}
       src={src}
       alt={alt}
       loading={priority ? "eager" : "lazy"}
