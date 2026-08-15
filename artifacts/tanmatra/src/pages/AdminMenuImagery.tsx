@@ -44,15 +44,15 @@ export default function AdminMenuImagery() {
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
 
   useEffect(() => {
-    if (!adminToken) return;
     loadMissing();
-  }, [adminToken]);
+  }, []);
 
   async function loadMissing() {
     setBusy(true);
     try {
       const res = await fetch(`${API_BASE}/api/menu/items/missing-images`, {
         headers: { "x-admin-token": adminToken },
+        credentials: "include",
       });
       if (res.ok) {
         const data = await res.json();
@@ -71,6 +71,7 @@ export default function AdminMenuImagery() {
     try {
       const res = await fetch(`${API_BASE}/api/menu/items/${slug}/assets`, {
         headers: { "x-admin-token": adminToken },
+        credentials: "include",
       });
       if (res.ok) {
         const data = await res.json();
@@ -99,6 +100,7 @@ export default function AdminMenuImagery() {
       const res = await fetch(endpoint, {
         method,
         headers: { "x-admin-token": adminToken },
+        credentials: "include",
       });
       
       if (res.ok) {
@@ -124,6 +126,7 @@ export default function AdminMenuImagery() {
       const res = await fetch(`${API_BASE}/api/menu/items/${activeSlug}/assets/hero`, {
         method: "POST",
         headers: { "x-admin-token": adminToken, "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ extraInstructions: heroPrompt || undefined })
       });
       if (res.ok) {
@@ -153,6 +156,7 @@ export default function AdminMenuImagery() {
         const res = await fetch(`${API_BASE}/api/menu/items/${activeSlug}/assets/upload`, {
           method: "POST",
           headers: { "x-admin-token": adminToken, "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({
             dataBase64: b64,
             mimeType: fileToUpload.type
@@ -185,6 +189,7 @@ export default function AdminMenuImagery() {
       const res = await fetch(`${API_BASE}/api/menu/items/assets/bulk-hero`, {
         method: "POST",
         headers: { "x-admin-token": adminToken, "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ slugs, confirm: true })
       });
       

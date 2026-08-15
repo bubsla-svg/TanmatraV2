@@ -35,11 +35,11 @@ export default function AdminCompliance() {
   const [tamperResult, setTamperResult] = useState<{ action: string; status: number; message: string } | null>(null);
 
   const loadLogs = useCallback(async () => {
-    if (!token) return;
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/compliance/logs`, {
         headers: { "x-admin-token": token },
+        credentials: "include",
       });
       if (res.ok) {
         const data = await res.json();
@@ -69,6 +69,7 @@ export default function AdminCompliance() {
           "Content-Type": "application/json",
           "x-admin-token": token,
         },
+        credentials: "include",
         body: JSON.stringify({ coldStorageTempCelsius: 8.5 }), // unsafe storage temp
       });
       const data = await res.json();
@@ -93,6 +94,7 @@ export default function AdminCompliance() {
       const res = await fetch(`${API_BASE}/compliance/logs/${targetId}`, {
         method: "DELETE",
         headers: { "x-admin-token": token },
+        credentials: "include",
       });
       const data = await res.json();
       setTamperResult({

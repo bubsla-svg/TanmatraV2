@@ -47,10 +47,10 @@ export default function AdminSupplier() {
 
   // Fetch list of products in catalog to verify matching names
   const loadInventory = useCallback(async () => {
-    if (!token) return;
     try {
       const res = await fetch(`${API_BASE}/ops/inventory`, {
         headers: { "x-admin-token": token },
+        credentials: "include",
       });
       if (res.ok) {
         const data = await res.json();
@@ -82,6 +82,7 @@ export default function AdminSupplier() {
           "Content-Type": "application/json",
           "x-admin-token": token,
         },
+        credentials: "include",
         body: JSON.stringify({
           product,
           farmOrigin,
@@ -118,6 +119,7 @@ export default function AdminSupplier() {
           "Content-Type": "application/json",
           "x-admin-token": token,
         },
+        credentials: "include",
         body: JSON.stringify({
           barcodeToken: activeBarcode.barcodeToken,
         }),
