@@ -29,3 +29,23 @@ test("the provisioned-RD state discloses that booking-directory listing is a sep
   assert.match(block, /rdBookingData\.ts/);
   assert.match(block, /rd\/directory/);
 });
+
+/**
+ * Found by actually clicking through the fix in a browser (not just parsing
+ * source): "Mark contacted/approved/rejected" and "Approve & provision" all
+ * go through the same patch() helper, which called a hardcoded
+ * `/api/admin/rd-applications/:id` instead of `${API_BASE}/...` — unlike
+ * this same file's load() function three lines above it. In production that
+ * hits the tanmatra frontend's own origin, not the API server (same failure
+ * mode as the AdminAudit.tsx / AdminForecasting.tsx bugs already fixed
+ * elsewhere): every status change and every provisioning action was silently
+ * broken. The disclosure text this file's other test guards was correct but
+ * unreachable — the button that was supposed to trigger it never completed.
+ */
+test("the patch() mutation helper goes through API_BASE, not a hardcoded relative path", () => {
+  const fnStart = SRC.indexOf("async function patch(");
+  assert.notEqual(fnStart, -1);
+  const fnBody = SRC.slice(fnStart, SRC.indexOf("\n  }", fnStart));
+  assert.doesNotMatch(fnBody, /fetch\(\s*\n?\s*`\/api\//);
+  assert.match(fnBody, /fetch\(\s*\n?\s*`\$\{API_BASE\}\/admin\/rd-applications/);
+});
