@@ -6,10 +6,9 @@ import { dishCardSummary } from "@/lib/dishText";
 import { AddToCart } from "@/components/cart/AddToCart";
 import { ClinicalBadge } from "@/components/primitives/Badges";
 import { VegMark, resolveVegClass } from "@/components/menu/VegMark";
-import { DishFallbackTile } from "@/components/menu/DishFallbackTile";
 import { macroTrust } from "@/lib/dishTrust";
 
-import { SafeImage } from "@/components/ui/SafeImage";
+import { DishImage } from "@/components/menu/DishImage";
 
 /**
  * Dish row — Stitch Route Brief 02 v3, "Mirrored Clinical Menu List"
@@ -110,11 +109,11 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
               <ClinicalBadge label={dish.badge} variant={badgeVariant(dish.badge)} className="backdrop-blur-md" />
             )}
           </div>
-          <SafeImage
+          <DishImage
             src={dish.image}
+            name={dish.name}
             alt={dish.name}
             className="aspect-[4/3] w-full"
-            fallback={<DishFallbackTile name={dish.name} className="h-full w-full" />}
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -161,11 +160,11 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
             a 1x/2x srcset, which is the right pair here. A `sizes` value would
             replace that with the full width-descriptor ladder for no gain. */}
         <div className="relative h-[104px] w-[104px] shrink-0 overflow-hidden rounded-2xl border border-line bg-surface-raised">
-          <SafeImage
+          <DishImage
             src={dish.image}
+            name={dish.name}
             alt={dish.name}
             className="h-full w-full transition-transform duration-300 group-hover:scale-[1.03]"
-            fallback={<DishFallbackTile name={dish.name} className="h-full w-full" />}
           />
         </div>
       </Link>

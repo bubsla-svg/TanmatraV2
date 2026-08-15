@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ProtocolKey } from "@/content/landing/protocol";
-import { SafeImage } from "@/components/ui/SafeImage";
+import { DishImage } from "@/components/menu/DishImage";
 
 /** Slim projection of a catalog dish for the protocol rail. */
 export interface ProtocolDish {
@@ -74,8 +74,9 @@ export function ProtocolDishRail({
               className="group w-44 shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition-shadow hover:shadow-md cv-auto sm:w-52"
             >
               <div className="relative aspect-square w-full overflow-hidden bg-surface-raised">
-                <SafeImage
+                <DishImage
                   src={d.image}
+                  name={d.name}
                   className="h-full w-full"
                   imgClassName="transition-transform duration-300 ease-out group-hover:scale-105"
                 />

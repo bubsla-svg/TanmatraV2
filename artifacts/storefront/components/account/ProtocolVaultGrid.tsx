@@ -14,7 +14,7 @@ import { ApiError } from "@/lib/apiClient";
 import { getMySavedMeals, removeMealFromVault, type SavedMeal } from "@/lib/savedMealsApi";
 import { AddToCart } from "@/components/cart/AddToCart";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
-import { SafeImage } from "@/components/ui/SafeImage";
+import { DishImage } from "@/components/menu/DishImage";
 
 export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
   const queryClient = useQueryClient();
@@ -128,8 +128,11 @@ export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
             {dish?.image && (
               <div className="px-4">
                 <div className="relative aspect-video overflow-hidden rounded-xl border border-line bg-surface-raised">
-                  <SafeImage
+                  <DishImage
                     src={dish.image}
+                    // Same precedence the card's title uses two lines below,
+                    // so the tile's letter and the name always agree.
+                    name={saved.dishName || dish.name || saved.dishSlug}
                     className="h-full w-full"
                     imgClassName="transition-transform duration-700 group-hover:scale-105"
                   />

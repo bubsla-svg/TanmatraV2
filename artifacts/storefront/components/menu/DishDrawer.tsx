@@ -19,7 +19,7 @@ import {
 import { DishRationale } from "./DishRationale";
 import { DishSpec } from "./DishSpec";
 import { DishAllergens } from "./DishAllergens";
-import { SafeImage } from "@/components/ui/SafeImage";
+import { DishImage } from "@/components/menu/DishImage";
 
 /**
  * Dish detail as a bottom sheet over the menu (§4.2): users triage dishes in
@@ -60,7 +60,7 @@ export function DishDrawer({ dish }: { dish: DishData }) {
             IN this scrolling div, ~200px below the fold on a typical phone. */}
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-4 pt-3">
           <div className="overflow-hidden rounded-xl border border-line bg-surface-raised">
-            <SafeImage src={dish.image} className="aspect-[16/9] w-full" />
+            <DishImage src={dish.image} name={dish.name} className="aspect-[16/9] w-full" />
           </div>
 
           <div className="mt-4 flex items-start justify-between gap-4">
