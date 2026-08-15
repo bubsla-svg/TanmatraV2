@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { API_BASE } from "@/lib/apiBase";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 
 const ADMIN_TOKEN_KEY = "tanmatra:admin-token:v1";
 
@@ -25,10 +26,37 @@ interface MenuItem {
   allergenReviewState: string | null;
   isAvailable: boolean;
   unavailableUntil: string | null;
+  // The rest of what the storefront dish page (app/(focus)/dish/[slug])
+  // actually renders. GET /api/menu/items already returns the full row
+  // (listMenuItems does an unrestricted select()) — these were simply never
+  // typed or wired into this form, so "Add/Edit Menu Item" could only ever
+  // produce a name + price + category placeholder, never a real dish.
+  description: string | null;
+  tags: string[] | null;
+  // ingredients/prepTime/sugarPerServing are PATCH-only server-side
+  // (POST /menu/items's createSchema does not accept them) — they only
+  // appear on the edit form, filled in once the dish exists.
+  ingredients: string[] | null;
+  prepTime: string | null;
+  sugarPerServing: string | null;
 }
 
 function rupees(paise: number): string {
   return `₹${(paise / 100).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+}
+
+/** "a, b,  c" -> ["a","b","c"]. Empty/whitespace-only input -> null, so a
+ * cleared field PATCHes to null rather than an empty array. */
+function parseCommaList(s: string): string[] | null {
+  const items = s
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+  return items.length > 0 ? items : null;
+}
+
+function formatCommaList(items: string[] | null | undefined): string {
+  return items?.join(", ") ?? "";
 }
 
 export default function AdminCatalog() {
@@ -48,7 +76,12 @@ export default function AdminCatalog() {
   const [isNew, setIsNew] = useState(false);
 
   useEffect(() => {
-    if (!adminToken) return;
+    // Always attempt the load. An operator signed in through the normal
+    // /admin/login cookie flow (the common case) has no localStorage
+    // x-admin-token at all — gating on it meant the catalog silently never
+    // loaded for anyone using the standard login. credentials: "include"
+    // below carries the session cookie; x-admin-token layers on top for the
+    // legacy manual-token flow the sibling admin consoles also support.
     loadItems();
   }, [adminToken, q]);
 
@@ -57,6 +90,7 @@ export default function AdminCatalog() {
     try {
       const qs = q ? `?q=${encodeURIComponent(q)}` : "";
       const res = await fetch(`${API_BASE}/api/menu/items${qs}`, {
+        credentials: "include",
         headers: { "x-admin-token": adminToken },
       });
       if (res.ok) {
@@ -82,6 +116,7 @@ export default function AdminCatalog() {
     try {
       const res = await fetch(`${API_BASE}/api/menu/items/bulk/availability`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "x-admin-token": adminToken,
           "Content-Type": "application/json",
@@ -121,13 +156,20 @@ export default function AdminCatalog() {
       glycaemicIndex: null,
       allergenReviewState: "pending_review",
       isAvailable: true,
-      unavailableUntil: null
+      unavailableUntil: null,
+      description: null,
+      tags: null,
+      ingredients: null,
+      prepTime: null,
+      sugarPerServing: null
     });
     setFormData({
       name: "",
       category: "Meals",
       pricePaise: 0,
-      isVeg: false
+      isVeg: false,
+      description: "",
+      tags: null
     });
     setIsNew(true);
   }
@@ -140,7 +182,8 @@ export default function AdminCatalog() {
       if (isNew) {
         const res = await fetch(`${API_BASE}/api/menu/items`, {
           method: "POST",
-          headers: { 
+          credentials: "include",
+          headers: {
             "x-admin-token": adminToken,
             "Content-Type": "application/json"
           },
@@ -151,7 +194,9 @@ export default function AdminCatalog() {
             isVeg: formData.isVeg,
             glycaemicIndex: formData.glycaemicIndex || undefined,
             allergenReviewState: formData.allergenReviewState || undefined,
-            kitchenLocation: formData.kitchenLocation || undefined
+            kitchenLocation: formData.kitchenLocation || undefined,
+            description: formData.description || undefined,
+            tags: formData.tags || undefined
           })
         });
         if (res.ok) {
@@ -164,7 +209,8 @@ export default function AdminCatalog() {
       } else {
         const res = await fetch(`${API_BASE}/api/menu/items/${editItem.slug}`, {
           method: "PATCH",
-          headers: { 
+          credentials: "include",
+          headers: {
             "x-admin-token": adminToken,
             "Content-Type": "application/json"
           },
@@ -174,7 +220,12 @@ export default function AdminCatalog() {
             isVeg: formData.isVeg,
             glycaemicIndex: formData.glycaemicIndex || null,
             allergenReviewState: formData.allergenReviewState || undefined,
-            kitchenLocation: formData.kitchenLocation || null
+            kitchenLocation: formData.kitchenLocation || null,
+            description: formData.description || undefined,
+            tags: formData.tags || null,
+            ingredients: formData.ingredients || null,
+            prepTime: formData.prepTime || null,
+            sugarPerServing: formData.sugarPerServing || null
           })
         });
         if (res.ok) {
@@ -330,13 +381,67 @@ export default function AdminCatalog() {
             </div>
             <div className="space-y-2">
               <Label>Kitchen Location</Label>
-              <Input 
-                value={formData.kitchenLocation || ""} 
+              <Input
+                value={formData.kitchenLocation || ""}
                 placeholder="Leave blank for universal"
-                onChange={(e) => setFormData({ ...formData, kitchenLocation: e.target.value })} 
+                onChange={(e) => setFormData({ ...formData, kitchenLocation: e.target.value })}
               />
             </div>
-            
+
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                value={formData.description || ""}
+                placeholder="What a customer sees on the dish page"
+                rows={3}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Tags</Label>
+              <Input
+                value={formatCommaList(formData.tags)}
+                placeholder="high-protein, gut-health, spicy (comma separated)"
+                onChange={(e) => setFormData({ ...formData, tags: parseCommaList(e.target.value) })}
+              />
+            </div>
+
+            {!isNew && (
+              <>
+                <div className="space-y-2">
+                  <Label>Ingredients</Label>
+                  <Input
+                    value={formatCommaList(formData.ingredients)}
+                    placeholder="paneer, spinach, cumin (comma separated)"
+                    onChange={(e) => setFormData({ ...formData, ingredients: parseCommaList(e.target.value) })}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Prep Time</Label>
+                    <Input
+                      value={formData.prepTime || ""}
+                      placeholder="e.g. 20 min"
+                      onChange={(e) => setFormData({ ...formData, prepTime: e.target.value || null })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Sugar / Serving</Label>
+                    <Input
+                      value={formData.sugarPerServing || ""}
+                      placeholder="e.g. 8g"
+                      onChange={(e) => setFormData({ ...formData, sugarPerServing: e.target.value || null })}
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-zinc-500">
+                  Macros and the hero image are managed separately — macros are
+                  computed, and images go through Menu → Imagery — not this form.
+                </p>
+              </>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Glycaemic Index</Label>

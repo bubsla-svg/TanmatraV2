@@ -207,7 +207,7 @@ I-1's constraint ("M-3 never alone") is therefore satisfiable: the enforcement i
 - **M-3:** slug map is apply-ready (`m0-final-slug-map.csv`); 23 rows resolve only against production DB and get re-confirmed in the plan phase; disable set = `tanmatra-menu-rationalization.csv` action column per §8; D-19 is merged so the I-1 gate reduces to a deploy-version check.
 - **M-4:** modifiers path per §4 verdict; add `required`; per-piece via unit rows.
 - **M-5:** dependencies logged — `/menu/ranked` lacks the availability filter (§2); two storefront ₹ literals (§8); veg tri-state render depends on M-2's `veg_class`. **Resolved 2026-08-15, see §11.1.**
-- **M-6:** scope pending §12.1 resolution (9 vs 10 rows); wok macros/COGS blocked on kitchen recipes (§9).
+- **M-6:** scope **resolved 2026-08-15 — 10 rows** (§12.1); wok macros/COGS blocked on kitchen recipes (§9).
 
 ### §11.1 M-5 resolution (2026-08-15, `claude/menu-storefront-display`)
 
@@ -225,11 +225,19 @@ Also implemented, beyond the three logged dependencies (full M-5 scope): thirtee
 
 ## 12. Stop-and-ask register (owner decisions, nothing improvised)
 
-1. **needs-macros count:** manual §4 M-6 says **nine** rows; payload flags 8 `needs-macros` and leaves the two NEW meal-box rows (Paneer Meal, Veggie Meal) unflagged with no macro source → effective **10**. Confirm M-6's row list (or confirm Make Your Own Omelette derives from Plain Omelette + add-on math, making it 9 + derivation).
-2. **Millet rename** (§2.8): kitchen fact required before the mechanical rename decision.
-3. **Wok recipes** (§2.9): kitchen to supply five recipes (macros + COGS); until merged those rows stay `is_available=false` per §8.
-4. **Claims-integrity defect (outside this program):** POS imports enter pre-`reviewed` (lib/petpooja.ts:359) and seed `rdVerified` is blanket-true on placeholder macros — wants its own remediation ruling.
-5. **Outbound price flow:** `fetchmenu` exports direct-book prices to the POS side (§3) — confirm this is acceptable under R-2's two-book model.
+1. **needs-macros count — RESOLVED 2026-08-15: 10.** Manual §4 M-6 said nine; owner confirmed the payload's math (8 flagged + Paneer Meal + Veggie Meal, both now explicitly flagged `needs-macros` in the payload) — M-6 scope is 10 rows.
+2. **Millet rename — RESOLVED 2026-08-15: no rename.** Owner: *"Remove Millet pasta. (When in doubt, cut it out)"* — read as: since the millet-base fact is unconfirmed, do not add an unverified "Millet" claim to the four Pasta section names. The payload names already carry no "Millet" text, so this requires **no payload edit** — the `millet-confirm-N1` flags on the four pasta rows are left in place as a record that the question was raised and closed this way, not as a pending action.
+3. **Wok recipes — RESOLVED 2026-08-15: deferred by design.** Owner: *"Save as a draft to be picked when recipes arrive."* No action — the five Off-the-Wok rows already plan to `is_available=false` (needs-macros + needs-cogs) until M-6 supplies kitchen recipes; this confirms that gating is intentional, not a gap to close now.
+4. **Claims-integrity defect (outside this program):** POS imports enter pre-`reviewed` (lib/petpooja.ts:359) and seed `rdVerified` is blanket-true on placeholder macros — wants its own remediation ruling. Still open.
+5. **Outbound price flow:** `fetchmenu` exports direct-book prices to the POS side (§3) — confirm this is acceptable under R-2's two-book model. Still open.
+6. **The seven ungoverned KEEP rows (surfaced by the M-3/M-4 rehearsal, not this session's original register) — RESOLVED 2026-08-15**, folded into the payload as a §9 amendment (no code changes; payload + slug-map CSV edits only, applied via the existing plan-then-apply script):
+   - **Rename, not cut:** *Antioxidant Detox* → **Antioxidant Boost Smoothie** (Smoothies & Juices #11, ₹149). The evidence CSV's own note already read "RENAME required — 'Detox' is a banned claim word"; the slug identity (`antioxidant-detox`) is unchanged, only `display_name` moves, consistent with R-1's curated-column model.
+   - **Sauce-variant folds** (business-logic call, not a literal owner instruction — flagged here for visibility): *Chipotle Chicken Burrito Wrap* and *Crispy Peri Peri Chicken Burrito Wrap* are two of the five options the existing "BBQ Chicken Tikka Wrap" sauce-chooser group already lists (`Chipotle`, `Peri Peri`) — folded as additional `maps_from` identities on that row rather than created as near-duplicate standalone SKUs, exactly the pattern the payload's own "Paneer Tikka Wrap" row (two folded sauce variants) already establishes.
+   - **Add-on-group folds** (same rationale): *Mushroom Omelette (2 Egg)* and *Cheese Omelette (2 Egg)* are subsumed by the existing "Make Your Own Omelette (2 eggs)" payload row's add-on group (Mushroom / Spinach / Tomato & Cheese) — folded as `maps_from` identities there instead of new SKUs. Consequence: these two legacy dishes go unavailable until M-6 supplies Make Your Own Omelette's macros (already Law-8-gated, needs-macros), an accepted trade for consolidation.
+   - **New governed rows** (owner-directed fold, no clean existing-row mapping): *French Omelette (Sweet/Savoury) (2 Egg)* (Breakfast & Eggs #20, ₹179) and *Veg Quesadilla* (Wraps & Burritos #7, ₹179 — no dedicated "Quesadilla" section exists in the fixed 13; placed in Wraps & Burritos as the closest format/price-band fit, a judgment call).
+   - All three new/renamed rows are marked **MATCH** (not NEW) in the slug map against their `slugify()`-derived live slugs, deliberately — if a slug guess is wrong, the plan engine's read-before-write safety fails closed as a `missingExpected` blocker rather than silently creating a duplicate row.
+   - Prices for the two brand-new rows and all four fold targets are estimates set by section-price-band pattern-matching (not owner-ratified line-by-line per R-3's normal standard, since these are new payload lines the owner authorized adding, not existing lines the owner priced) — flagged with `folded-owner-2026-08-15` / `renamed-detox-owner-2026-08-15` / `wrap-fold-owner-2026-08-15` / `omelette-fold-owner-2026-08-15` flags for visibility and future §9 price correction if needed.
+   - Rehearsed against a full production-shaped Postgres clone (including manually-seeded rows for the four merge-source identities, to actually exercise the fold logic rather than skip it silently): 78 updates + 17 creates + 34 archives + 1 seasonal, 0 blockers, re-plan converges to 0, §7 verify clean, §7.1 checksum MATCH. The `ungovernedKeeps` report is now empty.
 
 ---
 

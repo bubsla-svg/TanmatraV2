@@ -91,3 +91,6 @@ Off the Wok,Chilli Chicken — Dry Tossed,,NEW,CREATE,,
 Off the Wok,Hakka Noodles — Choose Your Protein,,ABSENT-CREATE,CREATE,,
 Off the Wok,Wok Fried Rice — Choose Your Protein,,ABSENT-CREATE,CREATE,,
 Off the Wok,Lemon Chicken — Dry Tossed,,ABSENT-CREATE,CREATE,,
+Breakfast & Eggs,French Omelette (Sweet/Savoury) (2 Egg),french-omelette-sweet-savoury-2-egg,MATCH,POS-DERIVED,French Omelette (Sweet/Savoury) (2 Egg),Owner ruling 2026-08-15: fold ungoverned KEEP-B into payload (§12.4). liveSlug derived via slugify — not independently confirmed against production; a wrong guess fails safe as a missingExpected blocker on apply, per read-before-write.
+Wraps & Burritos,Veg Quesadilla,veg-quesadilla,MATCH,POS-DERIVED,Veg Quesadilla,Owner ruling 2026-08-15: fold ungoverned KEEP-C into payload (§12.4). Same liveSlug caveat as above.
+Smoothies & Juices,Antioxidant Boost Smoothie,antioxidant-detox,MATCH,POS-DERIVED,Antioxidant Detox,Owner ruling 2026-08-15: rename to drop the banned claim word "Detox" (§12.3; the evidence CSV's own note already flagged RENAME required). Slug identity (antioxidant-detox) is unchanged — only display_name moves, per R-1's curated-column model.
