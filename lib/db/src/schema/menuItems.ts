@@ -84,6 +84,8 @@ export const menuItemsTable = pgTable(
       Array<{
         groupName: string;
         type: "single" | "multiple";
+        // TNM-MENU-01 R-4/§6 — see DishCustomGroup in @workspace/menu-catalog.
+        required?: boolean;
         options: Array<{
           name: string;
           priceModifier: number;

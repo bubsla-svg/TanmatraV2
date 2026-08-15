@@ -246,6 +246,7 @@ router.patch("/menu/items/:slug", async (req: Request, res: Response) => {
   const customizationSchema = z.object({
     groupName: z.string().min(1).max(120),
     type: z.enum(["single", "multiple"]),
+    required: z.boolean().optional(),
     options: z
       .array(
         z.object({

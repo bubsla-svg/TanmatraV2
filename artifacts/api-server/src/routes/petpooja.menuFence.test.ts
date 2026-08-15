@@ -63,7 +63,8 @@ const POS_WRITABLE = new Set<string>([
   "allergens",
   "cuisineTags",
   "macros",
-  "customizations",
+  // customizations left this list in TNM-MENU-01 M-4: §6 option groups are
+  // catalog-authored, and a POS re-sync must not strip priced modifiers.
   "isAvailable",
   "updatedAt",
 ]);

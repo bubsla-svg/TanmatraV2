@@ -51,11 +51,12 @@ function unauthorized(res: Response) {
 // a POS re-sync must not revert customer-facing curation (display names,
 // taxonomy, veg marks). When the taxonomy migration adds section_order /
 // sort_rank / veg_class / badge / archived, those are curated too and must
-// never join this upsert's `set`. The contract is pinned by
-// petpooja.menuFence.test.ts: on an existing row a replayed push may only
-// change the operational fields (description, imageUrl, tags, allergens,
-// cuisineTags, macros, customizations, isAvailable, updatedAt). A
-// brand-new item still takes every field from the payload — there is no
+// never join this upsert's `set`. TNM-MENU-01 M-4 added `customizations`
+// to the fenced set — §6 option groups are catalog-authored modifiers.
+// The contract is pinned by petpooja.menuFence.test.ts: on an existing row
+// a replayed push may only change the operational fields (description,
+// imageUrl, tags, allergens, cuisineTags, macros, isAvailable, updatedAt).
+// A brand-new item still takes every field from the payload — there is no
 // curation to protect yet.
 router.post("/integrations/petpooja/push-menu", async (req: Request, res: Response) => {
   if (!petpoojaAuthOk(req, req.log, "strict")) return unauthorized(res);
@@ -126,16 +127,20 @@ router.post("/integrations/petpooja/push-menu", async (req: Request, res: Respon
             target: menuItemsTable.slug,
             set: {
               description: mapped.description,
-              // name, category, isVeg and pricePaise are intentionally
-              // excluded — the R-1 fence; see the handler's doc comment
-              // above. The catalog owns curation and price, not PetPooja.
+              // name, category, isVeg, pricePaise AND customizations are
+              // intentionally excluded — the R-1 fence; see the handler's
+              // doc comment above. customizations joined the fenced set in
+              // TNM-MENU-01 M-4: the §6 option groups (sauce choosers, wok
+              // proteins, priced add-ons) are authored by the catalog, and a
+              // POS re-sync overwriting them would strip priced modifiers
+              // from live dishes. The catalog owns curation, price and
+              // modifiers, not PetPooja.
               isAvailable: mapped.isAvailable,
               imageUrl: mapped.imageUrl,
               tags: mapped.tags,
               allergens: mapped.allergens,
               cuisineTags: mapped.cuisineTags,
               macros: mapped.macros,
-              customizations: mapped.customizations,
               updatedAt: new Date(),
             },
           });
