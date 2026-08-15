@@ -2,22 +2,23 @@ section_order,section,item_rank,display_name,maps_from,veg,price_inr,badge,flags
 1,High-Protein Meals,1,Grilled Chicken with Veggies & Mash,Grilled Chicken With Sautéed Vegetable And Mash Potato High Protein,non-veg,299,Bestseller,
 1,High-Protein Meals,2,Chicken Meal — 150 g grilled chicken + veggies + rice,Grilled Chicken Breast [Single Serve],non-veg,299,,sauce-chooser
 1,High-Protein Meals,3,Stuffed Chicken with Beans & Mash,Stuffed Chicken With Mashed Potato & Sautéed Green Beans,non-veg,299,New,
-1,High-Protein Meals,4,Paneer Meal — 120 g paneer + veggies + rice,NEW,veg,249,,sauce-chooser
+1,High-Protein Meals,4,Paneer Meal — 120 g paneer + veggies + rice,NEW,veg,249,,sauce-chooser;needs-macros
 1,High-Protein Meals,5,Grilled Paneer with Sautéed Veg,Grilled Paneer With Sauteed Veggies,veg,199,,
 1,High-Protein Meals,6,Boiled Chicken Breast (150 g),Boiled Chicken Breast [Single Serve],non-veg,199,,price-DR-nb180-formula239
-1,High-Protein Meals,7,Veggie Meal — 100 g veg + 150 g rice,NEW,veg,199,,sauce-chooser
+1,High-Protein Meals,7,Veggie Meal — 100 g veg + 150 g rice,NEW,veg,199,,sauce-chooser;needs-macros
 1,High-Protein Meals,8,Tuscan Chicken with Bread/Rice,Tuscan Chicken With Bread/rice,non-veg,249,,probation
 1,High-Protein Meals,9,Marry Me Mushroom with Bread/Rice,Marry Me Mushroom With Bread / Rice,veg,219,New,probation
 2,Bowls,1,Chicken Burrito Bowl — choose your sauce,Barbeque Grilled Chicken Rice Bowl;Chipotle Grilled Chicken Rice Bowl;Crispy Peri Peri Chicken Rice Bowl,non-veg,299,,sauce-chooser
 2,Bowls,2,Paneer Burrito Bowl — choose your sauce,Chilli Chipotle Paneer Rice Bowl;Barbeque Paneer Rice Bowl,veg,249,,sauce-chooser
 2,Bowls,3,Mushroom Burrito Bowl — choose your sauce,Crispy Mushroom Rice Bowl;Crispy Peri Peri Mushroom Rice Bowl,veg,199,,sauce-chooser;fix-first-lineage
 2,Bowls,4,Quinoa Khichdi,Quinoa Khichdi,veg,179,,
-3,Wraps & Burritos,1,BBQ Chicken Tikka Wrap,Barbeque Chicken Burrito Wrap,non-veg,199,Trending,burrito-upgrade;sauce-chooser;parity-lift-nb180
+3,Wraps & Burritos,1,BBQ Chicken Tikka Wrap,Barbeque Chicken Burrito Wrap;Chipotle Chicken Burrito Wrap;Crispy Peri Peri Chicken Burrito Wrap,non-veg,199,Trending,burrito-upgrade;sauce-chooser;parity-lift-nb180;wrap-fold-owner-2026-08-15
 3,Wraps & Burritos,2,Chicken Tikka Wrap (Whole Wheat),Healthy Whole Wheat Chicken Tikka Wrap,non-veg,199,,burrito-upgrade;sauce-chooser;parity-lift-nb180
 3,Wraps & Burritos,3,Paneer Tikka Wrap,Paneer Tikka Burrito Wrap;Chilli Chipotle Paneer Burrito Wrap,veg,179,,burrito-upgrade;sauce-chooser;parity-lift-nb160
 3,Wraps & Burritos,4,Falafel Hummus Wrap,Falafal Hummus Wrap,veg,179,,burrito-upgrade;parity-lift-nb160
 3,Wraps & Burritos,5,Mushroom Wrap — choose your sauce,Crispy Mushroom Burrito Wrap,veg,159,,burrito-upgrade;sauce-chooser;fix-first-lineage
 3,Wraps & Burritos,6,Paneer Wrap (Whole Wheat),Healthy Whole Wheat Paneer Wrap,veg,179,,confirm-if-same-as-paneer-tikka
+3,Wraps & Burritos,7,Veg Quesadilla,Veg Quesadilla,veg,179,,folded-owner-2026-08-15
 4,Sandwiches,1,Grilled Veggie Sandwich with Ranch Yoghurt,Grilled Veggie Sandwich With Ranch Yoghurt,veg,169,,fix-first;G-1-addback
 4,Sandwiches,2,Grilled Chicken Club Sandwich,Grilled Chicken Club Sandwich,non-veg,199,,G-1-addback
 4,Sandwiches,3,Chicken Tikka Sandwich with Ranch Yoghurt,Chicken Tikka Sandwich With Ranch Yoghurt,non-veg,189,,fix-first;G-1-addback
@@ -47,12 +48,13 @@ section_order,section,item_rank,display_name,maps_from,veg,price_inr,badge,flags
 6,Breakfast & Eggs,11,Spinach Mushroom Omelette (2 eggs),Spinach Mushroom Omelette (2 Egg),egg,159,,via-base-plus-addons-or-sku-DR4;equals-base-plus-addons
 6,Breakfast & Eggs,12,Veg Loaded Omelette (2 eggs),Veg Loaded Bread Omelette (2 Egg),egg,119,,addon-group
 6,Breakfast & Eggs,13,Egg Shakshuka,Egg Shakshuka,egg,179,,addback
-6,Breakfast & Eggs,14,Make Your Own Omelette (2 eggs),NEW,egg,119,New,addon-group;needs-macros
+6,Breakfast & Eggs,14,Make Your Own Omelette (2 eggs),Mushroom Omelette (2 Egg);Cheese Omelette (2 Egg),egg,119,New,addon-group;needs-macros;omelette-fold-owner-2026-08-15
 6,Breakfast & Eggs,15,Bread Omelette — Classic / Masala,Classic Bread Omelette (2 Egg);Masala Bread Omelette (2 Egg),egg,129,,addback;two-variant-one-line
 6,Breakfast & Eggs,16,Plain Omelette (2 eggs),Plain Omelette (2 Egg),egg,99,,addon-group;revived-as-modifier-base
 6,Breakfast & Eggs,17,Exotic Egg Bhurji (2 eggs),Exotic Egg Bhurji (2 Egg),egg,119,,revived
 6,Breakfast & Eggs,18,Classic Vegetable Poha,Classic Vegetable Poha,veg,129,,
 6,Breakfast & Eggs,19,Boiled Egg (1 pc),Four Boiled Egg;Two Boiled Egg,egg,15,,per-piece-model
+6,Breakfast & Eggs,20,French Omelette (Sweet/Savoury) (2 Egg),French Omelette (Sweet/Savoury) (2 Egg),egg,179,,folded-owner-2026-08-15
 7,Pita & Hummus,1,Classic Hummus Pita,Hummus Pita Classic,veg,179,,
 7,Pita & Hummus,2,Hummus Pita with Falafel,Hummus Pita With Falafel,veg,219,,fix-first
 7,Pita & Hummus,3,Chicken Pita Pocket with Hummus,Chicken Pita Pockets With Hummus,non-veg,249,,
@@ -77,6 +79,7 @@ section_order,section,item_rank,display_name,maps_from,veg,price_inr,badge,flags
 10,Smoothies & Juices,8,Watermelon Juice,Hydrating Watermelon Juice,veg,129,,attach
 10,Smoothies & Juices,9,Lemon Mint Iced Tea,Lemon Mint Ice Tea,veg,99,,attach
 10,Smoothies & Juices,10,Zero-Calorie Mint Mojito,Zero Calorie Mint Mojito,veg,99,,attach
+10,Smoothies & Juices,11,Antioxidant Boost Smoothie,Antioxidant Detox,veg,149,,renamed-detox-owner-2026-08-15
 11,Desserts,1,Fruity Greek Yogurt,Fruity Greek Yogurt,veg,149,,addback;riser
 11,Desserts,2,Ragi & Dates Brownie (eggless),Ragi Dates Eggless Brownie (1) Pc,veg,99,,name-per-P5;per-piece
 11,Desserts,3,Tiramisu Box,Healthy Tiramisu Box,veg,179,,addback;renamed
