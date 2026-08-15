@@ -115,7 +115,7 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
         </div>
         <div className="flex flex-col gap-1">
           <h3 className="font-bold text-lg text-ink truncate">{dish.name}</h3>
-          <span className="tabular font-mono text-2xs text-ink-muted">
+          <span className="tabular text-2xs text-ink-muted">
             {formatMacroLine(dish.macros, dish.macrosEstimated)}
           </span>
           <div className="relative z-10 mt-3 flex justify-between items-center">
