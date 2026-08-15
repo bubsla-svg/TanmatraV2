@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Bot } from "lucide-react";
+import { API_BASE } from "@/lib/apiBase";
 
 interface AlertRow {
   id: number;
@@ -23,8 +24,6 @@ interface DigestRow {
   latestSummary: string;
   latestSuggestedAction: string;
 }
-
-const apiBase = "/api";
 
 function readToken(): string {
   if (typeof window === "undefined") return "";
@@ -61,11 +60,11 @@ export default function AnomaliesPanel({ onOpenAgent }: AnomaliesPanelProps = {}
     setError(null);
     try {
       const [a, d] = await Promise.all([
-        fetch(`${apiBase}/ops/anomalies?status=active&limit=20`, {
+        fetch(`${API_BASE}/ops/anomalies?status=active&limit=20`, {
           credentials: "include",
           headers: headers(),
         }),
-        fetch(`${apiBase}/ops/anomalies/digest`, {
+        fetch(`${API_BASE}/ops/anomalies/digest`, {
           credentials: "include",
           headers: headers(),
         }),
@@ -92,7 +91,7 @@ export default function AnomaliesPanel({ onOpenAgent }: AnomaliesPanelProps = {}
     try {
       const body =
         action === "snooze" ? JSON.stringify({ minutes: 30 }) : undefined;
-      const r = await fetch(`${apiBase}/ops/anomalies/${id}/${action}`, {
+      const r = await fetch(`${API_BASE}/ops/anomalies/${id}/${action}`, {
         method: "POST",
         credentials: "include",
         headers: { ...headers(), "Content-Type": "application/json" },
@@ -113,7 +112,7 @@ export default function AnomaliesPanel({ onOpenAgent }: AnomaliesPanelProps = {}
   const runScan = async () => {
     setScanning(true);
     try {
-      const r = await fetch(`${apiBase}/ops/anomalies/scan`, {
+      const r = await fetch(`${API_BASE}/ops/anomalies/scan`, {
         method: "POST",
         credentials: "include",
         headers: headers(),
