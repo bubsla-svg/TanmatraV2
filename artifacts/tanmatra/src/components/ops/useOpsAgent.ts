@@ -154,13 +154,19 @@ export function useOpsAgent() {
       if (result.escalated) {
         toast.info("Escalated to human support. Ticket created.");
       }
-    } catch {
+    } catch (err) {
+      // Prefer the server's own words. This is an internal staff console, so
+      // a raw upstream message ("API key not valid…") is far more actionable
+      // to an operator than a generic connection line.
+      const detail = err instanceof Error && err.message ? err.message : null;
       setMessages((prev) =>
         prev.map((m) =>
           m.id === placeholderId
             ? {
                 ...m,
-                text: "Ops Agent connection failed. Please retry or escalate to on-call engineer.",
+                text: detail
+                  ? `Ops Agent error: ${detail}`
+                  : "Ops Agent connection failed. Please retry or escalate to on-call engineer.",
               }
             : m,
         ),

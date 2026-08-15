@@ -226,6 +226,7 @@ export async function streamOpsAgentChat(
   const decoder = new TextDecoder();
   let buf = "";
   let final: SupportChatResponse | null = null;
+  let streamError: string | null = null;
   const dispatch = (line: string): void => {
     if (!line) return;
     let evt: SupportStreamEvent;
@@ -253,7 +254,16 @@ export async function streamOpsAgentChat(
         };
         break;
       case "error":
-        throw new Error(evt.message);
+        // Do NOT throw here. The server always follows an `error` event with
+        // a `finish` carrying operator-readable fallback text; throwing on
+        // the error event abandons the stream before that finish arrives, so
+        // every server-side agent failure — model-key outage, tool crash —
+        // rendered as a generic "connection failed" instead of what actually
+        // went wrong. (That masking cost a real debugging session: an invalid
+        // GOOGLE_API_KEY was indistinguishable from an auth failure.) Record
+        // the message; it becomes the thrown error only if no finish follows.
+        streamError = evt.message;
+        break;
     }
   };
 
@@ -275,7 +285,9 @@ export async function streamOpsAgentChat(
   buf += decoder.decode();
   for (const line of buf.split("\n")) dispatch(line.trim());
   if (!final) {
-    throw new Error("support-agent stream ended without finish event");
+    throw new Error(
+      streamError ?? "ops-agent stream ended without finish event",
+    );
   }
   return final;
 }
