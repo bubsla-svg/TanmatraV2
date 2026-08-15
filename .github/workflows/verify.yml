@@ -131,6 +131,16 @@ jobs:
         working-directory: artifacts/api-server
         run: node --test --import tsx "../tanmatra/src/**/*.test.ts"
 
+      # TNM-MENU-01 M-3 — the Menu v2 plan engine (scripts/src/lib). Pure and
+      # DB-free: §8 availability mapping, Law-8 gating, payload-claim
+      # precedence, merge-source archival, idempotency, the non-integer-price
+      # abort, and the slugify lockstep with the petpooja mapper. Prices move
+      # through this engine, so it lives with the money-path units.
+      - name: Menu v2 plan engine (scripts)
+        if: ${{ !cancelled() }}
+        working-directory: scripts
+        run: node --test --import tsx ./src/lib/menuCatalogV2Plan.test.ts
+
       # The step above predates the storefront and covers only the legacy SPA,
       # so the money path that is actually live — a-la-carte checkout, plan
       # checkout, trial creditback, post-checkout attach, the Razorpay adapter —

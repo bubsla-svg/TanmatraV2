@@ -24,6 +24,8 @@
     "unpause-menu": "tsx ./src/unpause-menu.ts",
     "assign-admin-role": "tsx ./src/assign-admin-role.ts",
     "test:menu-engineering": "node --test --import tsx ./src/lib/menuEngineeringPlan.test.ts",
+    "test:menu-catalog-v2": "node --test --import tsx ./src/lib/menuCatalogV2Plan.test.ts",
+    "menu-catalog-v2": "tsx ./src/menu-catalog-v2-apply.ts",
     "test": "tsx ./src/verify-dish-integrity.ts",
     "stress-test-ledger": "tsx ./src/stress-test-ledger.ts",
     "optimize-images": "tsx ./src/optimize-dish-images.ts",
