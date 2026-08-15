@@ -54,7 +54,7 @@ section_order,section,item_rank,display_name,maps_from,veg,price_inr,badge,flags
 6,Breakfast & Eggs,17,Exotic Egg Bhurji (2 eggs),Exotic Egg Bhurji (2 Egg),egg,119,,revived
 6,Breakfast & Eggs,18,Classic Vegetable Poha,Classic Vegetable Poha,veg,129,,
 6,Breakfast & Eggs,19,Boiled Egg (1 pc),Four Boiled Egg;Two Boiled Egg,egg,15,,per-piece-model
-6,Breakfast & Eggs,20,French Omelette (Sweet/Savoury) (2 Egg),French Omelette (Sweet/Savoury) (2 Egg),egg,179,,folded-owner-2026-08-15
+6,Breakfast & Eggs,20,French Omelette (Sweet/Savoury) (2 Egg),French Omelette (Sweet/Savoury) (2 Egg),egg,100,,folded-owner-2026-08-15;price-held-at-live-2026-08-15
 7,Pita & Hummus,1,Classic Hummus Pita,Hummus Pita Classic,veg,179,,
 7,Pita & Hummus,2,Hummus Pita with Falafel,Hummus Pita With Falafel,veg,219,,fix-first
 7,Pita & Hummus,3,Chicken Pita Pocket with Hummus,Chicken Pita Pockets With Hummus,non-veg,249,,
@@ -79,7 +79,7 @@ section_order,section,item_rank,display_name,maps_from,veg,price_inr,badge,flags
 10,Smoothies & Juices,8,Watermelon Juice,Hydrating Watermelon Juice,veg,129,,attach
 10,Smoothies & Juices,9,Lemon Mint Iced Tea,Lemon Mint Ice Tea,veg,99,,attach
 10,Smoothies & Juices,10,Zero-Calorie Mint Mojito,Zero Calorie Mint Mojito,veg,99,,attach
-10,Smoothies & Juices,11,Antioxidant Boost Smoothie,Antioxidant Detox,veg,149,,renamed-detox-owner-2026-08-15
+10,Smoothies & Juices,11,Antioxidant Boost Smoothie,Antioxidant Detox,veg,170,,renamed-detox-owner-2026-08-15;price-held-at-live-2026-08-15
 11,Desserts,1,Fruity Greek Yogurt,Fruity Greek Yogurt,veg,149,,addback;riser
 11,Desserts,2,Ragi & Dates Brownie (eggless),Ragi Dates Eggless Brownie (1) Pc,veg,99,,name-per-P5;per-piece
 11,Desserts,3,Tiramisu Box,Healthy Tiramisu Box,veg,179,,addback;renamed

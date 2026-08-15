@@ -120,8 +120,18 @@ jobs:
 
       # Always. On an apply run this is the record of what the apply was
       # about to do, captured before it did it.
+      # `pipefail` is load-bearing: without it the exit status of this step is
+      # tee's (always 0), which silently swallowed the script's non-zero exit
+      # on the first production run. The blocker was still printed, so the
+      # plan stayed readable — but a plan that CRASHED (unreachable DB,
+      # malformed CSV) would equally have reported success and let the Apply
+      # step run against an unknown state. `Apply` carries no status function
+      # in its `if:`, so it implicitly requires success(): a failed plan now
+      # skips the apply, fail-closed.
       - name: Plan (read-only)
+        shell: bash
         run: |
+          set -o pipefail
           cd scripts
           pnpm run menu-catalog-v2 -- --md ../menu-catalog-v2-plan.md | tee ../menu-catalog-v2-plan.txt
 
