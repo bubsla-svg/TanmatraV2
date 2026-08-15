@@ -40,15 +40,26 @@ const OPERATIONAL_ROLES = ["kitchen", "catalog", "support", "growth"];
 
 export async function isRoleRequest(req: Request, role: string | string[]): Promise<GateResult> {
   const targetRoles = Array.isArray(role) ? role : [role];
-  
+
   const hasOperationalAlternative = targetRoles.some(r => OPERATIONAL_ROLES.includes(r));
 
+  // The x-admin-token header is a static bearer secret (RD_ADMIN_TOKEN) that
+  // can leak more easily than a login (pasted into a script, a support
+  // ticket, a browser extension) — keep it scoped to operational roles only,
+  // never finance/compliance/owner.
   if (hasAdminToken(req) && hasOperationalAlternative) {
     return { allowed: true, operatorId: req.user?.id ?? "admin-token" };
   }
-  
+
+  // The signed admin session cookie, by contrast, proves the caller went
+  // through /admin/login with ADMIN_USERNAME/ADMIN_PASSWORD_HASH — there is
+  // exactly one such identity, and it *is* the owner. Scoping it down to
+  // OPERATIONAL_ROLES meant every finance/compliance/owner-gated route
+  // (refunds, compliance logs, AI-run telemetry, RD applications) was
+  // unreachable via the only admin login flow that exists. Grant it any
+  // role, same as an authenticated DB "owner" role below.
   const adminSession = hasAdminSession(req);
-  if (adminSession && hasOperationalAlternative) {
+  if (adminSession) {
     return { allowed: true, operatorId: `admin:${adminSession.username}` };
   }
 
