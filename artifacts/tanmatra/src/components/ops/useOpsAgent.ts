@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { streamSupportAgentChat, type SupportToolCall } from "@/lib/queries";
+import { streamOpsAgentChat, type SupportToolCall } from "@/lib/queries";
 import { toast } from "sonner";
 
 export interface ChatMessage {
@@ -109,7 +109,7 @@ export function useOpsAgent() {
     setStreaming(true);
 
     try {
-      const result = await streamSupportAgentChat(
+      const result = await streamOpsAgentChat(
         {
           message: userMsg.text,
           history: messages

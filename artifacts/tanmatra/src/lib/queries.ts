@@ -170,7 +170,7 @@ export interface SupportChatResponse {
 }
 
 /**
- * NDJSON streaming events emitted by POST /support-agent/chat.
+ * NDJSON streaming events emitted by POST /ops-agent/chat.
  * The client reads them line-by-line; `text-delta` events drive
  * incremental rendering while `finish` carries the final tool-call
  * metadata that Admin Ops uses for risk gating.
@@ -198,12 +198,21 @@ export interface SupportStreamHandlers {
 /**
  * POST a chat turn and stream the agent's reply. Resolves with the
  * final `finish` payload once the stream ends.
+ *
+ * Targets /ops-agent/chat, whose gate (`requireOps`) accepts the signed
+ * admin cookie, an x-admin-token header, or an OPS_USER_IDS user session.
+ * The Admin Ops dashboard used to stream from /support-agent/chat, which
+ * requires a CUSTOMER session — an operator signed in through /admin/login
+ * has only the admin cookie, so every message 401'd and surfaced as
+ * "Ops Agent connection failed". Same NDJSON protocol, but this endpoint
+ * also runs the actual ops agent (rider assignment, refunds, stock tools)
+ * instead of the customer-support agent.
  */
-export async function streamSupportAgentChat(
+export async function streamOpsAgentChat(
   vars: SupportChatRequest,
   handlers: SupportStreamHandlers = {},
 ): Promise<SupportChatResponse> {
-  const res = await fetch(`${API_BASE}/support-agent/chat`, {
+  const res = await fetch(`${API_BASE}/ops-agent/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(vars),
@@ -211,7 +220,7 @@ export async function streamSupportAgentChat(
     signal: handlers.signal,
   });
   if (!res.ok || !res.body) {
-    throw new Error(`support-agent stream failed: ${res.status}`);
+    throw new Error(`ops-agent stream failed: ${res.status}`);
   }
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
