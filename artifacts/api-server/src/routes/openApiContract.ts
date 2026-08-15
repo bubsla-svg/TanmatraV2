@@ -62,6 +62,7 @@ const OPS_PATHS = {
   "/ops/recipes/{slug}": { get: { summary: "Get recipe by slug" } },
   "/ops/kds/orders": { get: { summary: "Get KDS orders" } },
   "/ops/kds/orders/{id}/ready": { post: { summary: "Mark order ready" } },
+  "/ops/supplier/batches": { get: { summary: "List supplier delivery batches" } },
   "/ops/supplier/deliver": { post: { summary: "Supplier deliver" } },
   "/ops/supplier/intake": { post: { summary: "Supplier intake" } },
   "/ops/kds/orders/{id}/simulate-delay": { post: { summary: "Simulate order delay" } },
