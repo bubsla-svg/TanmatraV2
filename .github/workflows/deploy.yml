@@ -388,6 +388,64 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
+      # Refuse to deploy with a missing or malformed credential, BEFORE any
+      # Cloud Run mutation. Without this the deploy is silently destructive:
+      # `--update-env-vars` below writes every listed value unconditionally, so
+      # an unset GitHub secret expands to "" and OVERWRITES a working
+      # production credential with an empty string. Nothing goes red — the
+      # deploy reports success and the service starts failing.
+      #
+      # Not hypothetical: TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN /
+      # TWILIO_VERIFY_SERVICE_SID sat on this service as declared-but-valueless
+      # entries for exactly this reason, and were later misread as a
+      # credentials outage.
+      #
+      # This matters most on the FIRST deploy from a new repository (the
+      # tanmatra6-wq/Wellness-Foods -> bubsla-svg/TanmatraV2 account
+      # migration), where no secret is populated yet and a single merge to
+      # main would blank the payment, queue and admin credentials at once.
+      #
+      # ADMIN_PASSWORD_HASH also gets a FORMAT check, because "present but
+      # corrupt" is its documented failure mode: verifyPassword() splits on `$`
+      # and requires exactly 6 fields, so a mangled hash rejects every password
+      # including the correct one, with nothing red anywhere.
+      - name: Preflight — required secrets present and well-formed
+        env:
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD_HASH: ${{ secrets.ADMIN_PASSWORD_HASH }}
+          RAZORPAY_KEY_ID: ${{ secrets.RAZORPAY_KEY_ID }}
+          RAZORPAY_KEY_SECRET: ${{ secrets.RAZORPAY_KEY_SECRET }}
+          RAZORPAY_WEBHOOK_SECRET: ${{ secrets.RAZORPAY_WEBHOOK_SECRET }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+        run: |
+          missing=()
+          for name in ADMIN_USERNAME ADMIN_PASSWORD_HASH RAZORPAY_KEY_ID \
+                      RAZORPAY_KEY_SECRET RAZORPAY_WEBHOOK_SECRET REDIS_PASSWORD; do
+            # Indirect expansion: tests emptiness without ever echoing a value.
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::Refusing to deploy — these repository secrets are unset:"
+            printf '::error::  %s\n' "${missing[@]}"
+            echo "::error::Deploying would overwrite the live values with empty strings."
+            echo "::error::Set them under Settings > Secrets and variables > Actions, then re-run."
+            exit 1
+          fi
+
+          # scrypt$N$r$p$saltHex$hashHex — 6 fields. Matched with a case glob so
+          # the value is never expanded into a command or printed.
+          case "$ADMIN_PASSWORD_HASH" in
+            scrypt\$*\$*\$*\$*\$*) : ;;
+            *)
+              echo "::error::ADMIN_PASSWORD_HASH is set but is not in scrypt\$N\$r\$p\$salt\$hash form."
+              echo "::error::A malformed hash rejects EVERY password, including the correct one."
+              echo "::error::Regenerate with hashPassword() and store it without shell expansion:"
+              echo "::error::  gh secret set ADMIN_PASSWORD_HASH < hash.txt"
+              exit 1 ;;
+          esac
+
+          echo "preflight ok — all 6 required secrets present, admin hash well-formed"
       - name: Build image with Cloud Build
         run: |
           IMAGE=asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }}
@@ -454,64 +512,6 @@ jobs:
           done
           echo "Timed out waiting for Cloud Build"; exit 1
 
-      # Refuse to deploy with a missing or malformed credential, BEFORE any
-      # Cloud Run mutation. Without this the deploy is silently destructive:
-      # `--update-env-vars` below writes every listed value unconditionally, so
-      # an unset GitHub secret expands to "" and OVERWRITES a working
-      # production credential with an empty string. Nothing goes red — the
-      # deploy reports success and the service starts failing.
-      #
-      # Not hypothetical: TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN /
-      # TWILIO_VERIFY_SERVICE_SID sat on this service as declared-but-valueless
-      # entries for exactly this reason, and were later misread as a
-      # credentials outage.
-      #
-      # This matters most on the FIRST deploy from a new repository (the
-      # tanmatra6-wq/Wellness-Foods -> bubsla-svg/TanmatraV2 account
-      # migration), where no secret is populated yet and a single merge to
-      # main would blank the payment, queue and admin credentials at once.
-      #
-      # ADMIN_PASSWORD_HASH also gets a FORMAT check, because "present but
-      # corrupt" is its documented failure mode: verifyPassword() splits on `$`
-      # and requires exactly 6 fields, so a mangled hash rejects every password
-      # including the correct one, with nothing red anywhere.
-      - name: Preflight — required secrets present and well-formed
-        env:
-          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
-          ADMIN_PASSWORD_HASH: ${{ secrets.ADMIN_PASSWORD_HASH }}
-          RAZORPAY_KEY_ID: ${{ secrets.RAZORPAY_KEY_ID }}
-          RAZORPAY_KEY_SECRET: ${{ secrets.RAZORPAY_KEY_SECRET }}
-          RAZORPAY_WEBHOOK_SECRET: ${{ secrets.RAZORPAY_WEBHOOK_SECRET }}
-          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
-        run: |
-          missing=()
-          for name in ADMIN_USERNAME ADMIN_PASSWORD_HASH RAZORPAY_KEY_ID \
-                      RAZORPAY_KEY_SECRET RAZORPAY_WEBHOOK_SECRET REDIS_PASSWORD; do
-            # Indirect expansion: tests emptiness without ever echoing a value.
-            [ -n "${!name}" ] || missing+=("$name")
-          done
-
-          if [ "${#missing[@]}" -gt 0 ]; then
-            echo "::error::Refusing to deploy — these repository secrets are unset:"
-            printf '::error::  %s\n' "${missing[@]}"
-            echo "::error::Deploying would overwrite the live values with empty strings."
-            echo "::error::Set them under Settings > Secrets and variables > Actions, then re-run."
-            exit 1
-          fi
-
-          # scrypt$N$r$p$saltHex$hashHex — 6 fields. Matched with a case glob so
-          # the value is never expanded into a command or printed.
-          case "$ADMIN_PASSWORD_HASH" in
-            scrypt\$*\$*\$*\$*\$*) : ;;
-            *)
-              echo "::error::ADMIN_PASSWORD_HASH is set but is not in scrypt\$N\$r\$p\$salt\$hash form."
-              echo "::error::A malformed hash rejects EVERY password, including the correct one."
-              echo "::error::Regenerate with hashPassword() and store it without shell expansion:"
-              echo "::error::  gh secret set ADMIN_PASSWORD_HASH < hash.txt"
-              exit 1 ;;
-          esac
-
-          echo "preflight ok — all 6 required secrets present, admin hash well-formed"
       - name: Capture the currently-serving revision (rollback target)
         id: stable
         run: |
@@ -647,6 +647,44 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
+      # The FIREBASE_* values below are baked into the client bundle as
+      # build args, so an unset secret does NOT fail the build — it produces a
+      # bundle whose Firebase config is empty strings, and phone sign-in is
+      # dead in the browser. Because the value is compiled in, this cannot be
+      # repaired by changing an env var afterwards; it needs a full rebuild.
+      #
+      # Firebase is the OTP provider (Twilio is decommissioned), so shipping an
+      # empty config takes customer login down on a green deploy.
+      #
+      # Checked here rather than in the api-server preflight because these are
+      # build-time inputs to a different job.
+      - name: Preflight — Firebase web config present
+        env:
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+        run: |
+          missing=()
+          for name in FIREBASE_API_KEY FIREBASE_AUTH_DOMAIN FIREBASE_PROJECT_ID \
+                      FIREBASE_STORAGE_BUCKET FIREBASE_MESSAGING_SENDER_ID FIREBASE_APP_ID; do
+            # Indirect expansion: tests emptiness without ever echoing a value.
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::Refusing to build — these Firebase secrets are unset:"
+            printf '::error::  %s\n' "${missing[@]}"
+            echo "::error::They are compiled into the bundle, so building now ships"
+            echo "::error::an app with empty Firebase config and broken phone sign-in."
+            echo "::error::Fetch them with:"
+            echo "::error::  gcloud alpha firebase apps sdkconfig WEB <appId>  (or the Firebase console)"
+            exit 1
+          fi
+
+          echo "preflight ok — all 6 Firebase web config values present"
       - name: Build image with Cloud Build
         # Same secret-binding rule as the api-server deploy step: the heredoc
         # below is unquoted (`<<EOF`) so ${IMAGE}/${CACHE_IMAGE} expand, which
@@ -914,6 +952,44 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
+      # The FIREBASE_* values below are baked into the client bundle as
+      # build args, so an unset secret does NOT fail the build — it produces a
+      # bundle whose Firebase config is empty strings, and phone sign-in is
+      # dead in the browser. Because the value is compiled in, this cannot be
+      # repaired by changing an env var afterwards; it needs a full rebuild.
+      #
+      # Firebase is the OTP provider (Twilio is decommissioned), so shipping an
+      # empty config takes customer login down on a green deploy.
+      #
+      # Checked here rather than in the api-server preflight because these are
+      # build-time inputs to a different job.
+      - name: Preflight — Firebase web config present
+        env:
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+        run: |
+          missing=()
+          for name in FIREBASE_API_KEY FIREBASE_AUTH_DOMAIN FIREBASE_PROJECT_ID \
+                      FIREBASE_STORAGE_BUCKET FIREBASE_MESSAGING_SENDER_ID FIREBASE_APP_ID; do
+            # Indirect expansion: tests emptiness without ever echoing a value.
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::Refusing to build — these Firebase secrets are unset:"
+            printf '::error::  %s\n' "${missing[@]}"
+            echo "::error::They are compiled into the bundle, so building now ships"
+            echo "::error::an app with empty Firebase config and broken phone sign-in."
+            echo "::error::Fetch them with:"
+            echo "::error::  gcloud alpha firebase apps sdkconfig WEB <appId>  (or the Firebase console)"
+            exit 1
+          fi
+
+          echo "preflight ok — all 6 Firebase web config values present"
       - name: Build image with Cloud Build
         # Same secret-binding rule as the api-server deploy step: the heredoc
         # below is unquoted (`<<EOF`) so ${IMAGE}/${CACHE_IMAGE} expand, which
