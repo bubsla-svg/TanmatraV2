@@ -1,0 +1,175 @@
+# TNM-MENU-01 M-3 — apply the governed menu catalog to a real database.
+#
+# WHY THIS EXISTS AS A WORKFLOW rather than something an engineer runs from a
+# laptop or an agent runs from a sandbox: the apply rewrites the live customer
+# catalog (the last rehearsal planned 78 updates · 17 creates · 34 archives ·
+# 1 seasonal), so it needs the same properties every other production mutation
+# in this repo has — a service-account identity rather than a human's, the
+# Cloud SQL Auth Proxy rather than an ad-hoc tunnel, an immutable run log, and
+# a plan a human can read BEFORE anything is written.
+#
+# It deliberately mirrors deploy.yml's `migrate-db` job step for step (auth →
+# proxy → Secret Manager → URL rewrite), because that path is already proven
+# against this instance and already granted the roles it needs. Divergence
+# there would be a second thing to keep working, for no benefit.
+#
+# SAFETY MODEL, in the order it applies:
+#   1. Plan-only by default. `apply` is a separate, explicit input.
+#   2. The plan always runs first and is printed in full, even on an apply run.
+#   3. The script itself refuses to apply while any blocker is open
+#      (missing slug-map MATCH rows, ungoverned KEEP rows) — see
+#      scripts/src/menu-catalog-v2-apply.ts. This workflow cannot override it.
+#   4. The script always writes a pre-change backup of every touched row on
+#      an apply (it is unconditional in menu-catalog-v2-apply.ts, not a
+#      flag); `--backup` only chooses the path. It is uploaded as a run
+#      artifact retained 90 days, so a bad apply is reversible from the
+#      artifact rather than from a database point-in-time restore.
+#   5. After applying, the script re-plans and asserts convergence to zero
+#      actions plus a §7.1 checksum match. A non-converging apply fails the
+#      run loudly instead of leaving the catalog half-migrated in silence.
+#
+# §9 (the manual's amendment procedure) says every future menu change is a
+# payload/slug-map CSV edit re-run through this same script — so this is the
+# permanent vehicle for those, not a one-off scaffold to delete afterwards.
+name: Menu catalog v2 (M-3 apply)
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "WRITE to the database. Leave false for a plan-only dry run."
+        type: boolean
+        default: false
+
+# Never let two applies overlap — the engine reads current state, diffs, then
+# writes, so a concurrent run would plan against state the other is mutating.
+concurrency:
+  group: menu-catalog-v2-apply
+  cancel-in-progress: false
+
+jobs:
+  plan-and-apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GCP_PROJECT: brand-tanmatra-tmg
+      SQL_INSTANCE: brand-tanmatra-tmg:asia-south2:brand-tanmatra-db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+
+      # The engine is pure and DB-free; if its own contract is broken there is
+      # no point reaching for production at all. Cheap, and fails in seconds.
+      - name: Plan-engine unit tests
+        run: |
+          cd artifacts/api-server
+          node --test --import tsx \
+            ../../scripts/src/lib/menuCatalogV2Plan.test.ts \
+            ../../scripts/src/lib/menuOptionGroups.test.ts
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Start Cloud SQL Auth Proxy
+        run: |
+          curl -sfL -o cloud-sql-proxy \
+            https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.14.2/cloud-sql-proxy.linux.amd64
+          chmod +x cloud-sql-proxy
+          ./cloud-sql-proxy --credentials-file "$GOOGLE_APPLICATION_CREDENTIALS" \
+            --address 127.0.0.1 --port 5433 "$SQL_INSTANCE" &
+          for i in $(seq 1 20); do
+            (echo > /dev/tcp/127.0.0.1/5433) 2>/dev/null && { echo "proxy up"; exit 0; }
+            sleep 1
+          done
+          echo "cloud-sql-proxy never came up — check the deploy SA has roles/cloudsql.client"; exit 1
+
+      # Identical rewrite to deploy.yml's migrate-db step — see the comments
+      # there for why the userinfo is passed through verbatim and why
+      # sslmode/host are stripped.
+      - name: Resolve DATABASE_URL through the proxy
+        run: |
+          RAW=$(gcloud secrets versions access latest \
+            --secret=brand-tanmatra-database-url --project "$GCP_PROJECT") || {
+            echo "cannot read secret brand-tanmatra-database-url — grant the deploy SA roles/secretmanager.secretAccessor"; exit 1; }
+          echo "::add-mask::$RAW"
+          URL=$(python3 - "$RAW" <<'EOF'
+          import sys, urllib.parse as u
+          raw = sys.argv[1]
+          p = u.urlsplit(raw)
+          q = dict(u.parse_qsl(p.query))
+          q.pop("host", None)
+          q.pop("sslmode", None)
+          q.pop("ssl", None)
+          auth = p.netloc.rsplit("@", 1)[0] + "@" if "@" in p.netloc else ""
+          query = ("?" + u.urlencode(q)) if q else ""
+          print(f"{p.scheme}://{auth}127.0.0.1:5433{p.path}{query}")
+          EOF
+          )
+          echo "::add-mask::$URL"
+          echo "DATABASE_URL=$URL" >> "$GITHUB_ENV"
+
+      # Always. On an apply run this is the record of what the apply was
+      # about to do, captured before it did it.
+      - name: Plan (read-only)
+        run: |
+          cd scripts
+          pnpm run menu-catalog-v2 -- --md ../menu-catalog-v2-plan.md | tee ../menu-catalog-v2-plan.txt
+
+      - name: Upload plan
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: menu-catalog-v2-plan
+          path: |
+            menu-catalog-v2-plan.md
+            menu-catalog-v2-plan.txt
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Apply
+        if: ${{ inputs.apply }}
+        run: |
+          cd scripts
+          pnpm run menu-catalog-v2 -- --apply \
+            --backup ../menu-catalog-v2-backup.json \
+            --md ../menu-catalog-v2-applied.md
+
+      # The backup is the rollback path, so it must survive the runner even
+      # when the apply step fails partway.
+      - name: Upload backup + applied report
+        if: ${{ always() && inputs.apply }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: menu-catalog-v2-applied
+          path: |
+            menu-catalog-v2-backup.json
+            menu-catalog-v2-applied.md
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Menu catalog v2 — ${{ inputs.apply && 'APPLY' || 'plan only (dry run)' }}"
+            echo
+            echo "Plan and (on an apply run) the pre-change backup are attached as run artifacts."
+            echo
+            if [ -f menu-catalog-v2-plan.md ]; then
+              echo '<details><summary>Plan</summary>'
+              echo
+              cat menu-catalog-v2-plan.md
+              echo
+              echo '</details>'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
