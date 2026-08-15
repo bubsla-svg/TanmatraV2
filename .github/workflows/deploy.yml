@@ -454,6 +454,64 @@ jobs:
           done
           echo "Timed out waiting for Cloud Build"; exit 1
 
+      # Refuse to deploy with a missing or malformed credential, BEFORE any
+      # Cloud Run mutation. Without this the deploy is silently destructive:
+      # `--update-env-vars` below writes every listed value unconditionally, so
+      # an unset GitHub secret expands to "" and OVERWRITES a working
+      # production credential with an empty string. Nothing goes red — the
+      # deploy reports success and the service starts failing.
+      #
+      # Not hypothetical: TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN /
+      # TWILIO_VERIFY_SERVICE_SID sat on this service as declared-but-valueless
+      # entries for exactly this reason, and were later misread as a
+      # credentials outage.
+      #
+      # This matters most on the FIRST deploy from a new repository (the
+      # tanmatra6-wq/Wellness-Foods -> bubsla-svg/TanmatraV2 account
+      # migration), where no secret is populated yet and a single merge to
+      # main would blank the payment, queue and admin credentials at once.
+      #
+      # ADMIN_PASSWORD_HASH also gets a FORMAT check, because "present but
+      # corrupt" is its documented failure mode: verifyPassword() splits on `$`
+      # and requires exactly 6 fields, so a mangled hash rejects every password
+      # including the correct one, with nothing red anywhere.
+      - name: Preflight — required secrets present and well-formed
+        env:
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD_HASH: ${{ secrets.ADMIN_PASSWORD_HASH }}
+          RAZORPAY_KEY_ID: ${{ secrets.RAZORPAY_KEY_ID }}
+          RAZORPAY_KEY_SECRET: ${{ secrets.RAZORPAY_KEY_SECRET }}
+          RAZORPAY_WEBHOOK_SECRET: ${{ secrets.RAZORPAY_WEBHOOK_SECRET }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+        run: |
+          missing=()
+          for name in ADMIN_USERNAME ADMIN_PASSWORD_HASH RAZORPAY_KEY_ID \
+                      RAZORPAY_KEY_SECRET RAZORPAY_WEBHOOK_SECRET REDIS_PASSWORD; do
+            # Indirect expansion: tests emptiness without ever echoing a value.
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::Refusing to deploy — these repository secrets are unset:"
+            printf '::error::  %s\n' "${missing[@]}"
+            echo "::error::Deploying would overwrite the live values with empty strings."
+            echo "::error::Set them under Settings > Secrets and variables > Actions, then re-run."
+            exit 1
+          fi
+
+          # scrypt$N$r$p$saltHex$hashHex — 6 fields. Matched with a case glob so
+          # the value is never expanded into a command or printed.
+          case "$ADMIN_PASSWORD_HASH" in
+            scrypt\$*\$*\$*\$*\$*) : ;;
+            *)
+              echo "::error::ADMIN_PASSWORD_HASH is set but is not in scrypt\$N\$r\$p\$salt\$hash form."
+              echo "::error::A malformed hash rejects EVERY password, including the correct one."
+              echo "::error::Regenerate with hashPassword() and store it without shell expansion:"
+              echo "::error::  gh secret set ADMIN_PASSWORD_HASH < hash.txt"
+              exit 1 ;;
+          esac
+
+          echo "preflight ok — all 6 required secrets present, admin hash well-formed"
       - name: Capture the currently-serving revision (rollback target)
         id: stable
         run: |
