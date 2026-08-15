@@ -52,16 +52,12 @@ export function resolveCustomizations(
   groups: readonly DishCustomGroup[],
   selections: readonly CustomizationSelection[] | undefined,
 ): CustomizationValidationResult {
-  if (!selections || selections.length === 0) {
-    return { ok: true, modifierPaise: 0, labels: [] };
-  }
-
   const groupByName = new Map(groups.map((g) => [g.groupName, g]));
   let modifierPaise = 0;
   const labels: string[] = [];
   const seenGroups = new Set<string>();
 
-  for (const selection of selections) {
+  for (const selection of selections ?? []) {
     if (seenGroups.has(selection.groupName)) {
       return { ok: false, error: `duplicate customisation group: ${selection.groupName}` };
     }
@@ -94,6 +90,27 @@ export function resolveCustomizations(
       modifierPaise += option.priceModifier;
       if (!option.default) labels.push(option.name);
     }
+  }
+
+  // TNM-MENU-01 R-4/§6 — required groups. A required group with no explicit
+  // selection falls back to its `default` option (its modifier applies, no
+  // kitchen label — the standing-default convention above). A required group
+  // with neither a selection nor a default fails CLOSED: silently pricing an
+  // unmade mandatory choice would be the same trust failure this module
+  // exists to prevent. An empty optionNames array counts as "no selection" —
+  // it means the client rendered the group and the customer chose nothing.
+  for (const group of groups) {
+    if (!group.required) continue;
+    const selection = (selections ?? []).find((s) => s.groupName === group.groupName);
+    if (selection && selection.optionNames.length > 0) continue;
+    const fallback = group.options.find((o) => o.default);
+    if (!fallback) {
+      return {
+        ok: false,
+        error: `group "${group.groupName}" requires a selection`,
+      };
+    }
+    modifierPaise += fallback.priceModifier;
   }
 
   return { ok: true, modifierPaise, labels };

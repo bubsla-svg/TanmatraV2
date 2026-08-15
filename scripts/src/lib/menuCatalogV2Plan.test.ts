@@ -13,6 +13,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   buildPlan,
+  jsonEqual,
   parseCsv,
   slugify,
   verifyPostState,
@@ -54,6 +55,7 @@ function dbRow(overrides: Partial<DbMenuRow> & { slug: string }): DbMenuRow {
     badge: null,
     unavailableReason: null,
     hasMacros: true,
+    customizations: [],
     ...overrides,
   };
 }
@@ -150,6 +152,7 @@ function applyInMemory(p: Plan, rows: DbMenuRow[]): DbMenuRow[] {
         badge: a.values.badge,
         unavailableReason: a.values.unavailableReason,
         hasMacros: false,
+        customizations: a.values.customizations,
       });
     } else if (a.kind === "update") {
       Object.assign(bySlug.get(a.slug)!, a.diff);
@@ -269,6 +272,19 @@ test("a MATCH row missing from the DB is a blocker, never an improvised create",
   assert.ok(!p.actions.some((a) => a.kind === "create" && a.slug === HERO_SLUG));
 });
 
+test("a sauce-chooser flag plans the §6 sauce group; a flagless row leaves customizations alone", () => {
+  const p = plan();
+  const bowl = p.actions.find((a) => a.kind === "update" && a.slug === BOWL_SLUG);
+  assert.ok(bowl && bowl.kind === "update");
+  assert.ok(bowl.diff.customizations, "sauce-chooser row must receive its §6 group");
+  assert.equal(bowl.diff.customizations![0]!.groupName, "Choose your sauce");
+  assert.equal(bowl.diff.customizations![0]!.required, true);
+
+  const hero = p.actions.find((a) => a.kind === "update" && a.slug === HERO_SLUG);
+  assert.ok(hero && hero.kind === "update");
+  assert.ok(!("customizations" in hero.diff), "flagless row must not touch customizations");
+});
+
 test("idempotency: the plan applied to its own post-state plans zero actions", () => {
   const first = plan();
   assert.equal(first.blockers.length, 0);
@@ -294,6 +310,79 @@ test("§7 verification catches fried-set names, Detox, internal tags and Law-8 b
   assert.equal(v.ok, false);
   assert.equal(v.violations.length, 4);
   assert.ok(!v.violations.some((x) => x.includes("parked-fried")));
+});
+
+test("jsonEqual is order-independent on object keys but order-sensitive on arrays (the jsonb round-trip regression)", () => {
+  // Reproduces exactly what Postgres's jsonb column handed back in the M-4
+  // rehearsal: the same group with its top-level AND nested option keys
+  // reordered. This is what made the apply script never converge before
+  // jsonEqual replaced a plain JSON.stringify compare.
+  const written = [
+    {
+      groupName: "Choose your sauce",
+      type: "single",
+      required: true,
+      options: [{ name: "Cilantro Lime", priceModifier: 0, default: true }],
+    },
+  ];
+  const roundTripped = [
+    {
+      type: "single",
+      options: [{ name: "Cilantro Lime", default: true, priceModifier: 0 }],
+      required: true,
+      groupName: "Choose your sauce",
+    },
+  ];
+  assert.ok(jsonEqual(written, roundTripped), "reordered object keys must compare equal");
+
+  const reorderedOptions = [
+    {
+      groupName: "Choose your sauce",
+      type: "single",
+      required: true,
+      options: [
+        { name: "Second", priceModifier: 0 },
+        { name: "First", priceModifier: 0, default: true },
+      ],
+    },
+  ];
+  assert.ok(
+    !jsonEqual(written, reorderedOptions),
+    "a genuinely different option ORDER must still compare unequal — rendering order matters",
+  );
+});
+
+test("jsonEqual treats an explicit `key: undefined` as the key being absent (matches real JSON/jsonb semantics)", () => {
+  assert.ok(jsonEqual({ name: "Tandoori", priceModifier: 0 }, { name: "Tandoori", priceModifier: 0, default: undefined }));
+  assert.ok(!jsonEqual({ name: "Tandoori", priceModifier: 0 }, { name: "Tandoori", priceModifier: 0, default: true }));
+});
+
+test("idempotency survives a jsonb key-reordered round-trip of customizations (regression for the M-4 rehearsal bug)", () => {
+  const withSauce = payloadRow({ flags: ["sauce-chooser"] });
+  const first = plan({ payload: [withSauce, BOWL, WOK] });
+  const create = first.actions.find((a) => a.kind === "create" && a.slug === HERO_SLUG);
+  // HERO is a MATCH, not a create, in this fixture — use the update path.
+  const update = first.actions.find((a) => a.kind === "update" && a.slug === HERO_SLUG);
+  assert.ok(update && update.kind === "update" && update.diff.customizations);
+  void create;
+
+  const applied = applyInMemory(first, DB);
+  // Simulate the jsonb round-trip: same content, keys reordered.
+  const roundTripped = applied.map((r) =>
+    r.slug === HERO_SLUG
+      ? {
+          ...r,
+          customizations: (r.customizations as any[]).map((g) => ({
+            options: g.options.map((o: any) => ({ default: o.default, name: o.name, priceModifier: o.priceModifier })),
+            required: g.required,
+            type: g.type,
+            groupName: g.groupName,
+          })),
+        }
+      : r,
+  );
+  const second = plan({ payload: [withSauce, BOWL, WOK], dbRows: roundTripped });
+  assert.deepEqual(second.actions, []);
 });
 
 test("CSV parser handles quoted fields with embedded commas and doubled quotes", () => {

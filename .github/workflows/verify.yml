@@ -139,7 +139,10 @@ jobs:
       - name: Menu v2 plan engine (scripts)
         if: ${{ !cancelled() }}
         working-directory: scripts
-        run: node --test --import tsx ./src/lib/menuCatalogV2Plan.test.ts
+        run: |
+          node --test --import tsx \
+            ./src/lib/menuCatalogV2Plan.test.ts \
+            ./src/lib/menuOptionGroups.test.ts
 
       # The step above predates the storefront and covers only the legacy SPA,
       # so the money path that is actually live — a-la-carte checkout, plan
@@ -509,4 +512,5 @@ jobs:
         run: |
           node --test --test-force-exit --import tsx \
             ./src/routes/petpooja.priceAuthority.test.ts \
-            ./src/routes/petpooja.menuFence.test.ts
+            ./src/routes/petpooja.menuFence.test.ts \
+            ./src/lib/dishCustomizations.test.ts

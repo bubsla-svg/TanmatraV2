@@ -73,6 +73,7 @@ async function fetchDbRows(): Promise<{ planRows: DbMenuRow[]; raw: Map<string, 
     badge: r.badge,
     unavailableReason: r.unavailableReason,
     hasMacros: r.macros !== null,
+    customizations: r.customizations ?? [],
   }));
   return { planRows, raw };
 }
@@ -174,6 +175,7 @@ async function applyPlan(plan: Plan, raw: Map<string, any>): Promise<void> {
           badge: action.values.badge,
           isAvailable: action.values.isAvailable,
           unavailableReason: action.values.unavailableReason,
+          customizations: action.values.customizations,
           contraindications: [],
         });
       } else if (action.kind === "update") {

@@ -144,3 +144,77 @@ test("dish with no customisation groups at all + a selection → unknown group, 
   ]);
   assert.equal(result.ok, false);
 });
+
+// --- TNM-MENU-01 M-4: required-group semantics (manual §6) -----------------
+
+const sauceChooser: DishCustomGroup = {
+  groupName: "Choose your sauce",
+  type: "single",
+  required: true,
+  options: [
+    { name: "Cilantro Lime", priceModifier: 0, default: true },
+    { name: "Peri Peri", priceModifier: 0 },
+  ],
+};
+
+const wokProtein: DishCustomGroup = {
+  groupName: "Choose your protein",
+  type: "single",
+  required: true,
+  options: [
+    { name: "Veg", priceModifier: 0, default: true },
+    { name: "Chicken", priceModifier: 5000 },
+  ],
+};
+
+test("a required group with no selection auto-applies its default (no kitchen label, no surprise money)", () => {
+  const result = resolveCustomizations([sauceChooser], undefined);
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.modifierPaise, 0);
+    assert.deepEqual(result.labels, []);
+  }
+});
+
+test("a required group's explicit selection prices and labels normally", () => {
+  const result = resolveCustomizations([wokProtein], [
+    { groupName: "Choose your protein", optionNames: ["Chicken"] },
+  ]);
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.modifierPaise, 5000);
+    assert.deepEqual(result.labels, ["Chicken"]);
+  }
+});
+
+test("a required group with an EMPTY optionNames array falls back to the default", () => {
+  const result = resolveCustomizations([wokProtein], [
+    { groupName: "Choose your protein", optionNames: [] },
+  ]);
+  assert.equal(result.ok, true);
+  if (result.ok) assert.equal(result.modifierPaise, 0);
+});
+
+test("a required group with neither selection nor default fails CLOSED", () => {
+  const noDefault: DishCustomGroup = {
+    groupName: "Mandatory pick",
+    type: "single",
+    required: true,
+    options: [{ name: "A", priceModifier: 1000 }],
+  };
+  const result = resolveCustomizations([noDefault], undefined);
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.match(result.error, /requires a selection/);
+});
+
+test("a required default that carries a price modifier still bills it (base-price integrity)", () => {
+  const pricedDefault: DishCustomGroup = {
+    groupName: "Base",
+    type: "single",
+    required: true,
+    options: [{ name: "Standard", priceModifier: 2000, default: true }],
+  };
+  const result = resolveCustomizations([pricedDefault], []);
+  assert.equal(result.ok, true);
+  if (result.ok) assert.equal(result.modifierPaise, 2000);
+});

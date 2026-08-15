@@ -7,6 +7,12 @@ export interface DishCustomOption {
   export interface DishCustomGroup {
     groupName: string;
     type: "single" | "multiple";
+    /** TNM-MENU-01 R-4/§6: a required single-select (sauce chooser, pasta
+     *  base, wok protein). The UI must force a choice; the server resolver
+     *  (api-server lib/dishCustomizations.ts) auto-applies the group's
+     *  `default` option when no selection arrives, and fails closed when a
+     *  required group has neither a selection nor a default. */
+    required?: boolean;
     options: DishCustomOption[];
   }
 
