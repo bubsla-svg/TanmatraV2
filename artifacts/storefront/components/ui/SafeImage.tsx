@@ -31,6 +31,7 @@ export function SafeImage({
   className,
   imgClassName,
   priority = false,
+  fallback,
 }: {
   src: string;
   /** Empty for decorative photos (the common case for dish shots beside
@@ -41,6 +42,9 @@ export function SafeImage({
   /** Extra classes for the img itself (hover scale, transitions, …). */
   imgClassName?: string;
   priority?: boolean;
+  /** Branded stand-in shown instead of the generic glyph when the photo
+   *  fails to load (M-5 §3.5). Fills the same frame, so no layout shift. */
+  fallback?: React.ReactNode;
 }) {
   return (
     <span className={`relative block overflow-hidden ${className ?? ""}`}>
@@ -49,6 +53,7 @@ export function SafeImage({
         alt={alt}
         priority={priority}
         className={`h-full w-full object-cover ${imgClassName ?? ""}`}
+        fallback={fallback}
       />
     </span>
   );

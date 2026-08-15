@@ -48,7 +48,7 @@ export function SpecSheetCard({ spec, onFlipBack }: SpecSheetCardProps) {
   // RD note at all — so under real data those two sentences would have
   // appeared, identically, beneath EVERY dish, on a card headed "Clinical
   // Spec Sheet". A defaulted clinical claim is a fabricated one.
-  const est = spec.macrosEstimated ? "~" : "";
+  const est = spec.macrosEstimated ? "≈" : "";
   const showRdBlock = spec.rdVerified === true || Boolean(spec.rdNote);
 
   return (

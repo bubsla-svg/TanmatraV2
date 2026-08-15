@@ -440,10 +440,21 @@ function ApplicationDetail({
             </Button>
           </div>
           {application.linkedRdSlug && (
-            <p className="text-[11px] text-clinical-sage">
-              Provisioned as{" "}
-              <span className="font-mono">{application.linkedRdSlug}</span>
-            </p>
+            <div className="space-y-1.5">
+              <p className="text-[11px] text-clinical-sage">
+                Provisioned as{" "}
+                <span className="font-mono">{application.linkedRdSlug}</span>
+              </p>
+              <p className="text-[11px] text-amber-400/90 leading-relaxed">
+                This only grants <span className="font-mono">/rd-console</span> portal
+                access. The customer-facing booking directory, pricing, languages,
+                specialties, and office hours are a separate static roster
+                (<span className="font-mono">rdBookingData.ts</span> +{" "}
+                <span className="font-mono">rdIdentity.ts</span>) — add this slug there
+                by hand before the dietitian is bookable or shows up on{" "}
+                <span className="font-mono">/rd/directory</span>.
+              </p>
+            </div>
           )}
         </div>
       </CardContent>

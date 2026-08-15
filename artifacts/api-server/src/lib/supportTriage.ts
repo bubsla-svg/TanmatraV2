@@ -6,6 +6,7 @@ import {
   supportTicketsTable,
   supportEvalExamplesTable,
   ordersTable,
+  usersTable,
   aiRunsTable,
   SUPPORT_CATEGORIES,
   SUPPORT_PRIORITIES,
@@ -17,6 +18,7 @@ import {
 } from "@workspace/db";
 import { DEFAULT_MODEL_ID, getModel } from "./ai/model";
 import { logger } from "./logger";
+import { sendMail } from "./mail";
 
 const TRIAGE_TIMEOUT_MS = 8_000;
 const DRAFT_TIMEOUT_MS = 12_000;
@@ -449,6 +451,47 @@ export async function sendReply(
   // positive examples we can replay against future model versions.
   await appendEvalExample(updated, "accepted", safeReply);
   return updated;
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+export interface TicketEmailResult {
+  delivered: boolean;
+  reason?: string;
+}
+
+/**
+ * The customer-facing support dialog (SupportTicketDialog.tsx) promises
+ * "our care team will reply by email shortly" — until this, nothing in the
+ * codebase fulfilled that promise. sendReply() only ever wrote sentReply to
+ * the DB; an ops agent could triage, draft, and "send" a reply that the
+ * customer would never see through any channel. Mirrors
+ * sendDeliveryDelaySms's resilience pattern: never throws, degrades to a
+ * reported reason (no SMTP configured, no email on file) instead of
+ * silently no-opping.
+ */
+export async function emailTicketReply(
+  ticket: SupportTicket,
+): Promise<TicketEmailResult> {
+  if (!ticket.userId || !ticket.sentReply) {
+    return { delivered: false, reason: "ticket has no recipient or reply text" };
+  }
+  const [user] = await db
+    .select({ email: usersTable.email })
+    .from(usersTable)
+    .where(eq(usersTable.id, ticket.userId))
+    .limit(1);
+  if (!user?.email) {
+    return { delivered: false, reason: "no email on file for this customer" };
+  }
+  const text = `${ticket.sentReply}\n\n— Tanmatra Care Team`;
+  const html = `<p>${escapeHtml(ticket.sentReply).replace(/\n/g, "<br/>")}</p><p>— Tanmatra Care Team</p>`;
+  return sendMail({ to: user.email, subject: `Re: ${ticket.subject}`, text, html });
 }
 
 export async function rejectDraft(

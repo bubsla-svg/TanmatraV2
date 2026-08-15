@@ -105,3 +105,60 @@ test("a dish with only staples falls back to the catalog description, never blan
   );
   assert.equal(dishCardSummary({ ingredients: [] }), "");
 });
+
+// ── Stub guard (M-5 §3.4, defect S-3 / finding F8) ────────────────────────
+
+test("the 'fresh ingredients' placeholder never becomes the card line", () => {
+  // The exact production shape: 18 live dishes look like this.
+  const stub = {
+    ingredients: ["fresh ingredients"],
+    description: "Aam Panna - prepared fresh daily.",
+    longDescription:
+      "A traditional cooling summer drink made from boiled raw green mangoes, sweetened naturally with organic jaggery.",
+  };
+  const line = dishCardSummary(stub);
+  assert.ok(!line.toLowerCase().includes("fresh ingredients"), `leaked stub text: ${line}`);
+  assert.match(line, /raw green mangoes/, "should fall through to the real prose");
+});
+
+test("stub guard prefers real prose over the templated description", () => {
+  assert.equal(
+    dishCardSummary({
+      ingredients: ["fresh ingredients"],
+      description: "Garlic Bread - prepared fresh daily.",
+      longDescription: "Sourdough baked with roasted garlic butter and herbs.",
+    }),
+    "Sourdough baked with roasted garlic butter and herbs.",
+  );
+});
+
+test("stub guard falls back to description when no prose exists", () => {
+  assert.equal(
+    dishCardSummary({
+      ingredients: ["fresh ingredients"],
+      description: "Garlic Bread - prepared fresh daily.",
+    }),
+    "Garlic Bread - prepared fresh daily.",
+  );
+});
+
+test("an ingredient-list longDescription is NOT used as prose", () => {
+  // The curated seed catalog's longDescription carries quantities; printing
+  // it here would re-create the duplication this module exists to remove.
+  const line = dishCardSummary({
+    ingredients: ["fresh ingredients"],
+    description: "Fallback copy.",
+    longDescription: "Spaghetti pasta – 120 g (boiled al dente) · Olive oil – 2 tbsp",
+  });
+  assert.equal(line, "Fallback copy.");
+});
+
+test("a real ingredient list is still preferred over longDescription", () => {
+  assert.equal(
+    dishCardSummary({
+      ingredients: ["Grilled chicken – 120 g", "Brown rice – 150 g"],
+      longDescription: "Some prose that must not win.",
+    }),
+    "Grilled chicken · Brown rice",
+  );
+});
