@@ -92,12 +92,17 @@ test.describe("stitch-runtime: menu display integrity (M-5 §4)", () => {
     for (const n of names) seen.set(n, (seen.get(n) ?? 0) + 1);
     const dupes = [...seen.entries()].filter(([, n]) => n > 1).map(([name, n]) => `${name} ×${n}`);
 
-    // NOTE: this is expected to FAIL against production until M-3 runs — the
-    // live catalog holds stub duplicates (aglio-olio-pasta-v alongside the
-    // real aglio-olio-veg, finding F9) that only the M-3 archive set removes.
-    // It is a data assertion deliberately expressed as a display rule,
-    // because the customer experiences it as one.
     expect(dupes, `duplicate dish cards: ${dupes.join(", ")}`).toEqual([]);
+
+    // SCOPE, STATED HONESTLY: this asserts §4.2 as literally written —
+    // duplicate *names*. It passes against production, and that pass does
+    // NOT mean defect S-9 is closed. S-9 is a SEMANTIC duplicate: the live
+    // catalog carries "Aglio Olio Pasta V" (a stub row) alongside the real
+    // "Aglio Olio - Veg" (finding F9). Two rows, one dish, two different
+    // names — so a name-equality check cannot see it, and no render-side
+    // check reliably can. Only M-3's archive set removes it. Recorded here
+    // so a future reader does not mistake this green for coverage it
+    // doesn't provide.
   });
 
   test("the ≈ marker is explained exactly once when it appears", async ({ page }) => {

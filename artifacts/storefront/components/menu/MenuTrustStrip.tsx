@@ -22,14 +22,32 @@ import { macroTrust } from "@/lib/dishTrust";
  *
  *  - "verified macros" renders only when EVERY rendered dish has
  *    trustworthy macros. One placeholder row removes the claim for all.
- *  - "RD-reviewed kitchen" renders only when the catalog carries real
- *    per-dish review state (`rdReviewState === "reviewed"`) rather than the
- *    blanket `rdVerified` flag. Until F5 is resolved data-side this stays
- *    off, exactly as §3.7 specifies.
+ *    (Currently 17 of 145 fail, so it does not render.)
+ *  - "RD-reviewed kitchen" does not render at all, and cannot be switched
+ *    on by any field check — see RD_REVIEW_STATE_IS_TRUSTWORTHY below.
  *
  * The strip never becomes empty: dish count and "order today" are always
  * true, so the customer still gets an orienting line (Law 10 — no voids).
  */
+
+/**
+ * There is NO field in today's payload that can back an RD-review claim.
+ *
+ * The first cut of this component gated on `rdReviewState === "reviewed"`,
+ * reasoning that it was the RD's explicit per-dish verdict while
+ * `rdVerified` was the blanket seed flag F5 called out. Rendering it
+ * against production disproved that: `rdReviewState` is "reviewed" on all
+ * 145 live dishes, exactly as uniformly as `rdVerified` is true on all 145.
+ * F5 contaminates both — POS imports are written in pre-reviewed
+ * (`lib/petpooja.ts` sets `allergenReviewState: "reviewed"` on every
+ * import), which is the same defect wearing a different field name.
+ *
+ * So this is a deliberate constant, not a predicate. A predicate over
+ * contaminated data is worse than an honest `false`: it looks like
+ * evidence, passes review, and still ships the unearned claim. It flips
+ * only when F5 is resolved data-side and a genuine signal exists to read.
+ */
+const RD_REVIEW_STATE_IS_TRUSTWORTHY = false;
 export function MenuTrustStrip({ dishes }: { dishes: DishData[] }) {
   const clauses: string[] = [
     `${dishes.length} ${dishes.length === 1 ? "dish" : "dishes"}`,
@@ -40,12 +58,13 @@ export function MenuTrustStrip({ dishes }: { dishes: DishData[] }) {
     dishes.length > 0 && dishes.every((d) => macroTrust(d) !== "unverified");
   if (everyMacroTrustworthy) clauses.push("verified macros");
 
-  // `rdReviewState` is the RD's explicit per-dish verdict; `rdVerified` is
-  // the seed flag F5 flagged as blanket-true and therefore meaningless as
-  // evidence. Only the former may back a rendered claim.
-  const everyDishRdReviewed =
-    dishes.length > 0 && dishes.every((d) => d.rdReviewState === "reviewed");
-  if (everyDishRdReviewed) clauses.push("RD-reviewed kitchen");
+  // §3.7 specifies the fallback copy "macros on every dish" while the RD
+  // claim is withheld. That is NOT adopted here: every dish does carry a
+  // macros object, so the sentence is literally true — but 17 of them are
+  // the placeholder bucket, so it would re-assert at the strip exactly the
+  // confidence the cards below just withdrew. Silence is the honest
+  // fallback; the count and "order today" already orient the customer.
+  if (RD_REVIEW_STATE_IS_TRUSTWORTHY) clauses.push("RD-reviewed kitchen");
 
   return (
     <p className="mt-1 text-sm text-ink-muted" data-testid="menu-trust-strip">
