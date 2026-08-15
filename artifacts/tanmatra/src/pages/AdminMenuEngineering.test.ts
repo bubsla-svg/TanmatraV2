@@ -34,3 +34,21 @@ test("decide() goes through API_BASE, not a hardcoded relative path", () => {
 test("no fetch on this page doubles the /api segment already in API_BASE", () => {
   assert.doesNotMatch(SRC, /\$\{API_BASE\}\/api\//);
 });
+
+/**
+ * decide()'s confirmation toast built the past tense by string concat
+ * (`${action}d.`), which reads correctly for "approve" -> "approved" but
+ * produces "Suggestion dismissd." for "dismiss" — found by actually
+ * clicking Dismiss in a live browser. Cosmetic only (no functional
+ * impact), but a wrong word in a confirmation toast is exactly the kind
+ * of "does this look intentional" detail live verification exists to
+ * catch that a source-only read of the diff can miss.
+ */
+test("decide()'s toast spells 'dismissed' correctly (not string-concat 'dismissd')", () => {
+  const fnStart = SRC.indexOf("async function decide(");
+  assert.notEqual(fnStart, -1);
+  const fnBody = SRC.slice(fnStart, SRC.indexOf("\n  }", fnStart));
+  assert.doesNotMatch(fnBody, /dismissd/);
+  assert.match(fnBody, /dismissed/);
+  assert.match(fnBody, /approved/);
+});
