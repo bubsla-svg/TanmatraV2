@@ -46,6 +46,16 @@ export interface Sectioned<T> {
 }
 
 /**
+ * The DOM id a section renders with, and the chip bar jumps to. Derived
+ * from the numeric order rather than the name so it stays a valid,
+ * stable id regardless of punctuation ("Wraps & Burritos", "Sides & Sips")
+ * and does not change if a section is ever renamed.
+ */
+export function sectionAnchorId(order: number): string {
+  return `menu-section-${order}`;
+}
+
+/**
  * Group items into the fixed §5 sections (in order), appending a trailing
  * "More dishes" bucket for anything with no `sectionOrder`. Sections with
  * no items are omitted entirely — the caller sees only what it needs to

@@ -11,7 +11,7 @@
 // out of the client bundle. `dishes` is still needed here alongside `rows`
 // because ranking/filtering are computed over the DishData themselves — only
 // the rendering is server-side now.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { DishForMatch, PreferencesForMatch } from "@workspace/preferences-match";
@@ -34,6 +34,9 @@ import {
 } from "@/lib/menuFilters";
 import { mergeMenuUrlState, parseMenuUrlState } from "@/lib/menuUrlState";
 import { MenuFilterSheet } from "@/components/menu/MenuFilterSheet";
+import { SectionChipBar, useStickyAnchorOffset } from "@/components/menu/SectionChipBar";
+import { groupBySection, sectionAnchorId } from "@/lib/menuSections";
+import { useScrollRestore } from "@/lib/useScrollRestore";
 
 // N2.3: URL sync is debounced, not immediate — chip/filter changes are
 // discrete clicks (a 400ms delay before the address bar updates is
@@ -174,8 +177,37 @@ export function PersonalizedMenu({
   const allActiveLabels = [...searchLabel, ...activeLabels];
   const noMatch = allActiveLabels.length > 0 && filteredIds.size === 0;
 
+  // The chip bar's anchors are derived from exactly what MenuGrid will draw:
+  // the same `rows`, grouped the same way, filtered by the same
+  // `filteredIds`. Deriving rather than duplicating is what guarantees the
+  // two can never disagree about which sections exist.
+  const sectionAnchors = useMemo(
+    () =>
+      groupBySection(rows, (r) => r.sectionOrder)
+        .filter((s) => s.items.some((r) => filteredIds.has(r.dishId)))
+        .map((s) => ({ id: sectionAnchorId(s.order), label: s.name })),
+    [rows, filteredIds],
+  );
+
+  const stickyRef = useRef<HTMLDivElement>(null);
+  useStickyAnchorOffset(stickyRef);
+
+  // §3.9 / Law 3. Disabled while a dish drawer is open (`?dish=`): that is a
+  // same-route overlay whose own close already restores position, and
+  // writing a position while it is open would capture the scroll of the
+  // drawer, not of the list underneath it.
+  useScrollRestore("menu", !searchParams.get("dish"));
+
   return (
     <div className="flex flex-col gap-4">
+      {/* §3.2: search + chip bar + diet toggles are ONE sticky cluster. They
+          stick together because the chip bar alone would detach from the
+          controls it belongs with, and because useStickyAnchorOffset measures
+          this element to place jumped-to section anchors just below it. */}
+      <div
+        ref={stickyRef}
+        className="sticky top-0 z-[var(--z-chrome)] -mx-4 flex flex-col gap-3 bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-4 pb-2 pt-3 backdrop-blur"
+      >
       <div className="relative">
         <svg
           aria-hidden
@@ -248,11 +280,18 @@ export function PersonalizedMenu({
         </div>
       </div>
 
+      {/* Rendered from the SAME rows/visibleIds MenuGrid draws, so a section
+          whose dishes are all filtered out loses its chip at the same moment
+          it loses its heading — a chip that jumps to nothing is a dead end
+          (Law 9). */}
+      <SectionChipBar anchors={sectionAnchors} />
+
       {allActiveLabels.length > 0 && (
         <p className="text-xs text-ink-muted" data-testid="menu-active-filters">
           Filtering by {allActiveLabels.join(" · ")}
         </p>
       )}
+      </div>
 
       {noMatch ? (
         <div

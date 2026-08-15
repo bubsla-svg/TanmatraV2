@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { groupBySection, MENU_SECTIONS, NO_PERSONALIZATION_BOOST_SECTION } from "./menuSections";
+import { groupBySection, sectionAnchorId, MENU_SECTIONS, NO_PERSONALIZATION_BOOST_SECTION } from "./menuSections";
 
 test("groups items into fixed sections, in §5 order, omitting empty ones", () => {
   const items = [
@@ -50,4 +50,23 @@ test("section 13 is the personalization-boost exclusion", () => {
 
 test("empty input yields no sections", () => {
   assert.deepEqual(groupBySection([], () => 1), []);
+});
+
+// ── Anchor ids (M-5 §3.2) ────────────────────────────────────────────────
+
+test("anchor id is derived from order, not the name", () => {
+  // Section names carry punctuation ("Wraps & Burritos", "Sides & Sips")
+  // that would need escaping in a DOM id and in a querySelector; the
+  // numeric order sidesteps both and survives a rename.
+  assert.equal(sectionAnchorId(1), "menu-section-1");
+  assert.equal(sectionAnchorId(13), "menu-section-13");
+  assert.equal(sectionAnchorId(14), "menu-section-14", "the ungoverned bucket gets one too");
+});
+
+test("every rendered section can produce a unique anchor", () => {
+  const items = MENU_SECTIONS.map((s) => ({ sectionOrder: s.order }));
+  const grouped = groupBySection(items, (i) => i.sectionOrder);
+  const ids = grouped.map((s) => sectionAnchorId(s.order));
+  assert.equal(new Set(ids).size, ids.length, "anchor ids collided");
+  assert.equal(ids.length, 13);
 });
