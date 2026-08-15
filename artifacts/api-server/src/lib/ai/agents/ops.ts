@@ -652,8 +652,6 @@ registerAgent({
   name: "ops",
   description:
     "Operator-facing agent for kitchen + dispatch (inventory 86s, rider assignment, smart dispatch & override, order status, refunds, live queue).",
-  // Latest-stable alias — see DEFAULT_MODEL_ID in ../model.ts.
-  defaultModel: "gemini-flash-latest",
   maxSteps: 6,
   systemPrompt: OPS_PROMPT,
   tools: [
