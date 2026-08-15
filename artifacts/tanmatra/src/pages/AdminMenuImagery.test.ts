@@ -13,6 +13,13 @@ import { fileURLToPath } from "node:url";
  * any asset action. Parsed rather than imported/rendered — no RTL/jsdom
  * harness exists for tanmatra pages here (node:test has no DOM), matching
  * the pattern in adminConsoles.test.ts / AdminCatalog.test.ts.
+ *
+ * A third, independent bug shared with AdminCatalog.tsx: every URL here
+ * doubled the /api segment (`${API_BASE}/api/menu/...`). API_BASE
+ * (lib/apiBase.ts) already ends in "/api", and menu.ts/menuAssets.ts
+ * register their routes as "/menu/..." — mounted globally under /api by
+ * app.ts's `app.use("/api", router)`. The doubled form 404s in every
+ * environment.
  */
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -38,4 +45,8 @@ test("the missing-images load effect does not gate on a manually-entered admin t
   const effectBody = SRC.slice(effectStart, SRC.indexOf("}, []);", effectStart));
   assert.doesNotMatch(effectBody, /if \(!adminToken\) return/);
   assert.match(effectBody, /loadMissing\(\);/);
+});
+
+test("no URL on this page doubles the /api segment already in API_BASE", () => {
+  assert.doesNotMatch(SRC, /\$\{API_BASE\}\/api\//);
 });
