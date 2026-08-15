@@ -11,11 +11,36 @@ function useRdAuth(): RdAuthState {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(apiPath("/admin/me"), {
-          credentials: "include",
-        });
+        // Two distinct identities can legitimately reach this console:
+        // (1) internal staff, holding the shared admin-session cookie
+        //     (/admin/me) — the "reached from the admin console index" path
+        //     the comment below describes, and
+        // (2) the dietitian themselves, signed in through the ordinary
+        //     customer phone-OTP flow with their own account mapped to an
+        //     rd_users row (/rd/console/me returns a non-null rdSlug).
+        // Gating on /admin/me alone meant a real RD — who has no admin
+        // password and never will — could never get past this layout to
+        // reach a console every downstream route (requireRdRole in
+        // rdAdvisory.ts) already expects THEM, not staff, to use.
+        const [adminRes, rdRes] = await Promise.all([
+          fetch(apiPath("/admin/me"), { credentials: "include" }).catch(
+            () => null,
+          ),
+          fetch(apiPath("/rd/console/me"), { credentials: "include" }).catch(
+            () => null,
+          ),
+        ]);
         if (cancelled) return;
-        setState(res.ok ? "authed" : "anon");
+        if (adminRes?.ok) {
+          setState("authed");
+          return;
+        }
+        if (rdRes?.ok) {
+          const data = (await rdRes.json()) as { rdSlug: string | null };
+          setState(data.rdSlug ? "authed" : "anon");
+          return;
+        }
+        setState("anon");
       } catch {
         // Network error — redirect to login rather than trust any local state.
         if (!cancelled) setState("anon");

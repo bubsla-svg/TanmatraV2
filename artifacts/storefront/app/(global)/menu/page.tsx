@@ -7,6 +7,7 @@ import type { MenuGridRow } from "@/components/MenuGrid";
 import { PersonalizedMenu } from "@/components/menu/PersonalizedMenu";
 import { DishDrawer } from "@/components/menu/DishDrawer";
 import { FallbackMenuBanner } from "@/components/menu/FallbackMenuBanner";
+import { MacroLegend, MenuTrustStrip } from "@/components/menu/MenuTrustStrip";
 
 /**
  * The only fields PersonalizedMenu's client-side ranking/diet-filter actually
@@ -91,9 +92,10 @@ export default async function MenuPage({
             from localStorage once at mount with no `storage` listener, so a
             second copy on this route desynced permanently from the one sitting
             directly above it in the header. */}
-        <p className="mt-1 text-sm text-ink-muted">
-          {orderable.length} dishes · order today · verified macros · RD-reviewed kitchen
-        </p>
+        {/* §3.7: every clause is earned from the payload actually rendering —
+            see MenuTrustStrip for why the two claims are gated. */}
+        <MenuTrustStrip dishes={orderable} />
+        <MacroLegend dishes={orderable} />
       </div>
       {source === "fallback" && <FallbackMenuBanner />}
       <h2 className="sr-only">Dishes</h2>

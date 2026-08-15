@@ -12,10 +12,10 @@ const GI_LABEL: Record<DishData["glycaemicIndex"], string> = {
  * facts the headline macro grid omits (fibre, sugar), and the full ingredient
  * declaration. Pure presentational — reads only fields already present on
  * DishData, so it renders identically in an RSC (the page) or inside a client
- * island (the drawer). Estimated macros carry a "~", matching the grid.
+ * island (the drawer). Estimated macros carry a "≈", matching the grid.
  */
 export function DishSpec({ dish }: { dish: DishData }) {
-  const est = dish.macrosEstimated ? "~" : "";
+  const est = dish.macrosEstimated ? "≈" : "";
   return (
     <div className="mt-6 space-y-5">
       {/* diet + glycaemic-index chips — colour is never the sole signal (the

@@ -218,6 +218,14 @@ export default function AdminSupportTickets() {
       });
       if (!res.ok) {
         setMsg(`${path} failed: ${await res.text()}`);
+      } else if (path === "send") {
+        const data = (await res.json()) as { emailSent?: boolean; emailReason?: string };
+        setMsg(
+          data.emailSent
+            ? "send ok — reply emailed to the customer"
+            : `send ok — but no email was delivered (${data.emailReason ?? "unknown reason"})`,
+        );
+        await refresh();
       } else {
         setMsg(`${path} ok`);
         await refresh();
