@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LoginCard } from "@/components/auth/LoginCard";
 import { parseAuthStep, safeNextPath } from "@/lib/loginRoute";
+import { FocusHeader } from "@/components/FocusHeader";
 
 export const metadata: Metadata = { title: "Sign in", robots: { index: false } };
 
@@ -27,6 +28,7 @@ export default async function LoginPage({
   const authStep = parseAuthStep(step);
   return (
     <div className="min-h-dvh">
+      <FocusHeader backLabel="Back" />
       {/* The plainest, most utilitarian screen in the batch (Brief 26): one
           centered card, generous whitespace, nothing competing with the OTP
           flow that lives inside it. */}

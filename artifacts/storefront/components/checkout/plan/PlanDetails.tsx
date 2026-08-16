@@ -94,7 +94,7 @@ export function PlanDetails({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-ink">Which track?</span>
+        <span className="text-sm font-medium text-ink">What do you eat?</span>
         <div className="flex flex-wrap gap-2">
           {servedTracks.map((t) => (
             <button
@@ -171,7 +171,7 @@ export function PlanDetails({
           </p>
         )}
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-sm text-ink-muted">Billed each cycle (server-priced, incl. GST)</span>
+          <span className="text-sm text-ink-muted">Billed each cycle (incl. GST)</span>
           <span className="tabular text-xl font-semibold text-gold-text">
             {quoteLoading || quoteTotalPaise === null ? "…" : formatPaise(quoteTotalPaise)}
           </span>

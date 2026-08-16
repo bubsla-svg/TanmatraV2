@@ -46,13 +46,35 @@ export function formatGrams(grams: number, estimated?: boolean): string {
 }
 
 /**
+ * What a dish shows instead of numbers when its macros are provisional.
+ *
+ * `macrosProvisional` marks a dish whose seed macros were a duplicated
+ * placeholder bucket AND for which the ingredient calculator produced no
+ * high-confidence estimate (menu-catalog's DISHES derivation). The stored
+ * numbers are a bucket, not a measurement of that dish.
+ *
+ * The flag has carried the instruction "the UI gates them behind a 'being
+ * verified' state" in its own doc comment since it was introduced, and no
+ * surface implemented it — every consumer read `macrosEstimated` alone, so a
+ * placeholder rendered as a confident figure. On a clinical-nutrition product
+ * that is the worst way to be wrong: a number someone may plan a diabetic or
+ * renal diet around, asserted with no basis under it.
+ */
+export const MACROS_PENDING_LABEL = "Nutrition being verified";
+
+/**
  * `≈686 kcal · ≈42 g P` — the one-line summary a dense list shows (menu card,
  * cart line). Protein stays abbreviated: these render in a width-constrained
  * column where "protein" spelled out wraps the line.
+ *
+ * `provisional` outranks `estimated`: an estimate is a real calculation worth
+ * qualifying with ≈; a placeholder is not a value at all.
  */
 export function formatMacroLine(
   macros: { calories: number; protein: number },
   estimated?: boolean,
+  provisional?: boolean,
 ): string {
+  if (provisional) return MACROS_PENDING_LABEL;
   return `${formatKcal(macros.calories, estimated)} · ${formatGrams(macros.protein, estimated)}${NBSP}P`;
 }

@@ -11,6 +11,10 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ImageOff } from "lucide-react";
 
+/** How long a photo may hang before it degrades to the fallback. Past any
+ *  reasonable render, short of the customer deciding the page is broken. */
+const IMG_STALL_TIMEOUT_MS = 8000;
+
 export function ImgWithFallback({
   src,
   alt,
@@ -33,6 +37,30 @@ export function ImgWithFallback({
 }) {
   const [broken, setBroken] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
+
+  // A REQUEST THAT NEVER RESOLVES (flipbook review F-3).
+  //
+  // The two guards below both key on a load having FINISHED — `onError`
+  // fires on failure, and `complete && naturalWidth === 0` records a failure
+  // that already happened. Neither covers a request that simply hangs: no
+  // error event ever fires, `complete` stays false, and the <img> sits as an
+  // empty box indefinitely. §3.5 permits a real photo or the branded tile
+  // and nothing else, so an empty box is the one state that must not exist —
+  // and it was observed on the live catalog (section 13's remote Unsplash
+  // rows) rather than theorised.
+  //
+  // A slow connection is the normal cause, which is why the timeout is
+  // generous: 8s is well past any reasonable render but far short of a
+  // customer concluding the page is broken. Cleared as soon as the image
+  // resolves either way, so a slow-but-successful load still wins.
+  useEffect(() => {
+    if (broken) return;
+    const id = window.setTimeout(() => {
+      const el = imgRef.current;
+      if (el && !el.complete) setBroken(true);
+    }, IMG_STALL_TIMEOUT_MS);
+    return () => window.clearTimeout(id);
+  }, [broken, src]);
 
   // THE HYDRATION RACE, closed.
   //

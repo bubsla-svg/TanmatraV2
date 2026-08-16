@@ -13,7 +13,10 @@ import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter"
 import { buildSubscriptionInput, nextWeekdayISO } from "@/lib/planCheckout";
 import { stashCheckoutPerks, type CheckoutPerks } from "@/lib/postCheckout";
 import { usePlanQuote } from "@/lib/usePlanQuote";
-import { getAddresses, ApiError, type Address, type AuthUser, type AddOnId, type DietTrack, type PlanCadence } from "@/lib/api";
+import { getAddresses, type Address, type AuthUser, type AddOnId, type DietTrack, type PlanCadence } from "@/lib/api";
+// humanizeOrderError, not ApiError.message: #42 replaced the raw machine string
+// with copy that names the next step. This branch predated that change.
+import { humanizeOrderError } from "@/lib/orderErrors";
 import type { PlanOffer } from "@/lib/planOffer";
 import { PlanIdentityGate } from "./PlanIdentityGate";
 import { PlanOfferPreview } from "./PlanOfferPreview";
@@ -198,7 +201,13 @@ export function PlanCheckout({
       if (e instanceof RazorpayDismissed) {
         setError("Payment cancelled — you haven't been charged. Tap Continue to try again.");
       } else {
-        setError(e instanceof ApiError ? e.message : "Something went wrong. Please try again.");
+        // Through the humanizer, exactly as AlacarteCheckout does. This branch
+        // used to render `e.message` raw, so a plan/trial payment failure —
+        // the highest-stakes screen in the funnel — showed the server's own
+        // string with no next action, while the identical failure on the
+        // à-la-carte path got real copy. Same money moment, two different
+        // answers, and the worse one on the more expensive purchase.
+        setError(humanizeOrderError(e));
       }
       setBusy(false);
       setVerifying(false);

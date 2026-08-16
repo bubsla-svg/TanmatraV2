@@ -105,12 +105,21 @@ export default async function ConfirmedPage({
               {deliveryWindow && <span className="tabular"> · {deliveryWindow}</span>}
             </p>
           )}
+          {/* Law 9: each of these states ends with what happens next. "pending"
+              previously stated only the fact ("Confirming your delivery time.")
+              and left the customer with nothing to expect or do; "failed" said
+              what did not happen but not how to recover. */}
           {trackable && timing === "pending" && (
-            <p className="mt-2 text-sm text-ink-muted">Confirming your delivery time.</p>
+            <p className="mt-2 text-sm text-ink-muted">
+              Confirming your delivery time — the kitchen usually confirms within a few
+              minutes, and we&rsquo;ll text you as soon as it&rsquo;s set. Track live below for
+              updates.
+            </p>
           )}
           {tone === "failed" && (
             <p className="mt-3 text-sm font-semibold text-[var(--danger)]">
-              This order did not complete — you have not been charged for it.
+              This order did not complete — you have not been charged for it. Your cart is
+              still saved, so you can head back to the menu and try again.
             </p>
           )}
           <div className="mt-8 flex w-full flex-col gap-3 sm:flex-row">

@@ -103,7 +103,8 @@ jobs:
             ./src/lib/bloodReportOcr.test.ts \
             ./src/lib/pantryVisionScanner.test.ts \
             ../../lib/subscription-rules/src/planCatalog.test.ts \
-            ./src/lib/priceBands.test.ts
+            ./src/lib/priceBands.test.ts \
+            ./src/lib/autopayDisclaimer.test.ts
       # The web half of the money-path lockstep rule, for the legacy SPA that is
       # still the app on tanmatra.food. It had no wired test script, so CI ran
       # these nowhere; they are driven through the api-server tsx loader.

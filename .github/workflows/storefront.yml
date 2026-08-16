@@ -183,6 +183,18 @@ jobs:
       - name: Icon-font gate — no ligature icon class without its font loaded
         if: ${{ !cancelled() }}
         run: pnpm --filter @workspace/storefront run lint:icon-font
+      # Law 6 (customer's language) copy gate. Internal vocabulary reads as
+      # correct to whoever wrote it, so review misses it: "server-priced" is an
+      # architecture guarantee, not a benefit; a raw status enum is a DB value
+      # wearing a UI. The recurrence rule is surface-scoped on purpose —
+      # schema/subscriptions.ts:44-52 makes "cycle"/"renews" correct after
+      # conversion and a broken promise on a live trial, which a diff read in
+      # isolation cannot tell apart. Comments are stripped before matching, so
+      # prose about a banned term is not itself a violation, and
+      # `law6-allow: <reason>` exempts a genuinely correct use.
+      - name: Law 6 copy gate — no internal vocabulary on customer surfaces
+        if: ${{ !cancelled() }}
+        run: pnpm --filter @workspace/storefront run lint:copy-vocabulary
       # Stitch traceability gates. The manifest verifier proves the 74-entry
       # manifest is schema-valid; the wiring verifier proves its filesystem
       # claims match the repo. Honest missing/partial/blocked entries PASS —
