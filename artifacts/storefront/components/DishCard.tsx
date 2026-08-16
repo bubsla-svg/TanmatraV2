@@ -136,7 +136,12 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="flex items-center gap-2">
             <VegMark vegClass={vegClass} />
-            <Text type="body" weight="bold" as="h3" maxLines={1} className="font-bold">{dish.name}</Text>
+            {/* Two lines, not one (flipbook review F-4): the name is the
+                card's primary identifier and the clamp was eating the
+                distinguishing tail — "Chicken Meal — 150 g grilled …",
+                "Grilled Chicken with Veggies …". Portion size and protein
+                are exactly what separates neighbouring dishes in a family. */}
+            <Text type="body" weight="bold" as="h3" maxLines={2} className="font-bold">{dish.name}</Text>
           </span>
 
           {dish.badge && (
