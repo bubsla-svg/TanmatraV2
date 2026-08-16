@@ -4,6 +4,7 @@ import { deriveHeroContent } from "@/lib/heroContent";
 import { Section04bMarketplace } from "@/components/landing/Section04bMarketplace";
 import { Section04ProtocolsGrid } from "@/components/landing/Section04ProtocolsGrid";
 import { fetchMenu } from "@/lib/catalog";
+import { buildSharedMacroKeys } from "@/lib/dishTrust";
 import { formatPaise } from "@/lib/format";
 import { pickPlanCardDishes } from "@/lib/planCardDish";
 import { activeCampaign } from "@/lib/heroCampaign";
@@ -49,6 +50,9 @@ export default async function HomePage() {
   
   const { dishes } = await fetchMenu();
   const featuredDishes = dishes.slice(0, 5);
+  // F-1: built from the whole catalog, not the 5-item rail — a duplicate pair
+  // split across the rail boundary is still a duplicate.
+  const sharedMacroKeys = buildSharedMacroKeys(dishes);
   // The real dish behind each plan card, off the catalog we just loaded — the
   // grid is a client component and cannot read it itself. Order matters: each
   // plan claims its dish before the next one picks, so no two cards repeat.
@@ -91,7 +95,7 @@ export default async function HomePage() {
           <ul className="flex gap-4 overflow-x-auto snap-x no-scrollbar pb-4 -mx-gutter px-gutter">
             {featuredDishes.map((dish) => (
               <li key={dish.id} className="flex-none w-[280px] snap-start">
-                <DishCard dish={dish} compact />
+                <DishCard dish={dish} compact sharedMacroKeys={sharedMacroKeys} />
               </li>
             ))}
           </ul>

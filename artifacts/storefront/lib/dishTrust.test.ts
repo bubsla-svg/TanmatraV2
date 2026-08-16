@@ -6,6 +6,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  buildSharedMacroKeys,
   hasStubContent,
   hasStubIngredients,
   hasStubMacros,
@@ -89,4 +90,92 @@ test("a real dish is never mistaken for a stub", () => {
   };
   assert.equal(hasStubContent(real), false);
   assert.equal(macroTrust(real), "verified");
+});
+
+// ── F-1: shared macro tuples ────────────────────────────────────────────────
+//
+// The stub check above matches ONE hard-coded bucket found by hand. The
+// flipbook review showed that was the visible corner: 93 live dishes share
+// macros drawn from 32 distinct tuples, and the stub bucket is only one of
+// them. These pin the generalisation.
+
+test("buildSharedMacroKeys: only tuples used by MORE than one dish", () => {
+  const shared = buildSharedMacroKeys([
+    { macros: REAL_MACROS },
+    { macros: REAL_MACROS },
+    { macros: { calories: 100, protein: 1, carbs: 2, fat: 3 } },
+  ]);
+  assert.equal(shared.size, 1, "the unique tuple must not be flagged");
+  assert.equal(shared.has("520|32|40|18"), true);
+  assert.equal(shared.has("100|1|2|3"), false);
+});
+
+test("buildSharedMacroKeys: dishes without macros are skipped, not grouped", () => {
+  // Three dishes with no macros must NOT collapse into one 'shared' bucket —
+  // absent is not a value, and treating it as one would flag every dish in a
+  // macro-less catalog.
+  const shared = buildSharedMacroKeys([{}, { macros: null }, {}]);
+  assert.equal(shared.size, 0);
+});
+
+test("buildSharedMacroKeys: a clean catalog yields an empty set", () => {
+  // The static fallback catalog is exactly this shape — 116 dishes, 116
+  // distinct tuples — which is why the set must be built from the payload
+  // being rendered rather than from the bundled catalog.
+  const shared = buildSharedMacroKeys([
+    { macros: { calories: 1, protein: 1, carbs: 1, fat: 1 } },
+    { macros: { calories: 2, protein: 1, carbs: 1, fat: 1 } },
+  ]);
+  assert.equal(shared.size, 0);
+});
+
+test("macroTrust: a shared tuple is unverified even when otherwise curated", () => {
+  const shared = buildSharedMacroKeys([{ macros: REAL_MACROS }, { macros: REAL_MACROS }]);
+  // Without catalog context this reads as a real curated value...
+  assert.equal(macroTrust({ macros: REAL_MACROS }), "verified");
+  // ...with it, the number cannot be claimed at all.
+  assert.equal(macroTrust({ macros: REAL_MACROS }, shared), "unverified");
+});
+
+test("macroTrust: a shared tuple is unverified even when flagged estimated", () => {
+  // The ≈ marker still asserts "we computed this for THIS dish", which a
+  // copied row cannot support. Demoting to 'estimated' would be a softer lie,
+  // not a fix — this is the Diet Coke case (≈140 kcal · ≈3 g P, actually 0/0).
+  const shared = buildSharedMacroKeys([{ macros: REAL_MACROS }, { macros: REAL_MACROS }]);
+  assert.equal(
+    macroTrust({ macros: REAL_MACROS, macrosEstimated: true }, shared),
+    "unverified",
+  );
+});
+
+test("macroTrust: a unique tuple is unaffected by the shared set", () => {
+  const shared = buildSharedMacroKeys([{ macros: REAL_MACROS }, { macros: REAL_MACROS }]);
+  const unique = { calories: 311, protein: 9, carbs: 7, fat: 5 };
+  assert.equal(macroTrust({ macros: unique }, shared), "verified");
+  assert.equal(macroTrust({ macros: unique, macrosEstimated: true }, shared), "estimated");
+});
+
+test("macroTrust: omitting the shared set keeps the pre-F-1 behaviour exactly", () => {
+  // The optional parameter must not change any existing verdict — the render
+  // layer requires it, but the pure function stays a one-dish predicate.
+  const cases: DishTrustInput[] = [
+    { macros: REAL_MACROS },
+    { macros: REAL_MACROS, macrosEstimated: true },
+    { macros: STUB_MACROS },
+    { macros: REAL_MACROS, macrosProvisional: true },
+    {},
+  ];
+  for (const c of cases) assert.equal(macroTrust(c), macroTrust(c, new Set()));
+});
+
+test("macroTrust: the F-1 case that motivated this — the 460/18/45/14 family", () => {
+  // Two unrelated dishes carrying the placeholder bucket. Both gates fire;
+  // the shared-tuple gate would have caught it even if the bucket's exact
+  // values had never been hard-coded above.
+  const aamPanna = { macros: STUB_MACROS };
+  const garlicBread = { macros: STUB_MACROS };
+  const shared = buildSharedMacroKeys([aamPanna, garlicBread]);
+  assert.equal(shared.has("460|18|45|14"), true);
+  assert.equal(macroTrust(aamPanna, shared), "unverified");
+  assert.equal(macroTrust(garlicBread, shared), "unverified");
 });

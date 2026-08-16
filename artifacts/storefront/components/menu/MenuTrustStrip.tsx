@@ -48,14 +48,29 @@ import { macroTrust } from "@/lib/dishTrust";
  * only when F5 is resolved data-side and a genuine signal exists to read.
  */
 const RD_REVIEW_STATE_IS_TRUSTWORTHY = false;
-export function MenuTrustStrip({ dishes }: { dishes: DishData[] }) {
+
+/**
+ * `sharedMacroKeys` is passed in rather than derived from `dishes` (F-1).
+ * `dishes` here is the ORDERABLE subset, while the cards are gated against
+ * duplicates across the whole served catalog. Re-deriving from the narrower
+ * list would find fewer duplicates, so the strip could assert "verified
+ * macros" directly above cards that had just withheld their numbers. One set,
+ * computed once by the page, used by both.
+ */
+export function MenuTrustStrip({
+  dishes,
+  sharedMacroKeys,
+}: {
+  dishes: DishData[];
+  sharedMacroKeys: ReadonlySet<string>;
+}) {
   const clauses: string[] = [
     `${dishes.length} ${dishes.length === 1 ? "dish" : "dishes"}`,
     "order today",
   ];
 
   const everyMacroTrustworthy =
-    dishes.length > 0 && dishes.every((d) => macroTrust(d) !== "unverified");
+    dishes.length > 0 && dishes.every((d) => macroTrust(d, sharedMacroKeys) !== "unverified");
   if (everyMacroTrustworthy) clauses.push("verified macros");
 
   // §3.7 specifies the fallback copy "macros on every dish" while the RD
@@ -86,8 +101,14 @@ export function MenuTrustStrip({ dishes }: { dishes: DishData[] }) {
  * actually carries the mark — an explanation for a symbol that is not on
  * screen is its own kind of noise.
  */
-export function MacroLegend({ dishes }: { dishes: DishData[] }) {
-  const anyEstimated = dishes.some((d) => macroTrust(d) === "estimated");
+export function MacroLegend({
+  dishes,
+  sharedMacroKeys,
+}: {
+  dishes: DishData[];
+  sharedMacroKeys: ReadonlySet<string>;
+}) {
+  const anyEstimated = dishes.some((d) => macroTrust(d, sharedMacroKeys) === "estimated");
   if (!anyEstimated) return null;
   return (
     <p className="mt-2 text-xs text-ink-faint" data-testid="macro-legend">

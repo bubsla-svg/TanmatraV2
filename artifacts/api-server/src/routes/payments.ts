@@ -25,6 +25,7 @@ import {
   REFUND_EVENT_NAMES,
 } from "../lib/paymentIntegrity";
 import { chargeMandateCore } from "../lib/chargeMandate";
+import { autopayDisclaimerFor } from "../lib/autopayDisclaimer";
 import { requireRole } from "../lib/adminGate";
 import { paymentRateLimit } from "../middlewares/rateLimitMiddleware";
 import {
@@ -206,7 +207,7 @@ async function registerAutopayMandate(
   await upsertActiveMandate(subDelivery.subscriptionId, subDelivery.cadence, customerId, tokenId);
 
   return {
-    autopayDisclaimer: "Weekly payments use UPI Autopay. You'll get a notification at least 24 hours before each charge..."
+    autopayDisclaimer: autopayDisclaimerFor(subDelivery.cadence),
   };
 }
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { fetchMenu } from "@/lib/catalog";
 import { recommendMenu } from "@/lib/recommendations";
 import { DishCard } from "@/components/DishCard";
+import { buildSharedMacroKeys } from "@/lib/dishTrust";
 
 export const metadata: Metadata = {
   title: "Recommendations",
@@ -10,6 +11,8 @@ export const metadata: Metadata = {
 export default async function MealRecommendationsPage() {
   const { dishes } = await fetchMenu();
   const recommendations = recommendMenu(dishes, { goal: "lose_weight" }, true); // mock pref
+  // F-1: whole catalog, not the top-10 slice.
+  const sharedMacroKeys = buildSharedMacroKeys(dishes);
 
   return (
     <div data-ui-generation="stitch-74" data-screen-id="5.10" data-screen-state="default" className="min-h-dvh flex flex-col bg-bg pb-24">
@@ -27,7 +30,7 @@ export default async function MealRecommendationsPage() {
               </span>
               <p className="text-xs text-ink-muted italic">{rationale}</p>
             </div>
-            <DishCard dish={dish} />
+            <DishCard dish={dish} sharedMacroKeys={sharedMacroKeys} />
           </div>
         ))}
         {recommendations.length === 0 && (
