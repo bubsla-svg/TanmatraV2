@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { beginLayoutSettle, isLayoutSettling } from "./scrollSettle";
 
 /**
  * Direction-aware chrome condensing for long list pages (owner feedback
@@ -69,7 +70,11 @@ export function useCondensedOnScroll(): {
   const suppressUntil = useRef(0);
 
   // Single write path: every real flip opens the settle window (see the
-  // header comment) so its own anchoring echo cannot flip it back.
+  // header comment) so its own anchoring echo cannot flip it back — and
+  // publishes it PAGE-WIDE, because the echo hits every scroll-direction
+  // detector on the document, not just this one. `useScrollHide` drives the
+  // tab bar, header and cart pill off the same stream; without this the
+  // cluster's collapse revealed the tab bar mid-scroll on /menu.
   const apply = useCallback((next: boolean) => {
     if (condensedRef.current === next) return;
     condensedRef.current = next;
@@ -77,12 +82,16 @@ export function useCondensedOnScroll(): {
       suppressUntil.current,
       performance.now() + SELF_SETTLE_MS,
     );
+    beginLayoutSettle(SELF_SETTLE_MS);
     setCondensed(next);
   }, []);
 
   const pin = useCallback(
     (ms: number) => {
       suppressUntil.current = performance.now() + ms;
+      // A chip jump both resizes the cluster and flies the viewport; the tab
+      // bar must not read that flight as a gesture either.
+      beginLayoutSettle(ms);
       condensedRef.current = true;
       setCondensed(true);
     },

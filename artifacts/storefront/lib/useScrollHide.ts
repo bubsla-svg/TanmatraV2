@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { isLayoutSettling } from "./scrollSettle";
 
 /** Ignore scroll movement under this many px — small-movement hysteresis so
  *  chrome doesn't flicker on sub-pixel/rubber-band jitter (D-17). */
@@ -18,10 +19,14 @@ const SCROLL_HYSTERESIS_PX = 12;
  * doing.
  *
  * This hook is for chrome that TRANSLATES away (fixed/sticky bars — no
- * layout change, so no scroll-anchoring echo). Chrome that RESIZES its
- * layout box on toggle needs `useCondensedOnScroll` instead, whose settle
- * window exists precisely because resizing feeds scroll events back into
- * the detector.
+ * layout change, so no scroll-anchoring echo of its own). Chrome that
+ * RESIZES its layout box on toggle needs `useCondensedOnScroll` instead.
+ *
+ * It still has to survive SOMEONE ELSE'S resize, though: on `/menu` the
+ * condensing cluster's collapse produced an anchoring counter-scroll that
+ * read here as a scroll-up and revealed the tab bar mid-scroll (caught by
+ * nav-contract.spec.ts). Hence `isLayoutSettling()` — a page-wide signal,
+ * because the echo belongs to the document, not to the hook that caused it.
  */
 export function useScrollHide(disabled: boolean): boolean {
   const [hidden, setHidden] = useState(false);
@@ -33,6 +38,13 @@ export function useScrollHide(disabled: boolean): boolean {
 
     function onScroll() {
       const y = window.scrollY;
+      // Another component just resized the page; the engine's anchoring
+      // correction is not the reader moving. Track the baseline through it
+      // so the frames spanning the correction never become a delta.
+      if (isLayoutSettling()) {
+        lastYRef.current = y;
+        return;
+      }
       const delta = y - lastYRef.current;
       if (y <= 0) {
         setHidden(false);
