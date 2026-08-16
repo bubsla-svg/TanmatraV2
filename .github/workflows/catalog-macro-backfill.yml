@@ -1,0 +1,143 @@
+# Catalog macro backfill — push ingredient-derived macro estimates into
+# menu_items, so the DB serves the numbers the repo already computed.
+#
+# WHY: getMergedCatalog lets a menu_items row's `macros` override the static
+# catalog's. The static catalog is clean (116 dishes / 116 distinct tuples,
+# 104 computed from RD-verified ingredient lists at >=0.85 coverage with
+# Atwater energy reconciliation); the DB still holds the old seed values,
+# where 93 dishes share only 32 distinct tuples. The good numbers exist and
+# simply are not the ones being served.
+#
+# Mirrors menu-catalog-v2.yml's auth path step for step (service-account
+# identity, Cloud SQL Auth Proxy, Secret Manager, plan before write).
+#
+# SAFETY MODEL:
+#   1. Plan-only by default; `apply` is a separate explicit input.
+#   2. Only slugs present in BOTH the estimate set and menu_items are touched.
+#      No inserts, no deletes, no slug invention.
+#   3. R-3 (the payload is price law): writes `macros` and
+#      `macros_are_estimate` ONLY. It never reads or writes price_paise.
+#   4. A pre-change backup of every touched row is uploaded as an artifact.
+#   5. After applying it re-reads and asserts convergence, and prints the
+#      shared-tuple census before and after.
+name: Catalog macro backfill
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "WRITE to the database. Leave false for a plan-only dry run."
+        type: boolean
+        default: false
+
+concurrency:
+  group: catalog-macro-backfill
+  cancel-in-progress: false
+
+jobs:
+  plan-and-apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GCP_PROJECT: brand-tanmatra-tmg
+      SQL_INSTANCE: brand-tanmatra-tmg:asia-south2:brand-tanmatra-db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+
+      # The provenance rule the whole change rests on is pure and DB-free.
+      # If it is broken there is no point reaching for production.
+      - name: Macro-provenance unit tests
+        working-directory: artifacts/api-server
+        run: |
+          node --test --import tsx \
+            ./src/lib/menuResolver.macroProvenance.test.ts
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Start Cloud SQL Auth Proxy
+        run: |
+          curl -sfL -o cloud-sql-proxy \
+            https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.14.2/cloud-sql-proxy.linux.amd64
+          chmod +x cloud-sql-proxy
+          ./cloud-sql-proxy --credentials-file "$GOOGLE_APPLICATION_CREDENTIALS" \
+            --address 127.0.0.1 --port 5433 "$SQL_INSTANCE" &
+          for i in $(seq 1 20); do
+            (echo > /dev/tcp/127.0.0.1/5433) 2>/dev/null && { echo "proxy up"; exit 0; }
+            sleep 1
+          done
+          echo "cloud-sql-proxy never came up — check the deploy SA has roles/cloudsql.client"; exit 1
+
+      # Identical rewrite to deploy.yml's migrate-db step — see the comments
+      # there for why the userinfo is passed through verbatim and why
+      # sslmode/host are stripped.
+      - name: Resolve DATABASE_URL through the proxy
+        run: |
+          RAW=$(gcloud secrets versions access latest \
+            --secret=brand-tanmatra-database-url --project "$GCP_PROJECT") || {
+            echo "cannot read secret brand-tanmatra-database-url — grant the deploy SA roles/secretmanager.secretAccessor"; exit 1; }
+          echo "::add-mask::$RAW"
+          URL=$(python3 - "$RAW" <<'EOF'
+          import sys, urllib.parse as u
+          raw = sys.argv[1]
+          p = u.urlsplit(raw)
+          q = dict(u.parse_qsl(p.query))
+          q.pop("host", None)
+          q.pop("sslmode", None)
+          q.pop("ssl", None)
+          auth = p.netloc.rsplit("@", 1)[0] + "@" if "@" in p.netloc else ""
+          query = ("?" + u.urlencode(q)) if q else ""
+          print(f"{p.scheme}://{auth}127.0.0.1:5433{p.path}{query}")
+          EOF
+          )
+          echo "::add-mask::$URL"
+          echo "DATABASE_URL=$URL" >> "$GITHUB_ENV"
+
+      # `pipefail` is load-bearing — see menu-catalog-v2.yml: without it tee's
+      # exit status masks a crashed plan, and Apply's implicit success()
+      # requirement would then run against unknown state.
+      - name: Plan (read-only)
+        shell: bash
+        run: |
+          set -o pipefail
+          cd scripts
+          pnpm run backfill-catalog-macros -- --md ../macro-backfill-plan.md | tee ../macro-backfill-plan.txt
+
+      - name: Upload plan
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macro-backfill-plan-${{ github.run_number }}
+          path: |
+            macro-backfill-plan.txt
+            macro-backfill-plan.md
+          retention-days: 90
+
+      - name: Apply
+        if: ${{ inputs.apply }}
+        shell: bash
+        run: |
+          set -o pipefail
+          cd scripts
+          pnpm run backfill-catalog-macros -- --apply | tee ../macro-backfill-apply.txt
+
+      - name: Upload apply log + backup
+        if: ${{ inputs.apply && always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: macro-backfill-apply-${{ github.run_number }}
+          path: |
+            macro-backfill-apply.txt
+            scripts/macro-backfill-backup-*.json
+          retention-days: 90
