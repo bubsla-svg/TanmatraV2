@@ -1,0 +1,187 @@
+ingredient_key,verdict,item_no,item_product,status,rationale
+activated charcoal powder,map,115,ACTIVATED CHARCOAL,proposed,ACTIVATED CHARCOAL
+almond milk,kitchen,,,proposed,"no confident match (best: ""ANAND COW MILK"" at 33%) — composite line, missing inventory row, or needs the kitchen"
+almonds,map,84,ALMOND DOUBLE TOUCH,proposed,ALMOND DOUBLE TOUCH is the almond line
+amaranth seeds,kitchen,,,proposed,"no confident match (best: ""CUMIN SEED"" at 50%) — composite line, missing inventory row, or needs the kitchen"
+apple,map,51,APPLE SHIMLA,proposed,APPLE SHIMLA
+avocado,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+babycorn,map,119,BABYCORN,proposed,exact
+baking powder,map,13,BAKING POWDER,proposed,exact
+banana,map,100,BANANA YELLOW,proposed,BANANA YELLOW
+barnyard millet poha,kitchen,,,proposed,"no confident match (best: ""POHA MOTA"" at 33%) — composite line, missing inventory row, or needs the kitchen"
+basil,map,10,BASIL LEAVES,proposed,BASIL LEAVES (currently unpriced on the sheet — flows as 0-cost until priced)
+basil pesto,map,92,PESTO SAUCE,proposed,same
+bbq sauce,map,90,BARBEQUE SAUCE,proposed,BARBEQUE SAUCE
+beetroot,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+bell peppers,map,38,GREEN BELL PEPPER,proposed,GREEN BELL PEPPER as default; red 65 / yellow 66 exist
+bell peppers & onion,kitchen,,,proposed,"composite line — split into components on the sheet, or hand-map deliberately"
+bell peppers & onions,kitchen,,,proposed,"composite line — split into components on the sheet, or hand-map deliberately"
+black pepper,map,85,BLACK CHINESE PEPPER,proposed,BLACK CHINESE PEPPER is the black-pepper line
+blueberries,map,14,MALA CRUSH BLUEBERRY,proposed,MALA CRUSH BLUEBERRY — the sheet's only blueberry line; frozen-mix alternative is item 48
+boiled chickpeas,map,78,KABULI CHANA,proposed,cooked KABULI CHANA
+bread slices,map,113,BREAD JUMBO,proposed,same
+broccoli,map,101,BROCOLLI,proposed,inventory spells it BROCOLLI; FROZEN BROCCOLI (89) is the frozen line
+brown bread,map,113,BREAD JUMBO,proposed,one bread line on the sheet (BREAD JUMBO) — confirm variant
+brown rice,map,8,DAWAAT BROWN RICE,proposed,DAWAAT BROWN RICE
+butter,map,109,AMUL CHIPLETS,proposed,AMUL CHIPLETS are portioned butter
+button mushrooms,map,87,BUTTOM MUSHROOM,proposed,inventory spells it BUTTOM MUSHROOM
+caesar dressing,kitchen,,,proposed,"no confident match (best: ""THOUSAND ISLAND DRESSING"" at 33%) — composite line, missing inventory row, or needs the kitchen"
+capsicum,map,38,GREEN BELL PEPPER,proposed,capsicum IS bell pepper in Indian English; green as default
+carrot,map,107,ORANGE CARROT,proposed,ORANGE CARROT as default; RED CARROT (103) exists
+carrot & beans,kitchen,,,proposed,"composite line — split into components on the sheet, or hand-map deliberately"
+cheese,map,16,DAIRY CRAFT CHEESE SLICE,proposed,bare 'cheese' → the slice line; mozzarella/feta/parmesan have their own keys
+cheese sauce,kitchen,,,proposed,"no confident match (best: ""PARMESAN CHEESE"" at 50%) — composite line, missing inventory row, or needs the kitchen"
+cherry tomatoes,map,88,CHERRY TOMATO,proposed,CHERRY TOMATO
+chia seeds,kitchen,,,proposed,"no confident match (best: ""CUMIN SEED"" at 50%) — composite line, missing inventory row, or needs the kitchen"
+chicken,map,1,CHICKEN BREAST BONELESS,proposed,only chicken raw-protein line on the inventory
+chicken breast,map,1,CHICKEN BREAST BONELESS,proposed,"exact item, sheet spells it BONELESS"
+chicken stock,kitchen,,,proposed,"no confident match (best: ""CHICKEN SAUSAGES"" at 50%) — composite line, missing inventory row, or needs the kitchen"
+chicken strips,map,1,CHICKEN BREAST BONELESS,proposed,preparation of CHICKEN BREAST BONELESS
+chicken tikka,map,1,CHICKEN BREAST BONELESS,proposed,marinated chicken breast; marinade not costed
+chickpeas,map,78,KABULI CHANA,proposed,KABULI CHANA
+chili flakes,map,99,BIG BELL CHILLI FLAKES,proposed,BIG BELL CHILLI FLAKES
+chili paste,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+chipotle sauce,map,24,CHIPOTLE MAYONISSE,proposed,CHIPOTLE MAYONISSE is the chipotle line — verify
+cinnamon powder,map,50,DALCHIINI,proposed,same
+cocoa powder,kitchen,,,proposed,"no confident match (best: ""BAKING POWDER"" at 50%) — composite line, missing inventory row, or needs the kitchen"
+coriander leaves,map,64,CORIANDER GREEN,proposed,inventory calls it CORIANDER GREEN
+cornstarch slurry,map,19,JEECON CORN FLOUR 5 KG,proposed,cornflour + water; only the flour costs
+crispy peri peri chicken,map,1,CHICKEN BREAST BONELESS,proposed,"same protein line, spiced"
+crispy peri peri mushrooms,map,87,BUTTOM MUSHROOM,proposed,"BUTTOM MUSHROOM, spiced"
+croutons,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+cucumber,map,42,INDIAN CUCUMBER,proposed,INDIAN CUCUMBER; ENGLISH (93) is the salad variant
+curd,map,118,CURD,proposed,plain CURD line; HUNG CURD (82) is separate
+curry leaves,map,105,CURRY LEAVES,proposed,exact
+dates,map,4,SEEDLESS DATES,proposed,SEEDLESS DATES
+dates puree,map,4,SEEDLESS DATES,proposed,"SEEDLESS DATES, puréed"
+diet coke can,map,112,ZERO CALORIE SODA,proposed,ZERO CALORIE SODA
+dry red chili flakes,map,99,BIG BELL CHILLI FLAKES,proposed,same item
+dry yeast,map,30,INSTANT DRY YEAST,proposed,token match 67% — verify
+egg,map,2,EGG 2 UNITS,proposed,same as eggs
+egg whites,map,2,EGG 2 UNITS,proposed,portion of the EGG line; whole-egg price is the honest ceiling
+eggs,map,2,EGG 2 UNITS,proposed,EGG 2 UNITS is the egg line; neither string contains the other
+falafel,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+feta cheese,map,17,DAIRY CRAFT FETA CHEESE,proposed,DAIRY CRAFT FETA CHEESE
+flattened rice,map,86,POHA MOTA,proposed,flattened rice IS poha — POHA MOTA
+fresh cream,map,6,GOODRICH CREAMY DELITE,proposed,GOODRICH CREAMY DELITE is the cream line
+fresh mint,map,54,MINT,proposed,MINT
+fried noodles,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+garlic,map,27,GARLIC WHOLW,proposed,GARLIC WHOLW
+garlic herb seasoning,kitchen,,,proposed,"no confident match (best: ""GARLIC WHOLW"" at 33%) — composite line, missing inventory row, or needs the kitchen"
+ginger,map,28,GINGER,proposed,exact
+grapes,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+green apple,map,51,APPLE SHIMLA,proposed,same line; sheet stocks one apple
+green chili,map,106,GREEN CHILLI,proposed,inventory spells it GREEN CHILLI
+green tea,kitchen,,,proposed,"no confident match (best: ""CORIANDER GREEN"" at 50%) — composite line, missing inventory row, or needs the kitchen"
+"grilled bell peppers, zucchini, onions",kitchen,,,proposed,"composite line — split into components on the sheet, or hand-map deliberately"
+grilled chicken,map,1,CHICKEN BREAST BONELESS,proposed,"menu shorthand for CHICKEN BREAST BONELESS, grilled"
+grilled chicken breast,map,1,CHICKEN BREAST BONELESS,proposed,"same item, cooked"
+herb seasoning,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+herbs,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+high-fiber bread slices,map,113,BREAD JUMBO,proposed,same; sheet has one bread
+honey,map,97,HONEY,proposed,exact
+hummus,map,91,HUMMUS,proposed,exact
+hung curd,map,82,HUNG CURD,proposed,exact item
+ice,no-cost,,,proposed,frozen water
+ice cubes,no-cost,,,proposed,frozen water
+jalapeños,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+lemon juice,map,102,LEMON,proposed,juiced from the LEMON line
+lettuce,map,44,LETTUCE ICEBERG,proposed,LETTUCE ICEBERG; loose salad leaves are item 39
+"lettuce, cucumber, tomato",kitchen,,,proposed,"composite line — split into components on the sheet, or hand-map deliberately"
+light salt,no-cost,,,proposed,same as salt
+mashed potato,map,76,POTATO,proposed,preparation of raw POTATO; kitchen labour not costed here
+mayo,map,25,SALAD MAYONISE,proposed,same
+milk,map,47,ANAND COW MILK,proposed,ANAND COW MILK
+millet flour,kitchen,,,proposed,"no confident match (best: ""JEECON CORN FLOUR 5 KG"" at 33%) — composite line, missing inventory row, or needs the kitchen"
+mini pita breads,kitchen,,,proposed,"no confident match (best: ""BREAD JUMBO"" at 33%) — composite line, missing inventory row, or needs the kitchen"
+mint chutney,kitchen,,,proposed,"no confident match (best: ""MINT"" at 50%) — composite line, missing inventory row, or needs the kitchen"
+mint leaves,map,54,MINT,proposed,same
+mixed vegetables,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+mixed veggies,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+moong dal,map,110,MOONG DAL,proposed,exact
+moong sprouts,map,110,MOONG DAL,proposed,sprouted MOONG DAL
+multigrain bread,map,113,BREAD JUMBO,proposed,same — confirm variant
+mushrooms,map,87,BUTTOM MUSHROOM,proposed,inventory spells it BUTTOM MUSHROOM
+mustard seeds,map,22,BLACK MUSTARD SEEDS,proposed,BLACK MUSTARD SEEDS
+nachos chips,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+nutella,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+oats,map,117,OATS,proposed,exact
+oil,map,32,BEST CHOICE REFINED OIL,proposed,BEST CHOICE REFINED OIL is the default cooking oil
+olive oil,map,68,PAMOCE OLIVE OIL,proposed,PAMOCE OLIVE OIL
+olives,map,5,SLICED BLACK OLIVES,proposed,SLICED BLACK OLIVES
+onion,map,53,ONION,proposed,exact
+onion & bell pepper,kitchen,,,proposed,"composite line — split into components on the sheet, or hand-map deliberately"
+onion & bell peppers,kitchen,,,proposed,"composite line — split into components on the sheet, or hand-map deliberately"
+onion & capsicum,kitchen,,,proposed,"composite line — split into components on the sheet, or hand-map deliberately"
+onion & cucumber,kitchen,,,proposed,"composite line — split into components on the sheet, or hand-map deliberately"
+onion & tomato slices,kitchen,,,proposed,"composite line — split into components on the sheet, or hand-map deliberately"
+onion rings,map,53,ONION,proposed,preparation of the same item
+"onion, bell peppers",kitchen,,,proposed,"composite line — split into components on the sheet, or hand-map deliberately"
+orange segments,kitchen,,,proposed,"no confident match (best: ""ORANGE CARROT"" at 50%) — composite line, missing inventory row, or needs the kitchen"
+paneer,map,114,PANEER,proposed,exact
+paneer tikka,map,114,PANEER,proposed,marinated PANEER; marinade not costed
+papaya,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+paprika,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+parmesan,map,36,PARMESAN CHEESE,proposed,same
+parmesan cheese,map,36,PARMESAN CHEESE,proposed,exact item
+parsley,map,12,PARSELY,proposed,inventory spells it PARSELY
+pasta,map,15,PASTA WHOLE WHEAT PENNE,proposed,default pasta line is WHOLE WHEAT PENNE — confirm
+peanut butter,map,122,PEANUT BUTTER,proposed,exact (currently unpriced)
+peanuts,kitchen,,,proposed,"no confident match (best: ""PEANUT BUTTER"" at 50%) — composite line, missing inventory row, or needs the kitchen"
+penne pasta,map,15,PASTA WHOLE WHEAT PENNE,proposed,PASTA WHOLE WHEAT PENNE
+peri peri mayo,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+peri peri sauce,kitchen,,,proposed,"no confident match (best: ""BARBEQUE SAUCE"" at 50%) — composite line, missing inventory row, or needs the kitchen"
+pita bread,kitchen,,,proposed,"no confident match (best: ""BREAD JUMBO"" at 50%) — composite line, missing inventory row, or needs the kitchen"
+poached egg,map,2,EGG 2 UNITS,proposed,preparation of the same item
+pomegranate,map,75,POMEGRANTE,proposed,inventory spells it POMEGRANTE
+potato wedges,map,121,POTATO wedges,proposed,the sheet carries a dedicated POTATO wedges line
+prawns,map,3,PRAWNS16/20 JUMBO,proposed,PRAWNS16/20 JUMBO is the only prawn line
+quinoa,map,34,EASTMADE QUIONA,proposed,inventory spells it EASTMADE QUIONA
+ragi flour,kitchen,,,proposed,"no confident match (best: ""JEECON CORN FLOUR 5 KG"" at 33%) — composite line, missing inventory row, or needs the kitchen"
+ranch,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+ranch yogurt,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+ranch yogurt dip,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+ranch yogurt dressing,kitchen,,,proposed,"no confident match (best: ""THOUSAND ISLAND DRESSING"" at 33%) — composite line, missing inventory row, or needs the kitchen"
+rice,map,8,DAWAAT BROWN RICE,proposed,menu bowls are brown-rice based; DAWAAT BROWN RICE — confirm
+romaine lettuce,map,39,LETTUCE GREEN SALAD LEAVES,proposed,LETTUCE GREEN SALAD LEAVES is the loose-leaf line — verify
+salsa,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+salt,no-cost,,,proposed,negligible cost at recipe quantities; LOW SALT line (29) exists if the kitchen wants it tracked
+salt & black pepper,no-cost,,,proposed,seasoning-scale quantities — negligible mass and cost
+salt & pepper,no-cost,,,proposed,measured 'to taste' — negligible mass and cost
+salt & turmeric,no-cost,,,proposed,seasoning-scale quantities — negligible mass and cost
+"salt, pepper",no-cost,,,proposed,same
+sauce,kitchen,,,proposed,"no confident match (best: ""BARBEQUE SAUCE"" at 50%) — composite line, missing inventory row, or needs the kitchen"
+"sautéed broccoli, zucchini, carrots",kitchen,,,proposed,"composite line — split into components on the sheet, or hand-map deliberately"
+smoked chicken,map,1,CHICKEN BREAST BONELESS,proposed,same protein line
+soda water,kitchen,,,proposed,"no confident match (best: ""WATER MELON"" at 50%) — composite line, missing inventory row, or needs the kitchen"
+sour cream,kitchen,,,proposed,"no confident match (best: ""CREAM POT VANILLA FLAVOURED FROZEN DESSERT"" at 17%) — composite line, missing inventory row, or needs the kitchen"
+soy sauce,kitchen,,,proposed,"no confident match (best: ""BARBEQUE SAUCE"" at 50%) — composite line, missing inventory row, or needs the kitchen"
+spaghetti,map,111,SPEGHETTI,proposed,same
+spaghetti pasta,map,111,SPEGHETTI,proposed,inventory spells it SPEGHETTI
+spinach,map,116,SPINACH,proposed,exact
+steamed broccoli & carrots,kitchen,,,proposed,"composite line — split into components on the sheet, or hand-map deliberately"
+steamed vegetables,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+steamed veggies,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+stevia,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+sugar,map,35,WHITE SUGAR,proposed,WHITE SUGAR
+thums up can,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+tofu,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+tomato,map,56,TOMATO LARGE,proposed,TOMATO LARGE is the standard tomato
+tomato puree,map,45,TOMATO GRAVY,proposed,sheet's TOMATO GRAVY line — confirm with kitchen it is the puree base
+tortilla,map,71,FRESH GO TORTILLA WRAP 10 PCS,proposed,FRESH GO TORTILLA WRAP 10 PCS
+turmeric,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+veg stock,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+veggies,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+vinegar,map,31,APPLE CIDER VINGEGAR,proposed,the sheet's only vinegar is apple cider
+warm water,no-cost,,,proposed,not an inventory good
+water,no-cost,,,proposed,not an inventory good
+watermelon cubes,map,46,WATER MELON,proposed,WATER MELON
+whey protein,kitchen,,,proposed,"no inventory candidate — composite line, missing inventory row, or needs the kitchen"
+white bread,map,113,BREAD JUMBO,proposed,same — confirm variant
+whole grain bread,map,113,BREAD JUMBO,proposed,BREAD JUMBO is the only bread line
+whole wheat flour,map,94,ATTA,proposed,ATTA is whole wheat flour
+whole wheat tortilla,map,7,WHOLEWHEAT WRAP 10 INCH,proposed,"WHOLEWHEAT WRAP 10 INCH — NOT item 96 TILL, which the substring matcher chose (torTILLa)"
+yogurt,map,118,CURD,proposed,kitchen's yogurt is the curd line
+yogurt dressing,kitchen,,,proposed,"no confident match (best: ""THOUSAND ISLAND DRESSING"" at 33%) — composite line, missing inventory row, or needs the kitchen"
+"zucchini, bell peppers, broccoli",kitchen,,,proposed,"composite line — split into components on the sheet, or hand-map deliberately"
+"zucchini, broccoli, capsicum",kitchen,,,proposed,"composite line — split into components on the sheet, or hand-map deliberately"

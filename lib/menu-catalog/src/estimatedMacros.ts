@@ -112,7 +112,7 @@ export const ESTIMATED_MACROS: Record<string, DishMacros> = {
   "smoked-chicken-cheese-omelette": { protein: 47, carbs: 4, fat: 31, fiber: 0, calories: 491 },
   "smokey-chicken-salad": { protein: 35, carbs: 9, fat: 24, fiber: 2, calories: 385 },
   "spinach-mushroom-omelette": { protein: 22, carbs: 6, fat: 20, fiber: 2, calories: 284 },
-  "thums-up-can": { protein: 0, carbs: 6, fat: 0, fiber: 0, calories: 22 },
+  "thums-up-can": { protein: 0, carbs: 36, fat: 0, fiber: 0, calories: 145 },
   "tomato-basil-omelette": { protein: 13, carbs: 2, fat: 15, fiber: 1, calories: 195 },
   "tomato-basil-soup": { protein: 2, carbs: 10, fat: 5, fiber: 3, calories: 91 },
   "two-boiled-eggs": { protein: 13, carbs: 1, fat: 10, fiber: 0, calories: 143 },
