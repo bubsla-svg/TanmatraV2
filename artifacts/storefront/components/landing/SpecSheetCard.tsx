@@ -22,6 +22,12 @@ export interface ClinicalDishSpec {
    */
   macrosEstimated?: boolean;
   /**
+   * Macros are an unresolved placeholder, not a measurement of this dish. The
+   * readout shows "being verified" instead of the figures — a bucket value
+   * printed confidently is worse than no value on a clinical surface.
+   */
+  macrosProvisional?: boolean;
+  /**
    * Glycemic classification, when the catalog actually knows it. No dish
    * carries this today, so the row simply does not render — see the comment
    * at its render site for why that is the point.
