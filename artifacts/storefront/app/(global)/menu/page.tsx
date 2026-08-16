@@ -8,6 +8,7 @@ import { PersonalizedMenu } from "@/components/menu/PersonalizedMenu";
 import { DishDrawer } from "@/components/menu/DishDrawer";
 import { FallbackMenuBanner } from "@/components/menu/FallbackMenuBanner";
 import { MacroLegend, MenuTrustStrip } from "@/components/menu/MenuTrustStrip";
+import { buildSharedMacroKeys } from "@/lib/dishTrust";
 
 /**
  * The only fields PersonalizedMenu's client-side ranking/diet-filter actually
@@ -76,9 +77,14 @@ export default async function MenuPage({
     return a.name.localeCompare(b.name);
   });
   const openDish = dishSlug ? findDish(dishSlug, dishes) : undefined;
+  // F-1: computed over the WHOLE served catalog, not just `orderable`. A dish
+  // hidden from à-la-carte still proves a tuple was copied, and the copy is
+  // what disqualifies the claim — narrowing the input here would let a shared
+  // pair survive whenever one of the two is not orderable today.
+  const sharedMacroKeys = buildSharedMacroKeys(dishes);
   const rows: MenuGridRow[] = orderable.map((dish) => ({
     dishId: dish.id,
-    node: <DishCard key={dish.id} dish={dish} />,
+    node: <DishCard key={dish.id} dish={dish} sharedMacroKeys={sharedMacroKeys} />,
     sectionOrder: dish.sectionOrder,
   }));
 
@@ -97,8 +103,8 @@ export default async function MenuPage({
             directly above it in the header. */}
         {/* §3.7: every clause is earned from the payload actually rendering —
             see MenuTrustStrip for why the two claims are gated. */}
-        <MenuTrustStrip dishes={orderable} />
-        <MacroLegend dishes={orderable} />
+        <MenuTrustStrip dishes={orderable} sharedMacroKeys={sharedMacroKeys} />
+        <MacroLegend dishes={orderable} sharedMacroKeys={sharedMacroKeys} />
       </div>
       {source === "fallback" && <FallbackMenuBanner />}
       <h2 className="sr-only">Dishes</h2>
