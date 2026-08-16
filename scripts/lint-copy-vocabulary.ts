@@ -121,10 +121,43 @@ function stripComments(src: string): string {
 }
 
 /**
+ * String literals that are IDENTIFIERS rather than copy, blanked before the
+ * scan so a name that happens to look like a status enum is not read as a
+ * sentence shown to someone.
+ *
+ * The gate's own header already says "identifiers are never matched"; these are
+ * identifiers that happen to be spelled as string literals, which is the one
+ * case that rule missed. An analytics event is the clearest example — the whole
+ * point of `emitFunnel("payment_failed", …)` is that it is a stable machine
+ * name, and renaming it to read like prose would break the scoreboard while
+ * changing nothing a customer ever sees.
+ *
+ * Deliberately narrow. Each entry names a specific position, not a general
+ * "strings near this word are fine" — a broad carve-out would quietly stop the
+ * gate catching the real thing it exists for.
+ */
+const IDENTIFIER_POSITIONS: RegExp[] = [
+  // Analytics event name: the first argument to emitFunnel(.
+  /emitFunnel\(\s*(["'`])[^"'`]*\1/g,
+  // A string-literal member of a type union — `| "payment_failed"` — which is
+  // a type, and cannot be rendered at all.
+  /^\s*\|\s*(["'`])[^"'`]*\1/g,
+];
+
+function blankIdentifierPositions(line: string): string {
+  let out = line;
+  for (const re of IDENTIFIER_POSITIONS) {
+    out = out.replace(re, (m) => m.replace(/[^\s]/g, " "));
+  }
+  return out;
+}
+
+/**
  * Customer-visible text on a line: string literals plus JSX text nodes.
  * Import specifiers are excluded — a path is not copy.
  */
-function visibleText(line: string): string {
+function visibleText(rawLine: string): string {
+  const line = blankIdentifierPositions(rawLine);
   if (/^\s*(import|export)\b.*\bfrom\b/.test(line)) return "";
   const parts: string[] = [];
   for (const m of line.matchAll(/"([^"]*)"|'([^']*)'|`([^`]*)`/g)) {

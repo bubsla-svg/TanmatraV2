@@ -113,6 +113,36 @@ test("an identifier is not copy", () => {
   assert.equal(r.code, 0, `expected pass, got:\n${r.output}`);
 });
 
+test("an analytics event name is an identifier, not copy", () => {
+  // `emitFunnel("payment_failed", …)` is a stable machine name whose whole
+  // value is that it never changes; renaming it to read like prose would break
+  // the scoreboard and change nothing anyone sees. The gate's header already
+  // says identifiers are never matched — this is the case where an identifier
+  // is spelled as a string literal, which the first version read as a sentence.
+  const r = runGate({
+    "components/checkout/Pay.tsx":
+      `export function pay() { emitFunnel("payment_failed", { error_code: "x" }); }\n`,
+  });
+  assert.equal(r.code, 0, `expected pass, got:\n${r.output}`);
+});
+
+test("a string-literal member of a type union is not copy", () => {
+  const r = runGate({
+    "lib/events.ts": `export type E =\n  | "payment_failed"\n  | "order_cancelled";\n`,
+  });
+  assert.equal(r.code, 0, `expected pass, got:\n${r.output}`);
+});
+
+test("the carve-out does not blind the gate to real copy on the same line", () => {
+  // The narrow-position rule must blank ONLY the event name. A banned term in
+  // a sentence beside it still fails, or the carve-out would be a hole.
+  const r = runGate({
+    "components/checkout/Pay.tsx":
+      `export const C = () => <span onClick={() => emitFunnel("payment_failed")}>Your payment_failed</span>;\n`,
+  });
+  assert.notEqual(r.code, 0, "a real violation beside an event name must still fail");
+});
+
 test("law6-allow exempts a line", () => {
   const r = runGate({
     "components/checkout/Total.tsx":
