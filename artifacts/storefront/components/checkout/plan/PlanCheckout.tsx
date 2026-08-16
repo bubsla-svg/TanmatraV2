@@ -264,6 +264,10 @@ export function PlanCheckout({
         // time. A saved address still wins — it is the more complete answer.
         initialAddress={savedAddress ?? { line1: "", city: "", pincode: servicePincode }}
         finePrint={finePrint}
+        // Law 7: the trial is three fixed dishes bought once — it asks for
+        // nothing it cannot act on. Derived from the plan id rather than passed
+        // as another prop, so it cannot disagree with what is being bought.
+        minimalIntake={planId === "trial_3day"}
         busy={busy}
         verifying={verifying}
         error={error}

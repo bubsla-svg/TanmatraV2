@@ -1,4 +1,4 @@
-import type { AddOnId, CreateSubscriptionInput, DietTrack, MemberInput, PlanCadence } from "./api";
+import type { AddOnId, CreateSubscriptionInput, DietTrack, MemberDiet, MemberInput, PlanCadence } from "./api";
 
 /**
  * Pure assembly for the plan money path (SF-07). Turns the checkout-collected
@@ -42,6 +42,25 @@ export const PLAN_DELIVERY_WINDOW_LABEL = (() => {
     ? `${a.time}–${b.time} ${b.suffix}`
     : `${a.time} ${a.suffix}–${b.time} ${b.suffix}`;
 })();
+
+/**
+ * The eater's diet, from the track they already chose (Law 4).
+ *
+ * The member profile carries its own `diet` and the checkout carries a `track`,
+ * and nothing kept them in step: the draft defaults to "veg", so a buyer who
+ * picked non-veg and never opened the diet select submitted a veg member beside
+ * a nonveg track. Where the select is not shown at all — the trial, which asked
+ * this on /trial already — deriving it is the only correct answer.
+ *
+ * "egg" maps to "any" rather than to either side: an eggetarian is neither
+ * strictly vegetarian nor an omnivore, and picking one would be a dietary claim
+ * we were never given.
+ */
+export function memberDietForTrack(track: DietTrack): MemberDiet {
+  if (track === "veg") return "veg";
+  if (track === "nonveg") return "nonveg";
+  return "any";
+}
 
 /** The next weekday (delivery never lands on a weekend), as YYYY-MM-DD. `from`
  *  is injectable so the mapping is testable without the clock. */
