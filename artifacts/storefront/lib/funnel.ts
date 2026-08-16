@@ -31,7 +31,15 @@ export type FunnelEvent =
   | "payment_opened"
   | "payment_failed"
   | "checkout_complete"
-  | "subscription_created";
+  | "subscription_created"
+  // ── Dish surface (plan item 1.1) ──────────────────────────────────────────
+  // The step between "saw the menu" and "began checkout", which nothing
+  // measured. `plan_toggle` in particular is the only way to learn whether the
+  // plan option is being considered and declined, or simply never seen — two
+  // very different problems that look identical in a funnel without it.
+  | "view_dish"
+  | "plan_toggle"
+  | "subscribe_cta_click";
 
 /**
  * A stable, groupable cause for `payment_failed`.
