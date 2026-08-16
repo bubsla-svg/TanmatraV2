@@ -10,6 +10,7 @@ import {
 import { planDisplay, planQuoteView } from "@/lib/plans";
 import { planAllowsAddOn, addOnView } from "@/lib/addons";
 import { planTotalAfterCredit, TRIAL_COPY, TRIAL_CREDITBACK_PAISE } from "@/lib/trial";
+import { planDecisionFacts } from "@/lib/planDecisionFacts";
 import { CheckoutFlow } from "@/components/checkout/CheckoutFlow";
 import { AlacarteCheckout } from "@/components/checkout/AlacarteCheckout";
 import { FocusHeader } from "@/components/FocusHeader";
@@ -136,7 +137,14 @@ export default async function CheckoutPage({ searchParams }: Props) {
             initialTrack={requestedTrack}
             cadence={requestedCadence}
             addOns={withRdBump ? ["rd_bump"] : undefined}
-            finePrint={isTrial ? [TRIAL_COPY.creditLine, TRIAL_COPY.noAutoConvert] : undefined}
+            // A plan used to pass `undefined`, so the purchase that registers a
+            // recurring UPI Autopay mandate disclosed LESS at the decision
+            // moment than the trial, which registers none.
+            finePrint={
+              isTrial
+                ? [TRIAL_COPY.creditLine, TRIAL_COPY.noAutoConvert]
+                : planDecisionFacts(id, requestedCadence)
+            }
             successPerks={isTrial ? { trialCreditbackPaise: TRIAL_CREDITBACK_PAISE } : undefined}
             recap={{
               mealsPerCycle: recapQuote.mealsPerCycle,
