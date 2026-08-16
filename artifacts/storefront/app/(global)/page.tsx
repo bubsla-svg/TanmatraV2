@@ -88,7 +88,16 @@ export default async function HomePage() {
         <section className="px-gutter">
           <div className="flex justify-between items-end mb-6">
             <h2 className="font-bold text-3xl text-ink">On the menu today</h2>
-            <a href="/menu" className="font-bold text-xs text-primary uppercase tracking-widest hover:opacity-80">View menu</a>
+            <a
+              href="/menu"
+              /* Was 81×16 — exactly the line-height of an uppercase 12px
+                 label, under the WCAG 2.2 SC 2.5.8 floor. `touch-target-min`
+                 is the house utility (globals.css) and already carries the
+                 inline-flex + centring the min-height needs to act on. */
+              className="touch-target-min font-bold text-xs text-primary uppercase tracking-widest hover:opacity-80"
+            >
+              View menu
+            </a>
           </div>
           {/* A real list, so a screen reader announces "5 items" before the
               rail instead of reading five unlabelled groups in a row. */}

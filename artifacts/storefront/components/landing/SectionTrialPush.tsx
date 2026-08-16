@@ -63,7 +63,11 @@ export function SectionTrialPush() {
                 trial pitch twice, but they are not who this band is for. */}
             <Link
               href="/plans"
-              className="text-center text-sm font-semibold text-ink-muted underline-offset-4 hover:text-ink hover:underline"
+              /* 328×20 before: a full-width text link with no vertical box of
+                 its own. `w-full` because touch-target-min is inline-flex and
+                 would otherwise shrink this to its text, undoing the centred
+                 full-column look it has in this card. */
+              className="touch-target-min w-full text-center text-sm font-semibold text-ink-muted underline-offset-4 hover:text-ink hover:underline"
             >
               Or see monthly plans
             </Link>
