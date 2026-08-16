@@ -103,7 +103,10 @@ export function DishDrawer({ dish }: { dish: DishData }) {
           <div className="flex items-center justify-between gap-3">
             <Link
               href={`/dish/${dish.slug}`}
-              className="text-sm font-medium text-ink-muted underline-offset-4 hover:text-ink hover:underline"
+              /* 93×20 before, and it sits in the drawer footer beside the Add
+                 button — the densest row on the surface, so the easiest to
+                 mis-tap. */
+              className="touch-target-min text-sm font-medium text-ink-muted underline-offset-4 hover:text-ink hover:underline"
             >
               Open full page
             </Link>

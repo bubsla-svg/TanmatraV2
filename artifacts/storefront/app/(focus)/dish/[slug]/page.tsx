@@ -174,7 +174,13 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
             <Macro label="Carbs" value={formatGrams(dish.macros.carbs, dish.macrosEstimated)} />
           </HStack>
 
-          <CollapsibleGroup type="multiple" defaultValue={["nutrition"]}>
+          {/* `density` is not decoration: without it the group resolves to
+              `paddingBlock: 0` and each trigger's box is the capsize-trimmed
+              text alone — 380×17, under the 24px WCAG 2.2 SC 2.5.8 floor on
+              the two controls this page is built around. `balanced` is the
+              library's own answer (spacing-2 either side → 33px); overriding
+              the button's padding from outside would fight the component. */}
+          <CollapsibleGroup type="multiple" defaultValue={["nutrition"]} density="balanced">
             <Divider />
             <Collapsible value="nutrition" trigger={<Heading level={3}>Nutrition</Heading>}>
               <VStack gap={2}>
