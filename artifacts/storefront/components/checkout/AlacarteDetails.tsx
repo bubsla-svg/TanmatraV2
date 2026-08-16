@@ -247,7 +247,7 @@ export function AlacarteDetails({
                     same spelling (lib/format.ts, N5.7). */}
                 {l.macros && (
                   <p className="tabular text-xs text-ink-faint">
-                    {formatMacroLine(l.macros, l.macros.estimated)}
+                    {formatMacroLine(l.macros, l.macros.estimated, l.macros.provisional)}
                   </p>
                 )}
               </div>
