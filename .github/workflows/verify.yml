@@ -526,3 +526,16 @@ jobs:
             ./src/routes/petpooja.priceAuthority.test.ts \
             ./src/routes/petpooja.menuFence.test.ts \
             ./src/lib/dishCustomizations.test.ts
+
+      # BOM costing + the recipe-quantity conversion contract. In THIS
+      # properly-formed step, not the folded `run: >` list above, for the
+      # dead-list reason documented there: files named after an in-scalar
+      # `#` never execute. These feed the margin axis that can move a real
+      # price, so they must provably run. DB-free (pure aggregation +
+      # @workspace/menu-catalog conversion) — no DATABASE_URL needed.
+      - name: BOM cost + quantity-conversion tests
+        working-directory: artifacts/api-server
+        run: |
+          node --test --test-force-exit --import tsx \
+            ./src/lib/bomCosts.test.ts \
+            ../../scripts/src/lib/bomPlan.test.ts

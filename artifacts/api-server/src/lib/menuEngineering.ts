@@ -11,6 +11,7 @@ import {
   recipesTable,
   recipeIngredientsTable,
   inventoryItemsTable,
+  dishBomComponentsTable,
   type DishClassification,
   type DishRecommendation,
   type MenuEngineeringDishStat,
@@ -18,8 +19,9 @@ import {
   type PricingSuggestion,
   type PricingSuggestionStatus,
 } from "@workspace/db";
-import { DISHES } from "@workspace/menu-catalog";
+import { DISHES, gramsFromQuantityText } from "@workspace/menu-catalog";
 import { DEFAULT_MODEL_ID, getModel } from "./ai/model";
+import { aggregateBomCosts } from "./bomCosts";
 import { logger } from "./logger";
 import { findBySlug, updatePrice } from "./menu";
 import { recordOpsAction } from "./opsAudit";
@@ -72,9 +74,26 @@ export type FoodCostPaise = number | null;
 export const DEFAULT_MARGIN_PCT = 0.35;
 const DEFAULT_MARGIN_PCT_LABEL = `${Math.round(DEFAULT_MARGIN_PCT * 100)}%`;
 
-function parseGrams(text: string): number {
-  const match = text.match(/(\d+)\s*g/i);
-  return match ? parseInt(match[1], 10) : 0;
+/**
+ * Quantity text → grams, via the nutrition calculator's conversion tables
+ * (unicode fractions, ranges, the kitchen's own dry/liquid spoon weights,
+ * per-piece weights).
+ *
+ * DELIBERATE SEMANTICS CHANGE (2026-08-16). The old body was
+ * `/(\d+)\s*g/` — anything not written in grams read as ZERO grams and
+ * contributed ZERO cost. Measured on the seeded sheet that was 371 of 667
+ * ingredient rows (every tbsp, tsp, ml, pcs, cup, clove, pinch), leaving 96
+ * of 116 dishes with a confident, low, unflagged food cost feeding the
+ * margin axis. "2 tbsp" of oil is 30 g of real money; pretending otherwise
+ * is not conservatism, it is understatement.
+ *
+ * The recipeCosts golden test still passes UNCHANGED because its fixtures
+ * are all gram-denominated, where old and new parse identically — see the
+ * note added there. Non-gram behaviour is pinned by bomCosts.test.ts,
+ * which runs in verify.yml.
+ */
+function parseGrams(text: string, ingredientName: string): number {
+  return gramsFromQuantityText(text, ingredientName);
 }
 
 interface PricedItem {
@@ -98,9 +117,16 @@ export async function loadDynamicRecipeCosts(): Promise<
   const recipes = await db.select().from(recipesTable);
   const ingredients = await db.select().from(recipeIngredientsTable);
   const inventory = await db.select().from(inventoryItemsTable);
+  // The structured BOM, where it exists, outranks everything below: explicit
+  // inventory FKs chosen by a reviewed mapping instead of two-way substring
+  // matching, and quantities normalised to grams at authoring time instead
+  // of regex-parsed from prose. Empty until the bom-backfill workflow has
+  // applied — in which case this read costs one SELECT and changes nothing,
+  // which is also why the recipeCosts golden test (whose CI database has no
+  // BOM rows) is unaffected. See src/lib/bomCosts.ts.
+  const bomRows = await db.select().from(dishBomComponentsTable);
 
   const recipeCostMap = new Map<string, FoodCostPaise>();
-  const unknown: string[] = [];
 
   // Group ingredients by recipe once instead of re-filtering the whole
   // ingredient list per recipe (was O(recipes × ingredients)).
@@ -143,7 +169,7 @@ export async function loadDynamicRecipeCosts(): Promise<
       const match = matchInventory(ingNameLower);
 
       if (match) {
-        const grams = parseGrams(ing.quantityText || ing.rawText);
+        const grams = parseGrams(ing.quantityText || ing.rawText, ing.ingredient);
         const perKgCost = match.perKgUnitPaise ?? match.buyingPricePaise ?? 0;
         const ingCost = Math.round((grams / 1000) * perKgCost);
         totalCostPaise += ingCost;
@@ -158,10 +184,29 @@ export async function loadDynamicRecipeCosts(): Promise<
       // Record the miss explicitly rather than storing 0. Ingredient→inventory
       // matching is fuzzy substring matching, so misses are routine and silent.
       recipeCostMap.set(recipe.slug, null);
-      unknown.push(recipe.slug);
     }
   }
 
+  // BOM overlay — a dish with a complete, fully-priced BOM takes its cost
+  // from there, whether or not a recipes row exists for it. Dishes whose BOM
+  // is unusable (unpriced item, zero quantity, unknown unit) are NOT summed
+  // partially — a partial sum is the silent-understatement defect — they
+  // keep whatever the fallback produced, and get logged.
+  const bom = aggregateBomCosts(bomRows, inventory);
+  for (const [slug, cost] of bom.costs) recipeCostMap.set(slug, cost);
+  if (bom.skipped.size > 0) {
+    logger.warn(
+      {
+        count: bom.skipped.size,
+        slugs: [...bom.skipped.keys()].slice(0, 20),
+      },
+      "BOM present but unusable for costing (unpriced items or bad rows) — fell back to the fuzzy recipe path for these dishes",
+    );
+  }
+
+  const unknown = [...recipeCostMap.entries()]
+    .filter(([, v]) => v == null)
+    .map(([slug]) => slug);
   if (unknown.length > 0) {
     logger.warn(
       { count: unknown.length, slugs: unknown.slice(0, 20) },

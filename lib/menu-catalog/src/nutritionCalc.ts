@@ -250,6 +250,48 @@ export function parseIngredientLine(line: string): ParsedIngredient | null {
   return { name, grams: Math.round(toGrams(qty, unit, name)), raw };
 }
 
+/**
+ * Grams from a bare quantity string ("2 tbsp", "½ tsp (optional)", "6–8",
+ * "200 g"), resolved against the ingredient's name for density/piece weight.
+ *
+ * Exists for callers that hold quantity and name SEPARATELY — the ops tables'
+ * `recipe_ingredients.quantityText` / `.ingredient` split, and the BOM
+ * backfill — where `parseIngredientLine` (which expects the combined
+ * "Name – Qty" form) does not fit. The api-server's recipe-costing fallback
+ * (`menuEngineering.loadDynamicRecipeCosts`) calls this to replace its old
+ * `/(\d+)\s*g/` regex, which read every non-gram quantity — all 97 tbsp, 83
+ * tsp, 31 ml, 7 pcs rows in the live sheet — as zero grams and therefore
+ * zero cost.
+ *
+ * Three accepted shapes, tried in order:
+ *   1. "Name – Qty" whole line (spaced dash only, so "sugar-free" and
+ *      "asafoetida-not-in-inventory" never split mid-word): quantity is the
+ *      part after the dash.
+ *   2. Bare/leading quantity: "2 tbsp", "20 g olive oil", "1 medium (ripe)".
+ *   3. Negligible phrasing ("to taste", "a pinch") → 0, matching
+ *      parseIngredientLine's rule.
+ * Unparseable input returns 0 — the same "contributes nothing" contract the
+ * old regex had, so a caller treating 0 as absence keeps working.
+ */
+export function gramsFromQuantityText(
+  text: string | null | undefined,
+  ingredientName: string,
+): number {
+  if (!text) return 0;
+  let t = text.trim();
+  const dash = t.match(/^(.+?)\s[–—-]\s(.+)$/);
+  if (dash) t = dash[2]!.trim();
+  t = t.replace(/\([^)]*\)/g, " ").trim();
+  if (!t) return 0;
+  if (NEGLIGIBLE.test(t) && !/\d/.test(t)) return 0;
+  const qty = parseQuantity(t);
+  if (qty === null) return 0;
+  // unit = first alphabetic token after the number (parseIngredientLine's rule)
+  const unitMatch = t.replace(/^[^a-zA-Z]*/, "").match(/^([a-zA-Z]+)/);
+  const unit = unitMatch ? unitMatch[1]! : "";
+  return Math.round(toGrams(qty, unit, ingredientName.toLowerCase()));
+}
+
 /** Parse a full "A – x · B – y · …" longDescription into ingredients. */
 export function parseLongDescription(text: string): ParsedIngredient[] {
   if (!text) return [];

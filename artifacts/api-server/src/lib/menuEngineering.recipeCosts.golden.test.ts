@@ -20,6 +20,26 @@
  * Needs Postgres (DATABASE_URL). Run with:
  *   DATABASE_URL=... node --test --import tsx \
  *     ./src/lib/menuEngineering.recipeCosts.golden.test.ts
+ *
+ * TWO DELIBERATE DIVERGENCES SINCE THE FREEZE (2026-08-16), and why this
+ * test still holds:
+ *
+ * 1. Quantity parsing upgraded. `parseGrams` now converts tbsp/tsp/ml/pieces
+ *    via the nutrition calculator (gramsFromQuantityText) instead of reading
+ *    them as zero grams. The fixtures below are ALL gram-denominated — the
+ *    one shape old and new parse identically — so this test keeps pinning
+ *    what it was built to pin (first-match-wins and memoisation semantics)
+ *    without asserting the old zero-gram defect. Do NOT add non-gram
+ *    fixtures here; their divergence is intended, and it is pinned the other
+ *    way by bomCosts.test.ts.
+ *
+ * 2. BOM overlay. loadDynamicRecipeCosts now overlays costs from
+ *    dish_bom_components where a complete, fully-priced BOM exists. This
+ *    test's CI database has no BOM rows, so the overlay is a no-op here. If
+ *    a future CI seed ever populates that table, the size assertion below
+ *    will fail loudly — that is correct behaviour, not breakage: the frozen
+ *    algorithm never modelled BOMs, and the comparison would no longer be
+ *    like-for-like.
  */
 
 import assert from "node:assert/strict";
