@@ -49,6 +49,30 @@ test("macros are the dishes' own, not restated", () => {
   }
 });
 
+test("a dish sharing its macro tuple with another is never used as evidence", () => {
+  // The half macrosProvisional cannot see. Two unrelated dishes cannot have
+  // measured their way to a byte-identical quadruple; one is wrong and we
+  // cannot tell which, so neither may be shown as fact on the screen that
+  // exists to be checked.
+  // Must be a dish the plan ACTUALLY rotates, or the assertion passes for the
+  // wrong reason — the first draft duplicated DISHES[0], which steady does not
+  // carry, so it held even with the old macrosProvisional-only filter.
+  const inPool = poolForPlan("steady", "veg", DISHES)[0];
+  assert.ok(inPool, "steady must rotate something for this rule to have a case");
+  const before = planOfferDishes("steady", ["veg", "egg", "nonveg"], DISHES, 50);
+  assert.ok(
+    before.dishes.some((d) => d.slug === inPool.slug),
+    "the chosen dish must be offered BEFORE a duplicate exists",
+  );
+
+  const dupe = { ...inPool, slug: `${inPool.slug}-dupe`, name: `${inPool.name} (dupe)` };
+  const { dishes } = planOfferDishes("steady", ["veg", "egg", "nonveg"], [...DISHES, dupe], 50);
+  assert.ok(
+    !dishes.some((d) => d.slug === inPool.slug),
+    "a dish whose macro tuple is now shared must stop being offered as evidence",
+  );
+});
+
 test("a provisional dish is never used as evidence", () => {
   // The one screen whose purpose is to be checked cannot be built on a
   // placeholder bucket. Same rule planCardDish applies to the landing cards.
