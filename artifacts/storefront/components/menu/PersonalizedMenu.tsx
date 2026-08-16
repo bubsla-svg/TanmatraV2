@@ -20,6 +20,7 @@ import { DishFitProvider } from "@/components/menu/DishFitContext";
 import { isMeaningful, rankDishes } from "@/lib/menuFit";
 import { computeMenuGridState } from "@/lib/menuGridState";
 import { resolveInitialDietChip, type DietFilterChip } from "@/lib/dietFilter";
+import { forgetDiet, rememberDiet } from "@/lib/dietMemory";
 import {
   EMPTY_FILTERS,
   activeFilterLabels,
@@ -109,6 +110,17 @@ export function PersonalizedMenu({
       live = false;
     };
   }, []);
+
+  // Law 4: a chip tap is the visitor telling us how they want to eat, and it
+  // used to live only in this component's state and the URL — so the wizard,
+  // two taps away, started again from "Omnivore". Recorded as "filtered", the
+  // weaker fact: a request to narrow a list, never a declared dietary identity
+  // (lib/dietMemory), so it can never overwrite the wizard's own answer.
+  function handleChipChange(next: DietFilterChip) {
+    setChip(next);
+    if (next === "all") forgetDiet();
+    else rememberDiet({ chip: next, source: "filtered" });
+  }
 
   // Committed state -> URL, debounced. MenuFilterSheet's own draft editing
   // never reaches this effect — only what onApply hands back as `filters`.
@@ -227,7 +239,7 @@ export function PersonalizedMenu({
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         chip={chip}
-        onChipChange={setChip}
+        onChipChange={handleChipChange}
         activeFilterCount={activeLabels.length}
         onOpenFilter={() => setFilterOpen(true)}
         showRankedNote={ranked !== null}
