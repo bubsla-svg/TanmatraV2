@@ -1,6 +1,7 @@
 import { poolForPlan, type PlanId } from "@workspace/subscription-rules";
 import type { DishData } from "@workspace/menu-catalog";
 import type { DietTrack } from "./api";
+import { buildSharedMacroKeys, macroTrust } from "./dishTrust";
 
 /**
  * What the customer is being offered, stated before they are asked for
@@ -40,10 +41,22 @@ export interface PlanOffer {
 /**
  * A sample of the dishes a plan actually rotates, across the tracks it serves.
  *
- * Evidence-grade only, on the same rule `planCardDish` uses: a dish with
- * `macrosProvisional` macros is a placeholder bucket, and this screen exists to
- * be checked. Showing a number nothing stands behind, to someone deciding
- * whether to hand over a PIN code, is worse than showing one dish fewer.
+ * Evidence-grade only, judged by `macroTrust` over the dishes actually being
+ * shown — not by `macrosProvisional` alone, which is what this used to test.
+ *
+ * That flag was the weaker check. F-1 (#50) established that the duplication
+ * lives in the DB payload rather than the static catalog: 93 live dishes share
+ * macros drawn from 32 tuples, and only 15 of them carried a flag the old
+ * gate could see. #57 then fixed the merge so a DB-supplied number and its
+ * trust flag travel together — but the render guard is still the belt to that
+ * braces, and `buildSharedMacroKeys` is the half that catches a copied tuple no
+ * flag has been set on. Passing the RENDERED set is load-bearing: duplication
+ * is a property of the payload in hand, so a set built from anywhere else
+ * finds nothing.
+ *
+ * The screen exists to be checked. Showing a number nothing stands behind, to
+ * someone deciding whether to hand over a PIN code, is worse than showing one
+ * dish fewer.
  *
  * Deterministic — same catalog, same sample — so the screen is stable across
  * renders and the test can assert on it.
@@ -56,10 +69,13 @@ export function planOfferDishes(
 ): { dishes: PlanOfferDish[]; more: number } {
   const seen = new Set<string>();
   const rotation: DishData[] = [];
+  // Built once from the catalog being rendered — see the note above on why the
+  // set must come from the payload in hand.
+  const sharedMacroKeys = buildSharedMacroKeys(dishes);
   for (const track of tracks) {
     for (const dish of poolForPlan(planId, track, dishes)) {
       if (seen.has(dish.slug)) continue;
-      if (dish.macrosProvisional === true) continue;
+      if (macroTrust(dish, sharedMacroKeys) === "unverified") continue;
       seen.add(dish.slug);
       rotation.push(dish);
     }

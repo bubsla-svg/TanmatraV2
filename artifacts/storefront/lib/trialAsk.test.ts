@@ -48,7 +48,12 @@ test("the trio renders macros, not just a photo and a name", () => {
 
 test("a placeholder-macro dish would be omitted, never rendered as a figure", () => {
   const src = fs.readFileSync(path.join(HERE, "..", "app", "(focus)", "trial", "page.tsx"), "utf8");
-  assert.match(src, /macrosProvisional === true/, "the trio resolver must gate on provenance");
+  // macroTrust, not macrosProvisional alone: F-1 showed the duplication lives
+  // in the DB payload, where a copied tuple may carry no flag at all.
+  assert.match(src, /macroTrust\(d, sharedMacroKeys\) === "unverified"/);
+  // The set must be built from the catalog actually loaded — duplication is a
+  // property of the payload in hand, so any other source finds nothing.
+  assert.match(src, /buildSharedMacroKeys\(dishes\)/);
 });
 
 test("the trial says when the food arrives", () => {
