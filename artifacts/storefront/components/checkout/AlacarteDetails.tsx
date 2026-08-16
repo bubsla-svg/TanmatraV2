@@ -12,6 +12,8 @@ import { useCart } from "@/components/cart/CartProvider";
 import { DPDP_CONSENT_COPY, DPDP_SCOPE_NOTE } from "@/lib/consent";
 import { apiGet } from "@/lib/apiClient";
 import { flagCartAllergens } from "@/lib/allergenAck";
+import { carriedPincode } from "@/lib/serviceabilityApi";
+import { readAddressDraft, seedAddressFields } from "@/lib/addressSeed";
 import type { QuoteSnapshot } from "@/lib/quoteApi";
 import type { QuoteUiState } from "./AlacarteCheckout";
 import { ADDRESS_DRAFT_KEY } from "./AlacarteCheckout";
@@ -90,6 +92,8 @@ export function AlacarteDetails({
   const [allergenAckTouched, setAllergenAckTouched] = useState(false);
   const allergenAckRef = useRef<HTMLInputElement>(null);
   const prefilled = useRef(false);
+  /** Lets the saved-address prefill below tell a carried PIN from a typed one. */
+  const carriedPinRef = useRef("");
 
   // D-22: a synchronous, non-React-state guard against multi-tap. `busy`
   // (a prop, driven by React state in the parent) already disables the
@@ -123,22 +127,24 @@ export function AlacarteDetails({
   );
   const allergenAckRequired = flaggedAllergens.dishes.length > 0;
 
-  // Draft restore: back/forward navigation must not eat a typed address.
-  // Runs once, only into still-empty fields (a saved-address prefill or the
-  // customer's own typing always wins).
+  // Draft restore and the Law 4 carry-forward, in one mount pass — lib/addressSeed
+  // owns the precedence. The carried PIN is the one already given to the
+  // serviceability bar on the landing page or /menu; re-asking for it cost more
+  // than a retype, since the quote is keyed on the PIN and so the delivery-
+  // inclusive total and the ETA stayed withheld pending an answered question.
+  //
+  // Read here rather than in a useState initializer because both sources are
+  // storage, which the server render cannot see.
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(ADDRESS_DRAFT_KEY);
-      if (!raw) return;
-      const d = JSON.parse(raw) as { line1?: string; city?: string; pincode?: string };
-      setLine1((v) => (v === "" && d.line1 ? d.line1 : v));
-      setCity((v) => (v === "" && d.city ? d.city : v));
-      setPincode((v) => {
-        const next = v === "" && d.pincode ? d.pincode : v;
-        if (next !== v) onPincodeChange(next);
-        return next;
-      });
-    } catch {}
+    const carried = carriedPincode();
+    carriedPinRef.current = carried;
+    const next = seedAddressFields({ line1, city, pincode }, readAddressDraft(ADDRESS_DRAFT_KEY), carried);
+    setLine1(next.line1);
+    setCity(next.city);
+    if (next.pincode !== pincode) {
+      setPincode(next.pincode);
+      onPincodeChange(next.pincode);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
@@ -152,9 +158,15 @@ export function AlacarteDetails({
   // A saved address may arrive AFTER mount (async sign-in fetch). Seed the
   // fields once — but only while they're still untouched, so a customer who
   // started typing before it resolved never has their input clobbered.
+  //
+  // "Untouched" means the customer has entered nothing OF THEIR OWN. A PIN
+  // carried in from the serviceability check does not count: it is not typing,
+  // and a saved address is strictly more specific about where to deliver, so
+  // it wins. Testing `pincode === ""` alone would have let the carry-forward
+  // above silently cancel this prefill for every signed-in customer.
   useEffect(() => {
     if (!initialAddress || prefilled.current) return;
-    if (line1 === "" && city === "" && pincode === "") {
+    if (line1 === "" && city === "" && (pincode === "" || pincode === carriedPinRef.current)) {
       prefilled.current = true;
       setLine1(initialAddress.line1);
       setCity(initialAddress.city);

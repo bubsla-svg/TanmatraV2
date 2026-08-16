@@ -57,6 +57,27 @@ export function loadServiceabilityState(): ServiceabilityState {
   return { verdict: "unknown", pincode: "" };
 }
 
+/**
+ * Law 4 ("never ask twice") — the PIN the customer already handed the
+ * serviceability check, ready to carry into any later address form. Returns ""
+ * when there is nothing usable to carry, so a caller can seed a field with it
+ * unconditionally and get today's blank-field behaviour when no check has run.
+ *
+ * The verdict is deliberately NOT filtered to "serviceable". An unserviceable
+ * PIN is still the customer's own answer to "where do you live", and carrying
+ * it forward makes the quote say so immediately rather than after they retype
+ * it — a stated refusal with a next step beats a blank field (Laws 9, 10).
+ *
+ * The digit check lives here rather than at each call site: loadServiceability-
+ * State only type-checks the stored blob, so a truncated or corrupted PIN would
+ * otherwise reach a form field and quietly produce a quote for nowhere.
+ */
+export function carriedPincode(): string {
+  const { verdict, pincode } = loadServiceabilityState();
+  if (verdict === "unknown") return "";
+  return /^\d{6}$/.test(pincode) ? pincode : "";
+}
+
 /** Persist latest serviceability state into localStorage for subsequent page visits. */
 export function saveServiceabilityState(state: ServiceabilityState): void {
   if (typeof window === "undefined" || typeof localStorage === "undefined") return;
