@@ -148,6 +148,9 @@ export const PRIMARY_NAV: NavLink[] = [
 /** "Company" / help links (footer). */
 export const COMPANY_LINKS: NavLink[] = [
   { label: "About", href: "/about" },
+  // Plan item 2.1: the page that answers "does this keep charging me?" has to
+  // be reachable without already being in a checkout.
+  { label: "How it works", href: "/how-it-works" },
   { label: "Corporate", href: "/corporate-wellness" },
   { label: "FAQ", href: "/faq" },
 ];
