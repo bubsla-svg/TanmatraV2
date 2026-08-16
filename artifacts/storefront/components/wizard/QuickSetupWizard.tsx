@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { readQuickSetupDraft, stashQuickSetupDraft, clearQuickSetupDraft } from "@/lib/quickSetupDraft";
 import { createAcquisitionContext } from "@/lib/acquisitionContext";
 import { savePreferences, type DietaryStyle, type WellnessGoal } from "@/lib/preferencesApi";
+import { chipForStyle, recalledDietaryStyle, rememberDiet } from "@/lib/dietMemory";
 import { planForCondition } from "@workspace/subscription-rules";
 
 const GOALS = [
@@ -71,6 +72,23 @@ export function QuickSetupWizard() {
   const [dietaryStyle, setDietaryStyle] = useState(draft?.dietaryStyle ?? "omnivore");
   const [allergens, setAllergens] = useState<string[]>(draft?.allergens ?? []);
 
+  // Law 4: re-seed from an answer they already gave this question — the
+  // wizard's own, carried locally because `savePreferences` below swallows the
+  // 401 a signed-out visitor gets, so the server has nothing to hand back.
+  // Only a DECLARED style; a Veg chip tapped on the menu is a request to narrow
+  // a list, and pre-selecting "Strictly Vegetarian" from it would answer this
+  // question on their behalf. An in-progress draft still wins.
+  //
+  // In an effect rather than the initializer above: localStorage is invisible
+  // to the server render, so seeding at init would hydrate to a different value.
+  useEffect(() => {
+    if (draft?.dietaryStyle) return;
+    const recalled = recalledDietaryStyle();
+    if (recalled) setDietaryStyle(recalled);
+    // Mount only — a later change is the customer editing their answer.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     stashQuickSetupDraft({ step, goal, dietaryStyle, allergens });
   }, [step, goal, dietaryStyle, allergens]);
@@ -83,12 +101,24 @@ export function QuickSetupWizard() {
     const wireGoal = toWireGoal(goal);
     const recommendedPlanId = condition ? (planForCondition(condition) ?? undefined) : undefined;
 
+    // Law 4: keep the answer locally BEFORE the server attempt, because that
+    // attempt is where it used to be lost. The save below swallows a
+    // signed-out visitor's 401 by design, so their declared dietary style
+    // reached nothing that survived the navigation — and /menu, which gates on
+    // getAuthUser, then showed a self-declared vegetarian chicken. Recorded as
+    // "declared": the strong fact, which a later chip tap must not overwrite.
+    const chip = chipForStyle(dietaryStyle as DietaryStyle);
+    // Pescatarian/keto narrow to neither chip; no memory at all beats a wrong
+    // one, and the wizard offers neither today.
+    if (chip) rememberDiet({ chip, source: "declared", style: dietaryStyle as DietaryStyle });
+
     // Best-effort background save — never gates the exit. A 401 (signed-out
     // visitor) is swallowed exactly like every other auth-gated island in
     // this app; the old "Sign in to save your profile" wall is the thing
     // this contract disapproves of.
     void savePreferences({ goal: wireGoal, dietaryStyle: dietaryStyle as DietaryStyle, allergens }).catch(() => {
-      // Signed out / offline — the assessment still routes; nothing to save yet.
+      // Signed out / offline — the assessment still routes; the answer is kept
+      // locally above, so it is not lost with the request.
     });
 
     const acquisitionContextId = createAcquisitionContext({
