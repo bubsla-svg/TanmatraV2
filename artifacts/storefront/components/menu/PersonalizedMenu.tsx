@@ -12,7 +12,6 @@
 // because ranking/filtering are computed over the DishData themselves — only
 // the rendering is server-side now.
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { DishForMatch, PreferencesForMatch } from "@workspace/preferences-match";
 import { apiGet } from "@/lib/apiClient";
@@ -20,11 +19,7 @@ import { MenuGrid, type MenuGridRow } from "@/components/MenuGrid";
 import { DishFitProvider } from "@/components/menu/DishFitContext";
 import { isMeaningful, rankDishes } from "@/lib/menuFit";
 import { computeMenuGridState } from "@/lib/menuGridState";
-import {
-  resolveInitialDietChip,
-  DIET_CHIP_OPTIONS,
-  type DietFilterChip,
-} from "@/lib/dietFilter";
+import { resolveInitialDietChip, type DietFilterChip } from "@/lib/dietFilter";
 import {
   EMPTY_FILTERS,
   activeFilterLabels,
@@ -34,9 +29,11 @@ import {
 } from "@/lib/menuFilters";
 import { mergeMenuUrlState, parseMenuUrlState } from "@/lib/menuUrlState";
 import { MenuFilterSheet } from "@/components/menu/MenuFilterSheet";
+import { MenuControls } from "@/components/menu/MenuControls";
 import { SectionChipBar, useStickyAnchorOffset } from "@/components/menu/SectionChipBar";
 import { groupBySection, sectionAnchorId } from "@/lib/menuSections";
 import { useScrollRestore } from "@/lib/useScrollRestore";
+import { useCondensedOnScroll } from "@/lib/useCondensedOnScroll";
 
 // N2.3: URL sync is debounced, not immediate — chip/filter changes are
 // discrete clicks (a 400ms delay before the address bar updates is
@@ -192,6 +189,14 @@ export function PersonalizedMenu({
   const stickyRef = useRef<HTMLDivElement>(null);
   useStickyAnchorOffset(stickyRef);
 
+  // Owner feedback (2026-08-16): the control cluster consumed ~40% of the
+  // viewport before the first card. While the reader scrolls DOWN the list,
+  // MenuControls (search + filter trigger + diet chips) collapses and only
+  // the section chip bar stays pinned; any upward scroll brings it back.
+  // The keyboard-focus guard lives inside MenuControls with the rows it
+  // protects.
+  const { condensed: scrolledDown, pin: pinCondensed } = useCondensedOnScroll();
+
   // §3.9 / Law 3. Disabled while a dish drawer is open (`?dish=`): that is a
   // same-route overlay whose own close already restores position, and
   // writing a position while it is open would capture the scroll of the
@@ -203,89 +208,41 @@ export function PersonalizedMenu({
       {/* §3.2: search + chip bar + diet toggles are ONE sticky cluster. They
           stick together because the chip bar alone would detach from the
           controls it belongs with, and because useStickyAnchorOffset measures
-          this element to place jumped-to section anchors just below it. */}
+          this element to place jumped-to section anchors just below it —
+          which is also why condensing needs no offset wiring: the
+          ResizeObserver sees the collapse and shrinks --menu-anchor-offset
+          with it.
+
+          `min-h-16 justify-center` is load-bearing for the condensed state:
+          the global Header is sticky, 63px tall and at the SAME z (--z-chrome
+          = 10 = the header's z-10), so this cluster paints over it purely by
+          document order when both pin. Condensed content alone is ~50px —
+          shorter than the header — which would leave a clipped sliver of
+          header text peeking out underneath. 64px covers it exactly. */}
       <div
         ref={stickyRef}
-        className="sticky top-0 z-[var(--z-chrome)] -mx-4 flex flex-col gap-3 bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-4 pb-2 pt-3 backdrop-blur"
+        className="sticky top-0 z-[var(--z-chrome)] -mx-4 flex min-h-16 flex-col justify-center gap-2 bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-4 py-2 backdrop-blur"
       >
-      <div className="relative">
-        <svg
-          aria-hidden
-          className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.3-4.3" />
-        </svg>
-        <input
-          type="search"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search dishes…"
-          aria-label="Search dishes"
-          className="w-full rounded-full border border-line bg-surface py-2.5 pl-10 pr-4 text-sm text-ink outline-none placeholder:text-ink-faint focus-visible:border-[var(--gold)] focus-visible:ring-1 focus-visible:ring-[var(--gold)]"
-        />
-      </div>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
-        <div role="group" aria-label="Filter dishes by diet" className="flex items-center gap-1.5">
-          {DIET_CHIP_OPTIONS.map((opt) => {
-            const active = chip === opt.key;
-            return (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => setChip(opt.key)}
-                aria-pressed={active}
-                // D-08: selection state, not a rival action colour — border +
-                // tint + marker, never a solid --gold fill (the mini-cart bar
-                // is this screen's one gold action).
-                className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-transform active:scale-95 ${
-                  active
-                    ? "border-gold bg-gold/10 text-gold-text"
-                    : "border-line bg-surface text-ink-muted hover:text-ink"
-                }`}
-              >
-                {active && <span aria-hidden>✓ </span>}
-                {opt.label}
-              </button>
-            );
-          })}
-        </div>
-        <div className="flex items-center gap-3">
-          {ranked && (
-            <p className="text-xs text-ink-muted">
-              Sorted for your preferences.{" "}
-              <Link href="/account/preferences" className="font-medium text-gold-text hover:underline">
-                Edit
-              </Link>
-            </p>
-          )}
-          {/* Frosted, not gold — the mini-cart bar is this screen's one gold action. */}
-          <button
-            type="button"
-            onClick={() => setFilterOpen(true)}
-            data-testid="menu-filter-trigger"
-            className="min-h-[44px] rounded-full border border-line bg-surface-raised px-4 text-xs font-semibold text-ink transition-transform active:scale-95"
-          >
-            Filter
-            {activeLabels.length > 0 && (
-              <span className="ml-1.5 text-gold-text">· {activeLabels.length}</span>
-            )}
-          </button>
-        </div>
-      </div>
+      <MenuControls
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        chip={chip}
+        onChipChange={setChip}
+        activeFilterCount={activeLabels.length}
+        onOpenFilter={() => setFilterOpen(true)}
+        showRankedNote={ranked !== null}
+        scrolledDown={scrolledDown}
+      />
 
       {/* Rendered from the SAME rows/visibleIds MenuGrid draws, so a section
           whose dishes are all filtered out loses its chip at the same moment
           it loses its heading — a chip that jumps to nothing is a dead end
-          (Law 9). */}
-      <SectionChipBar anchors={sectionAnchors} />
+          (Law 9). Survives condensing: mid-list, this rail IS the cluster. */}
+      <SectionChipBar anchors={sectionAnchors} onJump={pinCondensed} />
 
+      {/* Outside the collapsing block on purpose: while condensed, this line
+          is the only remaining evidence that the list is narrowed — hiding
+          it would leave a filtered list with no visible cause. */}
       {allActiveLabels.length > 0 && (
         <p className="text-xs text-ink-muted" data-testid="menu-active-filters">
           Filtering by {allActiveLabels.join(" · ")}

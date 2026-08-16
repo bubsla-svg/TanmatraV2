@@ -358,7 +358,11 @@ html, body {
    warns about doesn't apply on this axis for this layout. */
 .cv-auto-row {
   content-visibility: auto;
-  contain-intrinsic-size: auto 600px auto 191px;
+  /* 192px = measured average card height with 3-line summaries (184-224
+     range). The closer this reservation sits to reality, the less the
+     document shifts when a row first materializes — which is what keeps
+     chip-bar jumps and scroll restore landing where they aimed. */
+  contain-intrinsic-size: auto 600px auto 192px;
 }
 
 /* TNM-MENU-01 M-5 §3.2 — a section jumped to from the chip bar must land
