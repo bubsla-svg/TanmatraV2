@@ -8,11 +8,14 @@ import {
   refundRequestsTable,
   slotReservationsTable,
   teamProfilesTable,
+  usersTable,
 } from "@workspace/db";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { z } from "zod/v4";
 import { emitDeliveryEvent } from "../lib/realtime";
 import { releaseSubsidyForOrder } from "../lib/corporateSubsidy";
+import { claimStatus, claimVerdict, type ClaimVerdict } from "../lib/orderClaim";
+import { orderClaimRateLimit } from "../middlewares/rateLimitMiddleware";
 
 const router: IRouter = Router();
 
@@ -375,6 +378,118 @@ router.post(
       cancelledByRole: meta.cancelledByRole,
       refundRequired,
     });
+  },
+);
+
+/**
+ * POST /api/orders/:externalOrderId/claim
+ *
+ * Attach an order placed as a guest (`user_id IS NULL`) to the signed-in
+ * account — plan item 2.4.
+ *
+ * Sign-in at checkout is optional, so a guest can pay end to end and never
+ * appear in `/orders/mine`, which filters strictly on `user_id`. Nothing
+ * backfilled that, so a customer who made an account afterwards — with the
+ * same number they had just typed at checkout — lost the order permanently.
+ * This is the endpoint that makes "save this to your account" a true offer
+ * instead of a signup that hands someone an empty history.
+ *
+ * AUTHORITY. The order id in the URL is a lookup key and nothing more. What
+ * authorises the transfer is the phone: the order carries the number the buyer
+ * typed, the session carries a number that was actually OTP-verified, and the
+ * claim proceeds only when those normalize to the same digits
+ * (lib/orderClaim.ts, where every branch is unit-tested).
+ *
+ * Every refusal is 403 with the reason in the body — see `claimStatus` for why
+ * the status code deliberately does not distinguish them.
+ */
+router.post(
+  "/orders/:externalOrderId/claim",
+  orderClaimRateLimit,
+  async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      res.status(401).json({ error: "unauthorized" });
+      return;
+    }
+    const externalOrderId = String(req.params.externalOrderId ?? "").trim();
+    if (!externalOrderId) {
+      res.status(400).json({ error: "missing order id" });
+      return;
+    }
+
+    // `{error, code}` is the shape every other route sends and the storefront's
+    // transport already reads (lib/apiClient.ts builds ApiError from exactly
+    // these two fields). The code IS the verdict; the sentence the customer
+    // reads is written on the storefront, keyed on it.
+    const refuse = (verdict: ClaimVerdict): void => {
+      res.status(claimStatus(verdict)).json({
+        ok: false,
+        claimed: false,
+        error: verdict,
+        code: verdict,
+      });
+    };
+
+    const [row] = await db
+      .select({
+        id: ordersTable.id,
+        userId: ordersTable.userId,
+        phone: ordersTable.phone,
+      })
+      .from(ordersTable)
+      .where(eq(ordersTable.externalOrderId, externalOrderId))
+      .limit(1);
+
+    if (!row) {
+      refuse("unknown_order");
+      return;
+    }
+
+    const [caller] = await db
+      .select({ phoneE164: usersTable.phoneE164 })
+      .from(usersTable)
+      .where(eq(usersTable.id, req.user.id))
+      .limit(1);
+
+    const verdict = claimVerdict(
+      { userId: row.userId, phone: row.phone },
+      { userId: req.user.id, phoneE164: caller?.phoneE164 ?? null },
+    );
+
+    if (verdict === "already_yours") {
+      res.json({ ok: true, claimed: false, code: verdict });
+      return;
+    }
+    if (verdict !== "claimable") {
+      // Logged because a burst of these on one session is the signature of
+      // someone walking order ids, and it is the only place that shows up.
+      req.log.info(
+        { externalOrderId, callerId: req.user.id, verdict },
+        "order claim refused",
+      );
+      refuse(verdict);
+      return;
+    }
+
+    // `isNull(userId)` inside the UPDATE, not just in the verdict above: two
+    // claims racing on the same guest order would both read `user_id = NULL`
+    // and both pass the check, and the second would silently overwrite the
+    // first owner. Postgres serialises the guarded write, so the loser updates
+    // zero rows and re-reads the truth instead of reporting a claim it did not
+    // make.
+    const updated = await db
+      .update(ordersTable)
+      .set({ userId: req.user.id })
+      .where(and(eq(ordersTable.id, row.id), isNull(ordersTable.userId)))
+      .returning({ id: ordersTable.id });
+
+    if (updated.length === 0) {
+      refuse("owned_by_other");
+      return;
+    }
+
+    req.log.info({ externalOrderId, orderId: row.id, callerId: req.user.id }, "guest order claimed");
+    res.json({ ok: true, claimed: true, code: "claimable" });
   },
 );
 

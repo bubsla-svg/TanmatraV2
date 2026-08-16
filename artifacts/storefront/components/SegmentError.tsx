@@ -6,7 +6,8 @@
 // group's OWN layout (global chrome stays up on a /menu crash; a /checkout
 // crash stays chrome-free, matching its shell). See app/global-error.tsx for
 // the root-layout-threw case, which no group boundary can catch.
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { reportClientError, reportedCopy } from "@/lib/errorReporter";
 
 export default function SegmentError({
   error,
@@ -15,9 +16,18 @@ export default function SegmentError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  // null until the report has resolved either way — the sentence about it
+  // renders only once there is a true answer, rather than claiming one and
+  // correcting itself a moment later.
+  const [reported, setReported] = useState<boolean | null>(null);
   useEffect(() => {
-    if (!process.env.NEXT_PUBLIC_SENTRY_DSN) return;
-    import("@sentry/nextjs").then((Sentry) => Sentry.captureException(error));
+    let live = true;
+    void reportClientError(error).then((sent) => {
+      if (live) setReported(sent);
+    });
+    return () => {
+      live = false;
+    };
   }, [error]);
 
   return (
@@ -30,6 +40,9 @@ export default function SegmentError({
         Try again, or head back to the menu. If you were paying, check your order history before
         retrying — the charge status is unaffected by this screen either way.
       </p>
+      {reported !== null && (
+        <p className="text-xs text-ink-faint">{reportedCopy(reported)}</p>
+      )}
       <div className="mt-2 flex flex-wrap justify-center gap-3">
         <button
           type="button"

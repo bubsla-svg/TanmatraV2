@@ -217,6 +217,16 @@ jobs:
         if: ${{ !cancelled() }}
         run: pnpm --filter @workspace/storefront run lint:stitch-markers
 
+      # An undeclared custom property is invalid at computed-value time: the
+      # browser drops the declaration and the styling silently does not happen
+      # — no warning, no build error, and a diff that reads as correct. This
+      # repo has already paid for it once (globals.css records five routes
+      # rendering with no gutter because `--spacing-gutter` was never
+      # registered), and it was found by grepping the built stylesheet.
+      - name: CSS vars — every custom property used is actually declared
+        if: ${{ !cancelled() }}
+        run: pnpm --filter @workspace/storefront run lint:css-vars
+
       # ---------------------------------------------------------------------
       # PERFORMANCE BASELINE — DELIBERATELY NON-BLOCKING. DO NOT FLIP YET.
       # ---------------------------------------------------------------------

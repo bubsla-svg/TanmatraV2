@@ -228,6 +228,35 @@ export async function paymentRouteRateLimit(
   await paymentRateLimit(req, res, next);
 }
 
+/**
+ * Guest-order claim (POST /orders/:externalOrderId/claim).
+ *
+ * Its own bucket, and a tight one, because this is the one customer endpoint
+ * where an order id taken from a URL can move ownership of a paid order. The
+ * phone match is what authorises the transfer; this is the second wall — it
+ * makes walking a list of ids expensive even for a signed-in caller, and it is
+ * keyed per SESSION rather than per IP so an attacker cannot buy more attempts
+ * by changing networks. Signed-out callers are rejected before any query runs,
+ * so the IP fallback only ever covers those.
+ */
+export const orderClaimRateLimit = rateLimitMiddleware("orders:claim", 10, 60_000, {
+  key: (req: Request) => (req.isAuthenticated?.() ? `user:${req.user.id}` : `ip:${clientIp(req)}`),
+  code: "ORDER_CLAIM_RATE_LIMITED",
+});
+
+/**
+ * Client error beacons (POST /api/v1/error-reports).
+ *
+ * Unauthenticated by necessity — a beacon fires from a page that has just
+ * crashed, often with no session — so the IP bucket is the only handle there
+ * is. Generous enough that a genuinely broken deploy still reports (a customer
+ * hitting one bad route repeatedly is the case this exists to capture), tight
+ * enough that a loop cannot turn one client into an unbounded log bill.
+ */
+export const errorReportRateLimit = rateLimitMiddleware("client:error-report", 30, 60_000, {
+  code: "ERROR_REPORT_RATE_LIMITED",
+});
+
 /** Admin moderation actions — prevents enumeration via compromised token. */
 export const adminModerationRateLimit = rateLimitMiddleware("admin:moderation", 60, 60_000);
 

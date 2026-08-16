@@ -12,7 +12,8 @@ import "@astryxdesign/core/astryx.css";
 import "@/lib/themes/tanmatra.css";
 import "@/lib/themes/tanmatraBridge.css";
 import "./globals.css";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { reportClientError, reportedCopy } from "@/lib/errorReporter";
 
 export default function GlobalError({
   error,
@@ -21,9 +22,15 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const [reported, setReported] = useState<boolean | null>(null);
   useEffect(() => {
-    if (!process.env.NEXT_PUBLIC_SENTRY_DSN) return;
-    import("@sentry/nextjs").then((Sentry) => Sentry.captureException(error));
+    let live = true;
+    void reportClientError(error).then((sent) => {
+      if (live) setReported(sent);
+    });
+    return () => {
+      live = false;
+    };
   }, [error]);
 
   return (
@@ -33,9 +40,11 @@ export default function GlobalError({
           Tanmatra hit a snag loading this page
         </h1>
         <p className="max-w-md text-sm text-ink-muted">
-          Try reloading — if it keeps happening, the issue is on our end and we&rsquo;ve been
-          notified.
+          Try reloading — if it keeps happening, the issue is on our end.
         </p>
+        {reported !== null && (
+          <p className="max-w-md text-xs text-ink-faint">{reportedCopy(reported)}</p>
+        )}
         <button
           type="button"
           onClick={reset}
