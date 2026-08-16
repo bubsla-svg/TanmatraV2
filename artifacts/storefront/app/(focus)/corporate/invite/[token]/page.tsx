@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { CompanyInvite } from "@/components/corporate/CompanyInvite";
-import { FocusHeader } from "@/components/FocusHeader";
 
 interface PageProps {
   params: Promise<{ token: string }>;
@@ -28,7 +27,6 @@ export default async function CorporateInvitePage({ params }: PageProps) {
       data-screen-state="default"
       className="mx-auto max-w-md px-4 py-12"
     >
-      <FocusHeader backLabel="Back" />
       <CompanyInvite token={token} />
     </section>
   );

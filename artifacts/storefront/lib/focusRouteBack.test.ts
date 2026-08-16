@@ -47,7 +47,14 @@ function focusRoutes(): { label: string; file: string }[] {
 
 /**
  * A back affordance is a RENDERED FocusHeader, or a hand-rolled equivalent:
- * an explicit router.back(), or a link whose label says where it goes.
+ * an explicit router.back(), a link whose label says where it goes, or a plain
+ * button labelled "Back".
+ *
+ * That last form was missing from the first draft, and the omission cost a CI
+ * round: it reported /quick-setup and /corporate/invite as dead ends when both
+ * already had a Back inside a child component, so a duplicate FocusHeader went
+ * in and two specs hit a strict-mode violation on `getByRole("button",
+ * { name: "Back" })` resolving to two elements.
  * Deliberately permissive about which — the point is that an exit exists, not
  * that one component is mandatory.
  *
@@ -56,7 +63,7 @@ function focusRoutes(): { label: string; file: string }[] {
  * passed. The first draft of this rule did exactly that, and the revert check
  * that was supposed to prove the rule caught nothing.
  */
-const BACK = /<FocusHeader|router\.back\(\)|Back to |aria-label="Back"/;
+const BACK = /<FocusHeader|router\.back\(\)|Back to |aria-label="Back"|>\s*Back\s*</;
 
 /**
  * Component files a page pulls from @/components, resolved best-effort.
