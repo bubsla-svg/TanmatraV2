@@ -40,6 +40,37 @@ function describeBlockReason(reason: WireBlockReason): string | null {
   }
 }
 
+/**
+ * The next action to offer when a failure has no bespoke copy.
+ *
+ * Derived from the same predicate that decides whether the UI shows a "Retry
+ * pricing" button, so sentence and button can never disagree — telling someone
+ * to try again beside a screen offering no retry is its own dead end (Law 9).
+ */
+function fallbackNextStep(e: ApiError): string {
+  return isRetryableQuoteError(e)
+    ? "Try again in a moment."
+    : "Adjust the items below to continue.";
+}
+
+/**
+ * Whether a server message can be shown to a customer as-is.
+ *
+ * Server strings are written for developers unless proven otherwise. A bare
+ * code (`safety_block`), a two-word internal label ("Safety block"), or
+ * anything carrying snake_case is machine vocabulary. Showing it is the Law 6
+ * failure this module was created to stop, and it names no next action — the
+ * Law 9 half of the same bug. Prose with real sentence punctuation is assumed
+ * deliberate and kept, because some routes do write customer copy.
+ */
+function isCustomerReadable(message: string): boolean {
+  const trimmed = message.trim();
+  if (trimmed.length === 0) return false;
+  if (/_/.test(trimmed)) return false; // snake_case anywhere ⇒ machine string
+  if (!/[.!?]$/.test(trimmed)) return false; // no sentence punctuation ⇒ a label
+  return trimmed.split(/\s+/).length >= 4; // "Safety block." is still a label
+}
+
 /** Turn a quote/create failure into copy a customer can act on. */
 export function humanizeOrderError(e: unknown): string {
   if (e instanceof ApiError) {
@@ -65,11 +96,22 @@ export function humanizeOrderError(e: unknown): string {
       return `We can't sell this order as-is: ${why}. Remove the affected dish below to continue.`;
     }
     if (e.code === "alc_checkout_disabled") {
-      return "Single-order checkout is temporarily paused — plans are still available. Please try again shortly.";
+      return "Single-order checkout is temporarily paused — plans are still available. Try again shortly, or switch to a plan below.";
     }
-    return e.message;
+    // No bespoke case. The old behaviour returned e.message verbatim, which is
+    // exactly the defect this module's header describes — "Safety block" reached
+    // customers that way — just narrowed to whichever code nobody has mapped
+    // yet. Keep genuine server prose, drop machine strings, and end with an
+    // action either way so no failure is a dead end (Law 9).
+    const detail = isCustomerReadable(e.message)
+      ? e.message.trim()
+      : "We couldn't price this order just now.";
+    return `${detail} ${fallbackNextStep(e)}`;
   }
-  return "Something went wrong. Please try again.";
+  // Not an ApiError: a network drop or a thrown non-Error. The cart survives —
+  // say so, because "something went wrong" on a payment screen reads as "did I
+  // just get charged?".
+  return "Something went wrong on our side — your order was not placed and your cart is safe. Try again in a moment.";
 }
 
 /** True when retrying the identical request could plausibly succeed (network
