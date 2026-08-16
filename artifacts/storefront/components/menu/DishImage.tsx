@@ -26,8 +26,14 @@ import { DishFallbackTile } from "@/components/menu/DishFallbackTile";
  * It used to say the platform serves no dish photography at all, every
  * `image` path resolving to the legacy SPA shell (HTTP 200,
  * `content-type: text/html`) that the browser reports as a load error. That
- * WAS true when written. It is not true now: `/api/menu/public` serves real
- * `https://images.unsplash.com/...` URLs, and they load.
+ * WAS true when written. It is not true now: `/api/menu/public` serves
+ * remote Unsplash stock URLs, and they load.
+ *
+ * Worth naming plainly: that host is on `BANNED_HOSTS` in
+ * scripts/lint-placeholder-assets.ts, whose own note calls it "someone
+ * else's photo of someone else's food". The gate scans SOURCE, so it cannot
+ * see a placeholder that arrives from the database at request time — the
+ * live catalogue is shipping exactly what this repo forbids in code.
  *
  * So the tile is no longer the common case — it is the SLOW case, reached
  * through `ImgWithFallback`'s 8s stall timeout when a remote photo hangs.
