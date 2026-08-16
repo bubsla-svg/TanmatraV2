@@ -15,14 +15,27 @@ export const metadata: Metadata = {
 
 type TrialTrack = "veg" | "nonveg";
 
-/** Resolve a track's fixed slug trio against the live menu (name + image for
- *  the preview). Missing slugs are dropped, not faked — the price stays the
- *  spine's regardless. */
+/** Resolve a track's fixed slug trio against the live menu (name, image and the
+ *  dish's own macros for the preview). Missing slugs are dropped, not faked —
+ *  the price stays the spine's regardless. */
 function resolveTrio(track: TrialTrack, dishes: DishData[]): TrioDish[] {
   return TRIAL_TRIO[track]
     .map((slug) => findDish(slug, dishes))
     .filter((d): d is DishData => Boolean(d))
-    .map((d) => ({ slug: d.slug, name: d.name, image: d.image }));
+    .map((d) => ({
+      slug: d.slug,
+      name: d.name,
+      image: d.image,
+      // Law 8. A placeholder bucket is omitted entirely rather than rendered
+      // as a figure — the same rule planCardDish and planOffer apply, and the
+      // trio is exactly the sort of claim a sceptical buyer checks.
+      ...(d.macrosProvisional === true
+        ? {}
+        : {
+            macros: { calories: d.macros.calories, protein: d.macros.protein },
+            macrosEstimated: d.macrosEstimated === true,
+          }),
+    }));
 }
 
 /**
