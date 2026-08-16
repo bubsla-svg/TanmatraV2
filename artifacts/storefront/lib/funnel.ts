@@ -39,7 +39,14 @@ export type FunnelEvent =
   // very different problems that look identical in a funnel without it.
   | "view_dish"
   | "plan_toggle"
-  | "subscribe_cta_click";
+  | "subscribe_cta_click"
+  // ── Guest → account (plan item 2.4) ───────────────────────────────────────
+  // The offer is counted separately from the claim because the ratio is the
+  // interesting number. A low claim count could mean the prompt is being
+  // ignored, or that almost nobody reaches the confirmation screen as a guest
+  // in the first place — opposite problems that look identical without both.
+  | "order_claim_offered"
+  | "order_claimed";
 
 /**
  * A stable, groupable cause for `payment_failed`.

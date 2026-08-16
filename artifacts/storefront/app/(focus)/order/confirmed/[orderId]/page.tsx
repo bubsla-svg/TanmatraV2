@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { fetchOrderStatus, statusLabel, statusTone, TRACKABLE_STATUSES } from "@/lib/orderStatus";
 import { PlanPerks } from "@/components/order/PlanPerks";
 import { ThankYouRecommendations } from "@/components/order/ThankYouRecommendations";
+import { ClaimOrder } from "@/components/order/ClaimOrder";
 
 /** Tone → status-label colour — same mapping as route-12's OrderRow, so a
  *  customer landing here straight from checkout and later revisiting via
@@ -140,6 +141,12 @@ export default async function ConfirmedPage({
             border-top rule, so this wrapper only adds the gap beneath the hero. */}
         <div className="mt-10">
           <PlanPerks orderId={orderId} />
+          {/* Above the recommendations on purpose: keeping the order is about
+              the order they just placed, and it stops being offerable the
+              moment they navigate away to a suggestion. Renders nothing at all
+              for a customer who signed in during checkout — the order is
+              already theirs. */}
+          <ClaimOrder orderId={orderId} />
           <ThankYouRecommendations />
         </div>
       </section>
