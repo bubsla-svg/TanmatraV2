@@ -16,6 +16,7 @@ import { usePlanQuote } from "@/lib/usePlanQuote";
 import { getAddresses, type Address, type AuthUser, type AddOnId, type DietTrack, type PlanCadence } from "@/lib/api";
 import { humanizeOrderError } from "@/lib/orderErrors";
 import { PlanIdentityGate } from "./PlanIdentityGate";
+import { PlanServiceabilityGate } from "./PlanServiceabilityGate";
 import { PlanDetails, type PlanDetailsValue } from "./PlanDetails";
 import { UnresolvedPaymentPanel } from "../UnresolvedPaymentPanel";
 
@@ -74,6 +75,10 @@ export function PlanCheckout({
     billedCadence,
   );
   const [savedAddress, setSavedAddress] = useState<Address | null>(null);
+  // Laws 1 + 7: the PIN is answered before any personal field. Null means the
+  // gate has not cleared yet — nothing that asks for identity, allergies or
+  // medical conditions may render while it is null.
+  const [servicePincode, setServicePincode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // "Opening payment…" vs "Confirming your payment…" — see handlePay's
   // onVerifying. Money is captured the instant the modal resolves; a slow
@@ -213,6 +218,20 @@ export function PlanCheckout({
     }
   }
 
+  // Serviceability first — ahead of the identity gate, not after it. This
+  // ordering IS the fix: the gate below asks for a phone number, and the step
+  // after it asks for allergies and medical conditions, so anything that runs
+  // before this line collects personal data from someone we may not be able to
+  // deliver to at all.
+  if (servicePincode === null) {
+    return (
+      <div className="flex flex-col gap-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{planName}</h1>
+        <PlanServiceabilityGate onServiceable={setServicePincode} />
+      </div>
+    );
+  }
+
   if (!user) {
     return <PlanIdentityGate planName={planName} recap={recap} onVerified={onVerified} />;
   }
@@ -234,7 +253,10 @@ export function PlanCheckout({
         onRetryQuote={retryQuote}
         addOnLine={quote?.addOnLine ?? null}
         creditAppliedPaise={quote?.creditAppliedPaise ?? 0}
-        initialAddress={savedAddress}
+        // Law 4 (never ask twice): the PIN cleared by the gate above seeds the
+        // address step, so the same six digits are not requested a second
+        // time. A saved address still wins — it is the more complete answer.
+        initialAddress={savedAddress ?? { line1: "", city: "", pincode: servicePincode }}
         finePrint={finePrint}
         busy={busy}
         verifying={verifying}
