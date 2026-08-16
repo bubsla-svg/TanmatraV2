@@ -13,6 +13,9 @@ import { ingredientSummary } from "@/lib/dishText";
 import { PdpBuyLedger } from "@/components/menu/PdpBuyLedger";
 import { FallbackMenuBanner } from "@/components/menu/FallbackMenuBanner";
 import { DishAllergens } from "@/components/menu/DishAllergens";
+import { DishPlanToggle } from "@/components/menu/DishPlanToggle";
+import { ViewDishBeacon } from "@/components/menu/ViewDishBeacon";
+import { dishPlanOffer } from "@/lib/dishPlanOffer";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
@@ -76,6 +79,11 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
   const dish = findDish(resolvedParams.slug, dishes);
   if (!dish) notFound();
 
+  // Resolved server-side: the rotation comes off the catalog this page already
+  // loaded, and the price is the spine's. Null when no bookable plan carries
+  // the dish, which is the common case.
+  const planOffer = dishPlanOffer(dish.slug, dishes);
+
 
   return (
     // pb-32 (128px), not pb-24: the sticky ledger card measures ~90px plus
@@ -93,6 +101,7 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
       data-screen-state="default"
       className="flex min-h-dvh flex-col bg-bg pb-32"
     >
+      <ViewDishBeacon dishSlug={dish.slug} hasPlanOption={planOffer !== null} />
       <div className="relative aspect-square w-full overflow-hidden md:aspect-video">
         <SafeImage src={dish.image} alt={dish.name} className="h-full w-full" />
         {/* The focus shell renders no Header, and FocusLayout's contract is
@@ -184,6 +193,16 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
               states must stay visible — an unreviewed list must never read as
               an affirmative "no allergens". Mirrors DishDrawer.tsx. */}
           <DishAllergens dish={dish} />
+
+          {/* Plan item 1.1. Rendered only when a BOOKABLE plan actually rotates
+              this dish — null for 60 of 116, and a toggle offering a plan that
+              never serves the dish would be worse than no toggle. It does not
+              add a second money CTA: the sticky ledger below stays the
+              one-time buy, per this file's own note on the template's dropped
+              "Buy it now". */}
+          {planOffer && (
+            <DishPlanToggle offer={planOffer} dishSlug={dish.slug} dishPricePaise={dish.price} />
+          )}
         </VStack>
 
         {/* N5.6: the float is the design; the 16px band beneath it is masked
