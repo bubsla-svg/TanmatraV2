@@ -39,7 +39,23 @@ export type FunnelEvent =
   // very different problems that look identical in a funnel without it.
   | "view_dish"
   | "plan_toggle"
-  | "subscribe_cta_click";
+  | "subscribe_cta_click"
+  // ── Retention (plan item 2.2) ─────────────────────────────────────────────
+  // The account surface emitted NOTHING — `emitFunnel` appeared nowhere under
+  // components/account. So a plan could be paused, skipped or cancelled and
+  // the scoreboard showed only that it was created.
+  //
+  // The inverses are not padding. A pause counted without its resume cannot
+  // tell a holiday from churn, and a skip counted without its restore reads as
+  // dissatisfaction when it was a Tuesday meeting. Counting only the negative
+  // half of a reversible action is how a retention number becomes alarming and
+  // wrong at the same time.
+  | "subscription_skipped"
+  | "subscription_unskipped"
+  | "subscription_paused"
+  | "subscription_resumed"
+  | "subscription_rescheduled"
+  | "subscription_cancelled";
 
 /**
  * A stable, groupable cause for `payment_failed`.
