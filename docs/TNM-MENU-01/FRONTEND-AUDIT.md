@@ -121,17 +121,63 @@ cannot resolve the `./pricing.js` / `./planCatalog.js` ESM specifiers in
 script is `next build --webpack`, which works, so CI is unaffected. Anyone
 running the bare command hits a wall that looks like a broken workspace.
 
+## Re-run after PR #64 (`/menu` title + search removal)
+
+Everything above was measured before #64 merged. That change removed the
+`/menu` H1, the dish-count trust strip and the inline search box, and gave
+the diet chips `min-h-9` — so the numbers this document reports for `/menu`
+went stale about an hour after they were taken. Re-run against merged `main`
+plus this harness, same instrument, same 9 routes, same Pixel 7 viewport:
+
+| | before #64 | after #64 |
+|---|---:|---:|
+| findings | 39 | **37** |
+| **WCAG 2.2 AA failures** | 5 | **5** (identical set) |
+| tap targets in the 24–44px band | 31 | **29** |
+| trailing void | 1 (`/cart`, 568px) | **1** (`/cart`, 568px) |
+| CTA stacking | 2 | 2 |
+| **permanently occluded controls** | 0 | **0** |
+| **collapsed image boxes** | 0 | **0** |
+
+**The two hard-gate classes stayed at zero, and the AA failure set did not
+change** — same five controls, same sizes. #64 introduced no layering or
+conformance regression, which is the question worth asking of a chrome change
+that shipped straight to `main`.
+
+The band dropped by two because the inline search input left the measured set
+and the diet chips grew. The chips are no longer `60×30` as reported above —
+they now measure `55×36`, `61×36` and `82×36`. They are still under the 44px
+comfort floor, so they remain band findings; the "three global-chrome fixes
+clear 20 of them" arithmetic also survives, now as **20 of 29** (header logo
+74×28 ×7, header search 36×28 ×7, diet chips ×6).
+
+One number moved the wrong way: the dish drawer now reports **6** stacked CTAs
+rather than the "Add + Open full page" pair described above, because removing
+~90px of `/menu` chrome pulls more dish cards into the viewport behind the
+open drawer. That is a consequence of the density win, not a defect in the
+drawer.
+
+The sub-threshold per-route trailing gaps quoted earlier (`/menu` 181px, `/`
+293px, `/faq` 193px, `/plans` 160px) were **not** re-measured — they sit below
+the probe's reporting threshold, and an ad-hoc re-measurement returned a
+figure that disagreed with the probe's own computation, so it is not recorded
+here rather than published unverified. The probe's own trailing-void finding
+(`/cart`, 568px) is unchanged.
+
 ## Running it
 
 ```bash
 pnpm --filter @workspace/storefront run build
 pnpm --filter @workspace/storefront exec next start -p 3111 &
-E2E_BASE_URL=http://localhost:3111 pnpm exec playwright test \
+RUN_FRONTEND_AUDIT=1 E2E_BASE_URL=http://localhost:3111 pnpm exec playwright test \
   --config artifacts/storefront/e2e/playwright.config.ts \
   --project=mobile frontend-audit
 node --experimental-strip-types \
   artifacts/storefront/e2e/support/audit/render-report.ts
 ```
+
+`RUN_FRONTEND_AUDIT=1` is required — without it every route skips. See the
+opt-in note in `frontend-audit.spec.ts` for why this is not a standing gate.
 
 `occlusion` and `image-collapse` fail the run. Everything else is written to
 `e2e/audit-report/report.md` for triage — deliberately, so the gate stays
