@@ -137,7 +137,7 @@ export function CartDrawer({
                       existed). "~" prefix matches DishCard/PDP's own convention. */}
                   {l.macros && (
                     <p className="tabular text-xs text-ink-faint">
-                      {formatMacroLine(l.macros, l.macros.estimated)}
+                      {formatMacroLine(l.macros, l.macros.estimated, l.macros.provisional)}
                     </p>
                   )}
                 </div>

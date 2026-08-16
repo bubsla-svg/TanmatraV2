@@ -33,6 +33,17 @@ export interface CartLineMacros {
   /** Mirrors DishData.macrosEstimated — the UI labels an estimated figure
    *  with "~", the same convention DishCard/the PDP already use. */
   estimated?: boolean;
+  /**
+   * Mirrors DishData.macrosProvisional — the numbers are a placeholder bucket,
+   * not a measurement of this dish, so the line shows "being verified" instead
+   * of them.
+   *
+   * Captured at add-time like the rest of this snapshot. Without it the cart
+   * and the checkout review re-assert figures the menu itself had already
+   * stopped asserting — the last two screens before payment being the worst
+   * place to reintroduce a number nothing stands behind.
+   */
+  provisional?: boolean;
 }
 
 export interface CartLine {
@@ -169,7 +180,10 @@ function isValidMacros(x: unknown): x is CartLineMacros {
     m.calories >= 0 &&
     typeof m.protein === "number" &&
     m.protein >= 0 &&
-    (m.estimated === undefined || typeof m.estimated === "boolean")
+    (m.estimated === undefined || typeof m.estimated === "boolean") &&
+    // Same present-but-malformed policy as `estimated`. A cart written before
+    // this field existed simply omits it and still parses.
+    (m.provisional === undefined || typeof m.provisional === "boolean")
   );
 }
 

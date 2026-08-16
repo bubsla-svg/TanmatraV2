@@ -17,13 +17,14 @@ const CartDrawer = dynamic(
   { ssr: false },
 );
 
-// isAvailable, macros and macrosEstimated all optional — see AddToCart.tsx's
-// identical Dish type for the rationale (D-19 availability, D-14 best-effort
-// macro capture).
+// isAvailable, macros and the two provenance flags all optional — see
+// AddToCart.tsx's identical Dish type for the rationale (D-19 availability,
+// D-14 best-effort macro capture).
 type Dish = Pick<DishData, "id" | "slug" | "name" | "price"> & {
   isAvailable?: boolean;
   macros?: DishMacros;
   macrosEstimated?: boolean;
+  macrosProvisional?: boolean;
 };
 const GROUP_CODE = /^[0-9A-Za-z]{6,8}$/;
 
@@ -122,7 +123,7 @@ function LocalLedger({ dish }: { dish: Dish }) {
                     pricePaise: dish.price,
                     // D-14: same figures the PDP's own macro strip already shows.
                     ...(dish.macros
-                      ? { macros: { calories: dish.macros.calories, protein: dish.macros.protein, estimated: dish.macrosEstimated } }
+                      ? { macros: { calories: dish.macros.calories, protein: dish.macros.protein, estimated: dish.macrosEstimated, provisional: dish.macrosProvisional } }
                       : {}),
                   },
                   { isAvailable: dish.isAvailable },
