@@ -1,0 +1,161 @@
+# TNM BOM adoption — report, plan and (explicitly) apply dish_bom_components.
+#
+# WHY A WORKFLOW: same reasons as menu-catalog-v2.yml, whose auth path this
+# mirrors step for step (service-account identity, Cloud SQL Auth Proxy,
+# Secret Manager, immutable run log, plan printed BEFORE any write). The BOM
+# feeds real-time inventory depletion, the 4 AM prep brief, PO drafting and
+# the wholesale-spike margin guardrail — production mutations, so they get the
+# production mutation vehicle.
+#
+# THE DEFAULT RUN WRITES NOTHING. It answers the two Phase 0 questions from
+# docs/TNM-MENU-01/PANTS-INTEGRATION-PLAN.md — how many BOM rows exist in
+# production (if zero, four shipped engines are silent no-ops), and how far
+# the F-1 catalog macros propagated into recipes.calories_kcal — then prints
+# the full backfill plan as an artifact.
+#
+# SAFETY MODEL, in the order it applies:
+#   1. Report + plan by default. `apply` is a separate, explicit input.
+#   2. The engine only plans dishes whose EVERY ingredient line resolves
+#      through a mapping row a human flipped to `accepted` in
+#      scripts/data/bom-ingredient-map.csv (see scripts/src/bom-backfill.ts).
+#      The `--assume-accepted` preview cannot reach apply — the script
+#      refuses the combination at argv parse.
+#   3. Slug fence: sheet dishes that join no catalog dish are BLOCKED, never
+#      given an invented slug.
+#   4. Apply touches only the slugs it plans, writes a pre-change backup of
+#      every touched row (uploaded as an artifact, retained 90 days), and
+#      re-plans afterwards asserting convergence to zero actions.
+#
+# OPERATIONAL RULE (see docs/TNM-MENU-01/BOM-ADOPTION.md, blocker 8):
+# seed-ops-data.ts reseeds inventory_items by DELETE + INSERT, and
+# dish_bom_components.inventory_item_id is ON DELETE CASCADE — a reseed
+# silently wipes the BOM. After any seed-ops-data --apply, re-run THIS
+# workflow with apply=true.
+name: BOM backfill (report / plan / apply)
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "WRITE to the database. Leave false for report + plan only."
+        type: boolean
+        default: false
+
+concurrency:
+  group: bom-backfill-apply
+  cancel-in-progress: false
+
+jobs:
+  report-plan-apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GCP_PROJECT: brand-tanmatra-tmg
+      SQL_INSTANCE: brand-tanmatra-tmg:asia-south2:brand-tanmatra-db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+
+      # The plan engine is pure and DB-free; if its own contract is broken
+      # there is no point reaching for production at all.
+      - name: Plan-engine unit tests
+        working-directory: scripts
+        run: pnpm run test:bom-backfill
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Start Cloud SQL Auth Proxy
+        run: |
+          curl -sfL -o cloud-sql-proxy \
+            https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.14.2/cloud-sql-proxy.linux.amd64
+          chmod +x cloud-sql-proxy
+          ./cloud-sql-proxy --credentials-file "$GOOGLE_APPLICATION_CREDENTIALS" \
+            --address 127.0.0.1 --port 5433 "$SQL_INSTANCE" &
+          for i in $(seq 1 20); do
+            (echo > /dev/tcp/127.0.0.1/5433) 2>/dev/null && { echo "proxy up"; exit 0; }
+            sleep 1
+          done
+          echo "cloud-sql-proxy never came up — check the deploy SA has roles/cloudsql.client"; exit 1
+
+      # Identical rewrite to deploy.yml's migrate-db step — see the comments
+      # there for why the userinfo is passed through verbatim and why
+      # sslmode/host are stripped.
+      - name: Resolve DATABASE_URL through the proxy
+        run: |
+          RAW=$(gcloud secrets versions access latest \
+            --secret=brand-tanmatra-database-url --project "$GCP_PROJECT") || {
+            echo "cannot read secret brand-tanmatra-database-url — grant the deploy SA roles/secretmanager.secretAccessor"; exit 1; }
+          echo "::add-mask::$RAW"
+          URL=$(python3 - "$RAW" <<'EOF'
+          import sys, urllib.parse as u
+          raw = sys.argv[1]
+          p = u.urlsplit(raw)
+          q = dict(u.parse_qsl(p.query))
+          q.pop("host", None)
+          q.pop("sslmode", None)
+          q.pop("ssl", None)
+          auth = p.netloc.rsplit("@", 1)[0] + "@" if "@" in p.netloc else ""
+          query = ("?" + u.urlencode(q)) if q else ""
+          print(f"{p.scheme}://{auth}127.0.0.1:5433{p.path}{query}")
+          EOF
+          )
+          echo "::add-mask::$URL"
+          echo "DATABASE_URL=$URL" >> "$GITHUB_ENV"
+
+      # Blocker 7's answer, on every run, before anything else.
+      - name: Production BOM report (read-only)
+        shell: bash
+        run: |
+          set -o pipefail
+          cd scripts
+          pnpm run bom-backfill -- --report | tee ../bom-report.txt
+
+      # `pipefail` is load-bearing — see menu-catalog-v2.yml's comment: without
+      # it tee's exit status masks a crashed plan, and Apply's implicit
+      # success() requirement would run against unknown state.
+      - name: Plan (read-only)
+        shell: bash
+        run: |
+          set -o pipefail
+          cd scripts
+          pnpm run bom-backfill -- --md ../bom-plan.md | tee ../bom-plan.txt
+
+      - name: Upload report + plan
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bom-plan-${{ github.run_number }}
+          path: |
+            bom-report.txt
+            bom-plan.txt
+            bom-plan.md
+          retention-days: 90
+
+      - name: Apply
+        if: ${{ inputs.apply }}
+        shell: bash
+        run: |
+          set -o pipefail
+          cd scripts
+          pnpm run bom-backfill -- --apply | tee ../bom-apply.txt
+
+      - name: Upload apply log + backup
+        if: ${{ inputs.apply && always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: bom-apply-${{ github.run_number }}
+          path: |
+            bom-apply.txt
+            scripts/bom-backup-*.json
+          retention-days: 90

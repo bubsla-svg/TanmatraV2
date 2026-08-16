@@ -1,4 +1,4 @@
-import type { AddOnId, CreateSubscriptionInput, DietTrack, MemberInput, PlanCadence } from "./api";
+import type { AddOnId, CreateSubscriptionInput, DietTrack, MemberDiet, MemberInput, PlanCadence } from "./api";
 
 /**
  * Pure assembly for the plan money path (SF-07). Turns the checkout-collected
@@ -9,6 +9,58 @@ import type { AddOnId, CreateSubscriptionInput, DietTrack, MemberInput, PlanCade
  */
 
 export const PLAN_DELIVERY_WINDOW = "12:30–13:30";
+
+/**
+ * Weekday-only, and not by assertion: `nextWeekdayISO` below skips Saturday and
+ * Sunday when it picks a start date, so this describes what the code does.
+ */
+export const PLAN_DELIVERY_DAYS_LABEL = "Weekdays, Monday to Friday";
+
+function to12Hour(hhmm: string): { time: string; suffix: "am" | "pm" } {
+  const [rawH = "0", rawM = "00"] = hhmm.trim().split(":");
+  const h = Number(rawH);
+  const suffix = h >= 12 ? "pm" : "am";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return { time: `${h12}:${rawM}`, suffix };
+}
+
+/**
+ * The delivery window in the 12-hour form customers read, DERIVED from the same
+ * constant `buildSubscriptionInput` books the delivery with.
+ *
+ * Three surfaces had hand-typed "12:30–1:30" beside a constant reading
+ * "12:30–13:30". They agreed by luck. Deriving it means a change to the booked
+ * window cannot leave a promise behind that we no longer keep.
+ */
+export const PLAN_DELIVERY_WINDOW_LABEL = (() => {
+  const [from = "", to = ""] = PLAN_DELIVERY_WINDOW.split(/[–-]/);
+  const a = to12Hour(from);
+  const b = to12Hour(to);
+  // "12:30–1:30 pm" when both ends share a half of the day; both suffixes
+  // otherwise, since "9:30–1:30 pm" would read as a four-hour window.
+  return a.suffix === b.suffix
+    ? `${a.time}–${b.time} ${b.suffix}`
+    : `${a.time} ${a.suffix}–${b.time} ${b.suffix}`;
+})();
+
+/**
+ * The eater's diet, from the track they already chose (Law 4).
+ *
+ * The member profile carries its own `diet` and the checkout carries a `track`,
+ * and nothing kept them in step: the draft defaults to "veg", so a buyer who
+ * picked non-veg and never opened the diet select submitted a veg member beside
+ * a nonveg track. Where the select is not shown at all — the trial, which asked
+ * this on /trial already — deriving it is the only correct answer.
+ *
+ * "egg" maps to "any" rather than to either side: an eggetarian is neither
+ * strictly vegetarian nor an omnivore, and picking one would be a dietary claim
+ * we were never given.
+ */
+export function memberDietForTrack(track: DietTrack): MemberDiet {
+  if (track === "veg") return "veg";
+  if (track === "nonveg") return "nonveg";
+  return "any";
+}
 
 /** The next weekday (delivery never lands on a weekend), as YYYY-MM-DD. `from`
  *  is injectable so the mapping is testable without the clock. */

@@ -1,6 +1,6 @@
 "use client";
 // Client: drives the live plan-subscription money path end to end.
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   runCheckout,
@@ -13,8 +13,15 @@ import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter"
 import { buildSubscriptionInput, nextWeekdayISO } from "@/lib/planCheckout";
 import { stashCheckoutPerks, type CheckoutPerks } from "@/lib/postCheckout";
 import { usePlanQuote } from "@/lib/usePlanQuote";
-import { getAddresses, ApiError, type Address, type AuthUser, type AddOnId, type DietTrack, type PlanCadence } from "@/lib/api";
+import { emitFunnel, funnelErrorCode } from "@/lib/funnel";
+import { getAddresses, type Address, type AuthUser, type AddOnId, type DietTrack, type PlanCadence } from "@/lib/api";
+// humanizeOrderError, not ApiError.message: #42 replaced the raw machine string
+// with copy that names the next step. This branch predated that change.
+import { humanizeOrderError } from "@/lib/orderErrors";
+import type { PlanOffer } from "@/lib/planOffer";
 import { PlanIdentityGate } from "./PlanIdentityGate";
+import { PlanOfferPreview } from "./PlanOfferPreview";
+import { PlanServiceabilityGate } from "./PlanServiceabilityGate";
 import { PlanDetails, type PlanDetailsValue } from "./PlanDetails";
 import { UnresolvedPaymentPanel } from "../UnresolvedPaymentPanel";
 
@@ -37,6 +44,7 @@ export function PlanCheckout({
   finePrint,
   successPerks,
   recap,
+  offer,
 }: {
   planId: string;
   planName: string;
@@ -56,6 +64,11 @@ export function PlanCheckout({
   /** N5.11 — spine list quote for the sign-in gate's offer recap (host-computed
    *  server-side from computePlanQuote; never authored here). */
   recap?: { mealsPerCycle: number; cycleTotalPaise: number; cadence: string };
+  /** Laws 1 + 8 — what arrives, when, and for how much, shown above the first
+   *  ask. Host-computed server-side from the plan's own rotation and the spine
+   *  quote; nothing here is authored client-side. Optional so a host that has
+   *  not wired it renders exactly today's screen rather than an empty card. */
+  offer?: PlanOffer;
 }) {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -73,6 +86,10 @@ export function PlanCheckout({
     billedCadence,
   );
   const [savedAddress, setSavedAddress] = useState<Address | null>(null);
+  // Laws 1 + 7: the PIN is answered before any personal field. Null means the
+  // gate has not cleared yet — nothing that asks for identity, allergies or
+  // medical conditions may render while it is null.
+  const [servicePincode, setServicePincode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // "Opening payment…" vs "Confirming your payment…" — see handlePay's
   // onVerifying. Money is captured the instant the modal resolves; a slow
@@ -100,6 +117,24 @@ export function PlanCheckout({
   const [unresolved, setUnresolved] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(false);
 
+  // begin_checkout, once, at the moment this becomes a priced purchase screen:
+  // identity established and the server quote landed. Firing on mount would
+  // count everyone who merely opened /checkout, and would carry no amount —
+  // an event with no total is not a usable denominator for the payment events.
+  // (Once the serviceability gate lands it sits BEFORE identity, so gating on
+  // `user` keeps this after it without naming it.)
+  const beganRef = useRef(false);
+  useEffect(() => {
+    if (beganRef.current || !user || !quote) return;
+    beganRef.current = true;
+    emitFunnel("begin_checkout", {
+      total_paise: quote.payableTotalPaise,
+      has_plan: true,
+      plan_id: planId,
+      cadence: billedCadence,
+    });
+  }, [user, quote, planId, billedCadence]);
+
   function onVerified(u: AuthUser) {
     setUser(u);
     void getAddresses()
@@ -123,6 +158,21 @@ export function PlanCheckout({
       creditAppliedPaise: createdRef.current?.creditAppliedPaise,
       ...successPerks,
     });
+    emitFunnel("checkout_complete", {
+      order_id: result.orderId,
+      method: "razorpay",
+      has_plan: true,
+      plan_id: planId,
+      ...(quote ? { total_paise: quote.payableTotalPaise } : {}),
+    });
+    // Distinct from checkout_complete on purpose: an à-la-carte order completes
+    // a checkout and creates no subscription, so counting "plans started" off
+    // the completion event would overcount every dish order.
+    emitFunnel("subscription_created", {
+      plan_id: planId,
+      cadence: billedCadence,
+      ...(createdRef.current?.subscriptionId ? { subscription_id: createdRef.current.subscriptionId } : {}),
+    });
     router.push(`/order/confirmed/${encodeURIComponent(result.orderId)}`);
   }
 
@@ -130,6 +180,9 @@ export function PlanCheckout({
     if (!user || !quote) return;
     setError(null);
     setBusy(true);
+    // The server quote, which is also what bills. `quote` is non-null by the
+    // guard above, so this never reports a plan purchase as costing nothing.
+    emitFunnel("payment_opened", { method: "razorpay", total_paise: quote.payableTotalPaise, plan_id: planId });
     const phone = user.phoneE164 ?? "";
     const adapter = createRazorpayAdapter({ name: "Tanmatra", description: `${planName} plan`, contact: phone });
     try {
@@ -182,10 +235,23 @@ export function PlanCheckout({
         setVerifying(false);
         return;
       }
+      // A dismissal is the customer changing their mind, not a gateway fault —
+      // counting them together would read as a broken payment rail.
+      emitFunnel("payment_failed", {
+        error_code: e instanceof RazorpayDismissed ? "dismissed" : funnelErrorCode(e),
+        has_plan: true,
+        plan_id: planId,
+      });
       if (e instanceof RazorpayDismissed) {
         setError("Payment cancelled — you haven't been charged. Tap Continue to try again.");
       } else {
-        setError(e instanceof ApiError ? e.message : "Something went wrong. Please try again.");
+        // Through the humanizer, exactly as AlacarteCheckout does. This branch
+        // used to render `e.message` raw, so a plan/trial payment failure —
+        // the highest-stakes screen in the funnel — showed the server's own
+        // string with no next action, while the identical failure on the
+        // à-la-carte path got real copy. Same money moment, two different
+        // answers, and the worse one on the more expensive purchase.
+        setError(humanizeOrderError(e));
       }
       setBusy(false);
       setVerifying(false);
@@ -204,6 +270,25 @@ export function PlanCheckout({
       // fall back to the normal form: that would risk reopening the modal.
       setCheckingStatus(false);
     }
+  }
+
+  // Serviceability first — ahead of the identity gate, not after it. This
+  // ordering IS the fix: the gate below asks for a phone number, and the step
+  // after it asks for allergies and medical conditions, so anything that runs
+  // before this line collects personal data from someone we may not be able to
+  // deliver to at all.
+  if (servicePincode === null) {
+    return (
+      <div className="flex flex-col gap-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{planName}</h1>
+        {/* Show first, ask second (Laws 1, 8). Above the PIN field there was the
+            plan's name and nothing else, so the first question of the whole
+            journey arrived before any of the three facts that decide whether
+            answering it is worth doing. */}
+        {offer && <PlanOfferPreview offer={offer} />}
+        <PlanServiceabilityGate onServiceable={setServicePincode} />
+      </div>
+    );
   }
 
   if (!user) {
@@ -227,8 +312,15 @@ export function PlanCheckout({
         onRetryQuote={retryQuote}
         addOnLine={quote?.addOnLine ?? null}
         creditAppliedPaise={quote?.creditAppliedPaise ?? 0}
-        initialAddress={savedAddress}
+        // Law 4 (never ask twice): the PIN cleared by the gate above seeds the
+        // address step, so the same six digits are not requested a second
+        // time. A saved address still wins — it is the more complete answer.
+        initialAddress={savedAddress ?? { line1: "", city: "", pincode: servicePincode }}
         finePrint={finePrint}
+        // Law 7: the trial is three fixed dishes bought once — it asks for
+        // nothing it cannot act on. Derived from the plan id rather than passed
+        // as another prop, so it cannot disagree with what is being bought.
+        minimalIntake={planId === "trial_3day"}
         busy={busy}
         verifying={verifying}
         error={error}

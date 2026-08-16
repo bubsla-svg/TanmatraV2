@@ -4881,6 +4881,7 @@ export {
   normalizeName,
   parseIngredientLine,
   parseLongDescription,
+  gramsFromQuantityText,
   lookup,
   computeDishMacros,
 } from "./nutritionCalc";

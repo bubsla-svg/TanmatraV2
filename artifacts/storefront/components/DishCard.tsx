@@ -68,7 +68,7 @@ function MacroChip({
     <ClinicalBadge
       variant="slate"
       className="tabular w-fit"
-      label={formatMacroLine(dish.macros, dish.macrosEstimated)}
+      label={formatMacroLine(dish.macros, dish.macrosEstimated, dish.macrosProvisional)}
     />
   );
 }

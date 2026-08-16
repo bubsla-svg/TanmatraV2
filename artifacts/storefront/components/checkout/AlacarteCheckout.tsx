@@ -17,6 +17,7 @@ import { fetchQuote, quoteIsFresh, type QuoteSnapshot } from "@/lib/quoteApi";
 // why, and what to do next — never the raw server string) plus the
 // retryable/deterministic split that keeps "Retry pricing" honest.
 import { humanizeOrderError, isRetryableQuoteError } from "@/lib/orderErrors";
+import { emitFunnel, funnelErrorCode } from "@/lib/funnel";
 import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter";
 import {
   getAddresses,
@@ -81,6 +82,12 @@ export function AlacarteCheckout() {
   const [quoteRetryable, setQuoteRetryable] = useState(true);
   const [pincode, setPincode] = useState("");
   const quoteSeq = useRef(0);
+  // begin_checkout, once per visit to this screen. Fired when the FIRST quote
+  // lands rather than on mount: before that there is no server total, and an
+  // event carrying no amount is not a usable denominator for the payment
+  // events below. Ref-guarded so a re-quote (stepper tap, PIN change) does not
+  // report a second checkout.
+  const beganRef = useRef(false);
 
   const loadQuote = useCallback(() => {
     if (dishLines.length === 0) return;
@@ -122,6 +129,18 @@ export function AlacarteCheckout() {
     // quoteKey/pinKey are the serialized deps loadQuote actually reads.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, quoteKey, pinKey]);
+
+  useEffect(() => {
+    if (beganRef.current || quoteState !== "active" || !quote) return;
+    beganRef.current = true;
+    emitFunnel("begin_checkout", {
+      total_paise: quote.payableNowPaise,
+      item_count: itemCount(dishCart),
+      has_plan: false,
+    });
+    // dishCart is derived per render; the ref is what makes this fire once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quoteState, quote]);
 
   // Flip the display to quote-expired when the advisory window closes —
   // stale prices must ask to be refreshed, not keep quietly rendering.
@@ -184,6 +203,12 @@ export function AlacarteCheckout() {
     setError(null);
     setBusy(true);
     const contact = `+91${phone.replace(/\D/g, "")}`;
+    // The server-quoted total, never a client sum: the same figure this screen
+    // rendered, so the funnel and the receipt cannot disagree. Omitted rather
+    // than zero-filled when no quote has landed — a 0 here would read as a
+    // free order in the scoreboard.
+    const totalProps: Record<string, number> = quote ? { total_paise: quote.payableNowPaise } : {};
+    emitFunnel("payment_opened", { method: "razorpay", ...totalProps });
     try {
       let result;
       if (createdOrder.current) {
@@ -227,6 +252,12 @@ export function AlacarteCheckout() {
           },
         });
       }
+      emitFunnel("checkout_complete", {
+        order_id: result.orderId,
+        method: "razorpay",
+        has_plan: false,
+        ...totalProps,
+      });
       try {
         sessionStorage.removeItem(PHONE_DRAFT_KEY);
         sessionStorage.removeItem(ADDRESS_DRAFT_KEY);
@@ -242,6 +273,14 @@ export function AlacarteCheckout() {
         setVerifying(false);
         return;
       }
+      // Dismissal is a distinct outcome from a failure — conflating them would
+      // read as a broken gateway in the scoreboard when the customer simply
+      // changed their mind. `error_code` is the server's machine code, not the
+      // humanized sentence, so the funnel groups by cause.
+      emitFunnel("payment_failed", {
+        error_code: e instanceof RazorpayDismissed ? "dismissed" : funnelErrorCode(e),
+        has_plan: false,
+      });
       if (e instanceof RazorpayDismissed) {
         setError("Payment cancelled — you haven't been charged. Tap Continue to try again.");
       } else {

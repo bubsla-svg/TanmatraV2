@@ -1,15 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { StepDots } from "./StepDots";
 import { formatPaise } from "@/lib/format";
 import { CERTAINTY } from "@/lib/checkout";
+import { PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
+import { carriedPincode } from "@/lib/serviceabilityApi";
 import { LocationPickerFlow } from "@/components/address/LocationPickerFlow";
 
 /**
  * Screen 2 — Address (02c §3). One decision: where. PIN pre-fills from the
- * serviceability gate (that gate is the live-env seam); two fields max for a
- * new address, zero for a returning user (this screen is skipped for them).
- * No slot picker — the delivery window is stated, not chosen.
+ * serviceability check; two fields max for a new address, zero for a returning
+ * user (this screen is skipped for them). No slot picker — the delivery window
+ * is stated, not chosen.
+ *
+ * That first sentence used to be a statement of intent rather than of the code:
+ * the field was seeded with "" and the stored serviceability state was never
+ * read, so the screen asked for a PIN the customer had already given (Law 4).
  */
 export function CheckoutAddress({
   step,
@@ -28,6 +34,13 @@ export function CheckoutAddress({
   const [pincode, setPincode] = useState("");
   const [line, setLine] = useState("");
   const [pickingLocation, setPickingLocation] = useState(false);
+  // In an effect, not a useState initializer: the value lives in localStorage,
+  // which the server render cannot see. Only into a still-empty field, so a
+  // customer who typed before this ran is never overwritten.
+  useEffect(() => {
+    const carried = carriedPincode();
+    if (carried) setPincode((v) => (v === "" ? carried : v));
+  }, []);
   const pinValid = pincode.replace(/\D/g, "").length === 6;
   const lineValid = line.trim().length > 3;
   const valid = pinValid && lineValid;
@@ -103,7 +116,7 @@ export function CheckoutAddress({
           />
         </div>
       </div>
-      <p className="text-xs text-ink-muted">Delivered 12:30&ndash;1:30, weekdays.</p>
+      <p className="text-xs text-ink-muted">Delivered {PLAN_DELIVERY_WINDOW_LABEL}, weekdays.</p>
       <p className="text-xs font-medium text-sage-text">{CERTAINTY.address}</p>
       <Button
         type="button"

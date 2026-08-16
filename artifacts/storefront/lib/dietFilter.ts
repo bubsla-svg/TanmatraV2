@@ -8,6 +8,7 @@
 import { getAuthUser } from "./api";
 import type { FetchImpl } from "./apiClient";
 import { getPreferences } from "./preferencesApi";
+import { recallDiet } from "./dietMemory";
 
 export type DietFilterChip = "all" | "veg" | "non_veg";
 
@@ -33,25 +34,44 @@ export function filterDishesByDiet<T extends { isVeg: boolean }>(
 }
 
 /**
- * Safely resolve initial diet chip state for signed-in customers.
+ * Safely resolve the initial diet chip.
  * Gates on getAuthUser (the ADDENDUM-7 gotcha) since GET /preferences returns 200 { preferences: null }
  * even for anonymous traffic. Never writes back on changes (deferred to D-OB3).
+ *
+ * Precedence, strongest first — the whole point of resolving it in ONE place:
+ *
+ *   1. A signed-in customer's stored preferences. A real profile they can see
+ *      and edit; it decides the answer outright, including deciding it is
+ *      "all" for an omnivore. Local memory never overrides it.
+ *   2. What a signed-out visitor told us locally (lib/dietMemory) — the
+ *      wizard's dietary-style answer, or a Veg/Non-veg chip they tapped.
+ *      Reached when nobody is signed in, or when a signed-in account simply
+ *      has no preferences row yet.
+ *   3. "all".
+ *
+ * Step 2 is the fix for a real contradiction, not a convenience: the wizard's
+ * `savePreferences` swallows the 401 a signed-out visitor gets, so before this
+ * a strict vegetarian could answer the dietary-style question and then be shown
+ * chicken on the very next screen.
  */
 export async function resolveInitialDietChip(
   fetchImpl?: FetchImpl,
 ): Promise<DietFilterChip> {
   try {
     const auth = await getAuthUser(fetchImpl);
-    if (!auth.user) return "all";
-
-    const { preferences } = await getPreferences(fetchImpl);
-    if (!preferences) return "all";
-
-    if (preferences.dietaryStyle === "vegetarian" || preferences.dietaryStyle === "vegan") {
-      return "veg";
+    if (auth.user) {
+      const { preferences } = await getPreferences(fetchImpl);
+      // A preferences row is a definite answer, "all" included — falling
+      // through to local memory here would let a stale chip tap override the
+      // profile the customer can actually see and edit.
+      if (preferences) {
+        return preferences.dietaryStyle === "vegetarian" || preferences.dietaryStyle === "vegan"
+          ? "veg"
+          : "all";
+      }
     }
   } catch {
-    /* Anonymous, offline, or session timeout -> degrade cleanly to "all" */
+    /* Anonymous, offline, or session timeout -> fall back to local memory */
   }
-  return "all";
+  return recallDiet()?.chip ?? "all";
 }

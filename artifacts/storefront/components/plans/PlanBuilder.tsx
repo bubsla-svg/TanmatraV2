@@ -8,6 +8,7 @@ import { formatPaise } from "@/lib/format";
 import { planDisplay, planQuoteView } from "@/lib/plans";
 import { planAllowsAddOn, addOnView } from "@/lib/addons";
 import { emitFunnel } from "@/lib/funnel";
+import { PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
 import { Button } from "@/components/ui/button";
 import { OrderBump } from "./OrderBump";
 import type { PlanId, DietTrack, PlanCycle } from "@workspace/subscription-rules";
@@ -120,7 +121,7 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
         {/* Plan name is now the page's FocusHeader h1 (app/(focus)/plan/[planId]/page.tsx) —
             this used to duplicate it as a second h1. */}
         <p className="mt-1 text-sm text-ink-muted">
-          {currentQuote.mealsPerCycle} lunches a {cycle === "weekly" ? "week" : cycle === "quarterly" ? "quarter" : "month"} · delivered 12:30&ndash;1:30 · pause or skip anytime
+          {currentQuote.mealsPerCycle} lunches a {cycle === "weekly" ? "week" : cycle === "quarterly" ? "quarter" : "month"} · delivered {PLAN_DELIVERY_WINDOW_LABEL} · pause or skip anytime
         </p>
       </div>
 

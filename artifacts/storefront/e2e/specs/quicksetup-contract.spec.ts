@@ -52,7 +52,11 @@ test("back preserves the prior answer; refresh preserves the in-progress draft",
   await expect(page.getByRole("button", { name: /strictly vegetarian/i })).toHaveClass(/border-gold/);
 
   // Back to step 1: the muscle-gain goal picked before is still selected.
-  await page.getByRole("button", { name: "Back" }).click();
+  // Scoped to the wizard: the route now carries a FocusHeader whose own
+  // "Back" is the exit from /quick-setup, while THIS click means the
+  // wizard's step-back. Both are correct and both are buttons named
+  // "Back", so the selector has to say which one it means.
+  await page.locator("section").getByRole("button", { name: "Back" }).click();
   await expect(page.getByText(/step 1 of 3/i)).toBeVisible();
   await expect(page.getByRole("button", { name: /lean muscle hypertrophy/i })).toHaveClass(/border-gold/);
 });

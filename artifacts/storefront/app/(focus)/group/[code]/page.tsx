@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { GroupOrderView } from "@/components/group/GroupOrderView";
+import { FocusHeader } from "@/components/FocusHeader";
 
 export const metadata: Metadata = {
   title: "Group order",
@@ -15,6 +16,7 @@ export default async function GroupOrderPage({ params }: { params: Promise<{ cod
   const { code } = await params;
   return (
     <section className="mx-auto max-w-lg px-4 py-10">
+      <FocusHeader backLabel="Back" />
       <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">Group order</p>
       <h1 className="mt-1 mb-6 text-2xl font-semibold tracking-tight text-ink">Order together, pay once</h1>
       <GroupOrderView code={code.toUpperCase()} />

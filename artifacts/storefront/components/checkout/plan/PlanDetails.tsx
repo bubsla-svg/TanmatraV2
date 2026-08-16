@@ -7,6 +7,7 @@ import { formatPaise } from "@/lib/format";
 import { DPDP_CONSENT_COPY } from "@/lib/consent";
 import type { PlanCheckoutAddress } from "@/lib/planCheckout";
 import { MemberIntake, EMPTY_MEMBER, draftToMember, type MemberDraft } from "./MemberIntake";
+import { memberDietForTrack } from "@/lib/planCheckout";
 import { LocationPickerFlow } from "@/components/address/LocationPickerFlow";
 
 const inputCls =
@@ -34,6 +35,7 @@ export function PlanDetails({
   verifying,
   error,
   onSubmit,
+  minimalIntake = false,
 }: {
   servedTracks: DietTrack[];
   track: DietTrack;
@@ -62,8 +64,21 @@ export function PlanDetails({
   verifying?: boolean;
   error: string | null;
   onSubmit: (value: PlanDetailsValue) => void;
+  /** Law 7 — the 3-Day Taste Test asks for nothing it cannot use. See
+   *  MemberIntake's `minimal` for what is dropped and why allergens are not. */
+  minimalIntake?: boolean;
 }) {
   const [member, setMember] = useState<MemberDraft>(EMPTY_MEMBER);
+  // With the diet select hidden (minimal intake), the draft's own default must
+  // not be what gets submitted: /trial already asked veg or non-veg, and that
+  // answer is what picked the trio. Deriving it from the track is the Law 4
+  // carry — and it also fixes the pre-existing mismatch where a non-veg buyer
+  // who never touched the select submitted `diet: "veg"` beside a nonveg track.
+  // `conditions` is blanked rather than trusted: nothing collects it here, so
+  // nothing should be able to reach the wire from a stale draft.
+  const submittedMember: MemberDraft = minimalIntake
+    ? { ...member, diet: memberDietForTrack(track), conditions: "" }
+    : member;
   const [line1, setLine1] = useState(initialAddress?.line1 ?? "");
   const [city, setCity] = useState(initialAddress?.city ?? "");
   const [pincode, setPincode] = useState(initialAddress?.pincode ?? "");
@@ -94,7 +109,7 @@ export function PlanDetails({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-ink">Which track?</span>
+        <span className="text-sm font-medium text-ink">What do you eat?</span>
         <div className="flex flex-wrap gap-2">
           {servedTracks.map((t) => (
             <button
@@ -107,7 +122,7 @@ export function PlanDetails({
         </div>
       </div>
 
-      <MemberIntake value={member} onChange={setMember} />
+      <MemberIntake value={member} onChange={setMember} minimal={minimalIntake} />
 
       <div className="flex flex-col gap-3">
         <span className="text-sm font-medium text-ink">Where should we deliver?</span>
@@ -171,7 +186,7 @@ export function PlanDetails({
           </p>
         )}
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-sm text-ink-muted">Billed each cycle (server-priced, incl. GST)</span>
+          <span className="text-sm text-ink-muted">Billed each cycle (incl. GST)</span>
           <span className="tabular text-xl font-semibold text-gold-text">
             {quoteLoading || quoteTotalPaise === null ? "…" : formatPaise(quoteTotalPaise)}
           </span>
@@ -217,7 +232,7 @@ export function PlanDetails({
             </div>
             <Button
               type="button" disabled={!valid || busy}
-              onClick={() => onSubmit({ member: draftToMember(member), address: { line1: line1.trim(), city: city.trim(), pincode: pincode.replace(/\D/g, "") } })}
+              onClick={() => onSubmit({ member: draftToMember(submittedMember), address: { line1: line1.trim(), city: city.trim(), pincode: pincode.replace(/\D/g, "") } })}
               aria-busy={verifying || busy} aria-live="polite"
               shape="pill" size="fluid" className="px-8 py-3.5 text-center font-semibold disabled:opacity-40 shadow-lg shadow-gold/20 transition-transform duration-300 hover:scale-[1.02] hover:shadow-gold/40 active:scale-95"
             >

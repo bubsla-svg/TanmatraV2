@@ -77,10 +77,14 @@ test.describe("stitch-runtime: menu flipbook (M-5)", () => {
     await evidenceShot(page, "5.2-veg-filtered");
   });
 
-  test("search narrows the grid; section grouping survives", async ({ page }) => {
+  // Was "search narrows the grid" until the inline search box was removed
+  // (2026-08-16). The invariant is about NARROWING, not about which control
+  // did it, so it now drives the filter sheet — the narrowing control that
+  // still writes `menu-active-filters`.
+  test("the filter sheet narrows the grid; section grouping survives", async ({ page }) => {
     const menu = new MenuPage(page);
     await menu.goto();
-    await menu.searchInput.fill("chicken");
+    await menu.applySheetFilter("Macro intent", "30g+ protein");
     await expect(page.getByTestId("menu-active-filters")).toBeVisible();
 
     // At least one section heading still renders among the narrowed results,
@@ -89,6 +93,6 @@ test.describe("stitch-runtime: menu flipbook (M-5)", () => {
     const noMatch = page.getByTestId("menu-no-match-empty");
     await expect(sectionHeadings.first().or(noMatch)).toBeVisible();
 
-    await evidenceShot(page, "5.2-search");
+    await evidenceShot(page, "5.2-sheet-filtered");
   });
 });

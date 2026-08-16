@@ -117,23 +117,36 @@ star/plowhorse/puzzle/dog matrix and can move a real price."
 structured table is the fix for a live costing defect, independent of anything
 nutrition-related.
 
-## And the fabricated macros are already downstream
+## CORRECTION — the recipes table is NOT contaminated by F-1
 
-`seed-ops-data.ts:226` sets the recipe nutrition columns from the menu-catalog
-macros:
+**This section previously claimed the opposite, and it was wrong.** Recorded
+here rather than deleted, because the mistake is instructive: it read one line
+of the seed without following what fed it.
+
+`seed-ops-data.ts:226` does set the recipe nutrition columns from
+`cat?.macros`:
 
 ```ts
 caloriesKcal: m?.calories ?? null,
 proteinG:     m?.protein  ?? null,
 ```
 
-`m` is `cat?.macros` — the same `@workspace/menu-catalog` values flipbook
-finding **F-1** showed are copy-pasted across unrelated dishes (93 dishes, 32
-distinct tuples). So the fabricated numbers are not confined to the storefront
-card; they have been seeded into the ops/RD reference tables as
-`recipes.calories_kcal` and friends. Anything built on `recipes` nutrition
-inherits F-1. That is Law 5 (one truth) failing at the data layer, which is
-precisely what a single ingredient-level source of truth fixes.
+But `catByName` is built from **`DISHES`**, not from the raw seed rows — and
+`DISHES` (`lib/menu-catalog/src/index.ts:4667`) already overlays
+`ESTIMATED_MACROS` on top of every dish whose seed macros were a duplicated
+placeholder. So `cat.macros` is the *good* ingredient-derived estimate for the
+104 dishes that have one. Measured: the static catalog is **116 dishes with
+116 distinct tuples — zero duplicates.**
+
+The real conclusion is the reverse of what was written here, and more useful:
+
+> The clean numbers already exist in the repo, and the F-1 duplication lives
+> **only** in the `menu_items` DB rows, which `getMergedCatalog` lets override
+> the static catalog.
+
+That reframes the whole problem from "compute nutrition" to "serve the
+nutrition we already computed" — see `docs/TNM-MENU-01/MACRO-PROVENANCE.md`
+for the root cause and the two fixes that follow from it.
 
 ## Phase 0 — confirm the two unknowns (read-only, gates everything)
 

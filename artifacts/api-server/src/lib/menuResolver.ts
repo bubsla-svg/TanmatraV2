@@ -9,6 +9,10 @@ import { listMenuItems, type DbReadExecutor } from "./menu";
 import { getSummariesForSlugs } from "./dishReviews";
 import { getCachedOrFetch } from "./menuCatalogCache";
 import { resolveAllergensReviewed } from "./allergenReview";
+import {
+  resolveMacrosEstimated,
+  resolveMacrosProvisional,
+} from "./macroProvenance";
 
 const VALID_CATEGORIES = new Set<DishCategory>([
   "beverages",
@@ -115,6 +119,37 @@ async function fetchMergedCatalog(
             fiber: row.macros.fiberG ?? stat.macros.fiber,
           }
         : stat.macros,
+      // A MACRO AND ITS TRUST FLAG MUST TRAVEL TOGETHER (flipbook F-1).
+      //
+      // `...stat` above carries the static catalog's `macrosEstimated` —
+      // which describes the STATIC numbers. When the DB row supplies its own
+      // macros they win the line above, and without this the payload shipped
+      // the DB's number wearing the static catalog's flag. Two ways that goes
+      // wrong, both live:
+      //
+      //   - Static `diet-coke-can` is 0/0/0/0 (correct — it is a zero-calorie
+      //     soda) and `macrosEstimated: true`. The DB row supplies 140 kcal /
+      //     3 g P, so the card rendered "≈140 kcal · ≈3 g P": a fabricated
+      //     number carrying a marker that claims we computed it from THIS
+      //     dish's recipe.
+      //   - 11 static dishes carry curated distinct macros and therefore
+      //     `macrosEstimated: false`. A DB row with a placeholder macro on
+      //     one of those renders the placeholder as PLAIN FACT, with no
+      //     marker at all — the "Boiled Egg, 460 kcal · 28 g P, unflagged"
+      //     case the review found most alarming.
+      //
+      // So when the row owns the numbers it owns the claim: `macros_are_estimate`
+      // (schema default TRUE, i.e. fail-soft toward "estimated") decides.
+      macrosEstimated: resolveMacrosEstimated({
+        rowHasMacros: row.macros != null,
+        rowMacrosAreEstimate: row.macrosAreEstimate,
+        staticMacrosEstimated: stat.macrosEstimated,
+      }),
+      // Deliberately NOT re-derived from the row: there is no DB column for
+      // it, and `macrosProvisional` is the strongest gate (renders no numbers
+      // at all). Inheriting the static value keeps it sticky — a DB row can
+      // never LOOSEN a gate the catalog already applied.
+      macrosProvisional: resolveMacrosProvisional(stat.macrosProvisional),
       rdVerified: row.rdVerified,
       ...(row.rdNote ? { rdNote: row.rdNote } : {}),
       prepTime: row.prepTime ?? "",
@@ -178,6 +213,18 @@ async function fetchMergedCatalog(
             fiber: row.macros.fiberG ?? 0,
           }
         : { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
+      // Same rule as the merge branch above, and it matters MORE here: this
+      // is a dish with no static counterpart (a Petpooja import or a CMS
+      // creation), so there is no curated macro anywhere behind it. Without
+      // this the field was simply absent — falsy — and the card rendered a
+      // POS-supplied macro as plain unqualified fact. The all-zero fallback
+      // below is already gated downstream (`macroTrust` treats 0 kcal as
+      // unverified), so this is specifically about rows that DO carry numbers.
+      macrosEstimated: resolveMacrosEstimated({
+        rowHasMacros: row.macros != null,
+        rowMacrosAreEstimate: row.macrosAreEstimate,
+        staticMacrosEstimated: undefined,
+      }),
       ingredients: row.ingredients ?? [],
       allergens: row.allergens ?? [],
       contraindications: row.contraindications ?? [],

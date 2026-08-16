@@ -8,13 +8,20 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { emitFunnel } from "@/lib/funnel";
-import { formatPaise } from "@/lib/format";
+import { formatMacroLine, formatPaise } from "@/lib/format";
+import { PLAN_DELIVERY_DAYS_LABEL, PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
 import { TRIAL_COPY } from "@/lib/trial";
 
 export interface TrioDish {
   slug: string;
   name: string;
   image: string;
+  /** Law 8 — the trio is the highest-intent dish moment in this funnel and it
+   *  carried a name and a photo only, on a product whose whole claim is that
+   *  the numbers are known. Absent when the catalog has none to give, never
+   *  filled in. */
+  macros?: { calories: number; protein: number };
+  macrosEstimated?: boolean;
 }
 
 type TrialTrack = "veg" | "nonveg";
@@ -100,12 +107,24 @@ export function TrialStart({
                 className="object-cover"
               />
             </div>
-            <p className="p-2.5 text-center text-xs font-semibold leading-snug text-ink">
-              {dish.name}
-            </p>
+            <div className="flex flex-1 flex-col gap-1 p-2.5 text-center">
+              <p className="text-xs font-semibold leading-snug text-ink">{dish.name}</p>
+              {dish.macros && (
+                <p className="tabular text-[0.6875rem] leading-tight text-ink-faint">
+                  {formatMacroLine(dish.macros, dish.macrosEstimated)}
+                </p>
+              )}
+            </div>
           </li>
         ))}
       </ul>
+
+      {/* Law 1: what arrives, and when, stated before the CTA rather than
+          discovered after paying. Same constants the create call books the
+          delivery with, so this cannot drift from what is actually scheduled. */}
+      <p className="text-center text-xs text-ink-muted">
+        Delivered {PLAN_DELIVERY_DAYS_LABEL.toLowerCase()}, {PLAN_DELIVERY_WINDOW_LABEL}.
+      </p>
 
       {/* Glass sticky footer (checkout vocabulary, BATCH-4-BRIEFS.md) — the ONE
           money-bearing CTA on this screen, since starting the trial IS the

@@ -67,8 +67,10 @@ export async function Header() {
                 <DeliveryAddressBar />
               </div>
               {/* The "RD-Reviewed" chip that sat here is REMOVED, for the
-                  same reason MenuTrustStrip withholds the identical claim:
-                  finding F5. It rested on `rdVerified`, which is true on all
+                  same reason /menu's trust strip withheld the identical
+                  claim before that strip itself came out (the record now
+                  lives in components/menu/MacroLegend.tsx): finding F5.
+                  It rested on `rdVerified`, which is true on all
                   145 live dishes — and on `rdReviewState`, which is
                   "reviewed" on all 145 for the same reason (POS imports are
                   written in pre-reviewed by lib/petpooja.ts). Neither is a

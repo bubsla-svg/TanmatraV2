@@ -20,6 +20,7 @@ import { DishFitProvider } from "@/components/menu/DishFitContext";
 import { isMeaningful, rankDishes } from "@/lib/menuFit";
 import { computeMenuGridState } from "@/lib/menuGridState";
 import { resolveInitialDietChip, type DietFilterChip } from "@/lib/dietFilter";
+import { forgetDiet, rememberDiet } from "@/lib/dietMemory";
 import {
   EMPTY_FILTERS,
   activeFilterLabels,
@@ -35,10 +36,11 @@ import { groupBySection, sectionAnchorId } from "@/lib/menuSections";
 import { useScrollRestore } from "@/lib/useScrollRestore";
 import { useCondensedOnScroll } from "@/lib/useCondensedOnScroll";
 
-// N2.3: URL sync is debounced, not immediate — chip/filter changes are
-// discrete clicks (a 400ms delay before the address bar updates is
-// imperceptible), but the search box fires on every keystroke and a
-// router.replace per character would be wasteful.
+// N2.3: URL sync is debounced, not immediate. Chip/filter changes are
+// discrete clicks, so a 400ms delay before the address bar updates is
+// imperceptible — but the sheet applies a whole filter set at once and the
+// re-assert effect below also fires on every same-route navigation, so
+// coalescing keeps this to one router.replace per settled state.
 const URL_SYNC_DEBOUNCE_MS = 400;
 
 interface PrefsRow {
@@ -85,7 +87,6 @@ export function PersonalizedMenu({
     () => parseMenuUrlState(searchParams).filters,
   );
   const [filterOpen, setFilterOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(() => parseMenuUrlState(searchParams).query);
 
   useEffect(() => {
     let live = true;
@@ -110,26 +111,37 @@ export function PersonalizedMenu({
     };
   }, []);
 
+  // Law 4: a chip tap is the visitor telling us how they want to eat, and it
+  // used to live only in this component's state and the URL — so the wizard,
+  // two taps away, started again from "Omnivore". Recorded as "filtered", the
+  // weaker fact: a request to narrow a list, never a declared dietary identity
+  // (lib/dietMemory), so it can never overwrite the wizard's own answer.
+  function handleChipChange(next: DietFilterChip) {
+    setChip(next);
+    if (next === "all") forgetDiet();
+    else rememberDiet({ chip: next, source: "filtered" });
+  }
+
   // Committed state -> URL, debounced. MenuFilterSheet's own draft editing
   // never reaches this effect — only what onApply hands back as `filters`.
   //
   // A merge, not a from-scratch replace, and `searchParams` is a dependency
   // here on purpose: the dish-card links and drawer are same-route
   // navigations built with their own hardcoded `?dish=slug` query string, so
-  // opening a dish drops diet/filters/search from the URL the instant it
-  // navigates — well before any unmount. Watching searchParams lets this
-  // effect notice that drift and re-assert its own params (merged, so
-  // `?dish=` survives) rather than only ever reacting to ITS OWN state
-  // changing, which would let the very first same-route navigation erase
-  // everything this fix exists to preserve.
+  // opening a dish drops diet/filters from the URL the instant it navigates
+  // — well before any unmount. Watching searchParams lets this effect notice
+  // that drift and re-assert its own params (merged, so `?dish=` survives)
+  // rather than only ever reacting to ITS OWN state changing, which would
+  // let the very first same-route navigation erase everything this fix
+  // exists to preserve.
   useEffect(() => {
     const id = setTimeout(() => {
-      const desired = mergeMenuUrlState(searchParams, { chip, filters, query: searchQuery });
+      const desired = mergeMenuUrlState(searchParams, { chip, filters });
       if (desired === searchParams.toString()) return;
       router.replace(desired ? `${pathname}?${desired}` : pathname, { scroll: false });
     }, URL_SYNC_DEBOUNCE_MS);
     return () => clearTimeout(id);
-  }, [chip, filters, searchQuery, pathname, router, searchParams]);
+  }, [chip, filters, pathname, router, searchParams]);
 
   const ranked = useMemo(() => {
     if (!prefs || !isMeaningful(prefs)) return null;
@@ -141,38 +153,17 @@ export function PersonalizedMenu({
     [dishes, ranked, chip],
   );
 
-  // Name search over the SAME `dishes` prop the ranking/filter passes already
-  // read (id + name are both in DishForMatch) — no second fetch, matching the
-  // rest of this file's "catalog is already loaded" data flow. `null` means
-  // no search is active; an empty Set (vs. null) is what actually narrows.
-  const searchMatchedIds = useMemo(() => {
-    const term = searchQuery.trim().toLowerCase();
-    if (!term) return null;
-    return new Set(
-      dishes.filter((d) => d.name.toLowerCase().includes(term)).map((d) => d.id),
-    );
-  }, [dishes, searchQuery]);
-
-  // The 5.3 sheet AND search narrow on top of the diet chip rather than
-  // replacing it: `visibleIds` already reflects the chip, so intersecting
-  // keeps every filter honest and leaves the server-rendered rows/order
-  // untouched.
+  // The 5.3 sheet narrows on top of the diet chip rather than replacing it:
+  // `visibleIds` already reflects the chip, so intersecting keeps both
+  // filters honest and leaves the server-rendered rows/order untouched.
   const filteredIds = useMemo(() => {
-    let ids = visibleIds;
-    if (countActiveFilters(filters)) {
-      const survivors = new Set(filterDishes(dishes, filters).map((d) => d.id));
-      ids = new Set([...ids].filter((id) => survivors.has(id)));
-    }
-    if (searchMatchedIds !== null) {
-      ids = new Set([...ids].filter((id) => searchMatchedIds.has(id)));
-    }
-    return ids;
-  }, [dishes, filters, visibleIds, searchMatchedIds]);
+    if (!countActiveFilters(filters)) return visibleIds;
+    const survivors = new Set(filterDishes(dishes, filters).map((d) => d.id));
+    return new Set([...visibleIds].filter((id) => survivors.has(id)));
+  }, [dishes, filters, visibleIds]);
 
   const activeLabels = activeFilterLabels(filters);
-  const searchLabel = searchQuery.trim() ? [`"${searchQuery.trim()}"`] : [];
-  const allActiveLabels = [...searchLabel, ...activeLabels];
-  const noMatch = allActiveLabels.length > 0 && filteredIds.size === 0;
+  const noMatch = activeLabels.length > 0 && filteredIds.size === 0;
 
   // The chip bar's anchors are derived from exactly what MenuGrid will draw:
   // the same `rows`, grouped the same way, filtered by the same
@@ -205,13 +196,13 @@ export function PersonalizedMenu({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* §3.2: search + chip bar + diet toggles are ONE sticky cluster. They
-          stick together because the chip bar alone would detach from the
-          controls it belongs with, and because useStickyAnchorOffset measures
-          this element to place jumped-to section anchors just below it —
-          which is also why condensing needs no offset wiring: the
-          ResizeObserver sees the collapse and shrinks --menu-anchor-offset
-          with it.
+      {/* §3.2: the diet/filter row and the section chip bar are ONE sticky
+          cluster. They stick together because the chip bar alone would
+          detach from the controls it belongs with, and because
+          useStickyAnchorOffset measures this element to place jumped-to
+          section anchors just below it — which is also why condensing needs
+          no offset wiring: the ResizeObserver sees the collapse and shrinks
+          --menu-anchor-offset with it.
 
           `min-h-16 justify-center` is load-bearing for the condensed state:
           the global Header is sticky, 63px tall and at the SAME z (--z-chrome
@@ -224,10 +215,8 @@ export function PersonalizedMenu({
         className="sticky top-0 z-[var(--z-chrome)] -mx-4 flex min-h-16 flex-col justify-center gap-2 bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-4 py-2 backdrop-blur"
       >
       <MenuControls
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
         chip={chip}
-        onChipChange={setChip}
+        onChipChange={handleChipChange}
         activeFilterCount={activeLabels.length}
         onOpenFilter={() => setFilterOpen(true)}
         showRankedNote={ranked !== null}
@@ -243,9 +232,9 @@ export function PersonalizedMenu({
       {/* Outside the collapsing block on purpose: while condensed, this line
           is the only remaining evidence that the list is narrowed — hiding
           it would leave a filtered list with no visible cause. */}
-      {allActiveLabels.length > 0 && (
+      {activeLabels.length > 0 && (
         <p className="text-xs text-ink-muted" data-testid="menu-active-filters">
-          Filtering by {allActiveLabels.join(" · ")}
+          Filtering by {activeLabels.join(" · ")}
         </p>
       )}
       </div>
@@ -260,16 +249,13 @@ export function PersonalizedMenu({
         >
           <h3 className="text-base font-semibold text-ink">Nothing matches yet</h3>
           <p className="mx-auto mt-2 max-w-md text-sm text-ink-muted">
-            You asked for {allActiveLabels.join(" · ")}. No dish on today&apos;s menu meets all of
+            You asked for {activeLabels.join(" · ")}. No dish on today&apos;s menu meets all of
             those at once.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <button
               type="button"
-              onClick={() => {
-                setFilters(EMPTY_FILTERS);
-                setSearchQuery("");
-              }}
+              onClick={() => setFilters(EMPTY_FILTERS)}
               data-testid="menu-no-match-clear"
               className="min-h-[48px] rounded-full bg-gold px-6 text-sm font-bold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
             >

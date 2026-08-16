@@ -7,7 +7,7 @@ import type { MenuGridRow } from "@/components/MenuGrid";
 import { PersonalizedMenu } from "@/components/menu/PersonalizedMenu";
 import { DishDrawer } from "@/components/menu/DishDrawer";
 import { FallbackMenuBanner } from "@/components/menu/FallbackMenuBanner";
-import { MacroLegend, MenuTrustStrip } from "@/components/menu/MenuTrustStrip";
+import { MacroLegend } from "@/components/menu/MacroLegend";
 import { buildSharedMacroKeys } from "@/lib/dishTrust";
 
 /**
@@ -90,22 +90,28 @@ export default async function MenuPage({
 
   return (
     <div data-ui-generation="stitch-74" data-screen-id="5.2" data-screen-state="default" className="min-h-dvh">
-    {/* pt-5 / mb-4, not py-8 / mb-6 (owner feedback 2026-08-16): the title
-        block sat on ~100px of the first viewport before any control or card.
-        The heading stays; the air above and below it was the cost. */}
-    <section className="mx-auto max-w-screen-xl px-4 pb-8 pt-5">
-      <div className="mb-4">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">The menu</h1>
-        {/* No ServiceabilityBar here — the Header's is the only instance
-            allowed to exist. Its verdict/pincode is per-instance state read
-            from localStorage once at mount with no `storage` listener, so a
-            second copy on this route desynced permanently from the one sitting
-            directly above it in the header. */}
-        {/* §3.7: every clause is earned from the payload actually rendering —
-            see MenuTrustStrip for why the two claims are gated. */}
-        <MenuTrustStrip dishes={orderable} sharedMacroKeys={sharedMacroKeys} />
-        <MacroLegend dishes={orderable} sharedMacroKeys={sharedMacroKeys} />
-      </div>
+    {/* No visible title block at all (owner feedback 2026-08-16, second
+        pass). "The menu" and the dish-count trust strip under it were the
+        last ~90px of chrome standing between the top of the first viewport
+        and the first product, and neither did any work the customer needed:
+        the route is reached from a nav item already labelled "Menu", and the
+        count is restated by the section headings. The H1 STAYS in the
+        document, screen-reader-only — a route with no top-level heading
+        breaks the heading outline and the page's own SEO title. pt-3, not
+        pt-5, because there is no longer a heading for that air to sit above.
+
+        MacroLegend is deliberately NOT chrome and survives visibly: it
+        explains the ≈ prefix printed on most of the cards below, and an
+        undecodable qualifier next to a clinical number is worse than none
+        (S-6). It renders nothing when no visible dish carries the mark. */}
+    <section className="mx-auto max-w-screen-xl px-4 pb-8 pt-3">
+      <h1 className="sr-only">The menu</h1>
+      {/* No ServiceabilityBar here — the Header's is the only instance
+          allowed to exist. Its verdict/pincode is per-instance state read
+          from localStorage once at mount with no `storage` listener, so a
+          second copy on this route desynced permanently from the one sitting
+          directly above it in the header. */}
+      <MacroLegend dishes={orderable} sharedMacroKeys={sharedMacroKeys} />
       {source === "fallback" && <FallbackMenuBanner />}
       <h2 className="sr-only">Dishes</h2>
       <PersonalizedMenu dishes={orderable.map(forMatch)} rows={rows} />

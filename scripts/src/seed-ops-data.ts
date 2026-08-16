@@ -22,8 +22,10 @@
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { sql } from "drizzle-orm";
 import {
   db,
+  dishBomComponentsTable,
   inventoryItemsTable,
   packagingItemsTable,
   recipeIngredientsTable,
@@ -280,6 +282,26 @@ async function main() {
   if (!APPLY) {
     console.log("\n(dry-run — no rows written. Pass --apply to seed the database.)");
     return;
+  }
+
+  // CASCADE TRAP (docs/TNM-MENU-01/BOM-ADOPTION.md, blocker 8): deleting
+  // inventory_items cascades into dish_bom_components (its FK is ON DELETE
+  // CASCADE), so this truncate-and-reseed silently wipes the entire BOM —
+  // and with it real-time depletion, the prep brief, PO drafting and the
+  // margin guardrail, all of which no-op on an empty table rather than fail.
+  // The reseed itself is fine (the BOM is re-derivable); going quiet about
+  // it is not. Count first, warn loudly, and say what to run afterwards.
+  const [bomRows] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(dishBomComponentsTable);
+  const bomCount = bomRows?.n ?? 0;
+  if (bomCount > 0) {
+    console.log(
+      `\n*** WARNING: deleting inventory_items will CASCADE-DELETE all ` +
+        `${bomCount} dish_bom_components rows. ***\n` +
+        `*** After this seed completes, re-run the "BOM backfill" workflow ` +
+        `with apply=true to restore them. ***`,
+    );
   }
 
   console.log("\nApplying: clearing existing ops reference data…");

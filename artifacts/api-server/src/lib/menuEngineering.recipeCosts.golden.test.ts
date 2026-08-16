@@ -20,6 +20,27 @@
  * Needs Postgres (DATABASE_URL). Run with:
  *   DATABASE_URL=... node --test --import tsx \
  *     ./src/lib/menuEngineering.recipeCosts.golden.test.ts
+ *
+ * TWO DELIBERATE DIVERGENCES SINCE THE FREEZE (2026-08-16), and why this
+ * test still holds:
+ *
+ * 1. Quantity parsing upgraded. `parseGrams` now converts tbsp/tsp/ml/pieces
+ *    via the nutrition calculator (gramsFromQuantityText) instead of reading
+ *    them as zero grams. The fixtures below are ALL gram-denominated — the
+ *    one shape old and new parse identically — so this test keeps pinning
+ *    what it was built to pin (first-match-wins and memoisation semantics)
+ *    without asserting the old zero-gram defect. Do NOT add non-gram
+ *    fixtures here; their divergence is intended, and it is pinned the other
+ *    way by bomCosts.test.ts.
+ *
+ * 2. BOM overlay. loadDynamicRecipeCosts now overlays costs from
+ *    dish_bom_components where a complete, fully-priced BOM exists. This
+ *    test opts OUT via `includeBom: false` (see the call site) — the frozen
+ *    algorithm never modelled BOMs, so a like-for-like comparison must
+ *    isolate the fuzzy path. It cannot rely on the table being empty:
+ *    bomEngine.test.ts seeds BOM rows in this same database while
+ *    `node --test` runs files concurrently. The overlay's behaviour is
+ *    pinned separately, DB-free, in bomCosts.test.ts.
  */
 
 import assert from "node:assert/strict";
@@ -152,7 +173,13 @@ test("the memoised/pre-grouped rewrite produces identical costs to the old algor
   ]);
 
   // New implementation, against the real DB.
-  const actual = await loadDynamicRecipeCosts();
+  // `includeBom: false` — this test pins the FUZZY path against the frozen
+  // algorithm, and it shares this database with bomEngine.test.ts, which
+  // seeds BOM rows for slugs with no recipes row while `node --test` runs
+  // files concurrently. With the overlay on, those rows would appear in
+  // `actual` mid-run and fail the size assertion nondeterministically. The
+  // overlay's own behaviour is pinned DB-free in bomCosts.test.ts.
+  const actual = await loadDynamicRecipeCosts({ includeBom: false });
 
   // Old implementation, against the same rows read back independently.
   const allRecipes = await db
