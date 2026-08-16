@@ -58,7 +58,11 @@ test.describe("stitch-runtime · quick-setup wizard", () => {
 
     // Back once: step 2 re-renders and the vegetarian pick from before is
     // still selected — state preserved, not a reset wizard.
-    await page.getByRole("button", { name: "Back" }).click();
+    // Scoped to the wizard: the route now carries a FocusHeader whose own
+    // "Back" is the exit from /quick-setup, while THIS click means the
+    // wizard's step-back. Both are correct and both are buttons named
+    // "Back", so the selector has to say which one it means.
+    await page.locator("section").getByRole("button", { name: "Back" }).click();
     await expect(marker(page, "6.9.2", "step-2-dietary-style")).toBeVisible();
     await expect(page.getByRole("button", { name: /strictly vegetarian/i })).toHaveClass(/border-gold/);
 

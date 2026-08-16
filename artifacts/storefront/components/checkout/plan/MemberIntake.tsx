@@ -82,7 +82,9 @@ export function MemberIntake({
           {SPICES.map((s) => (<option key={s} value={s}>{cap(s)} spice</option>))}
         </select>
       </div>
-      <input aria-label="Allergens" value={value.allergens} onChange={(e) => set({ allergens: e.target.value })} placeholder="Any allergies? (optional)" className={inputCls} />
+      {/* Main's placeholder wins over this branch's "Any allergies?" — the
+          Law 6 sweep gave it worked examples, which is the better prompt. */}
+      <input aria-label="Allergens" value={value.allergens} onChange={(e) => set({ allergens: e.target.value })} placeholder="Allergies, e.g. peanuts, shellfish (optional)" className={inputCls} />
       {!minimal && (
         <input aria-label="Medical conditions" value={value.conditions} onChange={(e) => set({ conditions: e.target.value })} placeholder="Conditions, e.g. diabetes (optional)" className={inputCls} />
       )}

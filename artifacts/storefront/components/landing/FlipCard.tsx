@@ -105,7 +105,7 @@ export function FlipCard({ spec, initialFlipped = false }: FlipCardProps) {
             {formatPaise(spec.price)}
           </span>
           <span className="tabular text-2xs text-ink-faint">
-            {formatMacroLine(spec.macros, spec.macrosEstimated)}
+            {formatMacroLine(spec.macros, spec.macrosEstimated, spec.macrosProvisional)}
           </span>
         </div>
         <Button

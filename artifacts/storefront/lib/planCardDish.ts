@@ -47,6 +47,8 @@ export interface PlanCardDish {
    * prefixes them with "~". Read from the dish; never assumed either way.
    */
   macrosEstimated: boolean;
+  /** Placeholder macros — the card shows "being verified", not the figures. */
+  macrosProvisional: boolean;
   /** Only ever `true` for a dish the catalog actually marks RD-verified. */
   rdVerified: boolean;
   /**
@@ -96,6 +98,7 @@ function project(dish: DishData): PlanCardDish {
     // is opt-IN. Defaulting the other way would stamp a hedge on numbers that
     // do not need one.
     macrosEstimated: dish.macrosEstimated === true,
+    macrosProvisional: dish.macrosProvisional === true,
     // Fail closed: only an explicit `true` earns the Verified badge.
     rdVerified: dish.rdVerified === true,
     ...(dish.rdNote ? { rdNote: dish.rdNote } : {}),

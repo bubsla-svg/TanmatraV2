@@ -30,7 +30,7 @@ export function CartDrawer({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { cart, setCart } = useCart();
+  const { cart, setCart, hydrated } = useCart();
 
   // Back gesture closes the drawer, not the page (Vaul owns the slide;
   // history ownership lives here).
@@ -137,7 +137,7 @@ export function CartDrawer({
                       existed). "~" prefix matches DishCard/PDP's own convention. */}
                   {l.macros && (
                     <p className="tabular text-xs text-ink-faint">
-                      {formatMacroLine(l.macros, l.macros.estimated)}
+                      {formatMacroLine(l.macros, l.macros.estimated, l.macros.provisional)}
                     </p>
                   )}
                 </div>
@@ -153,7 +153,24 @@ export function CartDrawer({
                 </div>
               </li>
             ))}
-            {cart.lines.length === 0 && (
+            {/* Law 10: "Cart is empty." is only true once the stored cart has
+                actually been read. CartProvider seeds EMPTY_CART and fills it
+                in a post-mount effect, so asserting emptiness before `hydrated`
+                tells someone who DOES have items that they have none — a void
+                state that lies rather than one that is merely blank.
+                MiniCartBar already guards on `hydrated`; this sibling did not. */}
+            {!hydrated && (
+              <li
+                data-screen-state="cart-loading"
+                aria-hidden
+                className="flex flex-col gap-3 py-6"
+              >
+                {[0, 1].map((i) => (
+                  <span key={i} className="h-12 animate-pulse rounded-2xl bg-surface-raised" />
+                ))}
+              </li>
+            )}
+            {hydrated && cart.lines.length === 0 && (
               <li data-ui-generation="stitch-74" data-screen-id="14.1" data-screen-state="cart-empty" className="py-6 text-center text-sm text-ink-muted">Cart is empty.</li>
             )}
           </ul>
