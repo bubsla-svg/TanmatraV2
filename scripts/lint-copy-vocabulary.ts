@@ -153,6 +153,44 @@ function blankIdentifierPositions(line: string): string {
 }
 
 /**
+ * The third identifier position, and the only one that cannot be recognised a
+ * line at a time: an object literal the TYPE SYSTEM has already declared holds
+ * event names —
+ *
+ *   const ACTION_EVENT: Partial<Record<SubAction, FunnelEvent>> = {
+ *     pause: "subscription_paused",
+ *   };
+ *
+ * The annotation is the guarantee. A value in that object cannot be a sentence
+ * shown to anyone, because `FunnelEvent` is a closed union of machine names —
+ * tsc rejects prose there. So this is not "strings near a word are fine"; it is
+ * the same rule as the `emitFunnel(` carve-out, applied where the event name
+ * has been lifted out of the call into a lookup table.
+ *
+ * Scoped to the literal's own braces, and only when `FunnelEvent` is the value
+ * type ITSELF — `Record<K, { label: FunnelEvent; text: string }>` is not
+ * matched, because `text` there could be real copy.
+ */
+const FUNNEL_EVENT_MAP = /:\s*(?:Partial<)?Record<[^<>]*,\s*FunnelEvent>>?\s*=\s*\{/g;
+
+function blankFunnelEventMaps(src: string): string {
+  let out = src;
+  for (const m of src.matchAll(FUNNEL_EVENT_MAP)) {
+    const open = (m.index ?? 0) + m[0].length - 1; // index of the `{`
+    let depth = 0;
+    let end = open;
+    for (; end < src.length; end += 1) {
+      if (src[end] === "{") depth += 1;
+      else if (src[end] === "}" && --depth === 0) break;
+    }
+    // Blanking preserves length and newlines, so both the remaining match
+    // indices and every reported line number stay correct.
+    out = out.slice(0, open) + src.slice(open, end + 1).replace(/[^\n]/g, " ") + out.slice(end + 1);
+  }
+  return out;
+}
+
+/**
  * Customer-visible text on a line: string literals plus JSX text nodes.
  * Import specifiers are excluded — a path is not copy.
  */
@@ -196,7 +234,9 @@ for (const file of files) {
   const rel = path.relative(REPO_ROOT, file).split(path.sep).join("/");
   const raw = fs.readFileSync(file, "utf8");
   const rawLines = raw.split("\n");
-  const lines = stripComments(raw).split("\n");
+  // Comments go first: prose in a doc-comment must not be able to open a
+  // carve-out over the real code beneath it.
+  const lines = blankFunnelEventMaps(stripComments(raw)).split("\n");
 
   lines.forEach((line, i) => {
     // Tested against the RAW line: the marker is normally written as a trailing

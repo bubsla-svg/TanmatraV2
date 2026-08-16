@@ -5,6 +5,9 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/apiClient";
+import { emitFunnel } from "@/lib/funnel";
+import { SKIP_SWAP_CUTOFF_HOURS } from "@/lib/planDecisionFacts";
+import { isChangeable, lockedReason, nextChangeNote } from "@/lib/deliveryCutoff";
 import {
   getSubscription,
   skipDelivery,
@@ -56,10 +59,24 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
       setMutationError(null);
       setBusyIds((prev) => new Set(prev).add(d.id));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    onSuccess: (_data, d) => {
+      void queryClient.invalidateQueries({ queryKey });
+      // The card above shows "Next delivery" and a credits chip, both of which
+      // a skip changes. Invalidating only this list left them stale on screen
+      // beside the row that had just moved.
+      void queryClient.invalidateQueries({ queryKey: ["account", "subscription"] });
+      emitFunnel(d.status === "skipped" ? "subscription_unskipped" : "subscription_skipped", {
+        subscription_id: subscriptionId,
+      });
+    },
     onError: (e) => {
-      // past_cutoff and friends arrive as the server's own sentence — show it.
-      setMutationError(e instanceof ApiError ? e.message : "Couldn't update that delivery.");
+      // past_cutoff and friends arrive as the server's own sentence, and each
+      // route writes an action-specific one ("…to skip." / "…to restore.").
+      // APPEND the next step rather than replacing it (Law 9): the refusal
+      // says what happened, the note says what can still be done.
+      const said = e instanceof ApiError ? e.message : "Couldn't update that delivery.";
+      const next = nextChangeNote(detail?.deliveries ?? []);
+      setMutationError(next ? `${said} ${next}` : said);
     },
     onSettled: (_data, _err, d) => {
       setBusyIds((prev) => {
@@ -104,7 +121,7 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
     <div className="mt-3 flex flex-col gap-2.5 border-t border-line pt-4">
       {detail.mandate && (
         <p className="inline-flex w-fit items-center gap-1.5 self-start rounded-full bg-sage-soft px-3 py-1 text-xs font-medium text-sage-text">
-          UPI Autopay active — you&rsquo;ll be notified at least 24h before each charge.
+          UPI Autopay active — you&rsquo;ll be notified at least {SKIP_SWAP_CUTOFF_HOURS}h before each charge.
         </p>
       )}
       {mutationError && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{mutationError}</p>}
@@ -112,14 +129,22 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
         <p className="text-xs text-ink-muted">No upcoming deliveries on the schedule.</p>
       ) : (
         <ul className="flex flex-col gap-1.5">
-          {rows.map((d) => (
-            <li key={d.id} className="flex items-center justify-between gap-2 rounded-xl bg-bg px-3 py-2.5 text-sm">
+          {rows.map((d) => {
+            // The cutoff, checked BEFORE the tap. This list used to offer Skip
+            // on every upcoming row and let the server refuse it — the sheet
+            // pre-checked, the list did not, so the common path was tap → wait
+            // → refusal. A restore is never locked: putting a skipped meal back
+            // is not a change the kitchen has to act on.
+            const locked = d.status === "upcoming" && !isChangeable(d);
+            return (
+            <li key={d.id} className="flex flex-col gap-1 rounded-xl bg-bg px-3 py-2.5 text-sm">
+              <div className="flex items-center justify-between gap-2">
               <span className={d.status === "skipped" ? "text-ink-faint line-through" : "text-ink"}>
                 {fmtDay(d.scheduledFor)}
                 {d.deliveryWindow ? <span className="text-ink-faint"> · {d.deliveryWindow}</span> : null}
               </span>
               <span className="flex shrink-0 items-center gap-3">
-                {d.status === "upcoming" && (
+                {d.status === "upcoming" && !locked && (
                   <button
                     type="button"
                     disabled={busyIds.has(d.id)}
@@ -131,19 +156,28 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
                 )}
                 <button
                   type="button"
-                  disabled={busyIds.has(d.id)}
+                  disabled={busyIds.has(d.id) || locked}
                   onClick={() => act.mutate(d)}
                   className="-m-1 p-1 text-xs font-medium text-gold-text hover:underline disabled:opacity-40"
                 >
                   {d.status === "skipped" ? "Restore" : "Skip"}
                 </button>
               </span>
+              </div>
+              {locked && <p className="text-2xs text-ink-faint">{lockedReason()}</p>}
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
+      {/* Law 9, and computed over the FULL array rather than the visible
+          rows: SHOW_AT_MOST caps the list, so the next changeable delivery is
+          frequently below the fold. */}
+      {nextChangeNote(detail.deliveries) && (
+        <p className="mt-0.5 text-2xs text-ink-faint">{nextChangeNote(detail.deliveries)}</p>
+      )}
       <p className="mt-0.5 text-2xs text-ink-faint">
-        Skips up to 24h ahead come back as meal credits.
+        Skips up to {SKIP_SWAP_CUTOFF_HOURS}h ahead come back as meal credits.
       </p>
       {managing && (
         <ManageDeliverySheet

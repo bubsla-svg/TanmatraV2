@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { evidenceShot } from "./support";
 import { MenuPage } from "../../support/pages/MenuPage";
+import { ORDERABLE_DISH } from "../../fixtures";
 
 /**
  * TNM-MENU-01 M-5 §3.5 / §4 — dish image integrity, and the §5 flipbook
@@ -108,6 +109,52 @@ test.describe("stitch-runtime: dish image integrity (M-5 §3.5)", () => {
       })),
     );
     for (const c of perCard) expect(c.tile || c.img).toBe(true);
+  });
+
+  /**
+   * THE ROUTE THIS SUITE FORGOT.
+   *
+   * Every other test here reaches the DOM through `menu.goto()`, so the suite
+   * only ever asserted §3.5 on `/menu` and the drawer that opens over it. The
+   * standalone dish page was never visited — and it was the one dish surface
+   * still calling `SafeImage` without a `fallback`, so it rendered the neutral
+   * ImageOff glyph on the largest image of the route while the card and the
+   * drawer for the SAME dish showed the branded tile. Green suite, broken
+   * page, found from a customer screen recording rather than from CI.
+   *
+   * Asserted on the standalone route directly, because "covered by the menu
+   * tests" is exactly the assumption that hid it.
+   */
+  test("§3.5 holds on the standalone dish page too — never the generic glyph", async ({ page }) => {
+    await page.goto(`/dish/${ORDERABLE_DISH.slug}`);
+    await expect(page.getByRole("heading", { name: ORDERABLE_DISH.name })).toBeVisible();
+
+    // The hero is `priority`, so it is fetched eagerly from the raw HTML; give
+    // the load (and, on failure, the fallback swap) a window to resolve.
+    await page.waitForTimeout(1200);
+
+    expect(
+      await page.locator(GENERIC_GLYPH).count(),
+      "the dish page hero degraded to the generic glyph instead of the branded tile",
+    ).toBe(0);
+
+    const hero = page.locator('[data-screen-id="5.5"] img, [data-testid="dish-fallback-tile"]');
+    expect(await hero.count(), "the hero rendered neither a photo nor the tile").toBeGreaterThan(0);
+  });
+
+  /**
+   * Finding F5's last hiding place. `rdVerified` is true on all 145 live
+   * dishes, so a badge gated on it renders unconditionally — the claim cannot
+   * be false, which means it is decoration, not evidence. It was removed from
+   * the Header chip and withheld from /menu's trust strip; this page kept
+   * rendering it beside the price until a customer screenshot surfaced it.
+   */
+  test("the dish page makes no RD-review claim (finding F5)", async ({ page }) => {
+    await page.goto(`/dish/${ORDERABLE_DISH.slug}`);
+    await expect(page.getByRole("heading", { name: ORDERABLE_DISH.name })).toBeVisible();
+
+    const body = (await page.locator("main, body").first().innerText()).replace(/ /g, " ");
+    expect(body, "unearned per-dish RD-review claim (F5)").not.toMatch(/RD[-\s]?reviewed/i);
   });
 
   test("the dish drawer shows the same branded tile the card does", async ({ page }) => {

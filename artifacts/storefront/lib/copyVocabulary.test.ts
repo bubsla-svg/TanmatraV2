@@ -143,6 +143,52 @@ test("the carve-out does not blind the gate to real copy on the same line", () =
   assert.notEqual(r.code, 0, "a real violation beside an event name must still fail");
 });
 
+test("an event name lifted into a typed lookup table is still an identifier", () => {
+  // Same identifier as `emitFunnel("subscription_paused")`, moved out of the
+  // call into a map. `Partial<Record<SubAction, FunnelEvent>>` is the
+  // guarantee: tsc will not accept a sentence in that position.
+  const r = runGate({
+    "components/account/SubscriptionManager.tsx":
+      `const ACTION_EVENT: Partial<Record<SubAction, FunnelEvent>> = {\n` +
+      `  pause: "subscription_paused",\n  cancel: "subscription_cancelled",\n};\n`,
+  });
+  assert.equal(r.code, 0, `expected pass, got:\n${r.output}`);
+});
+
+test("the lookup-table carve-out ends at the closing brace", () => {
+  // Otherwise one typed map at the top of a file would silence the gate for
+  // everything below it — the widest hole this carve-out could have.
+  const r = runGate({
+    "components/account/SubscriptionManager.tsx":
+      `const ACTION_EVENT: Record<SubAction, FunnelEvent> = {\n  pause: "subscription_paused",\n};\n` +
+      `export const C = () => <p>Your plan is subscription_paused.</p>;\n`,
+  });
+  assert.equal(r.code, 1);
+  assert.match(r.output, /SubscriptionManager\.tsx:4/);
+});
+
+test("an untyped object of the same shape is still scanned", () => {
+  // The type annotation is what makes the values identifiers. Without it they
+  // are just strings, and a status enum among them is the thing the gate is for.
+  const r = runGate({
+    "components/account/Labels.tsx": `const LABEL = {\n  pause: "subscription_paused",\n};\n`,
+  });
+  assert.equal(r.code, 1);
+  assert.match(r.output, /raw status enum/);
+});
+
+test("a map keyed to a richer value type is not carved out", () => {
+  // `Record<K, { event: FunnelEvent; label: string }>` has a copy field in it.
+  // Blanking the whole literal would hide real customer text.
+  const r = runGate({
+    "components/account/Actions.tsx":
+      `const A: Record<SubAction, { event: FunnelEvent; label: string }> = {\n` +
+      `  pause: { event: "subscription_paused", label: "Your plan is subscription_paused" },\n};\n`,
+  });
+  assert.equal(r.code, 1);
+  assert.match(r.output, /raw status enum/);
+});
+
 test("law6-allow exempts a line", () => {
   const r = runGate({
     "components/checkout/Total.tsx":

@@ -1,0 +1,47 @@
+{
+  "route": "/faq",
+  "name": "faq",
+  "ok": true,
+  "status": 200,
+  "findings": [
+    {
+      "probe": "tap-target",
+      "severity": "medium",
+      "detail": "74x28 — below the 44px comfort floor: \"Tanmatra\"",
+      "selector": "a.inline-block.max-w-[7.5rem].overflow-hidden",
+      "metrics": {
+        "w": 74,
+        "h": 28
+      }
+    },
+    {
+      "probe": "tap-target",
+      "severity": "medium",
+      "detail": "36x28 — below the 44px comfort floor: \"Search⌘K\"",
+      "selector": "button.flex.items-center.gap-2",
+      "metrics": {
+        "w": 36,
+        "h": 28
+      }
+    },
+    {
+      "probe": "tap-target",
+      "severity": "medium",
+      "detail": "136x42 — below the 44px comfort floor: \"Talk to an RD\"",
+      "selector": "a.shrink-0.rounded-full.border",
+      "metrics": {
+        "w": 136,
+        "h": 42
+      }
+    }
+  ],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "failedRequests": [
+    "GET http://127.0.0.1:3210/?_rsc=QgfnF85fYcrwyI4V",
+    "GET http://127.0.0.1:3210/menu?_rsc=QgfnF85fYcrwyI4V",
+    "GET http://127.0.0.1:3210/?_rsc=wKPz8cjhDlzQ_BQw",
+    "GET http://127.0.0.1:3210/menu?_rsc=idRFCYNHTuOXPa-u"
+  ]
+}

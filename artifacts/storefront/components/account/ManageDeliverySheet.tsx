@@ -19,6 +19,8 @@ import {
 } from "@/lib/subscriptionsApi";
 import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 import { Button } from "@/components/ui/button";
+import { earliestReschedulableDateISO } from "@/lib/deliveryCutoff";
+import { emitFunnel } from "@/lib/funnel";
 
 function toDateInputValue(iso: string): string {
   return new Date(iso).toISOString().slice(0, 10);
@@ -51,7 +53,10 @@ export function ManageDeliverySheet({
 
   const reschedule = useMutation({
     mutationFn: () => rescheduleDelivery(delivery.id, { scheduledFor: date }),
-    onSuccess: onSaved,
+    onSuccess: () => {
+      emitFunnel("subscription_rescheduled", { subscription_id: delivery.subscriptionId });
+      onSaved();
+    },
   });
 
   const swap = useMutation({
@@ -105,7 +110,11 @@ export function ManageDeliverySheet({
                   id="reschedule-date"
                   type="date"
                   value={date}
-                  min={new Date().toISOString().slice(0, 10)}
+                  // Not today: the picker used to offer dates the app's own
+                  // cutoff has already closed, so the customer chose one and
+                  // the server refused it. Weekends are excluded too —
+                  // nextWeekdayISO never schedules one.
+                  min={earliestReschedulableDateISO()}
                   disabled={pastCutoff || reschedule.isPending}
                   onChange={(e) => setDate(e.target.value)}
                   className="w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus-visible:border-line-strong disabled:opacity-50"

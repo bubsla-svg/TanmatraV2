@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Gift } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/apiClient";
+import { emitFunnel, type FunnelEvent } from "@/lib/funnel";
 import {
   getSubscriptions,
   getMealCredits,
@@ -27,6 +28,22 @@ const ACTION_FN: Record<SubAction, (id: number) => Promise<unknown>> = {
   resume: resumeSubscription,
   cancel: cancelSubscription,
   "reactivate-billing": reactivateSubscriptionBilling,
+};
+
+/**
+ * Which funnel event each action reports once the SERVER has accepted it.
+ *
+ * PARTIAL on purpose. `reactivate-billing` restarts a lapsed UPI mandate — it
+ * is a payment-rail recovery, not a lifecycle decision the customer made about
+ * the plan, and folding it into `subscription_resumed` would count a failed
+ * card being fixed as a customer un-pausing. It belongs with the payment
+ * events if it is ever measured; tsc caught the omission, which is why the
+ * type is Partial rather than silently defaulting.
+ */
+const ACTION_EVENT: Partial<Record<SubAction, FunnelEvent>> = {
+  pause: "subscription_paused",
+  resume: "subscription_resumed",
+  cancel: "subscription_cancelled",
 };
 
 /**
@@ -83,6 +100,11 @@ export function SubscriptionManager() {
     setActionError(null);
     try {
       await actionMutation.mutateAsync({ sub, action });
+      // Emitted AFTER the await, so only an action the server accepted is
+      // counted. Reporting on the tap would inflate every retention number by
+      // the refusals — the opposite of what the scoreboard is for.
+      const event = ACTION_EVENT[action];
+      if (event) emitFunnel(event, { subscription_id: sub.id, cadence: sub.cadence });
       await queryClient.invalidateQueries({ queryKey: ["account", "subscription"] });
     } catch (e) {
       if (isAuthExpired(e)) {
