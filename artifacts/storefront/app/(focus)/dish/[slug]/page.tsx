@@ -7,7 +7,7 @@ import { Badge } from "@astryxdesign/core/Badge";
 import { Divider } from "@astryxdesign/core/Divider";
 import { Collapsible, CollapsibleGroup } from "@astryxdesign/core/Collapsible";
 import { fetchMenu, findDish } from "@/lib/catalog";
-import { SafeImage } from "@/components/ui/SafeImage";
+import { DishImage } from "@/components/menu/DishImage";
 import { formatGrams, formatKcal, formatPaise } from "@/lib/format";
 import { ingredientSummary } from "@/lib/dishText";
 import { PdpBuyLedger } from "@/components/menu/PdpBuyLedger";
@@ -103,7 +103,17 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
     >
       <ViewDishBeacon dishSlug={dish.slug} hasPlanOption={planOffer !== null} />
       <div className="relative aspect-square w-full overflow-hidden md:aspect-video">
-        <SafeImage src={dish.image} alt={dish.name} className="h-full w-full" />
+        {/* DishImage, not SafeImage. `SafeImage`'s `fallback` is optional —
+            correctly, for a marketplace product or a landing hero — which
+            made the branded tile something every dish surface had to
+            REMEMBER. DishImage's own doc lists the five that forgot and were
+            converted; this hero was the sixth and was missed, so a dish that
+            renders its tile on the card and in the drawer degraded to the
+            neutral ImageOff glyph the moment you tapped "Open full page".
+            Confirmed from a customer screen recording, on the largest image
+            on the route. §3.5 permits a real photo or the tile, nothing
+            else. */}
+        <DishImage src={dish.image} name={dish.name} alt={dish.name} priority className="h-full w-full" />
         {/* The focus shell renders no Header, and FocusLayout's contract is
             that each flow supplies its own back affordance. */}
         <Link
@@ -123,7 +133,21 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
             <HStack gap={2}>
               <Badge variant={dish.isVeg ? "green" : "orange"} label={dish.isVeg ? "Veg" : "Non-veg"} />
               <Badge label={dish.category} />
-              {dish.rdVerified && <Badge variant="success" label="RD reviewed" />}
+              {/* The "RD reviewed" badge that stood here is REMOVED — the
+                  last surviving instance of finding F5's unearned claim.
+                  `dish.rdVerified` is true on all 145 live dishes including
+                  the dead SKUs (POS imports are written in pre-reviewed by
+                  lib/petpooja.ts), so the condition was decorative: the badge
+                  rendered on every dish, and a claim that cannot be false is
+                  not evidence of anything.
+
+                  The same finding already removed the site-wide chip from the
+                  Header and kept the claim out of /menu's trust strip. This
+                  per-dish green "success" badge outlived both — sitting on
+                  the product page, next to the price, at the moment of
+                  purchase, which is the worst place for a clinical claim with
+                  nothing behind it. It returns when F5 is resolved data-side
+                  and a genuine per-dish signal exists to read. */}
             </HStack>
 
             <Text type="display-2" as="h1">
