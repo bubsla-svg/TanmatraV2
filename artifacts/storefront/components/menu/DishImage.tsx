@@ -19,11 +19,23 @@ import { DishFallbackTile } from "@/components/menu/DishFallbackTile";
  * rather than a convention is what stops the next dish surface from
  * reintroducing a fourth.
  *
- * THIS IS NOT AN EDGE CASE TODAY. The platform serves no dish photography at
- * all — every `image` path resolves to the legacy SPA shell (HTTP 200,
- * `content-type: text/html`), which the browser fails to decode and reports
- * as a load error. So the tile is what nearly every dish actually renders,
- * on every surface, right now.
+ * WHAT ACTUALLY TRIGGERS THE TILE — corrected 2026-08-16 against the live
+ * payload, because the previous note here had gone stale and was steering
+ * readers wrong.
+ *
+ * It used to say the platform serves no dish photography at all, every
+ * `image` path resolving to the legacy SPA shell (HTTP 200,
+ * `content-type: text/html`) that the browser reports as a load error. That
+ * WAS true when written. It is not true now: `/api/menu/public` serves real
+ * `https://images.unsplash.com/...` URLs, and they load.
+ *
+ * So the tile is no longer the common case — it is the SLOW case, reached
+ * through `ImgWithFallback`'s 8s stall timeout when a remote photo hangs.
+ * That distinction matters for anyone testing this: a local build with no
+ * image host fails instantly, swaps to the tile immediately, and looks
+ * perfect. Production loads slowly and shows an empty box for up to 8
+ * seconds first. The environment that feels like the honest test is the one
+ * that cannot reproduce the defect.
  *
  * Server Component, like `SafeImage` — the `onError` leaf below it is the
  * only client piece, so this stays free to render from any RSC.
