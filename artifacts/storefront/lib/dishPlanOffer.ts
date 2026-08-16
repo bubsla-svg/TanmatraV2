@@ -33,6 +33,15 @@ import { planDisplay } from "./planCopy";
  *      the fabricated-benefit version of the same defect this workstream has
  *      spent its time removing from macros and renewal copy.
  *
+ * OWNER DECISION (2026-08-16): the toggle STAYS on the 17 dishes where a plan
+ * costs more per delivery than the dish alone. Hiding it there was the obvious
+ * alternative and was explicitly not chosen — a plan is bought for the rotation
+ * arriving without re-ordering, not only for a discount, and suppressing the
+ * option wherever it happens to price higher would be curating the customer's
+ * choice around one variable. The requirement that follows is that the plan
+ * side must state the higher price plainly and claim no saving, which is what
+ * `savingPaise: null` enforces below. Do not "fix" this by hiding the toggle.
+ *
  * Where several live plans carry the dish, the CHEAPEST per-delivery one wins.
  * That is not a recommendation dressed as a fact: it is the only choice that
  * cannot overstate what the dish costs on a plan, which is the single claim the
