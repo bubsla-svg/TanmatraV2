@@ -10,6 +10,7 @@
     "seed-legal-documents": "tsx ./src/seedLegalDocuments.ts",
     "backfill-order-coords": "tsx ./src/backfill-order-coords.ts",
     "backfill-macros": "tsx ./src/backfill-macros.ts",
+    "backfill-catalog-macros": "tsx ./src/backfill-catalog-macros.ts",
     "backfill-encrypt-subscription-members": "tsx ./src/backfill-encrypt-subscription-members.ts",
     "verify-ledger": "tsx ./src/verify-ledger.ts",
     "audit-order-status": "tsx ./src/audit-order-status.ts",
