@@ -227,6 +227,15 @@ jobs:
         if: ${{ !cancelled() }}
         run: pnpm --filter @workspace/storefront run lint:css-vars
 
+      # A raw <a> to an app route is a full document load: the router unmounts,
+      # providers re-run, the query cache is discarded, scroll position is lost
+      # and nothing prefetches. It is correct HTML and correct in a plain React
+      # app, so nothing in a diff distinguishes it — which is how ten of them
+      # accumulated, including every card in the marketplace and recipe grids.
+      - name: Client nav — internal links go through the router
+        if: ${{ !cancelled() }}
+        run: pnpm --filter @workspace/storefront run lint:client-nav
+
       # ---------------------------------------------------------------------
       # PERFORMANCE BASELINE — DELIBERATELY NON-BLOCKING. DO NOT FLIP YET.
       # ---------------------------------------------------------------------

@@ -11,6 +11,7 @@ import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
 import { fetchQuote, type QuoteSnapshot } from "@/lib/quoteApi";
 import { useCart } from "@/components/cart/CartProvider";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 import { CartUpsellRail } from "./CartUpsellRail";
@@ -87,7 +88,12 @@ export function CartDrawer({
   if (LIVE_CHECKOUT_ENABLED) {
     footer = (
       <Button asChild shape="pill" size="fluid" className="block min-h-11 px-5 py-3 text-center font-semibold">
-        <a href="/checkout?mode=alacarte">Checkout</a>
+        {/* prefetch: the only link in the storefront where the next step is
+            near-certain — this renders in an open cart drawer with items in
+            it. Everywhere else the default (the loading shell for a dynamic
+            route) is right, because a menu of ~100 dishes would fire one
+            full RSC render per visible card. */}
+        <Link href="/checkout?mode=alacarte" prefetch>Checkout</Link>
       </Button>
     );
   } else {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getRecipes } from "@/lib/recipesApi";
 import { SafeImage } from "@/components/ui/SafeImage";
 
@@ -19,7 +20,7 @@ export default async function RecipesPage() {
       <div className="px-gutter pt-6">
         <div className="flex flex-col gap-4">
           {recipes.map((recipe) => (
-            <a key={recipe.id} href={`/recipes/${recipe.slug}`} className="group flex flex-col rounded-2xl border border-line bg-surface p-3 transition-transform active:scale-[0.98]">
+            <Link key={recipe.id} href={`/recipes/${recipe.slug}`} className="group flex flex-col rounded-2xl border border-line bg-surface p-3 transition-transform active:scale-[0.98]">
               <div className="relative mb-3 overflow-hidden rounded-xl bg-surface-raised border border-line">
                 <SafeImage src={recipe.image || ""} alt={recipe.title} className="aspect-video w-full" />
               </div>
@@ -30,7 +31,7 @@ export default async function RecipesPage() {
                 </span>
                 <p className="text-ink-muted text-sm mt-1">{recipe.summary}</p>
               </div>
-            </a>
+            </Link>
           ))}
           {recipes.length === 0 && (
             <div className="py-10 text-center text-ink-muted">
