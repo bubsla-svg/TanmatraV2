@@ -14,8 +14,12 @@ import { buildSubscriptionInput, nextWeekdayISO } from "@/lib/planCheckout";
 import { stashCheckoutPerks, type CheckoutPerks } from "@/lib/postCheckout";
 import { usePlanQuote } from "@/lib/usePlanQuote";
 import { emitFunnel, funnelErrorCode } from "@/lib/funnel";
-import { getAddresses, ApiError, type Address, type AuthUser, type AddOnId, type DietTrack, type PlanCadence } from "@/lib/api";
+import { getAddresses, type Address, type AuthUser, type AddOnId, type DietTrack, type PlanCadence } from "@/lib/api";
+// humanizeOrderError, not ApiError.message — #42 replaced the raw machine
+// string with copy that names the next step. This branch predated that.
+import { humanizeOrderError } from "@/lib/orderErrors";
 import { PlanIdentityGate } from "./PlanIdentityGate";
+import { PlanServiceabilityGate } from "./PlanServiceabilityGate";
 import { PlanDetails, type PlanDetailsValue } from "./PlanDetails";
 import { UnresolvedPaymentPanel } from "../UnresolvedPaymentPanel";
 
@@ -74,6 +78,10 @@ export function PlanCheckout({
     billedCadence,
   );
   const [savedAddress, setSavedAddress] = useState<Address | null>(null);
+  // Laws 1 + 7: the PIN is answered before any personal field. Null means the
+  // gate has not cleared yet — nothing that asks for identity, allergies or
+  // medical conditions may render while it is null.
+  const [servicePincode, setServicePincode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // "Opening payment…" vs "Confirming your payment…" — see handlePay's
   // onVerifying. Money is captured the instant the modal resolves; a slow
@@ -229,7 +237,13 @@ export function PlanCheckout({
       if (e instanceof RazorpayDismissed) {
         setError("Payment cancelled — you haven't been charged. Tap Continue to try again.");
       } else {
-        setError(e instanceof ApiError ? e.message : "Something went wrong. Please try again.");
+        // Through the humanizer, exactly as AlacarteCheckout does. This branch
+        // used to render `e.message` raw, so a plan/trial payment failure —
+        // the highest-stakes screen in the funnel — showed the server's own
+        // string with no next action, while the identical failure on the
+        // à-la-carte path got real copy. Same money moment, two different
+        // answers, and the worse one on the more expensive purchase.
+        setError(humanizeOrderError(e));
       }
       setBusy(false);
       setVerifying(false);
@@ -248,6 +262,20 @@ export function PlanCheckout({
       // fall back to the normal form: that would risk reopening the modal.
       setCheckingStatus(false);
     }
+  }
+
+  // Serviceability first — ahead of the identity gate, not after it. This
+  // ordering IS the fix: the gate below asks for a phone number, and the step
+  // after it asks for allergies and medical conditions, so anything that runs
+  // before this line collects personal data from someone we may not be able to
+  // deliver to at all.
+  if (servicePincode === null) {
+    return (
+      <div className="flex flex-col gap-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{planName}</h1>
+        <PlanServiceabilityGate onServiceable={setServicePincode} />
+      </div>
+    );
   }
 
   if (!user) {
@@ -271,7 +299,10 @@ export function PlanCheckout({
         onRetryQuote={retryQuote}
         addOnLine={quote?.addOnLine ?? null}
         creditAppliedPaise={quote?.creditAppliedPaise ?? 0}
-        initialAddress={savedAddress}
+        // Law 4 (never ask twice): the PIN cleared by the gate above seeds the
+        // address step, so the same six digits are not requested a second
+        // time. A saved address still wins — it is the more complete answer.
+        initialAddress={savedAddress ?? { line1: "", city: "", pincode: servicePincode }}
         finePrint={finePrint}
         busy={busy}
         verifying={verifying}

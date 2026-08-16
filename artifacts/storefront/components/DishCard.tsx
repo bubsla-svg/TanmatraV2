@@ -47,8 +47,14 @@ import { DishImage } from "@/components/menu/DishImage";
  * assert "460 kcal · 18 g P" as fact. On a platform whose customers count
  * protein, a fabricated number is worse than an absent one.
  */
-function MacroChip({ dish }: { dish: DishData }) {
-  const trust = macroTrust(dish);
+function MacroChip({
+  dish,
+  sharedMacroKeys,
+}: {
+  dish: DishData;
+  sharedMacroKeys: ReadonlySet<string>;
+}) {
+  const trust = macroTrust(dish, sharedMacroKeys);
   if (trust === "unverified") {
     return (
       <ClinicalBadge
@@ -62,7 +68,7 @@ function MacroChip({ dish }: { dish: DishData }) {
     <ClinicalBadge
       variant="slate"
       className="tabular w-fit"
-      label={formatMacroLine(dish.macros, dish.macrosEstimated)}
+      label={formatMacroLine(dish.macros, dish.macrosEstimated, dish.macrosProvisional)}
     />
   );
 }
@@ -95,7 +101,25 @@ function RatingStars({ average, count }: { average?: number | null; count?: numb
   );
 }
 
-export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean }) {
+/**
+ * `sharedMacroKeys` is REQUIRED, not optional (flipbook F-1). It is the set of
+ * macro tuples appearing on more than one dish in the set being rendered, and
+ * a dish inside it prints no numbers. Required because the failure mode of
+ * forgetting it is invisible — the card renders a confident fabricated macro
+ * and nothing looks wrong. A type error at every new call site is the only
+ * reliable guard. Callers build it with `buildSharedMacroKeys(dishes)`; a
+ * surface that genuinely renders one isolated dish passes an empty set and
+ * thereby states that it has no catalog context to check against.
+ */
+export function DishCard({
+  dish,
+  compact,
+  sharedMacroKeys,
+}: {
+  dish: DishData;
+  compact?: boolean;
+  sharedMacroKeys: ReadonlySet<string>;
+}) {
   if (compact) {
     const vegClass = resolveVegClass(dish);
     return (
@@ -118,7 +142,7 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
         </div>
         <div className="flex flex-col gap-1">
           <h3 className="font-bold text-lg text-ink truncate">{dish.name}</h3>
-          <MacroChip dish={dish} />
+          <MacroChip dish={dish} sharedMacroKeys={sharedMacroKeys} />
           <div className="relative z-10 mt-3 flex justify-between items-center">
             <span className="font-clinical-data text-ink text-gold-text">{formatPaise(dish.price)}</span>
             <AddToCart dish={dish} />
@@ -161,7 +185,7 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
             {dishCardSummary(dish)}
           </Text>
           <RatingStars average={dish.averageRating} count={dish.reviewCount} />
-          <MacroChip dish={dish} />
+          <MacroChip dish={dish} sharedMacroKeys={sharedMacroKeys} />
         </div>
 
         {/* Photo LAST — square, flush right, fixed box (zero CLS). No `sizes`

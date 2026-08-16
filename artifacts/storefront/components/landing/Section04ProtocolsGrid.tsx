@@ -196,6 +196,7 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
                     price: steadyDish.pricePaise,
                     macros: steadyDish.macros,
                     macrosEstimated: steadyDish.macrosEstimated,
+                    macrosProvisional: steadyDish.macrosProvisional,
                     rdVerified: steadyDish.rdVerified,
                     ...(steadyDish.rdNote ? { rdNote: steadyDish.rdNote } : {}),
                     category: steadyDish.category,

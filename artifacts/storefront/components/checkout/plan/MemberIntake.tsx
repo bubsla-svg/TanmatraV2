@@ -59,7 +59,7 @@ export function MemberIntake({
           {SPICES.map((s) => (<option key={s} value={s}>{cap(s)} spice</option>))}
         </select>
       </div>
-      <input aria-label="Allergens" value={value.allergens} onChange={(e) => set({ allergens: e.target.value })} placeholder="Allergens, comma-separated (optional)" className={inputCls} />
+      <input aria-label="Allergens" value={value.allergens} onChange={(e) => set({ allergens: e.target.value })} placeholder="Allergies, e.g. peanuts, shellfish (optional)" className={inputCls} />
       <input aria-label="Medical conditions" value={value.conditions} onChange={(e) => set({ conditions: e.target.value })} placeholder="Conditions, e.g. diabetes (optional)" className={inputCls} />
       <p className="text-xs text-ink-faint">
         Used only to keep unsafe dishes off your plan — stored under the consent below.

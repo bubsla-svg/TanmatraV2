@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { QuickSetupWizard } from "@/components/wizard/QuickSetupWizard";
+import { FocusHeader } from "@/components/FocusHeader";
 
 export const metadata: Metadata = {
   title: "Quick Dietary Setup",
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
 export default function QuickSetupPage() {
   return (
     <div className="min-h-dvh">
+      <FocusHeader backLabel="Back" />
       <section className="mx-auto flex max-w-lg flex-col gap-8 px-4 py-12">
         <div className="flex flex-col gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
