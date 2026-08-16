@@ -4,7 +4,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SKIP_SWAP_CUTOFF_MS, PLAN_CATALOG, type PlanId } from "@workspace/subscription-rules";
-import { planDecisionFacts, SKIP_SWAP_CUTOFF_HOURS } from "./planDecisionFacts";
+import { planDecisionFacts, registersAutopayMandate, SKIP_SWAP_CUTOFF_HOURS } from "./planDecisionFacts";
 
 /**
  * Laws 5 and 6 at the decision moment.
@@ -27,13 +27,50 @@ test("the cutoff is derived from the shared constant, not written down", () => {
   assert.doesNotMatch(src, /\b24\s*h\b/, "the cutoff must not be restated as a literal");
 });
 
-test("a recurring plan states what arrives, the cutoff, and that it renews", () => {
-  const lines = planDecisionFacts("desk_fuel", "monthly");
+test("an autopay cadence states what arrives, the cutoff, and that it renews", () => {
+  const lines = planDecisionFacts("desk_fuel", "weekly");
   assert.equal(lines.length, 3);
-  assert.match(lines.join(" "), /per month/);
+  assert.match(lines.join(" "), /per week/);
   assert.match(lines.join(" "), new RegExp(`${SKIP_SWAP_CUTOFF_HOURS}\\s*h`));
-  assert.match(lines.join(" "), /Renews every month/);
+  assert.match(lines.join(" "), /Renews every week/);
   assert.match(lines.join(" "), /no lock-in/);
+});
+
+test("a prepaid cadence is never described as renewing", () => {
+  // The first draft said "Renews every month until you cancel" for every
+  // non-one-off cadence. The server attaches Razorpay's `token` block — the
+  // thing that makes a payment a mandate registration — only for weekly and
+  // fortnightly, so a monthly plan registers no mandate and the charge sweep
+  // has nothing to bill. The promise could not be kept.
+  //
+  // And monthly is the DEFAULT cadence, so this was the common case. Its
+  // ending is worse than a one-off mislabelled as renewing: the customer
+  // believes food keeps arriving, and it stops on a date nobody named.
+  for (const cadence of ["monthly", "quarterly"] as const) {
+    const all = planDecisionFacts("desk_fuel", cadence).join(" ");
+    assert.doesNotMatch(all, /Renews every/, `${cadence} registers no mandate and must not claim renewal`);
+    assert.match(all, /[Nn]othing renews automatically/);
+    assert.match(all, /no recurring charge is set up/);
+  }
+});
+
+test("the renewal claim tracks the cadences that actually register a mandate", () => {
+  // Guards the mapping itself against drift from api-server's own condition
+  // (routes/payments.ts: cadence === "weekly" || cadence === "fortnightly",
+  // and not a live trial).
+  assert.equal(registersAutopayMandate("weekly"), true);
+  assert.equal(registersAutopayMandate("fortnightly"), true);
+  assert.equal(registersAutopayMandate("monthly"), false);
+  assert.equal(registersAutopayMandate("quarterly"), false);
+  assert.equal(registersAutopayMandate("one_off"), false);
+});
+
+test("only an autopay cadence mentions UPI Autopay", () => {
+  // The disclaimer describes a mandate. Naming the mechanism where none is
+  // registered would be precise and wrong — the worst combination.
+  assert.match(planDecisionFacts("desk_fuel", "weekly").join(" "), /UPI Autopay/);
+  assert.doesNotMatch(planDecisionFacts("desk_fuel", "monthly").join(" "), /UPI Autopay/);
+  assert.doesNotMatch(planDecisionFacts("trial_3day", undefined).join(" "), /UPI Autopay/);
 });
 
 test("a one-off plan is never described as renewing", () => {
@@ -53,10 +90,10 @@ test("an absent cadence falls back to the plan's own cycle, not to monthly", () 
   for (const id of Object.keys(PLAN_CATALOG) as PlanId[]) {
     const cycle = PLAN_CATALOG[id].cycle;
     const lines = planDecisionFacts(id, undefined).join(" ");
-    if (cycle === "one_off") {
-      assert.doesNotMatch(lines, /Renews every/, `${id} is one_off and must not claim renewal`);
+    if (registersAutopayMandate(cycle)) {
+      assert.match(lines, /Renews every/, `${id} registers a mandate and must say so`);
     } else {
-      assert.match(lines, /Renews every/, `${id} renews and must say so`);
+      assert.doesNotMatch(lines, /Renews every/, `${id} registers no mandate and must not claim renewal`);
     }
   }
 });

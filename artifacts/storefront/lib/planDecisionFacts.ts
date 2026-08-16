@@ -37,6 +37,28 @@ import type { PlanCadence } from "./api";
 export const SKIP_SWAP_CUTOFF_HOURS = Math.round(SKIP_SWAP_CUTOFF_MS / 3_600_000);
 
 /**
+ * The cadences that actually set up a recurring charge.
+ *
+ * Not a product decision restated here — it is what the server does. At order
+ * creation (api-server routes/payments.ts) the Razorpay `token` block, which is
+ * what makes a payment a mandate registration, is attached only when
+ * `sub.cadence === "weekly" || sub.cadence === "fortnightly"` and the
+ * subscription is not a live trial. Without that block Razorpay returns no
+ * `token_id`, `registerAutopayMandate` bails, no `subscription_mandates` row
+ * exists, and `chargeMandateScheduler` — which sweeps active mandate rows —
+ * has nothing to charge. A monthly or quarterly plan therefore never bills
+ * itself a second time.
+ *
+ * So "does it auto-renew?" has no single answer for this product: it depends on
+ * the cadence the customer picked, and the default one (monthly) does not.
+ */
+const AUTOPAY_CADENCES: readonly (PlanCadence | PlanCycle)[] = ["weekly", "fortnightly"];
+
+export function registersAutopayMandate(cadence: PlanCadence | PlanCycle): boolean {
+  return AUTOPAY_CADENCES.includes(cadence);
+}
+
+/**
  * Every cadence the checkout can pass. `PlanCadence` (lib/api) carries
  * `fortnightly`, which the catalog's own PlanCycle does not — an exhaustive
  * Record makes the compiler, not a reviewer, catch the day a fifth is added.
@@ -84,9 +106,23 @@ export function planDecisionFacts(
     return [arrives, cutoff, "A one-time purchase — this does not renew and sets up no recurring charge."];
   }
 
+  const recurring = `${meals} ${meals === 1 ? "meal" : "meals"} per ${period} — ${slots} on your delivery days.`;
+
+  // Only an AUTOPAY cadence renews itself. Anything else is prepaid, and
+  // saying otherwise is the same Law 5 violation as the one-off case — with a
+  // worse ending, because a customer who believes deliveries continue simply
+  // stops receiving them on a date nobody warned them about.
+  if (!registersAutopayMandate(effective)) {
+    return [
+      recurring,
+      cutoff,
+      `Paid once for this ${period}. Nothing renews automatically and no recurring charge is set up — come back to buy the next ${period} when you want it.`,
+    ];
+  }
+
   return [
-    `${meals} ${meals === 1 ? "meal" : "meals"} per ${period} — ${slots} on your delivery days.`,
+    recurring,
     cutoff,
-    `Renews every ${period} until you cancel. Cancel any time before the next charge — there is no lock-in.`,
+    `Renews every ${period} by UPI Autopay until you cancel, with a notification before each charge. Cancel any time before the next one — there is no lock-in.`,
   ];
 }
