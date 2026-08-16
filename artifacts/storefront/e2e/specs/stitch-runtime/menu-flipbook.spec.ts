@@ -93,6 +93,6 @@ test.describe("stitch-runtime: menu flipbook (M-5)", () => {
     const noMatch = page.getByTestId("menu-no-match-empty");
     await expect(sectionHeadings.first().or(noMatch)).toBeVisible();
 
-    await evidenceShot(page, "5.2-search");
+    await evidenceShot(page, "5.2-sheet-filtered");
   });
 });

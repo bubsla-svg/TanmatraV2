@@ -71,14 +71,18 @@ export function MenuControls({
                   // border + tint + marker, never a solid --gold fill.
                   // min-h-9 (36px) keeps the row shorter than the 44px
                   // filter trigger beside it while staying above the WCAG
-                  // 2.2 AA 24px target minimum.
-                  className={`inline-flex min-h-9 items-center rounded-full border px-4 text-xs font-semibold transition-transform active:scale-95 ${
+                  // 2.2 AA 24px target minimum. `gap-1` carries the space
+                  // after the ✓, NOT a trailing space inside the span: this
+                  // is a flex container, and flex items get their leading
+                  // and trailing whitespace trimmed, which silently
+                  // rendered "✓All".
+                  className={`inline-flex min-h-9 items-center gap-1 rounded-full border px-4 text-xs font-semibold transition-transform active:scale-95 ${
                     active
                       ? "border-gold bg-gold/10 text-gold-text"
                       : "border-line bg-surface text-ink-muted hover:text-ink"
                   }`}
                 >
-                  {active && <span aria-hidden>✓ </span>}
+                  {active && <span aria-hidden>✓</span>}
                   {opt.label}
                 </button>
               );
