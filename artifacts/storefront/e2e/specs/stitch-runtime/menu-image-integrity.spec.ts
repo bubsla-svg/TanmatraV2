@@ -32,17 +32,44 @@ import { MenuPage } from "../../support/pages/MenuPage";
  *  fallback is supplied. Its presence on a dish surface is the defect. */
 const GENERIC_GLYPH = "svg.lucide-image-off";
 
+/** The scheme the customer actually sees — `data-stitch`'s !important rule
+ *  and next-themes' inline style both land here. Same probe
+ *  theme-toggle.spec.ts uses, and for the same reason: the attribute lies. */
+function paintedScheme(page: Page): Promise<string> {
+  return page.evaluate(() => getComputedStyle(document.documentElement).colorScheme);
+}
+
+/**
+ * Drive the REAL theme toggle until the page is painting `theme`.
+ *
+ * The previous version wrote `data-theme` on documentElement and to
+ * localStorage, then screenshotted 150ms later. next-themes re-asserts its
+ * own value over that write, so the shot came back in whatever theme the
+ * page was already in — which is how all 13 `-light` flipbook files ended up
+ * BYTE-IDENTICAL to their `-dark` counterparts (flipbook review F-6). The
+ * suite was green and the light half was fake.
+ *
+ * Asserting on the PAINTED color-scheme rather than the attribute is the
+ * other half of the fix: on a Stitch-scoped surface the attribute can say
+ * "light" while `data-stitch`'s !important rule paints dark, so the
+ * attribute is not evidence of what was captured.
+ */
 async function setTheme(page: Page, theme: "light" | "dark") {
-  await page.evaluate((t) => {
-    document.documentElement.setAttribute("data-theme", t);
-    try {
-      localStorage.setItem("theme", t);
-    } catch {
-      /* storage disabled — the attribute above is what paints */
-    }
-  }, theme);
-  // Let the token swap land before the shot.
-  await page.waitForTimeout(150);
+  const toggle = page.getByRole("button", { name: /switch to (dark|light) theme/i });
+  // Up to two taps: the first may only un-force the Stitch canvas, the
+  // second lands the explicit choice. Bail loudly rather than silently
+  // shooting the wrong theme — a wrong-theme shot filed under `-light` is
+  // exactly the failure this replaces.
+  for (let i = 0; i < 2 && (await paintedScheme(page)) !== theme; i += 1) {
+    await toggle.click();
+    await expect
+      .poll(() => paintedScheme(page), { timeout: 3000 })
+      .toBeTruthy();
+  }
+  await expect
+    .poll(() => paintedScheme(page), { timeout: 3000 })
+    .toBe(theme);
+  await page.waitForTimeout(150); // let the token swap paint before the shot
 }
 
 test.describe("stitch-runtime: dish image integrity (M-5 §3.5)", () => {
