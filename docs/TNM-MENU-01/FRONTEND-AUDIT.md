@@ -157,6 +157,34 @@ rather than the "Add + Open full page" pair described above, because removing
 open drawer. That is a consequence of the density win, not a defect in the
 drawer.
 
+## Re-run after PR #70 — the AA failures are fixed
+
+**All five WCAG 2.2 AA target-size failures are gone.** #70 fixed exactly the
+controls this audit measured — its own test header names them as "the five
+controls the frontend audit measured under 24 CSS px" — so the table at the
+top of this document now describes a state that no longer exists. Re-measured
+against post-#70 `main`, same instrument, same 9 routes:
+
+| | first run | after #65 | **after #70** |
+|---|---:|---:|---:|
+| findings | 39 | 37 | **34** |
+| **WCAG 2.2 AA failures** | 5 | 5 | **0** |
+| tap targets in the 24–44px band | 31 | 29 | 31 |
+| trailing void | 1 | 1 | 1 (`/cart`, 568px) |
+| CTA stacking | 2 | 2 | 2 |
+| permanently occluded controls | 0 | 0 | **0** |
+| collapsed image boxes | 0 | 0 | **0** |
+
+Read the band figure carefully — it went UP, and that is the fix working, not
+a regression. Of the five controls that were below 24px, three now clear 44px
+entirely and leave the report altogether; the other two cleared 24px and
+landed in the 24–44 comfort band. Total tap-target findings fell 34 → 31. A
+control moving from "AA violation" to "band finding" is a promotion.
+
+That leaves the open questions on this PR at two, not three: the global-chrome
+resize and the CI gate. The AA item is answered — in code, by someone else,
+which is the outcome an audit is for.
+
 **Re-verified again after PR #65** (dish-page branded tile + removal of the
 unearned "RD reviewed" badge), which touches `/dish/:slug` — one of the nine
 audited routes. Every number above is unchanged: 37 findings, the same five
