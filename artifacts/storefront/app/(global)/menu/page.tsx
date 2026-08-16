@@ -84,8 +84,11 @@ export default async function MenuPage({
 
   return (
     <div data-ui-generation="stitch-74" data-screen-id="5.2" data-screen-state="default" className="min-h-dvh">
-    <section className="mx-auto max-w-screen-xl px-4 py-8">
-      <div className="mb-6">
+    {/* pt-5 / mb-4, not py-8 / mb-6 (owner feedback 2026-08-16): the title
+        block sat on ~100px of the first viewport before any control or card.
+        The heading stays; the air above and below it was the cost. */}
+    <section className="mx-auto max-w-screen-xl px-4 pb-8 pt-5">
+      <div className="mb-4">
         <h1 className="text-2xl font-semibold tracking-tight text-ink">The menu</h1>
         {/* No ServiceabilityBar here — the Header's is the only instance
             allowed to exist. Its verdict/pincode is per-instance state read

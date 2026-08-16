@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { TopNav } from "@astryxdesign/core/TopNav";
+import { HeaderShell } from "@/components/HeaderShell";
 import { CommandMenu } from "@/components/CommandMenu";
 import { PrimaryNav } from "@/components/PrimaryNav";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -33,7 +34,11 @@ export async function Header() {
   const dishIndex = dishes.map((d) => ({ id: d.id, name: d.name, slug: d.slug }));
 
   return (
-    <header className="sticky top-0 z-10 border-b border-line bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] backdrop-blur">
+    // HeaderShell owns the <header> element and its retreat-on-scroll
+    // behavior (the sticky/border/backdrop classes moved with it); this
+    // file stays a Server Component and its content crosses the boundary
+    // as children.
+    <HeaderShell>
       <div className="mx-auto max-w-5xl">
         <TopNav
           label="Primary navigation"
@@ -108,7 +113,7 @@ export async function Header() {
           }
         />
       </div>
-    </header>
+    </HeaderShell>
   );
 }
 

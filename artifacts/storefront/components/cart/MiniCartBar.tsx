@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { itemCount, subtotalPaise } from "@/lib/cartStore";
 import { formatPaise } from "@/lib/format";
 import { useCart } from "@/components/cart/CartProvider";
+import { useScrollHide } from "@/lib/useScrollHide";
 
 // CartDrawer pulls in the Drawer primitive (Vaul — drag-physics + portal +
 // focus management, see components/ui/drawer.tsx) plus CartUpsellRail. A
@@ -44,16 +45,39 @@ export function MiniCartBar() {
   // see CartProvider's `cartOpen` note.
   const { cart, hydrated, cartOpen, setCartOpen } = useCart();
   const count = itemCount(cart);
+  // Same shared hook (and therefore the same thresholds) MobileBottomNav
+  // uses to slide away: when the tab bar retreats, this pill FOLLOWS it down
+  // into the freed 64px band instead of hovering over a dead gap. The pill
+  // itself never hides — it is the money path — it just refuses to reserve
+  // two bars' worth of bottom edge when only one is on screen.
+  const navRetreated = useScrollHide(cartOpen);
 
   if (!hydrated || count === 0) return null;
 
   // Band anchor: `bottom-16` clears the global tab bar, which always renders
   // in the (global) shell this bar mounts in. (Focus routes take the bottom
   // edge themselves — this bar never exists there to need a bottom-0 arm.)
+  //
+  // A floating PILL inside that band, not an edge-to-edge slab (owner
+  // feedback 2026-08-16: the full-width opaque banner + the tab bar
+  // letterboxed the product list into a strip). The band anchor is
+  // unchanged — the pill's top edge sits where the slab's did, so the
+  // DishBuyBar→this handoff still doesn't jump — but content now shows
+  // around three sides, the full-width top border is gone, and the bar reads
+  // as a chip floating OVER the list instead of a wall closing it off.
+  // Mobile needs no safe-area padding (the tab bar below owns that inset);
+  // md floats the pill off the naked bottom edge, where it does.
   return (
     <>
-      <div data-stitch="dark" className="fixed inset-x-0 bottom-16 md:bottom-0 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] text-ink backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+      <div
+        data-stitch="dark"
+        className={`pointer-events-none fixed inset-x-0 bottom-16 z-30 px-3 text-ink transition-transform duration-200 motion-reduce:transition-none md:bottom-0 md:px-4 md:pb-[max(env(safe-area-inset-bottom),1rem)] ${
+          navRetreated
+            ? "translate-y-14 pb-[max(env(safe-area-inset-bottom),0.375rem)] md:translate-y-0"
+            : "translate-y-0 pb-1.5"
+        }`}
+      >
+        <div className="pointer-events-auto mx-auto flex max-w-md items-center justify-between gap-3 rounded-full border border-line bg-[var(--glass)] py-1.5 pl-5 pr-1.5 shadow-lg backdrop-blur">
           <p className="tabular text-sm text-ink">
             <span className="font-semibold">{count}</span>{" "}
             {count === 1 ? "item" : "items"}{" "}

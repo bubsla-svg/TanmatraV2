@@ -4,49 +4,19 @@
 // over light and dark routes alike; data-stitch sits on the bar root, not a page
 // wrapper) — see lib/themes/stitch.css, same pattern as MiniCartBar/CartDrawer.
 import "@/lib/themes/stitch.css";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { COMPANY_LINKS, LEGAL_LINKS, SITE } from "@/lib/nav";
 import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
+import { useScrollHide } from "@/lib/useScrollHide";
 import { Drawer, DrawerContent, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 
 export type CoreTab = "home" | "menu" | "care" | "account";
 
-/** Ignore scroll movement under this many px — small-movement hysteresis so
- *  the bar doesn't flicker on sub-pixel/rubber-band jitter (D-17). */
-const SCROLL_HYSTERESIS_PX = 12;
-
-/** Hide on scroll-down, reveal on scroll-up, past the hysteresis threshold.
- *  Always revealed at the top of the page and whenever `disabled` (an
- *  overlay is open — scroll state shouldn't fight the overlay). */
-function useScrollHide(disabled: boolean): boolean {
-  const [hidden, setHidden] = useState(false);
-  const lastYRef = useRef(0);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    lastYRef.current = window.scrollY;
-
-    function onScroll() {
-      const y = window.scrollY;
-      const delta = y - lastYRef.current;
-      if (y <= 0) {
-        setHidden(false);
-        lastYRef.current = y;
-        return;
-      }
-      if (Math.abs(delta) < SCROLL_HYSTERESIS_PX) return;
-      setHidden(delta > 0);
-      lastYRef.current = y;
-    }
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  return disabled ? false : hidden;
-}
+// useScrollHide moved to lib/ (owner feedback 2026-08-16): the header now
+// retreats with the SAME hook, so top and bottom chrome move on identical
+// thresholds — see lib/useScrollHide.ts for the extraction note.
 
 interface TabConfig {
   key: CoreTab;

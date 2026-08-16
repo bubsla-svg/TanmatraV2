@@ -88,16 +88,18 @@ function GroupAdd({ code, dish }: { code: string; dish: Dish }) {
   }
   return (
     <div className="flex flex-col items-end gap-0.5">
-      {/* D-08: Secondary CTA styling — frosted surface, visible border, same
-          neutral language CartAdd's own qty stepper below already uses. Gold
-          stays reserved for the drawer's Checkout / the mini-cart bar. */}
+      {/* Same outline-gold treatment as CartAdd (owner feedback 2026-08-16):
+          in group mode THIS is the card's conversion action, and the same
+          contrast argument applies. Solid gold stays reserved for the
+          drawer's Checkout / the mini-cart bar — goldProbe counts solid
+          backgrounds, so a border does not compete. */}
       <button
         type="button"
         onClick={(e) => { e.preventDefault(); void add(); }}
         disabled={status === "adding"}
         aria-busy={status === "adding"}
         aria-live="polite"
-        className="min-h-11 rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-ink transition-transform active:scale-[0.98] disabled:opacity-60"
+        className="min-h-11 rounded-lg border border-gold bg-surface px-4 py-2 text-sm font-bold text-gold-text transition-transform active:scale-[0.98] disabled:opacity-60"
       >
         {status === "adding" ? "Adding…" : status === "added" ? "Added ✓" : "Add to group"}
       </button>
@@ -125,11 +127,16 @@ function CartAdd({ dish }: { dish: Dish }) {
 
   if (qty === 0) {
     return (
-      // D-08: Secondary CTA styling — every card on the grid renders one of
-      // these, so a solid gold fill here is the "3 Add per viewport"
-      // violation the runbook names. Gold stays reserved for the single
-      // action that actually moves the customer onward (mini-cart bar,
-      // drawer Checkout, PDP Add to cart).
+      // D-08, refined by owner feedback (2026-08-16: "the Add button lacks
+      // distinct color contrast"): OUTLINE gold — gold border + gold text on
+      // a surface background. This is the exact grammar of the q-commerce
+      // apps the menu directive anchors to (Blinkit/Zepto's ADD is a brand-
+      // colour outline on every card), and it is the distinction D-08's own
+      // enforcement draws: goldProbe counts SOLID gold backgrounds only, and
+      // its doc says a gold border deliberately does not count. So every
+      // card's Add can carry the purchase colour while the mini-cart bar /
+      // drawer Checkout / PDP Add remain the viewport's one solid-gold
+      // forward action.
       <button
         type="button"
         onClick={(e) => {
@@ -139,7 +146,7 @@ function CartAdd({ dish }: { dish: Dish }) {
           // never the primary gate.
           setCart(addLine(cart, line, { isAvailable: dish.isAvailable }));
         }}
-        className="min-h-11 rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-semibold text-ink transition-transform active:scale-[0.98]"
+        className="min-h-11 rounded-lg border border-gold bg-surface px-5 py-2 text-sm font-bold text-gold-text transition-transform active:scale-[0.98]"
       >
         Add
       </button>
@@ -147,16 +154,19 @@ function CartAdd({ dish }: { dish: Dish }) {
   }
 
   return (
-    <div className="flex items-center rounded-lg border border-line-strong bg-surface" role="group" aria-label={`${dish.name} quantity`}>
+    // In-cart state keeps the gold border the Add established — the stepper
+    // is the same control in its qty>0 face, and reverting to a neutral
+    // outline made "already in cart" invisible at a glance.
+    <div className="flex items-center rounded-lg border border-gold bg-surface" role="group" aria-label={`${dish.name} quantity`}>
       {/* Same pressed feedback as the Add button above and the CartDrawer /
           checkout steppers — this stepper is the qty>0 face of every card in
           the browse-to-cart flow, and it was the one control giving zero
           tactile response. */}
-      <button type="button" aria-label="Decrease quantity" onClick={(e) => { e.preventDefault(); setCart(setQty(cart, dish.id, "dish", qty - 1)); }} className="min-h-11 min-w-11 px-3 text-lg font-semibold text-ink transition-transform active:scale-[0.98]">
+      <button type="button" aria-label="Decrease quantity" onClick={(e) => { e.preventDefault(); setCart(setQty(cart, dish.id, "dish", qty - 1)); }} className="min-h-11 min-w-11 px-3 text-lg font-semibold text-gold-text transition-transform active:scale-[0.98]">
         −
       </button>
       <span aria-live="polite" className="tabular min-w-6 text-center text-sm font-semibold text-ink">{qty}</span>
-      <button type="button" aria-label="Increase quantity" onClick={(e) => { e.preventDefault(); setCart(setQty(cart, dish.id, "dish", qty + 1)); }} className="min-h-11 min-w-11 px-3 text-lg font-semibold text-ink transition-transform active:scale-[0.98]">
+      <button type="button" aria-label="Increase quantity" onClick={(e) => { e.preventDefault(); setCart(setQty(cart, dish.id, "dish", qty + 1)); }} className="min-h-11 min-w-11 px-3 text-lg font-semibold text-gold-text transition-transform active:scale-[0.98]">
         +
       </button>
     </div>

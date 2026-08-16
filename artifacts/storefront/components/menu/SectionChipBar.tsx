@@ -45,7 +45,20 @@ export interface SectionAnchor {
   label: string;
 }
 
-export function SectionChipBar({ anchors }: { anchors: SectionAnchor[] }) {
+export function SectionChipBar({
+  anchors,
+  onJump,
+}: {
+  anchors: SectionAnchor[];
+  /**
+   * Fired at the start of a chip jump with the total ms the jump owns the
+   * viewport (smooth-scroll flight + settle). The menu uses it to PIN the
+   * condensed cluster state for that window — see useCondensedOnScroll.pin:
+   * a jump's travel direction is not browsing intent, and letting it toggle
+   * the cluster's height mid-flight un-anchors the landing.
+   */
+  onJump?: (ownedMs: number) => void;
+}) {
   const [active, setActive] = useState(anchors[0]?.id ?? "");
   const activeRef = useRef(active);
   activeRef.current = active;
@@ -89,12 +102,39 @@ export function SectionChipBar({ anchors }: { anchors: SectionAnchor[] }) {
     const el = document.getElementById(id);
     if (!el) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Even under reduced motion the settle wait stays ≥ the cluster's
+    // collapse transition (200ms): the jump itself is instant, but the
+    // corrective re-snap below must measure FINAL geometry.
+    const settleMs = reduce ? 320 : SPY_LOCK_MS;
+    onJump?.(settleMs + 300);
     suppressRef.current = true;
     setActive(id);
     el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    // Re-snap once settled (and once more after late layout). Two distinct
+    // error sources, measured not guessed:
+    //  1. scrollIntoView computed its target against the cluster height AT
+    //     TAP TIME, but the cluster condenses during the flight (onJump pins
+    //     it) — the landing can be off by expanded-vs-condensed chrome.
+    //  2. `.cv-auto-row` reservations are an estimate; rows materializing
+    //     just above the landing nudge the document by their actual-minus-
+    //     reserved height for ~a second after arrival.
+    // Both corrections are instant, guarded (skip when already close, so no
+    // visible double-step in the clean case), and ≤ a few dozen px — too
+    // small to cross a section boundary, so they cannot flicker the active
+    // chip even after the observer suppression lifts.
+    const resnapIfOff = () => {
+      const offset = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue("--menu-anchor-offset"),
+      );
+      if (Number.isFinite(offset) && Math.abs(el.getBoundingClientRect().top - offset) > 14) {
+        el.scrollIntoView({ behavior: "auto", block: "start" });
+      }
+    };
     window.setTimeout(() => {
+      resnapIfOff();
       suppressRef.current = false;
-    }, reduce ? 0 : SPY_LOCK_MS);
+      window.setTimeout(resnapIfOff, 450);
+    }, settleMs);
   }
 
   if (anchors.length < 2) return null; // one section needs no navigation

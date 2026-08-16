@@ -147,8 +147,12 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
               field from the first three ingredients, which across a dish
               FAMILY are the shared base — "Aglio Olio - Veg / - Chicken /
               - Prawns" all printed the identical line, so three consecutive
-              cards differed only by name and price. See lib/dishText.ts. */}
-          <Text type="supporting" color="secondary" maxLines={2}>
+              cards differed only by name and price. See lib/dishText.ts.
+              Three lines, not two (owner feedback 2026-08-16): the photo box
+              fixes the row at ~104px, so a 2-line clamp cut summaries "…"
+              early while leaving dead air under the text — the third line
+              spends that trapped space on the words it was truncating. */}
+          <Text type="supporting" color="secondary" maxLines={3}>
             {dishCardSummary(dish)}
           </Text>
           <RatingStars average={dish.averageRating} count={dish.reviewCount} />
@@ -169,8 +173,11 @@ export function DishCard({ dish, compact }: { dish: DishData; compact?: boolean 
         </div>
       </Link>
 
-      {/* Sibling of the Link — see the a11y note above. */}
-      <div className="relative z-10 mt-2 flex items-center justify-between border-t border-line pt-2">
+      {/* Sibling of the Link — see the a11y note above. No divider (owner
+          feedback 2026-08-16): the hairline read as a wall between the dish
+          and its price/Add, and with the Add now carrying the gold outline
+          the row separates itself. */}
+      <div className="relative z-10 mt-2.5 flex items-center justify-between">
         <Text type="body" weight="bold" hasTabularNumbers className="text-gold-text">
           {formatPaise(dish.price)}
         </Text>
