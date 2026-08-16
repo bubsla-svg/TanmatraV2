@@ -60,11 +60,19 @@ test("the serviceability gate renders before the details step", () => {
 test("the gate blocks on an unresolved verdict rather than falling through", () => {
   // A gate that renders but does not short-circuit is decoration. The null
   // check must guard an early return, so nothing below it can render first.
-  assert.match(
-    PLAN_CHECKOUT,
-    /if \(servicePincode === null\) \{[\s\S]{0,400}?<PlanServiceabilityGate/,
-    "the serviceability branch must be an early return keyed on an unresolved PIN",
-  );
+  //
+  // Scoped to the branch's own body rather than a character budget after the
+  // `if`. The budget was 400, which the offer preview above the gate (Law 1 —
+  // show first, ask second) pushed past: a legitimate addition inside the same
+  // branch failed a test whose actual subject is the early return.
+  const open = PLAN_CHECKOUT.indexOf("if (servicePincode === null) {");
+  assert.notEqual(open, -1, "the serviceability branch must be keyed on an unresolved PIN");
+  // The branch closes at the first `\n  }` — its own indentation level.
+  const close = PLAN_CHECKOUT.indexOf("\n  }", open);
+  assert.notEqual(close, -1);
+  const branch = PLAN_CHECKOUT.slice(open, close);
+  assert.match(branch, /<PlanServiceabilityGate/, "the gate must render inside that branch");
+  assert.match(branch, /\breturn\b/, "the branch must RETURN, not merely render the gate");
 });
 
 test("a confirmed PIN seeds the address step instead of being asked again", () => {

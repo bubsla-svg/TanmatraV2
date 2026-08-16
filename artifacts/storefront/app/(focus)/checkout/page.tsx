@@ -8,6 +8,8 @@ import {
   type PlanId,
 } from "@workspace/subscription-rules";
 import { planDisplay, planQuoteView } from "@/lib/plans";
+import { fetchMenu } from "@/lib/catalog";
+import { planOfferDishes } from "@/lib/planOffer";
 import { planAllowsAddOn, addOnView } from "@/lib/addons";
 import { planTotalAfterCredit, TRIAL_COPY, TRIAL_CREDITBACK_PAISE } from "@/lib/trial";
 import { CheckoutFlow } from "@/components/checkout/CheckoutFlow";
@@ -18,6 +20,10 @@ import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
 import { asBuilderCycle } from "@/lib/checkoutCycle";
 
 export const metadata: Metadata = { title: "Checkout", robots: { index: false } };
+
+/** Enough of the rotation to be evidence, few enough to stay above the ask on
+ *  a phone. The remainder is counted, never hidden. */
+const OFFER_DISH_SAMPLE = 4;
 
 type Props = {
   searchParams: Promise<{
@@ -112,6 +118,19 @@ export default async function CheckoutPage({ searchParams }: Props) {
       requestedTrack ?? q.servedTracks[0] ?? "veg",
       requestedCadence,
     );
+    // Laws 1 + 8: the same figures, plus the dishes and the delivery window,
+    // shown ABOVE the serviceability gate — the journey's first ask. Resolved
+    // here because the rotation comes off the live catalog and PlanCheckout is
+    // a client island that cannot read it. Only the requested track's rotation
+    // when one was chosen: showing a chicken dish to someone who arrived on
+    // ?track=veg would be a worse answer than showing fewer.
+    const { dishes: catalogDishes } = await fetchMenu();
+    const rotation = planOfferDishes(
+      id,
+      requestedTrack ? [requestedTrack] : q.servedTracks,
+      catalogDishes,
+      OFFER_DISH_SAMPLE,
+    );
     return (
       <div data-ui-generation="stitch-74" data-screen-id="8.1" data-screen-state="quote-active" className="min-h-dvh">
         <section className="mx-auto max-w-md px-4 pt-10 pb-44">
@@ -139,6 +158,13 @@ export default async function CheckoutPage({ searchParams }: Props) {
             finePrint={isTrial ? [TRIAL_COPY.creditLine, TRIAL_COPY.noAutoConvert] : undefined}
             successPerks={isTrial ? { trialCreditbackPaise: TRIAL_CREDITBACK_PAISE } : undefined}
             recap={{
+              mealsPerCycle: recapQuote.mealsPerCycle,
+              cycleTotalPaise: recapQuote.cycleTotalPaise,
+              cadence: recapQuote.cycle,
+            }}
+            offer={{
+              dishes: rotation.dishes,
+              more: rotation.more,
               mealsPerCycle: recapQuote.mealsPerCycle,
               cycleTotalPaise: recapQuote.cycleTotalPaise,
               cadence: recapQuote.cycle,

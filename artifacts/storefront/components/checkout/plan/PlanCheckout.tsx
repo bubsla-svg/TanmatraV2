@@ -14,7 +14,9 @@ import { buildSubscriptionInput, nextWeekdayISO } from "@/lib/planCheckout";
 import { stashCheckoutPerks, type CheckoutPerks } from "@/lib/postCheckout";
 import { usePlanQuote } from "@/lib/usePlanQuote";
 import { getAddresses, ApiError, type Address, type AuthUser, type AddOnId, type DietTrack, type PlanCadence } from "@/lib/api";
+import type { PlanOffer } from "@/lib/planOffer";
 import { PlanIdentityGate } from "./PlanIdentityGate";
+import { PlanOfferPreview } from "./PlanOfferPreview";
 import { PlanServiceabilityGate } from "./PlanServiceabilityGate";
 import { PlanDetails, type PlanDetailsValue } from "./PlanDetails";
 import { UnresolvedPaymentPanel } from "../UnresolvedPaymentPanel";
@@ -38,6 +40,7 @@ export function PlanCheckout({
   finePrint,
   successPerks,
   recap,
+  offer,
 }: {
   planId: string;
   planName: string;
@@ -57,6 +60,11 @@ export function PlanCheckout({
   /** N5.11 — spine list quote for the sign-in gate's offer recap (host-computed
    *  server-side from computePlanQuote; never authored here). */
   recap?: { mealsPerCycle: number; cycleTotalPaise: number; cadence: string };
+  /** Laws 1 + 8 — what arrives, when, and for how much, shown above the first
+   *  ask. Host-computed server-side from the plan's own rotation and the spine
+   *  quote; nothing here is authored client-side. Optional so a host that has
+   *  not wired it renders exactly today's screen rather than an empty card. */
+  offer?: PlanOffer;
 }) {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -220,6 +228,11 @@ export function PlanCheckout({
     return (
       <div className="flex flex-col gap-5">
         <h1 className="text-2xl font-semibold tracking-tight text-ink">{planName}</h1>
+        {/* Show first, ask second (Laws 1, 8). Above the PIN field there was the
+            plan's name and nothing else, so the first question of the whole
+            journey arrived before any of the three facts that decide whether
+            answering it is worth doing. */}
+        {offer && <PlanOfferPreview offer={offer} />}
         <PlanServiceabilityGate onServiceable={setServicePincode} />
       </div>
     );

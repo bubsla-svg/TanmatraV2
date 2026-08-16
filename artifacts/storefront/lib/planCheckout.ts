@@ -10,6 +10,39 @@ import type { AddOnId, CreateSubscriptionInput, DietTrack, MemberInput, PlanCade
 
 export const PLAN_DELIVERY_WINDOW = "12:30–13:30";
 
+/**
+ * Weekday-only, and not by assertion: `nextWeekdayISO` below skips Saturday and
+ * Sunday when it picks a start date, so this describes what the code does.
+ */
+export const PLAN_DELIVERY_DAYS_LABEL = "Weekdays, Monday to Friday";
+
+function to12Hour(hhmm: string): { time: string; suffix: "am" | "pm" } {
+  const [rawH = "0", rawM = "00"] = hhmm.trim().split(":");
+  const h = Number(rawH);
+  const suffix = h >= 12 ? "pm" : "am";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return { time: `${h12}:${rawM}`, suffix };
+}
+
+/**
+ * The delivery window in the 12-hour form customers read, DERIVED from the same
+ * constant `buildSubscriptionInput` books the delivery with.
+ *
+ * Three surfaces had hand-typed "12:30–1:30" beside a constant reading
+ * "12:30–13:30". They agreed by luck. Deriving it means a change to the booked
+ * window cannot leave a promise behind that we no longer keep.
+ */
+export const PLAN_DELIVERY_WINDOW_LABEL = (() => {
+  const [from = "", to = ""] = PLAN_DELIVERY_WINDOW.split(/[–-]/);
+  const a = to12Hour(from);
+  const b = to12Hour(to);
+  // "12:30–1:30 pm" when both ends share a half of the day; both suffixes
+  // otherwise, since "9:30–1:30 pm" would read as a four-hour window.
+  return a.suffix === b.suffix
+    ? `${a.time}–${b.time} ${b.suffix}`
+    : `${a.time} ${a.suffix}–${b.time} ${b.suffix}`;
+})();
+
 /** The next weekday (delivery never lands on a weekend), as YYYY-MM-DD. `from`
  *  is injectable so the mapping is testable without the clock. */
 export function nextWeekdayISO(from: Date): string {

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { StepDots } from "./StepDots";
 import { formatPaise } from "@/lib/format";
 import { CERTAINTY } from "@/lib/checkout";
+import { PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
 import { LocationPickerFlow } from "@/components/address/LocationPickerFlow";
 
 /**
@@ -103,7 +104,7 @@ export function CheckoutAddress({
           />
         </div>
       </div>
-      <p className="text-xs text-ink-muted">Delivered 12:30&ndash;1:30, weekdays.</p>
+      <p className="text-xs text-ink-muted">Delivered {PLAN_DELIVERY_WINDOW_LABEL}, weekdays.</p>
       <p className="text-xs font-medium text-sage-text">{CERTAINTY.address}</p>
       <Button
         type="button"
