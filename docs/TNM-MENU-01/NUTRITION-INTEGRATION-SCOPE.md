@@ -4,6 +4,15 @@ Assessed 2026-08-16 against three candidate repositories, in the context of
 flipbook review finding **F-1** (78 of 112 live dishes render fabricated
 macros) and **M-6** (blocked on kitchen-supplied macros).
 
+> **Superseded in one respect — read `PANTS-INTEGRATION-PLAN.md` for the
+> design.** The verdict below (adopt USDA FDC, integrate none of the three)
+> stands. The *shape* in "Recommended shape" does not: it proposes parsing the
+> free-text `ingredients[]` per dish, which is ~560 lookups. Reading our own
+> schema afterwards showed we already have a structured ingredient model
+> (`inventory_items` + `dish_bom_components`), which makes it **122** lookups
+> deduplicated across dishes — and surfaced that the structured table has no
+> writer. The plan document supersedes this section.
+
 ## Verdict in one line
 
 **Integrate none of the three as dependencies. Adopt the data source they all
