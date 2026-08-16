@@ -33,6 +33,12 @@ export class MenuPage {
     await expect(this.heading).toBeVisible();
   }
 
+  /** The route's H1. It is `sr-only` since the 2026-08-16 density pass — the
+   *  visible title came out, the heading did not — so this is a
+   *  role/accessible-name locator by necessity, not by style. Playwright
+   *  still counts it visible (sr-only is a 1×1 clipped box, not
+   *  `visibility: hidden`), which is what keeps `goto()`'s ready-check
+   *  working while asserting the heading outline never silently vanished. */
   get heading(): Locator {
     return this.page.getByRole("heading", { name: "The menu" });
   }
@@ -91,11 +97,6 @@ export class MenuPage {
     await this.page.getByRole("button", { name: "View cart" }).click();
   }
 
-  /** The dish-name search box (N2.3 URL-as-state). */
-  get searchInput(): Locator {
-    return this.page.getByRole("searchbox", { name: "Search dishes" });
-  }
-
   /** A diet chip button ("All" / "Veg" / "Non-veg"). Anchored regex, not a
    *  plain string: an ACTIVE chip's accessible name gains a "✓ " prefix, and
    *  default substring matching would otherwise make "Veg" match "Non-veg"
@@ -113,5 +114,31 @@ export class MenuPage {
 
   get activeFiltersText(): Locator {
     return this.page.getByTestId("menu-active-filters");
+  }
+
+  /**
+   * Open the 5.3 filter sheet, toggle one chip in one group, and apply.
+   *
+   * Lives here because narrowing the grid is now a THREE-step interaction —
+   * the inline search box that used to do it in one `fill()` was removed
+   * (2026-08-16). Two specs need it already, and inline copies of a
+   * multi-step sheet drive are exactly the duplication this page object was
+   * created to stop. `group` is the sheet's own section label; `option` is
+   * the chip label, matched with the same ✓-tolerant anchored regex the diet
+   * chips need, since an already-selected chip gains the prefix. The label is
+   * escaped before it goes into that regex — "30g+ protein" is a real option
+   * and a bare `+` would silently match the wrong button.
+   */
+  async applySheetFilter(group: string, option: string): Promise<void> {
+    const escaped = option.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    await this.filterTrigger.click();
+    const sheet = this.page.getByTestId("menu-filter-sheet");
+    await expect(sheet).toBeVisible();
+    await sheet
+      .getByRole("group", { name: group })
+      .getByRole("button", { name: new RegExp(`^(?:✓\\s*)?${escaped}$`) })
+      .click();
+    await this.page.getByTestId("menu-filter-apply").click();
+    await expect(sheet).toBeHidden();
   }
 }

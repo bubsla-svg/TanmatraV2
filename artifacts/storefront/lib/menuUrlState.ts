@@ -1,5 +1,5 @@
 /**
- * Menu filter/search state, as URL search params (N2.2 native-feel plan —
+ * Menu filter state, as URL search params (N2.2 native-feel plan —
  * URL-as-state). Pure and DOM-free, same reasoning as menuFilters.ts next
  * door: PersonalizedMenu is a client island, but the read/write mapping
  * between MenuFilterState and a query string is a data question, testable
@@ -7,6 +7,13 @@
  *
  * Only COMMITTED state lives here. MenuFilterSheet's own in-progress draft
  * editing never reaches this module — only what onApply hands back.
+ *
+ * There used to be a `query` field backing an inline dish-name search box.
+ * The box was removed on owner instruction (2026-08-16) — the Header's ⌘K
+ * command menu already searches the same catalog from every route. `q` is
+ * therefore no longer WRITTEN, but it is deliberately still MANAGED (see
+ * MANAGED_PARAM_KEYS) so a bookmarked `/menu?q=bowl` is evicted rather than
+ * left in the address bar implying a search that nothing performs.
  */
 import type { DietFilterChip } from "./dietFilter";
 import type { AllergenFilter, DietaryFilter, GoalFilter, MacroFilter, MenuFilterState } from "./menuFilters";
@@ -25,7 +32,6 @@ const MACRO_KEYS: readonly MacroFilter[] = ["under_400_kcal", "protein_30_plus",
 export interface MenuUrlState {
   chip: DietFilterChip;
   filters: MenuFilterState;
-  query: string;
 }
 
 function parseGroup<T extends string>(raw: string | null, valid: readonly T[]): T[] {
@@ -53,14 +59,13 @@ export function parseMenuUrlState(params: URLSearchParams): MenuUrlState {
       allergen: parseGroup(params.get("allergen"), ALLERGEN_KEYS),
       macro: parseGroup(params.get("macro"), MACRO_KEYS),
     },
-    query: params.get("q") ?? "",
   };
 }
 
 /**
  * Inverse of parseMenuUrlState. Every default value (chip "all", an empty
- * filter group, an empty query) is OMITTED rather than written as an empty
- * param, so a visitor who never touched a filter keeps a bare `/menu` URL.
+ * filter group) is OMITTED rather than written as an empty param, so a
+ * visitor who never touched a filter keeps a bare `/menu` URL.
  */
 export function menuUrlStateToSearch(state: MenuUrlState): string {
   const params = new URLSearchParams();
@@ -69,14 +74,15 @@ export function menuUrlStateToSearch(state: MenuUrlState): string {
   if (state.filters.dietary.length) params.set("dietary", state.filters.dietary.join(","));
   if (state.filters.allergen.length) params.set("allergen", state.filters.allergen.join(","));
   if (state.filters.macro.length) params.set("macro", state.filters.macro.join(","));
-  const q = state.query.trim();
-  if (q) params.set("q", q);
   return params.toString();
 }
 
 /** Every key this module owns — the set `mergeMenuUrlState` clears before
  *  re-writing, so a stale value (an allergen chip since deselected) can't
- *  survive a merge just because it wasn't touched this round. */
+ *  survive a merge just because it wasn't touched this round.
+ *
+ *  `q` is in the list but never re-written: it is the retired search param,
+ *  kept here purely so a link that still carries it gets it cleared. */
 const MANAGED_PARAM_KEYS = ["diet", "goal", "dietary", "allergen", "macro", "q"] as const;
 
 /**
@@ -86,8 +92,8 @@ const MANAGED_PARAM_KEYS = ["diet", "goal", "dietary", "allergen", "macro", "q"]
  * navigations built with their own hardcoded query string — a plain
  * `router.replace(pathname + "?" + menuUrlStateToSearch(...))` would silently
  * drop `?dish=` the moment the drawer opens, and a live sync effect watching
- * the URL for exactly this drift is what re-asserts diet/filters/search
- * afterward (see PersonalizedMenu.tsx) without stepping on `dish`.
+ * the URL for exactly this drift is what re-asserts diet/filters afterward
+ * (see PersonalizedMenu.tsx) without stepping on `dish`.
  */
 export function mergeMenuUrlState(current: URLSearchParams, state: MenuUrlState): string {
   const merged = new URLSearchParams(current);

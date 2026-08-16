@@ -126,9 +126,8 @@ export function buildSharedMacroKeys(
  *
  * `sharedMacroKeys` is optional here so the function stays a pure one-dish
  * predicate for tests and for callers that genuinely have no catalog context.
- * It is NOT optional at the render layer: `DishCard` requires the prop, so a
- * new surface cannot forget it without a type error, and `MenuTrustStrip`
- * derives it from the dish array it already receives.
+ * It is NOT optional at the render layer: `DishCard` and `MacroLegend` both
+ * require the prop, so a new surface cannot forget it without a type error.
  */
 export type MacroTrust = "verified" | "estimated" | "unverified";
 
