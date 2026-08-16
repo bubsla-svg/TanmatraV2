@@ -1,6 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { logger } from "../lib/logger";
 import { requireOps } from "../lib/adminGate";
+import { MAX_RETAINED_REPORTS, normalizeReport, retain } from "../lib/errorReportIntake";
+import { errorReportRateLimit } from "../middlewares/rateLimitMiddleware";
 
 const router: IRouter = Router();
 
@@ -11,38 +13,46 @@ export interface ErrorReportRecord {
   stackTrace?: string;
   url: string;
   timestamp: string;
-  sessionReplayTrace: any[];
+  sessionReplayTrace: unknown[];
   isRageClickAlert: boolean;
+  /** True when a field was cut to fit — so a truncated stack is never read as
+   *  the whole story by whoever is debugging from it. */
+  truncated: boolean;
 }
 
+/**
+ * A BOUNDED debugging window, not the sink.
+ *
+ * The durable record is the `logger.error` line below, which on Cloud Run
+ * lands in Cloud Logging. This array only backs the ops audit view. It used to
+ * grow without limit on an endpoint that cannot require a session, so a loop
+ * posting large stacks grew the heap until the process was OOM-killed — and
+ * this process also serves checkout.
+ */
 export const storedErrorReports: ErrorReportRecord[] = [];
 
 /**
  * POST /api/v1/error-reports
- * Ingests client errors attached side-by-side with full session replay event traces.
+ *
+ * Ingests client errors alongside their session-replay traces. Deliberately
+ * unauthenticated (a beacon fires from a page that has just crashed), which is
+ * exactly why every field is clamped and the retained set is a fixed window —
+ * see lib/errorReportIntake.ts.
  */
 router.post(
   ["/v1/error-reports", "/error-reports"],
+  errorReportRateLimit,
   (req: Request, res: Response) => {
-    const { errorName, errorMessage, stackTrace, url, timestamp, sessionReplayTrace } = req.body ?? {};
-
-    const trace = Array.isArray(sessionReplayTrace) ? sessionReplayTrace : [];
-    const isRageClickAlert = trace.some((e: any) => e?.type === "rage_click");
+    const normalized = normalizeReport(req.body ?? {});
 
     const record: ErrorReportRecord = {
       id: `err_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      errorName: errorName ?? "UnknownClientError",
-      errorMessage: errorMessage ?? "No error message provided",
-      stackTrace,
-      url: url ?? "unknown",
-      timestamp: timestamp ?? new Date().toISOString(),
-      sessionReplayTrace: trace,
-      isRageClickAlert,
+      ...normalized,
     };
 
-    storedErrorReports.push(record);
+    retain(storedErrorReports, record, MAX_RETAINED_REPORTS);
 
-    if (isRageClickAlert) {
+    if (record.isRageClickAlert) {
       logger.warn(
         { record, alert: "RAGE_CLICK_UX_FAILURE_DETECTED" },
         "session_replay.rage_click_flagged"
@@ -57,8 +67,8 @@ router.post(
     res.status(201).json({
       ok: true,
       reportId: record.id,
-      attachedEventsCount: trace.length,
-      isRageClickAlert,
+      attachedEventsCount: record.sessionReplayTrace.length,
+      isRageClickAlert: record.isRageClickAlert,
     });
   }
 );
@@ -73,7 +83,11 @@ router.post(
 router.get("/v1/error-reports/audit", async (req: Request, res: Response) => {
   if (!(await requireOps(req, res))) return;
   res.json({
-    totalReports: storedErrorReports.length,
+    // `retained` is not `totalReports`: the window holds the most recent
+    // MAX_RETAINED_REPORTS and nothing more, so calling it a total would read
+    // as "we have had 200 errors" when it means "here are the last 200".
+    retained: storedErrorReports.length,
+    windowSize: MAX_RETAINED_REPORTS,
     reports: storedErrorReports,
   });
 });

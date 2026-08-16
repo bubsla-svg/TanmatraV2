@@ -244,6 +244,19 @@ export const orderClaimRateLimit = rateLimitMiddleware("orders:claim", 10, 60_00
   code: "ORDER_CLAIM_RATE_LIMITED",
 });
 
+/**
+ * Client error beacons (POST /api/v1/error-reports).
+ *
+ * Unauthenticated by necessity — a beacon fires from a page that has just
+ * crashed, often with no session — so the IP bucket is the only handle there
+ * is. Generous enough that a genuinely broken deploy still reports (a customer
+ * hitting one bad route repeatedly is the case this exists to capture), tight
+ * enough that a loop cannot turn one client into an unbounded log bill.
+ */
+export const errorReportRateLimit = rateLimitMiddleware("client:error-report", 30, 60_000, {
+  code: "ERROR_REPORT_RATE_LIMITED",
+});
+
 /** Admin moderation actions — prevents enumeration via compromised token. */
 export const adminModerationRateLimit = rateLimitMiddleware("admin:moderation", 60, 60_000);
 
