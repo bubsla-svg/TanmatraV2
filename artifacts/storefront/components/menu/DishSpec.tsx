@@ -1,4 +1,5 @@
 import type { DishData } from "@workspace/menu-catalog";
+import { MACROS_PENDING_LABEL } from "@/lib/format";
 
 const GI_LABEL: Record<DishData["glycaemicIndex"], string> = {
   low: "Low",
@@ -40,8 +41,16 @@ export function DishSpec({ dish }: { dish: DishData }) {
         <div className="rounded-3xl border border-line bg-surface p-4">
           <dt className="text-2xs uppercase tracking-wide text-ink-muted">Fibre</dt>
           <dd className="mt-1 font-mono text-sm tabular-nums text-ink">
-            {est}
-            {dish.macros.fiber} g
+            {dish.macrosProvisional ? (
+              <span className="font-sans text-xs normal-case text-ink-muted">
+                {MACROS_PENDING_LABEL}
+              </span>
+            ) : (
+              <>
+                {est}
+                {dish.macros.fiber} g
+              </>
+            )}
           </dd>
         </div>
         <div className="rounded-3xl border border-line bg-surface p-4">
