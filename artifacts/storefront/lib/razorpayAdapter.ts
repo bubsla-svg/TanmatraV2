@@ -73,6 +73,32 @@ interface RazorpayCtor {
   new (opts: unknown): { open(): void };
 }
 
+/**
+ * Method ordering inside Razorpay's own sheet — UPI first (plan correction #4).
+ *
+ * The audits this plan consolidated recommended Apple Pay / Google Pay and a
+ * second PSP. That is US advice: in this market UPI is the default rail, and
+ * the correction was to order UPI first INSIDE the existing single-PSP sheet
+ * rather than add rails. This is that, and nothing more.
+ *
+ * `show_default_blocks: true` is the load-bearing half. Without it this list
+ * becomes an allow-list and every other method — cards, netbanking, wallets —
+ * silently disappears from checkout. Ordering a preference is the goal;
+ * removing someone's only working method is not.
+ *
+ * Exported so the ordering is assertable without a browser: the adapter itself
+ * only runs against a real `window.Razorpay`.
+ */
+export const RAZORPAY_DISPLAY_CONFIG = {
+  display: {
+    blocks: {
+      upi: { name: "Pay by UPI", instruments: [{ method: "upi" }] },
+    },
+    sequence: ["block.upi"],
+    preferences: { show_default_blocks: true },
+  },
+} as const;
+
 export function createRazorpayAdapter(opts?: {
   name?: string;
   description?: string;
@@ -92,6 +118,8 @@ export function createRazorpayAdapter(opts?: {
           name: opts?.name ?? "Tanmatra",
           description: opts?.description ?? "Order",
           prefill: { contact: opts?.contact ?? "" },
+          // UPI first, every other method still present — see the constant.
+          config: RAZORPAY_DISPLAY_CONFIG,
           handler: (r: {
             razorpay_payment_id: string;
             razorpay_order_id: string;

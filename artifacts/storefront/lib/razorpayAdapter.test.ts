@@ -7,7 +7,8 @@
  */
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createRazorpayAdapter, RazorpayDismissed } from "./razorpayAdapter";
+import * as fs from "node:fs";
+import { createRazorpayAdapter, RazorpayDismissed, RAZORPAY_DISPLAY_CONFIG } from "./razorpayAdapter";
 
 interface RzpOpts {
   key: string;
@@ -200,4 +201,28 @@ test("script loaded but library broken fails LOUD (razorpay_unavailable), it doe
   } finally {
     dom.restore();
   }
+});
+
+test("UPI is ordered first without hiding any other method", () => {
+  // Plan correction #4: the audits asked for Apple Pay / Google Pay and a
+  // second PSP — US advice. In this market the fix is to order UPI first
+  // INSIDE the existing single-PSP sheet.
+  const { display } = RAZORPAY_DISPLAY_CONFIG;
+  assert.deepEqual(display.sequence, ["block.upi"]);
+  assert.equal(display.blocks.upi.instruments[0].method, "upi");
+
+  // The half that matters most. Without show_default_blocks the sequence
+  // becomes an ALLOW-LIST and cards, netbanking and wallets vanish from
+  // checkout — turning a preference into the removal of someone's only
+  // working payment method.
+  assert.equal(
+    display.preferences.show_default_blocks,
+    true,
+    "every other method must still be offered below UPI",
+  );
+});
+
+test("the adapter actually passes the ordering to Razorpay", () => {
+  const src = fs.readFileSync(new URL("./razorpayAdapter.ts", import.meta.url), "utf8");
+  assert.match(src, /config: RAZORPAY_DISPLAY_CONFIG/, "declaring the config is not passing it");
 });
