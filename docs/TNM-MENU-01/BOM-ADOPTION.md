@@ -25,11 +25,13 @@ apply.
 (`slugify(name)` + `-x` on collision) for sheet dishes that miss the catalog.
 
 **Workaround:** the plan engine contains **no slugify()**. A sheet dish joins
-the catalog through `normNameLikeSeed` — a pinned duplicate of
-seed-ops-data's own `normName`, so BOM and recipes can never join
-differently — and a dish that does not join is **blocked and reported**.
-Proof it works: the one blocked dish on the current sheet is *Ragi Dates
-Eggless Brownie*, which the catalog genuinely dropped (`ragi-remove.sql`).
+the catalog by exact name, falling back to `normNameLikeSeed` (a pinned
+duplicate of seed-ops-data's `normName`) only when that key is unambiguous.
+A dish that matches nothing, or matches a colliding key, is **blocked and
+reported** — see review finding 1 below for why the two-stage join is
+required and where seed-ops-data still gets this wrong. Proof it works: the
+one blocked dish on the current sheet is *Ragi Dates Eggless Brownie*, which
+the catalog genuinely dropped (`ragi-remove.sql`).
 
 ### 3. Slash-compound ingredients ("almond milk / low-fat milk")
 
@@ -90,7 +92,9 @@ the four engines return to silent no-ops with no error anywhere.
 **Workaround now:** the seed counts BOM rows before deleting and prints a
 loud warning naming the recovery step (re-run the BOM workflow with
 apply=true). The backfill also re-resolves `item_no → inventory_items.id` at
-apply time, so reseed-shifted serial ids can never rot the mapping.
+apply time (and, since review finding 2, refuses when a resolved `item_no`
+names a different product in the database than on the sheet), so neither
+reseed-shifted serial ids nor a renumbered sheet can rot the mapping.
 **Better fix available, owner's call:** change the FK to `ON DELETE
 RESTRICT` and make the seed upsert instead of truncate — a schema migration
 I did not write into this change.
@@ -122,6 +126,7 @@ Price impact is bounded by the existing control: computed costs feed
 | **ready — full BOM derivable today** | **42** (218 rows, 54 items) |
 | incomplete (≥1 unresolved line) | 73 |
 | blocked — no catalog slug | 1 (the removed ragi dish) |
+| blocked — ambiguous catalog slug | 0 |
 | no ingredients | 1 (Coke Can) |
 
 Top unblockers for the 73: splitting composite sheet lines
