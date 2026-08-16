@@ -90,7 +90,14 @@ const BANNED: BannedTerm[] = [
   },
   {
     label: '"track" as a plan-type selector',
-    pattern: /\b(choose|select|pick|your)\s+(a\s+)?track\b/i,
+    // Noun position only — a determiner or interrogative in front of it.
+    // "track" as a VERB is correct and ships on the confirmation screen
+    // ("Track live", "track it here"), so this cannot be a bare word ban. The
+    // first draft required choose/select/pick/your and therefore missed the
+    // live instance — PlanDetails.tsx's "Which track?" — which is exactly the
+    // usage the contract names. A gate reporting clean while the canonical
+    // example sits in the tree is worse than no gate.
+    pattern: /\b(which|what|choose|select|pick|your|a|the)\s+track\b/i,
     why: 'Internal taxonomy. To a customer "track" is what you do to a delivery, not a plan you buy.',
   },
   {

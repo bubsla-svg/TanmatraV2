@@ -129,3 +129,25 @@ test("test files are not scanned", () => {
   });
   assert.equal(r.code, 0, `expected pass, got:\n${r.output}`);
 });
+
+test('"Which track?" is caught — the live instance the first draft missed', () => {
+  // PlanDetails.tsx shipped exactly this. The original pattern demanded
+  // choose/select/pick/your, so the gate passed while the canonical banned
+  // usage sat in the tree.
+  const r = runGate({
+    "components/checkout/plan/PlanDetails.tsx": `export const C = () => <span>Which track?</span>;\n`,
+  });
+  assert.equal(r.code, 1);
+  assert.match(r.output, /plan-type selector/);
+});
+
+test('"track" as a verb still passes', () => {
+  // The confirmation screen's "Track live" CTA and "track it here" are correct
+  // English and correct product copy. Broadening the noun rule must not ban
+  // the verb, or the fix for one Law 6 violation manufactures another.
+  const r = runGate({
+    "app/order/confirmed/page.tsx":
+      `export const C = () => <div><a>Track live</a><p>You can track it here any time.</p></div>;\n`,
+  });
+  assert.equal(r.code, 0, `expected pass, got:\n${r.output}`);
+});

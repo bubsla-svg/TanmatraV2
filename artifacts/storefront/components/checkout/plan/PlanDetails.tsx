@@ -94,7 +94,7 @@ export function PlanDetails({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-ink">Which track?</span>
+        <span className="text-sm font-medium text-ink">What do you eat?</span>
         <div className="flex flex-wrap gap-2">
           {servedTracks.map((t) => (
             <button
