@@ -68,12 +68,34 @@ test.describe("chrome is rendered exactly once per route", () => {
     ).toHaveCount(0);
   });
 
-  test("focus shell: no chrome at all", async ({ page }) => {
+  test("focus shell: no GLOBAL chrome, but the route keeps its own header", async ({ page }) => {
     await page.goto("/login");
-    await expect(page.locator("header")).toHaveCount(0);
+
+    // Was `locator("header")).toHaveCount(0)` — the same conflation the B2B
+    // case above already fixed for itself. FocusHeader renders a semantic
+    // <header>, and it is REQUIRED on every focus route: the shell strips all
+    // global chrome, so a focus route without one has no way back at all (its
+    // own doc records that dead end shipping twice). Counting bare <header>
+    // therefore forbade the one piece of chrome these routes must have.
+    //
+    // Worth stating plainly: this assertion was green only because /login was
+    // one of the routes still missing its back affordance. It passed BECAUSE
+    // of the defect, so fixing the defect is what turned it red.
+    //
+    // What the focus shell actually forbids is the CONSUMER chrome leaking in,
+    // so that is what is asserted — identified by structure, as the B2B case
+    // does, not by tag alone.
+    const globalHeader = page.locator("header").filter({
+      has: page.getByRole("navigation", { name: "Primary" }),
+    });
+    await expect(globalHeader).toHaveCount(0);
     await expect(page.locator("footer")).toHaveCount(0);
     await expect(
       page.getByRole("navigation", { name: "Native Mobile Navigation" }),
     ).toHaveCount(0);
+
+    // The positive half — the flow owns its canvas, so it must supply the exit
+    // the shell no longer does.
+    await expect(page.getByRole("button", { name: /back/i })).toBeVisible();
   });
 });

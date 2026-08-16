@@ -5,6 +5,7 @@ import { SafeImage } from "@/components/ui/SafeImage";
 import { formatPaise } from "@/lib/format";
 import { MarketplaceAddToCart } from "@/components/cart/MarketplaceAddToCart";
 import { MarketplaceBuyNow } from "@/components/marketplace/MarketplaceBuyNow";
+import { FocusHeader } from "@/components/FocusHeader";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
@@ -22,6 +23,7 @@ export default async function MarketplaceItemPage({ params }: { params: Promise<
 
   return (
     <div data-ui-generation="stitch-74" data-screen-id="5.8" data-screen-state="default" className="min-h-dvh flex flex-col bg-bg pb-24">
+      <FocusHeader backLabel="Back to marketplace" />
       {/* Hero Image */}
       <div className="relative w-full aspect-square md:aspect-video overflow-hidden">
         <SafeImage src={item.image ?? ""} alt={item.name} className="h-full w-full" />
