@@ -157,6 +157,17 @@ rather than the "Add + Open full page" pair described above, because removing
 open drawer. That is a consequence of the density win, not a defect in the
 drawer.
 
+**Re-verified again after PR #65** (dish-page branded tile + removal of the
+unearned "RD reviewed" badge), which touches `/dish/:slug` — one of the nine
+audited routes. Every number above is unchanged: 37 findings, the same five
+AA failures, 29 in the band, zero hard gates. That is the expected result
+rather than a lucky one: the badge is a `<span>`, which is not in the
+probe's interactive selector, and the branded tile and the generic glyph
+both render a `<div>` rather than an `<img>`, so neither the tap-target nor
+the image probes can see the difference. Recorded because "I re-ran it and
+nothing moved" is worth as much as a delta, and costs the next reader a
+re-run to find out.
+
 The sub-threshold per-route trailing gaps quoted earlier (`/menu` 181px, `/`
 293px, `/faq` 193px, `/plans` 160px) were **not** re-measured — they sit below
 the probe's reporting threshold, and an ad-hoc re-measurement returned a
