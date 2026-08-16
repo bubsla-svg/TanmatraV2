@@ -35,11 +35,12 @@
  *
  * 2. BOM overlay. loadDynamicRecipeCosts now overlays costs from
  *    dish_bom_components where a complete, fully-priced BOM exists. This
- *    test's CI database has no BOM rows, so the overlay is a no-op here. If
- *    a future CI seed ever populates that table, the size assertion below
- *    will fail loudly — that is correct behaviour, not breakage: the frozen
- *    algorithm never modelled BOMs, and the comparison would no longer be
- *    like-for-like.
+ *    test opts OUT via `includeBom: false` (see the call site) — the frozen
+ *    algorithm never modelled BOMs, so a like-for-like comparison must
+ *    isolate the fuzzy path. It cannot rely on the table being empty:
+ *    bomEngine.test.ts seeds BOM rows in this same database while
+ *    `node --test` runs files concurrently. The overlay's behaviour is
+ *    pinned separately, DB-free, in bomCosts.test.ts.
  */
 
 import assert from "node:assert/strict";
@@ -172,7 +173,13 @@ test("the memoised/pre-grouped rewrite produces identical costs to the old algor
   ]);
 
   // New implementation, against the real DB.
-  const actual = await loadDynamicRecipeCosts();
+  // `includeBom: false` — this test pins the FUZZY path against the frozen
+  // algorithm, and it shares this database with bomEngine.test.ts, which
+  // seeds BOM rows for slugs with no recipes row while `node --test` runs
+  // files concurrently. With the overlay on, those rows would appear in
+  // `actual` mid-run and fail the size assertion nondeterministically. The
+  // overlay's own behaviour is pinned DB-free in bomCosts.test.ts.
+  const actual = await loadDynamicRecipeCosts({ includeBom: false });
 
   // Old implementation, against the same rows read back independently.
   const allRecipes = await db

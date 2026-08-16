@@ -13,10 +13,11 @@
  * docs/TNM-MENU-01/BOM-ADOPTION.md for the full record.
  *
  * DESIGN RULES, each one a blocker from that document:
- *  - Slug fence (blocker 2): a sheet dish maps to a catalog slug via the same
- *    normalised-name join seed-ops-data.ts uses, and a dish that does NOT
- *    match is BLOCKED — reported, never given an invented slug. This engine
- *    contains no slugify().
+ *  - Slug fence (blocker 2): a sheet dish maps to a catalog slug by exact
+ *    name, falling back to the seed's normalised join only when that key is
+ *    unambiguous. A dish that matches nothing, or matches a COLLIDING key
+ *    (the "(Veg)"/"(Chicken)" families — see resolveCatalogSlug), is BLOCKED
+ *    and reported. This engine contains no slugify().
  *  - Reviewed mapping (blockers 3, 4): every ingredient name resolves through
  *    scripts/data/bom-ingredient-map.csv. A name with no row, or whose row a
  *    human has not flipped to `accepted`, leaves its dish INCOMPLETE — and an
@@ -233,7 +234,12 @@ export interface DishPlan {
   sheetName: string;
   slug: string | null;
   servingSize: string | null;
-  status: "ready" | "incomplete" | "blocked-no-slug" | "no-ingredients";
+  status:
+    | "ready"
+    | "incomplete"
+    | "blocked-no-slug"
+    | "blocked-ambiguous-slug"
+    | "no-ingredients";
   rows: PlannedBomRow[];
   /** ingredient lines resolved to a deliberate no-cost verdict */
   noCost: string[];
@@ -254,10 +260,59 @@ export interface BomPlan {
     ready: number;
     incomplete: number;
     blockedNoSlug: number;
+    blockedAmbiguous: number;
     noIngredients: number;
     plannedRows: number;
     distinctItemsUsed: number;
   };
+}
+
+/**
+ * Sheet name → catalog slug, and the reason when there is no answer.
+ *
+ * TWO-STAGE, and the order is the whole point. `normNameLikeSeed` strips
+ * parentheticals, which is exactly what distinguishes several real dish
+ * FAMILIES: "Pesto Pasta (Veg)" / "(Chicken)" / "(Prawns)" all normalise to
+ * "pesto pasta", as do the Hot n Sour and Manchow soup pairs — 7 catalog
+ * dishes collapsing onto 3 keys. A `new Map(...)` over those keys silently
+ * keeps the LAST writer, so a single-stage normalised join would hand the
+ * veg soup's ingredients to the chicken soup's slug. On a table that drives
+ * inventory depletion and allergen-adjacent costing, that is not a rounding
+ * error.
+ *
+ * So: exact name first (the sheet and the catalog spell these identically,
+ * parenthetical included), and the normalised join only as a fallback and
+ * only when it is UNAMBIGUOUS. An ambiguous key returns no slug and blocks
+ * the dish.
+ *
+ * DELIBERATE DIVERGENCE FROM seed-ops-data.ts. That script does the
+ * single-stage `new Map(DISHES.map(d => [normName(d.name), d]))` join and
+ * therefore has this bug today: within each colliding family one sheet dish
+ * takes the other's slug and the next takes it again with a `-x` suffix
+ * appended by its dedupe loop. Reproducing that for consistency's sake would
+ * mean knowingly writing wrong slugs, so this diverges and the recipes-side
+ * defect is recorded in docs/TNM-MENU-01/BOM-ADOPTION.md instead.
+ */
+export function resolveCatalogSlug(sheetName: string): {
+  slug: string | null;
+  ambiguous: boolean;
+} {
+  const exact = new Map<string, string>();
+  for (const d of DISHES) exact.set(d.name.toLowerCase().replace(/\s+/g, " ").trim(), d.slug);
+  const hit = exact.get(sheetName.toLowerCase().replace(/\s+/g, " ").trim());
+  if (hit) return { slug: hit, ambiguous: false };
+
+  const byNorm = new Map<string, Set<string>>();
+  for (const d of DISHES) {
+    const k = normNameLikeSeed(d.name);
+    const set = byNorm.get(k) ?? new Set<string>();
+    set.add(d.slug);
+    byNorm.set(k, set);
+  }
+  const candidates = byNorm.get(normNameLikeSeed(sheetName));
+  if (!candidates || candidates.size === 0) return { slug: null, ambiguous: false };
+  if (candidates.size > 1) return { slug: null, ambiguous: true };
+  return { slug: [...candidates][0]!, ambiguous: false };
 }
 
 export function buildBomPlan(input: {
@@ -265,9 +320,9 @@ export function buildBomPlan(input: {
   inventoryByNo: Map<number, string>;
   mapping: Map<string, MappingRow>;
 }): BomPlan {
-  const catBySheetName = new Map(DISHES.map((d) => [normNameLikeSeed(d.name), d.slug]));
   const dishes: DishPlan[] = input.dishes.map((dish) => {
-    const slug = catBySheetName.get(normNameLikeSeed(dish.name)) ?? null;
+    const resolved = resolveCatalogSlug(dish.name);
+    const slug = resolved.slug;
     const servingSize = dish.servingSize?.trim() || null;
     const ingredients = dish.ingredients ?? [];
     if (ingredients.length === 0) {
@@ -275,7 +330,9 @@ export function buildBomPlan(input: {
         sheetName: dish.name,
         slug,
         servingSize,
-        status: "no-ingredients",
+        status: resolved.ambiguous
+          ? "blocked-ambiguous-slug"
+          : "no-ingredients",
         rows: [],
         noCost: [],
         unresolved: [],
@@ -338,7 +395,9 @@ export function buildBomPlan(input: {
 
     const rows = [...byItem.values()].sort((a, b) => a.itemNo - b.itemNo);
     const status: DishPlan["status"] =
-      slug == null
+      resolved.ambiguous
+        ? "blocked-ambiguous-slug"
+        : slug == null
         ? "blocked-no-slug"
         : unresolved.length > 0 || zeroGram.length > 0
           ? "incomplete"
@@ -366,6 +425,7 @@ export function buildBomPlan(input: {
       ready: ready.length,
       incomplete: dishes.filter((d) => d.status === "incomplete").length,
       blockedNoSlug: dishes.filter((d) => d.status === "blocked-no-slug").length,
+      blockedAmbiguous: dishes.filter((d) => d.status === "blocked-ambiguous-slug").length,
       noIngredients: dishes.filter((d) => d.status === "no-ingredients").length,
       plannedRows: ready.reduce((n, d) => n + d.rows.length, 0),
       distinctItemsUsed: itemsUsed.size,

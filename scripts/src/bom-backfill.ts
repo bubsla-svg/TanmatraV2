@@ -9,10 +9,14 @@
  *      bom-ingredient-map.csv rows a human flipped to `accepted`. A dish with
  *      any unresolved line contributes NOTHING (a partial BOM is a silently
  *      understated cost — the defect this work exists to fix).
- *   3. Slug fence: dishes that do not join to the catalog by the seed's own
- *      name normalisation are BLOCKED and reported. No slugify() here.
- *   4. Apply touches only the slugs it plans; foreign rows are left alone.
- *      A pre-change backup of every touched row is always written.
+ *   3. Slug fence: a dish joins the catalog by exact name, falling back to
+ *      the seed's normalised join only when unambiguous. Unmatched AND
+ *      ambiguous dishes are BLOCKED and reported. No slugify() here.
+ *   4. Apply touches only the slugs this plan has an opinion about; foreign
+ *      rows (other tools', other tests') are left alone. Rows on a planned
+ *      slug that is no longer derivable are RETRACTED and listed separately
+ *      from ordinary row churn. A pre-change backup of every touched row is
+ *      always written.
  *   5. After applying, it re-plans and asserts convergence to zero actions.
  *
  * Modes:
@@ -120,6 +124,7 @@ function renderPlan(plan: BomPlan): string {
   L.push(`| ready (full BOM derivable) | ${s.ready} |`);
   L.push(`| incomplete (unresolved lines) | ${s.incomplete} |`);
   L.push(`| blocked — no catalog slug | ${s.blockedNoSlug} |`);
+  L.push(`| blocked — AMBIGUOUS catalog slug | ${s.blockedAmbiguous} |`);
   L.push(`| no ingredients on sheet | ${s.noIngredients} |`);
   L.push(`| planned BOM rows | ${s.plannedRows} |`);
   L.push(`| distinct inventory items used | ${s.distinctItemsUsed} |`);
@@ -170,6 +175,20 @@ function renderPlan(plan: BomPlan): string {
     L.push("");
     L.push(`These get NO invented slug. Fix the sheet name or the catalog.`);
     for (const d of blocked) L.push(`- ${d.sheetName}`);
+    L.push("");
+  }
+
+  const ambiguous = plan.dishes.filter((d) => d.status === "blocked-ambiguous-slug");
+  if (ambiguous.length > 0) {
+    L.push(`## Blocked — sheet name matches SEVERAL catalog dishes (${ambiguous.length})`);
+    L.push("");
+    L.push(
+      `The normalised join drops parentheticals, which is what distinguishes` +
+        ` these dish families. Guessing would hand one variant's ingredients to` +
+        ` another's slug, so they are blocked until the sheet name matches a` +
+        ` catalog name exactly.`,
+    );
+    for (const d of ambiguous) L.push(`- ${d.sheetName}`);
     L.push("");
   }
   return L.join("\n");
@@ -255,10 +274,12 @@ async function main(): Promise<void> {
     })
     .from(inventoryItemsTable);
   const idByItemNo = new Map<number, number>();
+  const productByItemNo = new Map<number, string>();
   const dupes = new Set<number>();
   for (const r of invRows) {
     if (idByItemNo.has(r.itemNo)) dupes.add(r.itemNo);
     idByItemNo.set(r.itemNo, r.id);
+    productByItemNo.set(r.itemNo, r.product);
   }
 
   const desired: DesiredRow[] = plan.ready.flatMap((d) =>
@@ -283,7 +304,52 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const touchedSlugs = [...new Set(desired.map((r) => r.slug))];
+  // MEANING DRIFT, not just id rot. The CSV's product column proves the
+  // mapping still agrees with the SHEET; it says nothing about the
+  // DATABASE. `item_no` is a row counter, so inserting or deleting a row
+  // mid-sheet renumbers everything after it — and production keeps the OLD
+  // numbering until seed-ops-data runs again. In that window every id
+  // resolves (nothing is missing or duplicated) while pointing at the wrong
+  // ingredient: paneer grams land on the olive-oil row, depletion and PO
+  // drafting follow, and the convergence check happily agrees because it
+  // compares the database against the same wrong plan. So compare the DB's
+  // own product name for every item this plan intends to write. The rows
+  // are already in hand from the SELECT above; not comparing them was the
+  // whole gap.
+  const productDrift = [
+    ...new Set(desired.map((r) => r.itemNo)),
+  ].flatMap((no) => {
+    const dbProduct = productByItemNo.get(no);
+    const sheetProduct = inventoryByNo.get(no);
+    if (dbProduct == null || sheetProduct == null) return [];
+    return dbProduct.trim().toLowerCase() === sheetProduct.trim().toLowerCase()
+      ? []
+      : [{ no, dbProduct, sheetProduct }];
+  });
+  if (productDrift.length > 0) {
+    console.error(
+      `REFUSING: ${productDrift.length} item_no value(s) name a DIFFERENT product in the database than on the sheet.\n` +
+        `The sheet has been renumbered since the last seed, so applying now would write BOM rows against the wrong ingredients:`,
+    );
+    for (const d of productDrift)
+      console.error(`  - item_no ${d.no}: database says "${d.dbProduct}", sheet says "${d.sheetProduct}"`);
+    console.error(`Run seed-ops-data --apply to bring the database to the current sheet, then re-plan.`);
+    process.exit(1);
+  }
+
+  // RETRACTION. The touched set is every slug this plan has an opinion
+  // about, not just the ones it wants rows for. A dish that WAS ready on a
+  // previous run and has since fallen out (an ingredient line edited into
+  // ambiguity, a mapping row reverted to `proposed`) must have its stale
+  // rows deleted — otherwise they persist invisibly and, because the BOM
+  // overlay outranks the fuzzy path, keep authoritatively costing a dish
+  // from a recipe that no longer describes it. Scoping deletes to `desired`
+  // alone would make "no longer derivable" indistinguishable from "leave
+  // production as it is".
+  const plannedSlugs = new Set(
+    plan.dishes.map((d) => d.slug).filter((s): s is string => s != null),
+  );
+  const touchedSlugs = [...plannedSlugs];
   const existing = touchedSlugs.length
     ? await db
         .select()
@@ -305,16 +371,40 @@ async function main(): Promise<void> {
   });
   const deletes = [...existingByKey].filter(([k]) => !desiredByKey.has(k));
 
-  console.log(`\n=== diff vs database (touched slugs only: ${touchedSlugs.length}) ===`);
-  console.log(`creates: ${creates.length} · updates: ${updates.length} · deletes: ${deletes.length}`);
+  // Split the deletes so a RETRACTION is never mistaken for a tidy-up. Rows
+  // on a slug this plan still considers ready are ordinary row-level churn;
+  // rows on a planned-but-NOT-ready slug are the whole dish's BOM going
+  // away, which is a much larger claim and deserves to be read before it is
+  // approved. It also covers hand-authored rows: this tool owns every slug
+  // it plans, so a manually-added row on a sheet dish WILL be removed here.
+  // The backup written below is the recovery path, and this print is the
+  // warning that you may need it.
+  const readySlugs = new Set(plan.ready.map((d) => d.slug!));
+  const retractions = deletes.filter(([, e]) => !readySlugs.has(e.dishSlug));
+  const churnDeletes = deletes.filter(([, e]) => readySlugs.has(e.dishSlug));
+
+  console.log(`\n=== diff vs database (touched slugs: ${touchedSlugs.length}) ===`);
+  console.log(
+    `creates: ${creates.length} · updates: ${updates.length} · ` +
+      `deletes-within-ready-dishes: ${churnDeletes.length} · retractions: ${retractions.length}`,
+  );
+  if (retractions.length > 0) {
+    const bySlug = new Map<string, number>();
+    for (const [, e] of retractions) bySlug.set(e.dishSlug, (bySlug.get(e.dishSlug) ?? 0) + 1);
+    console.log(
+      `  RETRACTING the full BOM of ${bySlug.size} dish(es) that are no longer derivable ` +
+        `(or whose rows were authored outside this tool):`,
+    );
+    for (const [slug, n] of bySlug) console.log(`    - ${slug} (${n} row(s))`);
+  }
 
   if (!APPLY) {
     console.log("\nplan-only — pass --apply to write.");
     return;
   }
   if (ASSUME) throw new Error("unreachable"); // guarded at argv parse
-  if (plan.ready.length === 0) {
-    console.log("nothing ready to apply.");
+  if (creates.length === 0 && updates.length === 0 && deletes.length === 0) {
+    console.log("nothing to do — database already matches the plan.");
     return;
   }
 

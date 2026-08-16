@@ -303,7 +303,19 @@ for (const d of sheet.dishes) {
 const accepted = new Map<string, MappingRow>();
 if (existsSync(CSV_PATH)) {
   const prior = loadMapping(readFileSync(CSV_PATH, "utf8"), inventoryByNo);
-  for (const err of prior.errors) console.error(`prior CSV: ${err}`);
+  if (prior.errors.length > 0) {
+    // Refuse rather than warn. `loadMapping` DROPS every row it cannot
+    // parse, so continuing would silently rewrite the file without those
+    // rows — and an `accepted` row lost that way is destroyed human review
+    // work, replaced by a fresh `proposed` guess that reads as if nobody
+    // had ever looked at it. Loud stop, no data loss.
+    console.error(
+      `REFUSING to regenerate: the existing CSV has ${prior.errors.length} structural error(s).\n` +
+        `Rewriting now would discard any accepted rows among them. Fix these first:`,
+    );
+    for (const err of prior.errors) console.error(`  - ${err}`);
+    process.exit(1);
+  }
   for (const [k, row] of prior.rows) if (row.status === "accepted") accepted.set(k, row);
 }
 

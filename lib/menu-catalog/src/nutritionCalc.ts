@@ -164,6 +164,13 @@ const PIECE_G: Array<[RegExp, number]> = [
   [/coriander|cilantro/, 0.3],
   [/parsley/, 0.3],
   [/\bbay leaf\b|leaves|\bleaf\b/, 0.4],
+  // Canned/bottled drinks counted as "1". The unit token is empty here
+  // because the sheet writes the vessel into the NAME ("Diet Coke can - 1"),
+  // so UNIT_FIXED's `can: 330` never fires and the row fell through to
+  // PIECE_DEFAULT — 50 g for a 330 ml can, a 6.6× understatement that the
+  // BOM overlay would then make authoritative for depletion and COGS.
+  // Must precede the fruit/leaf entries below so "coke"/"soda" wins.
+  [/\bcan\b|soda|coke|thums ?up|cola/, 330],
   [/banana/, 118],
   [/\bapple/, 180],
   [/egg/, 50],

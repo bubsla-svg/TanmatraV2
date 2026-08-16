@@ -493,7 +493,6 @@ jobs:
           ./src/lib/menuResolver.allergenReview.test.ts
           ./src/routes/petpooja.cacheInvalidation.test.ts
           ./src/lib/menuEngineering.sliceCounts.golden.test.ts
-          ./src/lib/menuEngineering.recipeCosts.golden.test.ts
           ./src/lib/queue.pipelineIdempotency.test.ts
           ./src/lib/dishReviews.staleness.test.ts
           ./src/lib/userBrief/cacheSweep.test.ts
@@ -527,15 +526,20 @@ jobs:
             ./src/routes/petpooja.menuFence.test.ts \
             ./src/lib/dishCustomizations.test.ts
 
-      # BOM costing + the recipe-quantity conversion contract. In THIS
-      # properly-formed step, not the folded `run: >` list above, for the
-      # dead-list reason documented there: files named after an in-scalar
-      # `#` never execute. These feed the margin axis that can move a real
-      # price, so they must provably run. DB-free (pure aggregation +
-      # @workspace/menu-catalog conversion) — no DATABASE_URL needed.
-      - name: BOM cost + quantity-conversion tests
+      # BOM costing + the recipe-quantity conversion contract, and the
+      # recipeCosts golden test. In THIS properly-formed step, not the folded
+      # `run: >` list above, for the dead-list reason documented there: files
+      # named after an in-scalar `#` never execute, and 19 comment lines
+      # precede the golden entry, so it had never run despite being named.
+      # That matters now — this change alters parseGrams' semantics and adds
+      # the BOM overlay, which is precisely what that test pins. All three
+      # feed the margin axis that can move a real price, so they must
+      # provably run. bomCosts/bomPlan are DB-free; the golden test uses the
+      # job's DATABASE_URL.
+      - name: BOM cost, quantity-conversion and recipe-cost golden tests
         working-directory: artifacts/api-server
         run: |
           node --test --test-force-exit --import tsx \
             ./src/lib/bomCosts.test.ts \
-            ../../scripts/src/lib/bomPlan.test.ts
+            ../../scripts/src/lib/bomPlan.test.ts \
+            ./src/lib/menuEngineering.recipeCosts.golden.test.ts

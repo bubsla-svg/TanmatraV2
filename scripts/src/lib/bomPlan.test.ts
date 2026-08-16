@@ -11,6 +11,7 @@ import {
   loadMapping,
   normNameLikeSeed,
   parseSheetIngredient,
+  resolveCatalogSlug,
   serializeMapping,
   type MappingRow,
 } from "./bomPlan";
@@ -272,4 +273,54 @@ test("buildBomPlan: a dish with no ingredients is reported, not planned", () => 
   });
   assert.equal(plan.dishes[0]!.status, "no-ingredients");
   assert.equal(plan.stats.noIngredients, 1);
+});
+
+// ── slug fence: the collision case (review finding, confirmed) ──────────────
+//
+// normNameLikeSeed strips parentheticals, and the catalog has three dish
+// FAMILIES distinguished only by them — Pesto Pasta (Veg/Chicken/Prawns) and
+// the Hot n Sour / Manchow soup pairs, 7 dishes on 3 normalised keys. A
+// single-stage normalised join keeps the LAST writer, which would hand one
+// variant's ingredients to another variant's slug.
+
+test("resolveCatalogSlug: exact names win, so variant families stay distinct", () => {
+  assert.deepEqual(resolveCatalogSlug("Pesto Pasta (Veg)"), {
+    slug: "pesto-pasta-veg",
+    ambiguous: false,
+  });
+  assert.deepEqual(resolveCatalogSlug("Pesto Pasta (Chicken)"), {
+    slug: "pesto-pasta-chicken",
+    ambiguous: false,
+  });
+  assert.deepEqual(resolveCatalogSlug("Pesto Pasta (Prawns)"), {
+    slug: "pesto-pasta-prawns",
+    ambiguous: false,
+  });
+  assert.equal(resolveCatalogSlug("Hot n Sour Soup (Veg)").slug, "hot-n-sour-soup-veg");
+  assert.equal(resolveCatalogSlug("Manchow Soup (Chicken)").slug, "manchow-soup-chicken");
+});
+
+test("resolveCatalogSlug: a name that only matches a COLLIDING key is ambiguous, not a guess", () => {
+  // No exact "Pesto Pasta" dish exists; the normalised key maps to three
+  // slugs. Picking one would be a coin flip on which recipe gets the rows.
+  assert.deepEqual(resolveCatalogSlug("Pesto Pasta"), { slug: null, ambiguous: true });
+});
+
+test("resolveCatalogSlug: unknown names are absent, not ambiguous", () => {
+  assert.deepEqual(resolveCatalogSlug("Definitely Not A Real Dish 9000"), {
+    slug: null,
+    ambiguous: false,
+  });
+});
+
+test("buildBomPlan: an ambiguous dish is blocked and emits no rows", () => {
+  const plan = buildBomPlan({
+    dishes: [{ name: "Pesto Pasta", ingredients: ["Eggs - 2"] }],
+    inventoryByNo: INV,
+    mapping: MAPPING,
+  });
+  assert.equal(plan.dishes[0]!.status, "blocked-ambiguous-slug");
+  assert.equal(plan.dishes[0]!.slug, null);
+  assert.equal(plan.stats.blockedAmbiguous, 1);
+  assert.equal(plan.ready.length, 0);
 });

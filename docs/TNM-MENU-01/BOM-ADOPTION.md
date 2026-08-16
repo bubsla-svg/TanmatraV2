@@ -129,6 +129,71 @@ Top unblockers for the 73: splitting composite sheet lines
 rows (falafel ×4, soy sauce ×4, chili paste ×4, avocado ×3, veg stock ×3).
 Both are kitchen edits to the sheet, not code.
 
+## Defects the adversarial review found in this change, and their fixes
+
+A four-lens review fleet was run over the first commit of this work. Six real
+defects came back; all six are fixed here, and each has a test.
+
+1. **Slug collision (critical).** `normNameLikeSeed` strips parentheticals,
+   which is exactly what distinguishes three dish FAMILIES — Pesto Pasta
+   (Veg/Chicken/Prawns) and the Hot n Sour / Manchow soup pairs: **7 catalog
+   dishes on 3 normalised keys**. `new Map(...)` keeps the last writer, so
+   the veg soup's ingredients would have been written under the chicken
+   soup's slug. Fixed by `resolveCatalogSlug`: exact name first (the sheet
+   and catalog spell these identically), normalised join only when
+   unambiguous, and a new `blocked-ambiguous-slug` status otherwise.
+   *This is the same class of bug the blocker-2 fence was meant to prevent —
+   the fence caught non-matches but not ambiguous matches.*
+2. **`item_no` meaning drift (high, independently verified with a repro).**
+   The apply resolved `item_no → id` against the live DB but never compared
+   the DB's product name. `item_no` is a row counter, so a mid-sheet insert
+   or delete renumbers everything after it, and production keeps the old
+   numbering until the next seed. In that window every id resolves while
+   pointing at the wrong ingredient — and the convergence check agrees,
+   because it compares the DB against the same wrong plan. Fixed: the apply
+   now refuses when any used `item_no` names a different product in the
+   database than on the sheet.
+3. **No retraction path (high).** Deletes were scoped to slugs the plan
+   wanted rows for, so a dish that fell out of the ready set kept its stale
+   BOM forever — and since the overlay outranks the fuzzy path, kept
+   authoritatively costing a dish from a recipe that no longer described it.
+   Fixed: the touched set is every slug the plan has an opinion about, and
+   retractions are reported separately from ordinary row churn.
+4. **Golden test never ran (high).** `menuEngineering.recipeCosts.golden.test.ts`
+   sat in verify.yml's folded `run: >` list **after 19 comment lines** — the
+   documented dead-list defect, where everything past the first in-scalar `#`
+   is commented out. The test this change leans on had not executed in CI.
+   Moved into a properly-formed step.
+5. **Golden test vs. concurrent BOM seeding (high).** With the overlay on, the
+   golden test's size assertion would fail nondeterministically:
+   `bomEngine.test.ts` seeds BOM rows for slugs with no recipes row in the
+   same database while `node --test` runs files concurrently. Fixed with an
+   explicit `includeBom: false` — that test pins the fuzzy path, so isolating
+   it is correct; the overlay is pinned DB-free in `bomCosts.test.ts`.
+6. **Canned drinks weighed 50 g (medium).** The sheet writes the vessel into
+   the NAME ("Diet Coke can - 1"), so `UNIT_FIXED`'s `can: 330` never fired
+   and the row fell to `PIECE_DEFAULT` — a 6.6× understatement the overlay
+   would have made authoritative. Fixed in `PIECE_G`. The consistency test
+   then caught a stored estimate this corrects: **`thums-up-can` was 22 kcal
+   for a can of full-sugar cola; it is 145.** Regenerated — exactly one
+   estimate changed.
+
+Also hardened: `propose-bom-map --write` now refuses to regenerate when the
+existing CSV has structural errors, because `loadMapping` drops unparseable
+rows and rewriting would silently destroy accepted human review.
+
+**Known and accepted, not fixed:** an explicit gram weight inside parentheses
+(`"Banana - 1 small (50 g)"`) is discarded in favour of the piece weight.
+Changing it would ripple through the 104 shipped `ESTIMATED_MACROS` entries,
+which is a separate change with its own review. No current sheet line in a
+*ready* dish takes that shape.
+
+> **Review coverage caveat.** 19 of the 24 verification agents died on usage
+> limits, so only finding 2 carries a formal adversarial verdict. Findings 1,
+> 4 and 6 I reproduced and confirmed directly (collision list, comment count,
+> failing consistency test); 3 and 5 are code-reading conclusions. Nothing
+> here was taken on an agent's word alone.
+
 ## Assumptions on file — each with its veto point
 
 | # | assumption | veto point |
@@ -140,6 +205,8 @@ Both are kitchen edits to the sheet, not code.
 | 5 | every alias in the mapping CSV | flip the row's verdict/item_no before accepting |
 | 6 | salt/ice/water are no-cost | `no-cost` rows in the CSV |
 | 7 | `unit` is always `g` in written rows | `bom-backfill.ts` (single write site) |
+| 8 | a canned drink is 330 g | `nutritionCalc.ts` `PIECE_G` |
+| 9 | this tool OWNS every slug it plans — hand-authored rows on a sheet dish are retracted | the retraction list printed before every apply |
 
 ## Runbook
 

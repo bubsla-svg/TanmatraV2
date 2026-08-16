@@ -111,9 +111,22 @@ interface PricedItem {
  * matched inventory rows carry no price, and `recipes.food_cost_paise` is unset
  * or zero. Callers MUST NOT coerce that null to 0; see `costPerUnitPaise`.
  */
-export async function loadDynamicRecipeCosts(): Promise<
-  Map<string, FoodCostPaise>
-> {
+export async function loadDynamicRecipeCosts(
+  opts: {
+    /**
+     * The recipeCosts golden test sets this false. That test pins the FUZZY
+     * path against a frozen copy of the old algorithm, and it shares its CI
+     * database with bomEngine.test.ts, which seeds BOM rows for slugs that
+     * have no recipes row (`hp-quinoa-bowl-test`) while `node --test` runs
+     * files concurrently. With the overlay on, those rows would add keys to
+     * the result mid-run and fail the golden's size assertion
+     * nondeterministically. Isolating the fuzzy path is exactly what that
+     * test means to measure; every production caller takes the default.
+     */
+    includeBom?: boolean;
+  } = {},
+): Promise<Map<string, FoodCostPaise>> {
+  const includeBom = opts.includeBom ?? true;
   const recipes = await db.select().from(recipesTable);
   const ingredients = await db.select().from(recipeIngredientsTable);
   const inventory = await db.select().from(inventoryItemsTable);
@@ -124,7 +137,9 @@ export async function loadDynamicRecipeCosts(): Promise<
   // applied — in which case this read costs one SELECT and changes nothing,
   // which is also why the recipeCosts golden test (whose CI database has no
   // BOM rows) is unaffected. See src/lib/bomCosts.ts.
-  const bomRows = await db.select().from(dishBomComponentsTable);
+  const bomRows = includeBom
+    ? await db.select().from(dishBomComponentsTable)
+    : [];
 
   const recipeCostMap = new Map<string, FoodCostPaise>();
 
