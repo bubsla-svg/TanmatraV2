@@ -5,3 +5,16 @@
 .turbo
 test-results/
 playwright-report/
+
+# Playwright VRT baselines written by layout-vrt.spec.ts's toHaveScreenshot().
+# Ignored, like the two artifact directories above, because nothing here is a
+# reviewed reference: no storefront baseline has ever been tracked, so the
+# spec writes one on first run and passes against itself — on a dev machine
+# and in CI alike. Committing whichever branch happened to run last would
+# silently promote that branch's rendering to the reference.
+#
+# Making VRT actually gate is worth doing deliberately: it needs baselines
+# generated on the same platform CI renders on (the files are suffixed
+# -chromium-linux) and a decision about which commit is "correct". Until
+# then, treat layout-vrt as smoke coverage, not a visual gate.
+*.spec.ts-snapshots/
