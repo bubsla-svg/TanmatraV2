@@ -102,9 +102,31 @@ async function fullScroll(page: Page): Promise<void> {
   await page.waitForTimeout(SETTLE_MS);
 }
 
+/**
+ * OPT-IN, deliberately. `storefront.yml`'s e2e step runs the whole `specs/`
+ * directory with `--project=mobile` and no filter, so simply adding this file
+ * would have made it a merge gate nobody chose — and a geometry audit is
+ * exactly the kind of check that goes flaky on a slower runner (the settle
+ * window is wall-clock) and then gets deleted rather than fixed.
+ *
+ * So it runs only when asked:
+ *   RUN_FRONTEND_AUDIT=1 E2E_BASE_URL=... pnpm exec playwright test \
+ *     --config artifacts/storefront/e2e/playwright.config.ts \
+ *     --project=mobile frontend-audit
+ *
+ * Promoting it to a standing gate is a deliberate decision (see the PR), not
+ * a side effect of the file existing.
+ */
+const AUDIT_ENABLED = process.env["RUN_FRONTEND_AUDIT"] === "1";
+
 test.describe("frontend audit", () => {
   for (const route of ROUTES) {
     test(`audit ${route.name} (${route.path})`, async ({ page }, testInfo) => {
+      // Guard in the BODY, not as a describe-level condition: the
+      // `({}, testInfo)` conditional form is unsupported under the strip-only
+      // type stripping Playwright loads these files with (see
+      // menu-image-integrity.spec.ts for the same note).
+      test.skip(!AUDIT_ENABLED, "set RUN_FRONTEND_AUDIT=1 to run the audit");
       const consoleErrors: string[] = [];
       const failedRequests: string[] = [];
       page.on("console", (m) => {
