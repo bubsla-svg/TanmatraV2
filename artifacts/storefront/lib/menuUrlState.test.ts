@@ -10,7 +10,6 @@ const filters = (over: Partial<MenuFilterState>): MenuFilterState => ({
 const state = (over: Partial<MenuUrlState>): MenuUrlState => ({
   chip: "all",
   filters: EMPTY_FILTERS,
-  query: "",
   ...over,
 });
 
@@ -42,24 +41,22 @@ test("round-trips every filter group together", () => {
   assert.deepEqual(parseMenuUrlState(new URLSearchParams(search)), s);
 });
 
-test("round-trips a search query, trimmed", () => {
-  const search = menuUrlStateToSearch(state({ query: "  bowl  " }));
-  assert.equal(search, "q=bowl");
-  assert.deepEqual(parseMenuUrlState(new URLSearchParams(search)).query, "bowl");
-});
-
-test("a query that is only whitespace serializes as absent, not q=", () => {
-  assert.equal(menuUrlStateToSearch(state({ query: "   " })), "");
-});
-
-test("chip + filters + query combine into one query string and back", () => {
+test("chip + filters combine into one query string and back", () => {
   const s = state({
     chip: "non_veg",
     filters: filters({ macro: ["protein_30_plus"] }),
-    query: "chicken",
   });
   const search = menuUrlStateToSearch(s);
   assert.deepEqual(parseMenuUrlState(new URLSearchParams(search)), s);
+});
+
+test("the retired search param is never written", () => {
+  // `q` backed the inline search box, removed 2026-08-16. Nothing reads it
+  // any more, so nothing may emit it either — a param the page ignores is a
+  // lie in the address bar and a share link that silently means less than it
+  // looks like it means.
+  const search = menuUrlStateToSearch(state({ chip: "veg", filters: filters({ goal: ["fat_loss"] }) }));
+  assert.equal(new URLSearchParams(search).get("q"), null);
 });
 
 test("an unknown or tampered diet value falls back to all, not thrown", () => {
@@ -80,11 +77,20 @@ test("merge preserves a param this module does not own", () => {
   // The dish-drawer's own ?dish=slug — a same-route navigation built with
   // its own hardcoded query string, unaware this module manages anything.
   const current = new URLSearchParams("dish=quinoa-khichdi");
-  const merged = mergeMenuUrlState(current, state({ chip: "veg", query: "bowl" }));
+  const merged = mergeMenuUrlState(current, state({ chip: "veg" }));
   const params = new URLSearchParams(merged);
   assert.equal(params.get("dish"), "quinoa-khichdi");
   assert.equal(params.get("diet"), "veg");
-  assert.equal(params.get("q"), "bowl");
+});
+
+test("merge evicts a legacy q= param from a bookmarked or shared URL", () => {
+  // `q` is still MANAGED after the search box was removed, precisely so an
+  // old link stops advertising a search the page no longer performs.
+  const current = new URLSearchParams("q=bowl&dish=quinoa-khichdi");
+  const merged = mergeMenuUrlState(current, state({}));
+  const params = new URLSearchParams(merged);
+  assert.equal(params.get("q"), null);
+  assert.equal(params.get("dish"), "quinoa-khichdi");
 });
 
 test("merge clears a stale managed value that the new state no longer has", () => {

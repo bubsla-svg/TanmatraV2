@@ -76,7 +76,7 @@ test.describe("stitch-runtime: menu display integrity (M-5 §4)", () => {
     // dishes carry exactly 460 kcal / 18 g P; the gate replaces those
     // numbers with an honest "being verified" chip.
     const stubMacroPattern = /460\s*kcal\s*·\s*≈?\s*18\s*g\s*P/i;
-    expect(body.replace(/ /g, " ")).not.toMatch(stubMacroPattern);
+    expect(body.replace(/\u00A0/g, " ")).not.toMatch(stubMacroPattern);
   });
 
   test("§4.2 no duplicate dish names on the page", async ({ page }) => {
@@ -124,26 +124,32 @@ test.describe("stitch-runtime: menu display integrity (M-5 §4)", () => {
     await evidenceShot(page, "5.2-macro-legend");
   });
 
-  test("§3.7 the trust strip claims only what the payload supports", async ({ page }) => {
+  /**
+   * §3.7's trust strip ("{n} dishes · order today [· verified macros]
+   * [· RD-reviewed kitchen]") was removed along with the page title on
+   * 2026-08-16 — it was chrome above the first product, and the count is
+   * restated by the section headings below it. Its test went with it: there
+   * is no strip left to assert against.
+   *
+   * What that test actually protected was narrower than the strip — that no
+   * page-level element asserts confidence the cards below have withdrawn.
+   * That survives here, and is now stronger, because it holds for ANY future
+   * banner rather than only the one that happened to exist.
+   */
+  test("§3.7 no page-level element claims macros the cards withhold", async ({ page }) => {
     const menu = new MenuPage(page);
     await menu.goto();
+    await expect(page.locator("article").first()).toBeVisible();
 
-    const strip = page.getByTestId("menu-trust-strip");
-    await expect(strip).toBeVisible();
-    const text = await strip.innerText();
+    const body = (await page.locator("main").innerText()).replace(/\u00A0/g, " ");
 
-    // Always-true clauses survive — the strip never goes empty (Law 10).
-    expect(text).toMatch(/\d+\s+dish(es)?/);
-    expect(text).toContain("order today");
-
-    // "verified macros" may only appear when every rendered dish has
-    // trustworthy macros, which the stub-macro rows currently prevent.
-    if (text.includes("verified macros")) {
-      const body = (await page.locator("main").innerText()).replace(/ /g, " ");
-      expect(
-        body,
-        'strip claims "verified macros" while a card admits its macros are unverified',
-      ).not.toContain("Macros being verified");
-    }
+    // Passes trivially today — nothing on /menu makes the claim any more.
+    // That is the point: it is a regression guard, and it fails the moment
+    // someone reinstates a page-level "verified macros" banner while 17 of
+    // the 145 live dishes still cannot state their macros at all.
+    expect(
+      body.includes("verified macros") && body.includes("Macros being verified"),
+      'the page claims "verified macros" while a card admits its macros are unverified',
+    ).toBe(false);
   });
 });
