@@ -67,10 +67,18 @@ test("x-admin-token grants the error-reports audit (200, shaped)", async () => {
     });
     assert.equal(res.status, 200);
     const body = (await res.json()) as {
-      totalReports?: number;
+      retained?: number;
+      windowSize?: number;
       reports?: unknown[];
     };
-    assert.equal(typeof body.totalReports, "number");
+    // `retained`, not `totalReports`: the buffer is a bounded window of the
+    // most recent reports (lib/errorReportIntake.ts), so a field called a
+    // total would read as "we have had N errors" when it means "here are the
+    // last N". The window size travels with it so a reader can tell a quiet
+    // day from a full buffer.
+    assert.equal(typeof body.retained, "number");
+    assert.equal(typeof body.windowSize, "number");
+    assert.ok(body.retained! <= body.windowSize!);
     assert.ok(Array.isArray(body.reports));
   });
 });
