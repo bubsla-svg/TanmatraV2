@@ -16,14 +16,17 @@ import { addItem } from "@/lib/groupOrdersApi";
 // few (InstantPlanPreview) build a narrower literal with no availability
 // concept at all. `undefined` reads as available, same convention as
 // cartStore's `opts.isAvailable` and catalog.ts's `!== false` checks.
-// macros/macrosEstimated are likewise optional (not Pick'd straight off
-// DishData, which declares macros as required) — D-14's capture is
-// best-effort: a narrower literal still type-checks and simply adds a line
-// with no macro chip, same as any cart written before this field existed.
+// macros and its two provenance flags are likewise optional (not Pick'd
+// straight off DishData, which declares macros as required) — D-14's capture
+// is best-effort: a narrower literal still type-checks and simply adds a line
+// with no macro chip, same as any cart written before this field existed. The
+// narrow-literal call sites all pass no macros at all, so they never reach the
+// case where a missing `macrosProvisional` would matter.
 type Dish = Pick<DishData, "id" | "slug" | "name" | "price"> & {
   isAvailable?: boolean;
   macros?: DishMacros;
   macrosEstimated?: boolean;
+  macrosProvisional?: boolean;
 };
 const GROUP_CODE = /^[0-9A-Za-z]{6,8}$/;
 
@@ -121,7 +124,7 @@ function CartAdd({ dish }: { dish: Dish }) {
     // D-14: same figures the menu card already shows. Omitted entirely when
     // the dish has no macros to offer, rather than a fabricated {0,0}.
     ...(dish.macros
-      ? { macros: { calories: dish.macros.calories, protein: dish.macros.protein, estimated: dish.macrosEstimated } }
+      ? { macros: { calories: dish.macros.calories, protein: dish.macros.protein, estimated: dish.macrosEstimated, provisional: dish.macrosProvisional } }
       : {}),
   };
 
