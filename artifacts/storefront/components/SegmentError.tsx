@@ -51,8 +51,13 @@ export default function SegmentError({
         >
           Try again
         </button>
+        {/* A raw anchor on purpose, and the one place in the storefront that
+            wants one. This renders because something in the React tree threw;
+            a <Link> would client-navigate with that same tree still mounted,
+            back into a router that may itself be what broke. A full document
+            load is the honest recovery here — it rebuilds everything. */}
         <a
-          href="/menu"
+          href="/menu" // client-nav-allow: full reload is the recovery after a crash
           className="touch-target-min rounded-xl border border-line-strong px-5 py-3 text-sm font-semibold text-ink"
         >
           Back to the menu

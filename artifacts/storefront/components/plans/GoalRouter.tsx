@@ -4,6 +4,7 @@
 
 import { routerPlans } from "@/lib/plans";
 import { GoalCard } from "./GoalCard";
+import Link from "next/link";
 
 /**
  * "What's lunch for?" — the CUJ v2 entry (02d §3). One decision, five answers,
@@ -26,12 +27,12 @@ export function GoalRouter() {
         {plans.map((p) => (
           <GoalCard key={p.id} planId={p.id} promise={p.promise} planName={p.name} source="plans" />
         ))}
-        <a
+        <Link
           href="/menu"
           className="-m-2 mt-2 self-center p-2 text-sm font-medium text-ink-muted underline-offset-4 hover:underline"
         >
           Just browsing &rarr;
-        </a>
+        </Link>
       </div>
     </section>
   );

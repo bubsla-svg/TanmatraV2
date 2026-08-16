@@ -46,7 +46,10 @@ test("the house minimum clears the conformance floor", () => {
 
 test('landing "View menu" has a box of its own (was 81×16)', () => {
   const src = read("../app/(global)/page.tsx");
-  const link = /<a\s[^>]*href="\/menu"[\s\S]*?>\s*View menu/.exec(src)?.[0] ?? "";
+  // Matches <a> or <Link>: this assertion is about the tap target, not the
+  // element. It went red when 3.2 converted the anchor to a router link, which
+  // is the test doing its job — but pinning the tag was never the point.
+  const link = /<(?:a|Link)\s[^>]*href="\/menu"[\s\S]*?>\s*View menu/.exec(src)?.[0] ?? "";
   assert.ok(link, "the rail header still links to the menu");
   assert.match(link, /touch-target-min/);
 });

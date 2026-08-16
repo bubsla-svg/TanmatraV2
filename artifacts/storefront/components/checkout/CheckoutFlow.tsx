@@ -87,9 +87,9 @@ export function CheckoutFlow({
           <p className="text-sm text-ink-muted">First lunch next weekday, {PLAN_DELIVERY_WINDOW_LABEL}. {futureLine}</p>
         </div>
         {eveningAddPaise != null && <EveningAddOffer pricePaise={eveningAddPaise} />}
-        <a href="/plans" className="-m-2 self-start p-2 text-sm font-medium text-gold-text">
+        <Link href="/plans" className="-m-2 self-start p-2 text-sm font-medium text-gold-text">
           Manage your plan &rarr;
-        </a>
+        </Link>
       </div>
     );
   }
