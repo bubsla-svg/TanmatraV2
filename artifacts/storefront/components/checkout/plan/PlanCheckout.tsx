@@ -1,6 +1,6 @@
 "use client";
 // Client: drives the live plan-subscription money path end to end.
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   runCheckout,
@@ -13,6 +13,7 @@ import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter"
 import { buildSubscriptionInput, nextWeekdayISO } from "@/lib/planCheckout";
 import { stashCheckoutPerks, type CheckoutPerks } from "@/lib/postCheckout";
 import { usePlanQuote } from "@/lib/usePlanQuote";
+import { emitFunnel, funnelErrorCode } from "@/lib/funnel";
 import { getAddresses, ApiError, type Address, type AuthUser, type AddOnId, type DietTrack, type PlanCadence } from "@/lib/api";
 import { PlanIdentityGate } from "./PlanIdentityGate";
 import { PlanDetails, type PlanDetailsValue } from "./PlanDetails";
@@ -100,6 +101,24 @@ export function PlanCheckout({
   const [unresolved, setUnresolved] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(false);
 
+  // begin_checkout, once, at the moment this becomes a priced purchase screen:
+  // identity established and the server quote landed. Firing on mount would
+  // count everyone who merely opened /checkout, and would carry no amount —
+  // an event with no total is not a usable denominator for the payment events.
+  // (Once the serviceability gate lands it sits BEFORE identity, so gating on
+  // `user` keeps this after it without naming it.)
+  const beganRef = useRef(false);
+  useEffect(() => {
+    if (beganRef.current || !user || !quote) return;
+    beganRef.current = true;
+    emitFunnel("begin_checkout", {
+      total_paise: quote.payableTotalPaise,
+      has_plan: true,
+      plan_id: planId,
+      cadence: billedCadence,
+    });
+  }, [user, quote, planId, billedCadence]);
+
   function onVerified(u: AuthUser) {
     setUser(u);
     void getAddresses()
@@ -123,6 +142,21 @@ export function PlanCheckout({
       creditAppliedPaise: createdRef.current?.creditAppliedPaise,
       ...successPerks,
     });
+    emitFunnel("checkout_complete", {
+      order_id: result.orderId,
+      method: "razorpay",
+      has_plan: true,
+      plan_id: planId,
+      ...(quote ? { total_paise: quote.payableTotalPaise } : {}),
+    });
+    // Distinct from checkout_complete on purpose: an à-la-carte order completes
+    // a checkout and creates no subscription, so counting "plans started" off
+    // the completion event would overcount every dish order.
+    emitFunnel("subscription_created", {
+      plan_id: planId,
+      cadence: billedCadence,
+      ...(createdRef.current?.subscriptionId ? { subscription_id: createdRef.current.subscriptionId } : {}),
+    });
     router.push(`/order/confirmed/${encodeURIComponent(result.orderId)}`);
   }
 
@@ -130,6 +164,9 @@ export function PlanCheckout({
     if (!user || !quote) return;
     setError(null);
     setBusy(true);
+    // The server quote, which is also what bills. `quote` is non-null by the
+    // guard above, so this never reports a plan purchase as costing nothing.
+    emitFunnel("payment_opened", { method: "razorpay", total_paise: quote.payableTotalPaise, plan_id: planId });
     const phone = user.phoneE164 ?? "";
     const adapter = createRazorpayAdapter({ name: "Tanmatra", description: `${planName} plan`, contact: phone });
     try {
@@ -182,6 +219,13 @@ export function PlanCheckout({
         setVerifying(false);
         return;
       }
+      // A dismissal is the customer changing their mind, not a gateway fault —
+      // counting them together would read as a broken payment rail.
+      emitFunnel("payment_failed", {
+        error_code: e instanceof RazorpayDismissed ? "dismissed" : funnelErrorCode(e),
+        has_plan: true,
+        plan_id: planId,
+      });
       if (e instanceof RazorpayDismissed) {
         setError("Payment cancelled — you haven't been charged. Tap Continue to try again.");
       } else {
