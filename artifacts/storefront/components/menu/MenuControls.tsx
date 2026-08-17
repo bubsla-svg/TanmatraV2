@@ -69,14 +69,19 @@ export function MenuControls({
                   aria-pressed={active}
                   // D-08: selection state, not a rival action colour —
                   // border + tint + marker, never a solid --gold fill.
-                  // min-h-9 (36px) keeps the row shorter than the 44px
-                  // filter trigger beside it while staying above the WCAG
-                  // 2.2 AA 24px target minimum. `gap-1` carries the space
-                  // after the ✓, NOT a trailing space inside the span: this
-                  // is a flex container, and flex items get their leading
-                  // and trailing whitespace trimmed, which silently
-                  // rendered "✓All".
-                  className={`inline-flex min-h-9 items-center gap-1 rounded-full border px-4 text-xs font-semibold transition-transform active:scale-95 ${
+                  // min-h-11 (44px), raised from 36px — and it costs NOTHING
+                  // vertically. This row is `flex items-center` and already
+                  // contains the 44px filter trigger, so the row was
+                  // max(36, 44) = 44 tall either way; the chips were simply
+                  // sitting short inside a box that height already. The /menu
+                  // density work is untouched, which is measured after the
+                  // change rather than assumed.
+                  //
+                  // `gap-1` carries the space after the ✓, NOT a trailing
+                  // space inside the span: this is a flex container, and flex
+                  // items get their leading and trailing whitespace trimmed,
+                  // which silently rendered "✓All".
+                  className={`inline-flex min-h-11 items-center gap-1 rounded-full border px-4 text-xs font-semibold transition-transform active:scale-95 ${
                     active
                       ? "border-gold bg-gold/10 text-gold-text"
                       : "border-line bg-surface text-ink-muted hover:text-ink"

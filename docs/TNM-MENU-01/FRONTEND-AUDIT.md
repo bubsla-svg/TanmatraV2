@@ -157,6 +157,70 @@ rather than the "Add + Open full page" pair described above, because removing
 open drawer. That is a consequence of the density win, not a defect in the
 drawer.
 
+## Global-chrome resize + the gate goes live
+
+Owner answered the two remaining questions: do the resizes, wire it in.
+
+**The three global-chrome controls are fixed**, and because they are chrome
+each one was counted on every route it appears on — so three class changes
+removed twenty findings:
+
+| control | before | after | rows cleared |
+|---|---|---|---:|
+| header wordmark (`Header.tsx`) | 74×28 | 90×44 | 7 |
+| header search trigger (`CommandMenu.tsx`) | 36×28 | 44×44 | 7 |
+| diet chips (`MenuControls.tsx`) | 55–82×36 | ×44 | 6 |
+
+All three use the existing `.touch-target-min` (44px) from `globals.css`
+rather than a new token. There was already one answer to "how big must a
+target be"; a second, parallel one is worse than either alone.
+
+**The chip resize cost zero vertical space, measured rather than assumed.**
+That row is `flex items-center` and already contained the 44px filter
+trigger, so its height was `max(36, 44) = 44` either way — the chips were
+simply sitting short inside a box that height already. `/menu`'s first card
+top measured 301px before the change and 301px after, on the same build and
+viewport. The density work is untouched.
+
+The wordmark needed one structural change: `.touch-target-min` makes the
+anchor `inline-flex`, and `text-overflow: ellipsis` needs a block container,
+so the truncation moved to an inner `<span>`. Left as an inline-flex anchor
+with the classes in place, the clipping would have silently stopped working
+— a bug that only appears for a brand name longer than "Tanmatra".
+
+| | after #70 | **after the resize** |
+|---|---:|---:|
+| findings | 34 | **14** |
+| WCAG 2.2 AA failures | 0 | **0** |
+| tap targets in the 24–44px band | 31 | **11** |
+| trailing void | 1 | 1 (`/cart`, 568px) |
+| CTA stacking | 2 | 2 |
+| occluded controls / collapsed images | 0 / 0 | **0 / 0** |
+
+### The audit is now a merge gate
+
+`storefront.yml` runs it on its own `next start` (port 3200, following the
+Lighthouse step's self-contained precedent) with `RUN_FRONTEND_AUDIT=1`, and
+the report uploads as an artifact on **every** run, not only on failure — the
+band findings are the point of the report even when it is green, and a gate
+whose evidence only appears when it fails teaches people to fear it rather
+than read it.
+
+**What gates, and what does not.** `occlusion` and `image-collapse` gated
+from the start. **WCAG AA target size now gates too** — added at the moment
+its count reached zero, which is the only honest time to add a gate. The
+original argument for not gating everything was that a check which blocks on
+pre-existing debt gets weakened rather than obeyed; that argument expires
+when the debt does. The 24–44px comfort band stays report-only precisely
+because it is still 11 findings, which is exactly the debt that argument was
+about.
+
+`lib/tapTargets.test.ts` (from #70) pins the same five controls by *source*
+and runs without a browser. It can only check that a class is still written;
+it cannot see a control that regresses through a changed utility, a new
+wrapper, or a font-size change. This gate measures rendered pixels. They are
+complements, not duplicates.
+
 ## Re-run after PR #70 — the AA failures are fixed
 
 **All five WCAG 2.2 AA target-size failures are gone.** #70 fixed exactly the

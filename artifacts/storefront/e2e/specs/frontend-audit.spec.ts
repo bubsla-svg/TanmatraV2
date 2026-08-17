@@ -28,9 +28,42 @@ import { auditPage, type Finding } from "../support/audit/probes";
  * unverified in the report rather than silently omitted.
  */
 
-/** Probe classes that fail the build. Both are pointer-level defects: the
- *  customer taps a control and something else happens, or nothing does. */
+/** Probe classes that fail the build outright. Both are pointer-level
+ *  defects: the customer taps a control and something else happens, or
+ *  nothing does. */
 const HARD_GATES = new Set(["occlusion", "image-collapse"]);
+
+/**
+ * WCAG 2.2 AA target-size failures also fail the build — added once the count
+ * reached zero, which is the only honest moment to add a gate.
+ *
+ * The original note here said the reason not to gate everything was that "a
+ * gate that blocks on pre-existing debt on day one gets weakened, not
+ * obeyed". That reasoning expires when the debt does. The first run measured
+ * five sub-24px controls; PR #70 fixed all five; so this gate costs nothing
+ * today and is purely a ratchet against the regression that already happened
+ * once — a standalone text link with no vertical box of its own, whose
+ * rendered height is its line-height and which looks entirely normal in a
+ * diff.
+ *
+ * `lib/tapTargets.test.ts` pins the same five by SOURCE, which is faster and
+ * runs without a browser but can only check that a class is still written. It
+ * cannot see a control that regresses for a different reason — a changed
+ * utility, a new wrapper, a font-size change. This measures rendered pixels,
+ * so the two are complements, not duplicates.
+ *
+ * The 24–44px band stays REPORT-ONLY: 31 findings today, which is exactly the
+ * pre-existing debt the paragraph above says a gate must not be built on.
+ */
+const GATE_AA_TARGET_SIZE = true;
+
+function isGated(f: Finding): boolean {
+  if (HARD_GATES.has(f.probe)) return true;
+  // `severity: "high"` on a tap-target IS the sub-24px case — the probe sets
+  // "medium" for the 24–44 band. Keyed off severity rather than re-deriving
+  // the threshold here so there is one definition of "AA failure".
+  return GATE_AA_TARGET_SIZE && f.probe === "tap-target" && f.severity === "high";
+}
 
 const ROUTES: Array<{ path: string; name: string }> = [
   { path: "/", name: "landing" },
@@ -197,10 +230,10 @@ test.describe("frontend audit", () => {
         contentType: "application/json",
       });
 
-      const gated = findings.filter((f) => HARD_GATES.has(f.probe));
+      const gated = findings.filter(isGated);
       expect(
         gated,
-        `pointer-level defects on ${route.path}:\n${gated.map((g) => `  - [${g.severity}] ${g.detail}`).join("\n")}`,
+        `blocking defects on ${route.path}:\n${gated.map((g) => `  - [${g.severity}] ${g.probe} — ${g.detail}`).join("\n")}`,
       ).toEqual([]);
     });
   }

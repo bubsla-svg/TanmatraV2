@@ -54,10 +54,23 @@ export async function Header() {
               // content size the flex algorithm can actually respect; the cap
               // is well above "Tanmatra"'s natural width so nothing visibly
               // truncates today, it only clips in a future longer-brand case.
-              className="inline-block max-w-[7.5rem] overflow-hidden text-ellipsis whitespace-nowrap align-middle text-lg font-semibold tracking-tight text-ink sm:max-w-none"
+              // touch-target-min raises the 74x28 box to 44px (global chrome,
+              // so that one finding was counted on all seven audited routes).
+              // `justify-start` overrides the utility's centring — this is the
+              // leading brand element and must stay flush left — and the
+              // -mx-2/px-2 pair buys horizontal tap area without moving the
+              // wordmark a pixel.
+              //
+              // The truncation moved to an inner span deliberately:
+              // `text-overflow: ellipsis` needs a block container, and the
+              // utility makes this anchor inline-flex, which would turn the
+              // text into an anonymous flex item and silently stop clipping.
+              className="touch-target-min -mx-2 justify-start px-2"
               aria-label="Tanmatra home"
             >
-              Tanmatra
+              <span className="inline-block max-w-[7.5rem] overflow-hidden text-ellipsis whitespace-nowrap align-middle text-lg font-semibold tracking-tight text-ink sm:max-w-none">
+                Tanmatra
+              </span>
             </Link>
           }
           centerContent={<PrimaryNav />}

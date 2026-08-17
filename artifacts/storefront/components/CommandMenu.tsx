@@ -81,7 +81,13 @@ export function CommandMenu({ dishes = [] }: { dishes?: DishSearchEntry[] }) {
         <button
           type="button"
           aria-label="Search pages and dishes"
-          className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
+          // touch-target-min (44px), not the old 36x28 box. This trigger is
+          // global chrome, so its one finding was counted on all seven
+          // audited routes — a single class here clears seven rows of the
+          // audit report. The utility already exists in globals.css and
+          // supplies inline-flex + centring, so the previous `flex
+          // items-center` is redundant rather than merely replaced.
+          className="touch-target-min gap-2 rounded-md px-2.5 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <circle cx="11" cy="11" r="8" />
