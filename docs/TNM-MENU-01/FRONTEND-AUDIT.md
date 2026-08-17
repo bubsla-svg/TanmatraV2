@@ -197,6 +197,12 @@ with the classes in place, the clipping would have silently stopped working
 | CTA stacking | 2 | 2 |
 | occluded controls / collapsed images | 0 / 0 | **0 / 0** |
 
+Those numbers were re-verified against `main` at `518a9ff5` — after #71 made
+internal navigation client-side, which touched the landing page, `MenuGrid`,
+`GoalRouter` and the header's `DeliveryAddressBar` (global chrome, therefore
+every audited route). Identical: 14 / 0 / 11 / 0. Re-run because rendered
+markup on audited routes changed, not because `main` moved.
+
 ### The audit is now a merge gate
 
 `storefront.yml` runs it on its own `next start` (port 3200, following the
