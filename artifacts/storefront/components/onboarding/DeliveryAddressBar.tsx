@@ -18,6 +18,7 @@ import { checkServiceability, saveServiceabilityState } from "@/lib/serviceabili
 import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 import { ServiceabilityBar } from "./ServiceabilityBar";
 import { MarketplaceFallbackCta } from "./MarketplaceFallbackCta";
+import Link from "next/link";
 
 /**
  * Ambient delivery-address bar — Vector 3 of the location-onboarding brief.
@@ -268,12 +269,12 @@ function AddressSwitcherSheet({
             );
           })}
         </ul>
-        <a
+        <Link
           href="/account/addresses"
           className="mt-4 inline-block text-sm font-semibold text-gold-text hover:underline"
         >
           Manage addresses
-        </a>
+        </Link>
       </div>
     </div>
   );

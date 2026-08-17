@@ -1,6 +1,7 @@
 "use client";
 import type { ReactNode } from "react";
 import { groupBySection, sectionAnchorId, NO_PERSONALIZATION_BOOST_SECTION } from "@/lib/menuSections";
+import Link from "next/link";
 
 export interface MenuGridRow {
   dishId: number;
@@ -72,9 +73,9 @@ export function MenuGrid({
             Show all dishes
           </button>
         ) : (
-          <a href="/menu" className="mt-3 inline-block text-sm font-semibold text-gold-text hover:underline">
+          <Link href="/menu" className="mt-3 inline-block text-sm font-semibold text-gold-text hover:underline">
             Show all dishes
-          </a>
+          </Link>
         )}
       </div>
     );

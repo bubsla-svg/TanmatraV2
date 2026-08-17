@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import Link from "next/link";
 import { Section01ClinicalHero } from "@/components/landing/Section01ClinicalHero";
 import { deriveHeroContent } from "@/lib/heroContent";
 import { Section04bMarketplace } from "@/components/landing/Section04bMarketplace";
@@ -88,7 +89,7 @@ export default async function HomePage() {
         <section className="px-gutter">
           <div className="flex justify-between items-end mb-6">
             <h2 className="font-bold text-3xl text-ink">On the menu today</h2>
-            <a
+            <Link
               href="/menu"
               /* Was 81×16 — exactly the line-height of an uppercase 12px
                  label, under the WCAG 2.2 SC 2.5.8 floor. `touch-target-min`
@@ -97,7 +98,7 @@ export default async function HomePage() {
               className="touch-target-min font-bold text-xs text-primary uppercase tracking-widest hover:opacity-80"
             >
               View menu
-            </a>
+            </Link>
           </div>
           {/* A real list, so a screen reader announces "5 items" before the
               rail instead of reading five unlabelled groups in a row. */}

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { fetchMarketplaceItemsServer } from "@/lib/marketplaceApi";
 import { SafeImage } from "@/components/ui/SafeImage";
 import { formatPaise } from "@/lib/format";
@@ -21,7 +22,7 @@ export default async function MarketplacePage() {
       <div className="px-gutter pt-6">
         <div className="grid grid-cols-2 gap-4">
           {items.map((item) => (
-            <a key={item.id} href={`/marketplace/${item.slug}`} className="group flex flex-col rounded-2xl border border-line bg-surface p-3 transition-transform active:scale-[0.98]">
+            <Link key={item.id} href={`/marketplace/${item.slug}`} className="group flex flex-col rounded-2xl border border-line bg-surface p-3 transition-transform active:scale-[0.98]">
               <div className="relative mb-3 overflow-hidden rounded-xl bg-surface-raised border border-line">
                 {item.badges.length > 0 && (
                   <div className="absolute top-2 left-2 flex gap-1 z-10 flex-col">
@@ -42,7 +43,7 @@ export default async function MarketplacePage() {
                   <span className="font-clinical-data text-ink">{formatPaise(item.pricePaise)}</span>
                 </div>
               </div>
-            </a>
+            </Link>
           ))}
           {items.length === 0 && (
             <div className="col-span-2 py-10 text-center text-ink-muted">
