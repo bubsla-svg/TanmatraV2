@@ -50,8 +50,28 @@ export interface HeroCampaign {
   endsAt?: string;
 }
 
-/** No campaign is running. See rule 2 above before adding a placeholder. */
-export const HERO_CAMPAIGNS: HeroCampaign[] = [];
+/**
+ * Live campaigns. See rule 2 above before adding a placeholder — every entry
+ * here must be a claim that is true today.
+ *
+ * The pre-launch notice is the reason this slot exists. Until the kitchen
+ * opens, the homepage headline ("Cooked today, at your desk by one") describes
+ * a service that is not yet running, and `PLAN_CHECKOUT_DISABLED` /
+ * `ORDER_FINALIZE_DISABLED` mean no one can complete an order anyway. Without
+ * this line a visitor reads placeholder dish photography and estimated macros
+ * as a live storefront's failings, rather than as a kitchen that has not opened.
+ *
+ * Rule 1 does the retiring: `endsAt` is the launch instant, so this removes
+ * itself the moment the kitchen opens. Nobody has to remember.
+ */
+export const HERO_CAMPAIGNS: HeroCampaign[] = [
+  {
+    id: "pre-launch-sep-2026",
+    message: "Our kitchen opens 1 September — browse the menu now, ordering opens then.",
+    cta: { label: "See the menu", href: "/menu" },
+    endsAt: "2026-09-01T00:00:00+05:30",
+  },
+];
 
 function withinWindow(campaign: HeroCampaign, now: Date): boolean {
   const t = now.getTime();

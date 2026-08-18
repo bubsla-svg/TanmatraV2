@@ -94,7 +94,12 @@ export function Section01ClinicalHero({
               <Link
                 href={campaign.cta.href}
                 onClick={() => emitLpEvent("hero_campaign_click", { page: "/", label: campaign.id })}
-                className="font-bold text-gold-text underline underline-offset-4 hover:opacity-80"
+                /* `touch-target-min` (globals.css) is load-bearing, not
+                   decoration: a bare `text-sm` link is ~20px tall, under the
+                   WCAG 2.2 SC 2.5.8 24px floor, and the frontend-audit gate
+                   measures the live DOM and blocks on it. Same fix the "View
+                   menu" link on the homepage carries. */
+                className="touch-target-min font-bold text-gold-text underline underline-offset-4 hover:opacity-80"
               >
                 {campaign.cta.label}
               </Link>
