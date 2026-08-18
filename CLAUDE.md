@@ -164,6 +164,22 @@ Libraries, each imported by at least one deployed service:
 > So: changing `openapi.yaml` propagates to almost nothing. Do not assume codegen will carry a
 > contract change to any consumer — find the hand-written client and edit it.
 
+> **There are TWO OpenAPI specs in this repo and they are disjoint.** This is the single most
+> common wrong turn taken here: someone edits one believing it is "the" contract, while the other
+> is the one being enforced.
+>
+> | | `lib/api-spec/openapi.yaml` | `OPENAPI_SPEC_V1` |
+> |---|---|---|
+> | Where | `lib/api-spec/` | `artifacts/api-server/src/routes/openApiContract.ts` |
+> | Paths | 40 | 39 |
+> | Consumed by | Orval → `lib/api-client-react`, which almost nothing imports | Served live at `GET /v1/openapi.json` |
+> | Enforced by | `openApiSpecFile.test.ts` — every declared path must be a real registered route | `openApiContract.test.ts` — `validateRouterContract()` walks the live router stack and fails on any route missing from the spec (`/ops`, admin, legal) |
+>
+> **Overlap: zero paths.** Together they describe 79 of the ~396 routes the server registers
+> (~20%). Neither references the other. Which one survives is an open product decision; until it
+> is made, edit the one whose enforcement you actually want, and expect no propagation between
+> them. `openApiSpecFile.test.ts` fails the build if they ever describe the same path differently.
+
 1. Edit `lib/api-spec/openapi.yaml`.
 2. Run `pnpm --filter @workspace/api-spec run codegen` — Orval regenerates `lib/api-client-react` (hooks) and `lib/api-zod` (schemas).
 3. The generated output is then, in practice, almost entirely unconsumed (see above).

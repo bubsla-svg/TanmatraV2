@@ -410,6 +410,18 @@ jobs:
       # anything that expects a working db handle. It pins which way each
       # limiter resolves when the limiter itself cannot run — fail-open for
       # public reads, fail-closed (429 + Retry-After) for money routes.
+      # openapi.yaml had NO check of any kind until this landed: it feeds Orval,
+      # whose output almost nothing imports, so nothing objected if it drifted.
+      # This asserts every path it declares is still a real registered route,
+      # and that it does not contradict the SECOND, separately-enforced spec in
+      # routes/openApiContract.ts. See that file's header for the two-spec map.
+      - name: OpenAPI spec file is grounded in real routes
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: |
+          node --test --import tsx \
+            ./src/routes/openApiSpecFile.test.ts
+
       - name: Rate limiter fail-open vs fail-closed
         if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
