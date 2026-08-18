@@ -284,7 +284,7 @@ pnpm run lint:test-reach
 cd artifacts/storefront && node --test --import tsx "./lib/**/*.test.ts"   # 292+ pass
 
 # real production build + serve — dev mode hides client/server boundary bugs
-rm -rf /home/user/Wellness-Foods/artifacts/storefront/.next     # ABSOLUTE path (stale .next trap)
+rm -rf /home/user/TanmatraV2/artifacts/storefront/.next     # ABSOLUTE path (stale .next trap)
 pnpm --filter @workspace/storefront run build
 PORT=3115 pnpm --filter @workspace/storefront run start &
 E2E_BASE_URL=http://127.0.0.1:3115 pnpm exec playwright test \
