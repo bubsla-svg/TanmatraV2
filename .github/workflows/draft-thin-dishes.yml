@@ -1,0 +1,139 @@
+# Ops: draft dishes that fall below the customer data floor.
+#
+# A dish whose `ingredients` is `["fresh ingredients"]` sits inside the site's
+# allergen filter and Diabetic Safe filter answering "what is in this?" with
+# nothing, so a customer excluding peanuts is shown it as though it had passed
+# their filter. This moves such rows to `allergen_review_state='pending_review'`
+# — hidden from /menu/public and /menu/ranked, still visible to staff and RD
+# admin routes, and back on the menu the moment an RD flips the state.
+#
+# It is a DRAFT, not a delist: `archived` (the M-3 CUT/MERGE/DELIST verdict) is
+# never written here. See scripts/src/lib/dishDataFloorPlan.ts for the floor and
+# why it is absence-only — dishes whose macros merely DISAGREE with their
+# recipe stay live and are fixed by the macro backfill instead.
+#
+# workflow_dispatch only. Always runs the plan first so the log and the
+# uploaded artifact show exactly what would change; only writes when `apply` is
+# ticked. Database access mirrors unpause-menu.yml: Cloud SQL Auth Proxy + the
+# brand-tanmatra-database-url secret read via Secret Manager at run time
+# (never interpolated into the script from ${{ secrets }}).
+name: Draft Thin Dishes
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Actually write (unchecked = plan only)"
+        type: boolean
+        default: false
+
+jobs:
+  draft-thin-dishes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GCP_PROJECT: brand-tanmatra-tmg
+      GCP_REGION: asia-south2
+      SQL_INSTANCE: brand-tanmatra-tmg:asia-south2:brand-tanmatra-db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+
+      # The engine is pure and DB-free, so its tests run before anything
+      # touches production. A change to the floor that breaks these must never
+      # reach a row.
+      - name: Data-floor engine tests
+        run: pnpm --filter @workspace/scripts run test:dish-data-floor
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+      - name: Start Cloud SQL Auth Proxy
+        run: |
+          curl -sfL -o cloud-sql-proxy \
+            https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.14.2/cloud-sql-proxy.linux.amd64
+          chmod +x cloud-sql-proxy
+          ./cloud-sql-proxy --credentials-file "$GOOGLE_APPLICATION_CREDENTIALS" \
+            --address 127.0.0.1 --port 5433 "$SQL_INSTANCE" &
+          for i in $(seq 1 20); do
+            (echo > /dev/tcp/127.0.0.1/5433) 2>/dev/null && { echo "proxy up"; exit 0; }
+            sleep 1
+          done
+          echo "cloud-sql-proxy never came up — check the deploy SA has roles/cloudsql.client"; exit 1
+
+      - name: Plan (always), then apply if requested
+        env:
+          APPLY: ${{ inputs.apply }}
+        run: |
+          RAW=$(gcloud secrets versions access latest \
+            --secret=brand-tanmatra-database-url --project "$GCP_PROJECT") || {
+            echo "cannot read secret brand-tanmatra-database-url — grant the deploy SA roles/secretmanager.secretAccessor"; exit 1; }
+          echo "::add-mask::$RAW"
+          # Rewrite the URL to go through the proxy, handling both hostful
+          # (…@HOST:PORT/db) and unix-socket (…@/db?host=/cloudsql/…) shapes.
+          # Lifted verbatim from unpause-menu.yml / deploy.yml's migrate-db.
+          export DATABASE_URL=$(python3 - "$RAW" <<'EOF'
+          import sys, urllib.parse as u
+          raw = sys.argv[1]
+          p = u.urlsplit(raw)
+          q = dict(u.parse_qsl(p.query))
+          q.pop("host", None)     # unix-socket param, replaced by the proxy
+          q.pop("sslmode", None)  # the proxy listener is plaintext-local and
+          q.pop("ssl", None)      # already TLS-tunnelled; sslmode=require here
+                                  # would make node-postgres refuse to connect
+          # Pass the userinfo through VERBATIM — see deploy.yml's migrate-db
+          # job for why re-quoting would double-encode the password.
+          auth = p.netloc.rsplit("@", 1)[0] + "@" if "@" in p.netloc else ""
+          query = ("?" + u.urlencode(q)) if q else ""
+          print(f"{p.scheme}://{auth}127.0.0.1:5433{p.path}{query}")
+          EOF
+          )
+          # `|| PLAN_RC=$?` rather than letting bash -e abort here: the script
+          # exits non-zero when the plan has BLOCKERS, and a blocked plan is
+          # precisely the run whose summary someone needs to read. It writes
+          # the markdown before it checks blockers, so the file exists either
+          # way — aborting on the spot would have thrown away the evidence at
+          # the exact moment it mattered.
+          PLAN_RC=0
+          pnpm --filter @workspace/scripts run draft-thin-dishes -- \
+            --md "$GITHUB_WORKSPACE/dish-data-floor-plan.md" \
+            --json "$GITHUB_WORKSPACE/dish-data-floor-plan.json" || PLAN_RC=$?
+          # The plan is also the run summary, so the decision to apply can be
+          # made from the PR/run page without downloading the artifact.
+          if [ -f "$GITHUB_WORKSPACE/dish-data-floor-plan.md" ]; then
+            cat "$GITHUB_WORKSPACE/dish-data-floor-plan.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ "$PLAN_RC" -ne 0 ]; then
+            echo "plan failed (rc=$PLAN_RC) — see the summary above; refusing to apply"
+            exit "$PLAN_RC"
+          fi
+          if [ "$APPLY" = "true" ]; then
+            pnpm --filter @workspace/scripts run draft-thin-dishes -- \
+              --apply --backup "$GITHUB_WORKSPACE/dish-data-floor-backup.json"
+          else
+            echo "plan only — re-run with the apply input ticked to write"
+          fi
+
+      # The backup is the rollback: every touched row exactly as it was before
+      # the write. Uploaded even on failure, because a partial run is precisely
+      # when it is needed.
+      - name: Upload plan and backup
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: dish-data-floor-${{ github.run_id }}
+          path: |
+            dish-data-floor-plan.md
+            dish-data-floor-plan.json
+            dish-data-floor-backup.json
+          if-no-files-found: warn
+          retention-days: 90
