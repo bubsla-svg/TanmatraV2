@@ -550,7 +550,7 @@ jobs:
             --image asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }} \
             --region ${GCP_REGION} \
             --project ${GCP_PROJECT} \
-            --update-env-vars "^;^ADMIN_USERNAME=${ADMIN_USERNAME};ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH};DISABLE_SCHEDULERS=true;FLAG_PLAN_V2=true;PLAN_CHECKOUT_DISABLED=1;ORDER_FINALIZE_DISABLED=1;SESSION_SAMESITE=none;ALLOWED_ORIGINS=https://tanmatra.food,https://www.tanmatra.food,https://tanmatra-yftxztp3xq-em.a.run.app,https://tanmatra-475157072474.asia-south2.run.app,http://localhost:5173,http://localhost:3000;RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID};RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET};PETPOOJA_RESTAURANT_ID=cq5hnj3629;PETPOOJA_MENU_SHARING_CODE=cq5hnj3629;PETPOOJA_INVENTORY_RID=355738;PETPOOJA_PURCHASE_SYNC_DRY_RUN=1;PETPOOJA_STOCK_SYNC_DRY_RUN=1;REDIS_HOST=redis-17230.crce280.asia-south1-1.gcp.cloud.redislabs.com;REDIS_PORT=17230;REDIS_PASSWORD=${REDIS_PASSWORD};BULLMQ_PREFIX=prod;GOOGLE_VERTEX_PROJECT=${GCP_PROJECT};GOOGLE_VERTEX_LOCATION=global;RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET};PRIVATE_OBJECT_DIR=${PRIVATE_OBJECT_DIR}" \
+            --update-env-vars "^;^ADMIN_USERNAME=${ADMIN_USERNAME};ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH};DISABLE_SCHEDULERS=true;FLAG_PLAN_V2=true;PLAN_CHECKOUT_DISABLED=1;ORDER_FINALIZE_DISABLED=1;SESSION_SAMESITE=none;ALLOWED_ORIGINS=https://tanmatra.food,https://www.tanmatra.food,https://tanmatra-yftxztp3xq-em.a.run.app,https://tanmatra-475157072474.asia-south2.run.app,http://localhost:5173,http://localhost:3000;RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID};RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET};PETPOOJA_RESTAURANT_ID=cq5hnj3629;PETPOOJA_MENU_SHARING_CODE=cq5hnj3629;PETPOOJA_INVENTORY_RID=355738;PETPOOJA_PURCHASE_SYNC_DRY_RUN=1;PETPOOJA_STOCK_SYNC_DRY_RUN=1;REDIS_HOST=redis-17230.crce280.asia-south1-1.gcp.cloud.redislabs.com;REDIS_PORT=17230;REDIS_PASSWORD=${REDIS_PASSWORD};BULLMQ_PREFIX=prod;GOOGLE_VERTEX_PROJECT=${GCP_PROJECT};GOOGLE_VERTEX_LOCATION=global;RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET};PRIVATE_OBJECT_DIR=${PRIVATE_OBJECT_DIR};BUILD_SHA=${{ github.sha }};BUILT_AT='$(date -u +%Y-%m-%dT%H:%M:%SZ)'" \
             --set-secrets "ADMIN_SESSION_SECRET=brand-tanmatra-admin-session-secret:latest,DATABASE_URL=brand-tanmatra-database-url:latest,SESSION_SECRET=brand-tanmatra-session-secret:latest,CLINICAL_KMS_MASTER_KEY=brand-tanmatra-clinical-kms-key:latest,PETPOOJA_APP_KEY=brand-tanmatra-petpooja-app-key:latest,PETPOOJA_APP_SECRET=brand-tanmatra-petpooja-app-secret:latest,PETPOOJA_ACCESS_TOKEN=brand-tanmatra-petpooja-access-token:latest,GOOGLE_API_KEY=brand-tanmatra-google-api-key:latest" \
             --add-cloudsql-instances "${GCP_PROJECT}:asia-south2:brand-tanmatra-db" \
             --memory=1Gi \
@@ -581,6 +581,35 @@ jobs:
             echo "livez attempt $i failed, retrying..."; sleep 5
           done
           echo "livez never returned 200"; exit 1
+
+      # Deploy-truth. The smoke above proves the service ANSWERS; it cannot
+      # prove the answering revision is this commit — a two-day-old revision
+      # returns the same {"status":"ok"}. That is the exact hole the storefront
+      # and legacy jobs already close by polling /api/build, and this service,
+      # which owns the money path, was the only one of the three deploying on a
+      # liveness check alone.
+      #
+      # It also bounds the accepted concurrency race documented at the top of
+      # this file: when a superseded run means this service never actually
+      # rolled, the failure now shows up here instead of passing silently.
+      #
+      # Failing here reaches the rollback step below, same as a failed smoke.
+      - name: Verify the serving revision is this commit (deploy-truth)
+        run: |
+          URL=$(gcloud run services describe ${SERVICE} \
+            --region ${GCP_REGION} --project ${GCP_PROJECT} \
+            --format='value(status.url)')
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            SHA=$(curl -sf "$URL/api/build" \
+              | python3 -c 'import json,sys; print(json.load(sys.stdin).get("sha",""))' 2>/dev/null || true)
+            if [ "$SHA" = "${{ github.sha }}" ]; then
+              echo "deploy-truth OK: $SHA"; exit 0
+            fi
+            echo "attempt $i: serving sha=${SHA:-<none>}, want ${{ github.sha }}"
+            sleep 5
+          done
+          echo "deploy-truth FAILED: /api/build never reported ${{ github.sha }}"
+          exit 1
 
       # Same rollback discipline as the frontend jobs — this service serves
       # the money path and now deploys unattended on merge. Schema-ahead-of-

@@ -432,6 +432,18 @@ jobs:
         if: ${{ !cancelled() }}
         run: pnpm run codegen:verify
 
+      # The api-server's deploy-truth probe. deploy.yml polls /api/build and
+      # rolls back if the serving revision never reports the deployed sha, so
+      # the field name and the read-from-env behaviour are a contract between
+      # this route and that workflow. Breaking it would leave the deploy
+      # verifying nothing while still going green.
+      - name: api-server deploy-truth probe (/api/build)
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: |
+          node --test --import tsx \
+            ./src/routes/health.build.test.ts
+
       - name: OpenAPI spec file is grounded in real routes
         if: ${{ !cancelled() }}
         working-directory: artifacts/api-server

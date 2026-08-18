@@ -13,6 +13,31 @@ router.get("/livez", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
+/**
+ * Deploy-truth probe. Reports the commit this process was built from.
+ *
+ * /livez proves the service is UP. It cannot prove the service is the one that
+ * was just deployed — a revision from two days ago answers it exactly as
+ * happily, so a deploy that never actually rolled looks identical to one that
+ * did. The storefront and the legacy SPA both already close that hole with an
+ * /api/build endpoint their deploy jobs poll until the sha matches; this is the
+ * money-path service and it was the only one of the three without one, so its
+ * deploy step verified liveness and nothing else.
+ *
+ * Deliberately unauthenticated and dependency-free, matching /livez: it is
+ * polled by the deploy job before traffic is trusted, and a commit sha is not
+ * a secret (the storefront has served the same field publicly since cutover).
+ */
+router.get("/build", (_req: Request, res: Response) => {
+  res.json({
+    app: "tanmatra-api",
+    // Set at deploy time by the cloud-run job, not baked into the image, so
+    // this reflects the running revision rather than whatever was compiled.
+    sha: process.env["BUILD_SHA"] ?? "unknown",
+    builtAt: process.env["BUILT_AT"] ?? null,
+  });
+});
+
 const DB_PROBE_TIMEOUT_MS = 1500;
 const REDIS_PROBE_TIMEOUT_MS = 1500;
 
