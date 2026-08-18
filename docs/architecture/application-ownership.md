@@ -12,8 +12,8 @@ Phase 13 regression happened in the first place.
 
 | Package | Kind | Owns | Status |
 |---|---|---|---|
-| `artifacts/storefront` | Next.js 16 App Router | **Every customer-facing surface.** All 58 page routes. | Active — all new customer work lands here |
-| `artifacts/api-server` | Express 5 | Every business decision: pricing, quotes, orders, payments, dispatch, clinical gating, AI agents. 64 routers under `src/routes/`. | Active |
+| `artifacts/storefront` | Next.js 16 App Router | **Every customer-facing surface.** All 65 page routes. | Active — all new customer work lands here |
+| `artifacts/api-server` | Express 5 | Every business decision: pricing, quotes, orders, payments, dispatch, clinical gating, AI agents. 69 routers under `src/routes/`. | Active |
 | `artifacts/tanmatra` | React 19 + Vite SPA | Internal Admin ERP + RD console only. Customer routes removed 2026-07-26. | Legacy — retained for the `/images/*` proxy and internal consoles |
 | `artifacts/tanmatra-mobile` | Expo RN | Mobile app | **NOT LIVE** — no `eas.json`, no build/submit pipeline, not in either store, no CI job. In-progress work |
 
@@ -29,9 +29,9 @@ server-issued quote and a `keyId`; no Razorpay key is bundled into the client.
 | Plan pricing, cadence discount, add-on maths | `lib/subscription-rules` (shared, pure) + api-server | Render; `lib/plans.ts` is a *view* over the spine |
 | Quote issuance, TTL, supersession | api-server (`routes/checkout.ts`) | Consume `quoteId`, never recompute |
 | Payment creation + verification | api-server + Razorpay | Thread ids through `moneyPath.alacarte.ts` |
-| Clinical contraindication | `clinical-governance-engine` + api-server | Render rationale, never decide |
+| Clinical contraindication | api-server `src/lib/clinicalGuardrailEngine.ts` + the `lib/preferences-match` allergen gate | Render rationale, never decide |
 | Session identity | api-server session cookie | Try-the-call, render `<PhoneAuth/>` on 401 |
-| Design tokens | `lib/tokens` + `lib/themes` | Bridge in `app/globals.css`; never inline a hex |
+| Design tokens | `lib/tokens` + `artifacts/storefront/lib/themes/` (NOT a workspace package — it is a directory inside the storefront) | Bridge in `app/globals.css`; never inline a hex |
 
 ## 3. Shared libraries and their single owners
 
@@ -42,13 +42,13 @@ server-issued quote and a `keyId`; no Razorpay key is bundled into the client.
 | `lib/preferences-match` | Dietary/allergen matching | Both |
 | `lib/menu-catalog` | Dish/menu types | Both |
 | `lib/db` | Postgres schema (Drizzle) | api-server only |
-| `lib/tokens`, `lib/themes` | Colour, type, radius, motion | storefront |
+| `lib/tokens` | Colour, type, radius, motion tokens | storefront + legacy SPA |
 
 ### The contract-flow exception (must stay explicit)
 
-`artifacts/tanmatra`, `tanmatra-mobile` and `agents` consume generated React
-Query hooks from `@workspace/api-client-react`. **The storefront deliberately
-does not.** It calls the API through hand-written typed clients in
+`artifacts/tanmatra` consumes generated React Query hooks from
+`@workspace/api-client-react` (as does `tanmatra-mobile`, which is not
+deployed). **The storefront deliberately does not.** It calls the API through hand-written typed clients in
 `artifacts/storefront/lib/*Api.ts` over `lib/apiClient.ts`.
 
 Consequence, and it is an ownership hazard: **editing `openapi.yaml` does not
@@ -73,7 +73,7 @@ latent source of the same class of regression P0 exists to prevent.
    only inside `lib/domainInvariants.test.ts`. See
    [`privacy-analytics-contract.md`](./privacy-analytics-contract.md).
 4. **`/api/build` advertises `canonicalRoutes: 42` and `totalScreens: 74`**
-   while the tree has 58 page routes. The endpoint is the deploy-truth
+   while the tree has 65 page routes. The endpoint is the deploy-truth
    contract, so nobody owns correcting its self-description.
 5. **The legacy SPA still sits in the storefront's serving path** as
    `IMAGE_UPSTREAM` for `/images/*`. A change to the legacy app's `public/`
@@ -84,7 +84,7 @@ latent source of the same class of regression P0 exists to prevent.
 - New customer surface → `artifacts/storefront` only. Never the legacy SPA.
 - New business rule that both API and UI must agree on → a pure package under
   `lib/` (the `subscription-rules` pattern), never duplicated in both.
-- New colour or spacing value → `lib/tokens` / `lib/themes`, bridged in
+- New colour or spacing value → `lib/tokens` (or the storefront's own `lib/themes/`), bridged in
   `app/globals.css`. `lint:tokens` fails the build on a raw hex in
   `components/` or `app/`.
 - Contract change → `openapi.yaml` **and** the matching storefront

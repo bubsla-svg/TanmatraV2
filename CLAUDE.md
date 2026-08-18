@@ -28,7 +28,11 @@ pnpm run build              # typecheck + build all packages
 ```bash
 pnpm run test                                              # Every package that HAS a `test` script
 pnpm --filter @workspace/api-server run test               # All api-server tests
-# Run a single test file (from artifacts/api-server):
+# Run a single test file (from artifacts/api-server).
+# NOTE: api-server tests REQUIRE a database — they abort with
+# "DATABASE_URL must be set" without one, so `DATABASE_URL` must be exported
+# first. CI provisions postgres://postgres:postgres@localhost:5432/tanmatra_test.
+# This is not the DB-free suite; that is the storefront's, below.
 node --test --import tsx ./src/lib/loyaltyEngine.checkout.test.ts
 node --test --import tsx ./src/lib/dispatch.bulkhead.test.ts
 node --test --import tsx ./src/lib/mealPlanner.test.ts
@@ -112,10 +116,23 @@ Libraries, each imported by at least one deployed service:
 | `artifacts/tanmatra-mobile` | **NOT LIVE.** Expo React Native app. No `eas.json`, no build or submit pipeline, not in either app store, and no CI job touches it. Retained as in-progress work (`docs/NATIVE-ONBOARDING-PORT-PLAN.md`) — it is not a shipping surface |
 
 > **The catalogue is not in this repo.** Dish names, prices and macros live in Postgres and are
-> served by `/api/menu/public`. `lib/menu-catalog` holds *types* plus a small static fallback that
+> served by `/api/menu/public`. `lib/menu-catalog` holds *types* plus a static fallback that
 > `fetchMenu()` returns as `source: "fallback"` when the API is unreachable. A clone with no
 > database renders the fallback, not the live menu — so never read dish content out of this repo
 > and describe it as what customers see.
+
+> **Three different dish counts appear in this repo and all three are correct.** They are not
+> interchangeable, and mixing them is the single most common factual error made about this
+> codebase. Say which one you mean:
+>
+> | Count | Meaning | Where it comes from |
+> |------:|---------|---------------------|
+> | **112** | Live **orderable** dishes — what a customer actually browses | `GET /api/menu/public` (verified 2026-08-18) |
+> | **116** | The **static fallback** catalog — what a DB-less clone renders | `DISHES` in `lib/menu-catalog/src/index.ts` |
+> | **145** | **All** DB rows, including dead and archived SKUs | `menu_items` table; the basis of finding F5 |
+>
+> A statement like "17 of 145 dishes cannot state their macros" is about the whole table; "112
+> dishes" is about the live menu. Neither is the 116 in this repo's source.
 
 > **Agent workspaces are usually sparse checkouts.** `git sparse-checkout list` typically
 > materialises only `artifacts/api-server`, `artifacts/storefront`, `lib`, `scripts`, `docs`,
@@ -220,7 +237,7 @@ Drizzle ORM against Postgres. Schema files live in `lib/db/src/schema/` — one 
 - **Colors**: Clinical Dark palette — `#D4AF37` (clinical-gold), `#6BA3C8` (blue), `#7D9E7E` (sage).
   Still locked for `artifacts/tanmatra` (the legacy SPA): no new base colors there without explicit approval.
   **Lifted for `artifacts/storefront`** by owner decision (2026-07-27) adopting the Astryx Design System;
-  the storefront's palette is now whatever `lib/themes/tanmatra.ts` declares. That theme keeps the three
+  the storefront's palette is now whatever `artifacts/storefront/lib/themes/tanmatraTheme.ts` declares. That theme keeps the three
   brand hues as its dark-mode values and adds light-mode counterparts where the dark ones fail contrast —
   `#7F6921` is the light-mode gold, because `#D4AF37` measures below AA on a light background.
   Note the gate's reach: `lint:tokens` scans only `artifacts/storefront/{components,app}`, so a raw hex in

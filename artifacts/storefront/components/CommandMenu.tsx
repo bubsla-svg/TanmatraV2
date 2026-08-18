@@ -53,10 +53,15 @@ export function CommandMenu({ dishes = [] }: { dishes?: DishSearchEntry[] }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Idle (no query): page routes only, same as before — 116 dishes would
-  // swamp the default view. Once the customer types, dish name matches lead:
-  // the catalog page reads "116 dishes · order today", so the search icon in
-  // the header is what a food-app customer expects to find food with.
+  // Idle (no query): page routes only — the full catalog (112 live dishes)
+  // would swamp the default view. Once the customer types, dish name matches
+  // lead: this is a food app, and the header's search icon is what a customer
+  // expects to find food with.
+  //
+  // This used to justify itself by quoting /menu's "116 dishes · order today"
+  // header. That header was removed by owner instruction, and the number was
+  // the static fallback count rather than the live one — see CLAUDE.md on why
+  // 112 / 116 / 145 are three different figures.
   const results = useMemo(() => {
     const term = q.trim().toLowerCase();
     if (!term) return ENTRIES;
