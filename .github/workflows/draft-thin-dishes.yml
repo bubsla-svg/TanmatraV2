@@ -97,12 +97,25 @@ jobs:
           print(f"{p.scheme}://{auth}127.0.0.1:5433{p.path}{query}")
           EOF
           )
+          # `|| PLAN_RC=$?` rather than letting bash -e abort here: the script
+          # exits non-zero when the plan has BLOCKERS, and a blocked plan is
+          # precisely the run whose summary someone needs to read. It writes
+          # the markdown before it checks blockers, so the file exists either
+          # way — aborting on the spot would have thrown away the evidence at
+          # the exact moment it mattered.
+          PLAN_RC=0
           pnpm --filter @workspace/scripts run draft-thin-dishes -- \
             --md "$GITHUB_WORKSPACE/dish-data-floor-plan.md" \
-            --json "$GITHUB_WORKSPACE/dish-data-floor-plan.json"
+            --json "$GITHUB_WORKSPACE/dish-data-floor-plan.json" || PLAN_RC=$?
           # The plan is also the run summary, so the decision to apply can be
           # made from the PR/run page without downloading the artifact.
-          cat "$GITHUB_WORKSPACE/dish-data-floor-plan.md" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f "$GITHUB_WORKSPACE/dish-data-floor-plan.md" ]; then
+            cat "$GITHUB_WORKSPACE/dish-data-floor-plan.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ "$PLAN_RC" -ne 0 ]; then
+            echo "plan failed (rc=$PLAN_RC) — see the summary above; refusing to apply"
+            exit "$PLAN_RC"
+          fi
           if [ "$APPLY" = "true" ]; then
             pnpm --filter @workspace/scripts run draft-thin-dishes -- \
               --apply --backup "$GITHUB_WORKSPACE/dish-data-floor-backup.json"
