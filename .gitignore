@@ -65,3 +65,10 @@ blob-report/
 
 # Local git worktrees used for isolated agent work
 .claude/worktrees/
+
+# Stitch evidence — regenerable, and heavy (17 MB of PNGs when committed).
+# tools/record-stitch-evidence.mjs recreates this directory on demand:
+#   E2E_FULL_STACK=1 pnpm run test:stitch-runtime
+# Traces under it were already gitignored; the screenshots now match, so the
+# evidence trail stays reproducible without carrying binaries in git.
+artifacts/audit/

@@ -15,7 +15,7 @@
 | State / data | TanStack React Query, Zustand, React contexts (`cartContext`, `ordersContext`, `preferencesContext`), socket.io client |
 | Fonts | Inter Variable, Instrument Serif, JetBrains Mono |
 | Backend (`artifacts/api-server`) | Express + Drizzle ORM + PostgreSQL + Zod; Socket.IO at `/api/socket.io` |
-| Shared libs | `menu-catalog` (dish data + nutrition calc), `preferences-match`, `api-client-react`, `api-zod`, `db`, `integrations-gemini-ai`, `agency-agents` |
+| Shared libs | `menu-catalog` (dish data + nutrition calc), `preferences-match`, `api-client-react`, `api-zod`, `db`, `integrations-gemini-ai` |
 
 ### Current status
 - `pnpm install` clean; full typecheck passes.

@@ -26,9 +26,6 @@
     },
     {
       "path": "./lib/integrations-gemini-ai"
-    },
-    {
-      "path": "./lib/agency-agents"
     }
   ]
 }

@@ -10,13 +10,15 @@ It deliberately does **not** cover:
 |---|---|
 | Branch base, one-concern-per-PR, money-path lockstep, shared-file coordination, PR hygiene | [`AGENT_WORKING_AGREEMENT.md`](./AGENT_WORKING_AGREEMENT.md) |
 | The money-path defect list (E1–E16), sync + push directives | [`ENGINEERING_AGENT_PLAN.md`](./ENGINEERING_AGENT_PLAN.md) |
-| Commands, package roles, conventions | [`../CLAUDE.md`](../CLAUDE.md) — **with the corrections in §2 below** |
+| Commands, package roles, conventions | [`../CLAUDE.md`](../CLAUDE.md) — authoritative; §2 below carries any known-wrong claims, and is currently empty |
 | Astryx design-system adoption: template workflow, revoked design rules, the gold caveat | [`ASTRYX-ADOPTION-RUNBOOK.md`](./ASTRYX-ADOPTION-RUNBOOK.md) |
 | Which service the domain routes to, deploy-truth verification | [`DOMAIN-CUTOVER.md`](./DOMAIN-CUTOVER.md) |
 
-Everything here was re-verified against `main` at `a7a06fda` (2026-07-27) by an 8-section
-parallel audit; the previous edition (verified at `e14569ce`) had 30+ claims drift stale in
-under a week, which is the strongest argument for the rule below. Where a claim is a count,
+Section 1's package table and counts were re-verified on 2026-08-18; the rest was verified
+against `main` at `a7a06fda` (2026-07-27) by an 8-section parallel audit.
+
+The earlier edition (verified at `e14569ce`) had 30+ claims drift stale in under a week,
+which is the strongest argument for the rule below. Where a claim is a count,
 the command that produced it is given so you can re-derive it instead of trusting it.
 Counts drift; the shapes they describe do not, and the shapes are the point.
 
@@ -41,16 +43,17 @@ Three questions, in this order, before you write a line:
 
 ## 1. Orient: which surface owns your task
 
-Seven packages under `artifacts/`. CLAUDE.md's table now lists all of them.
+Four packages under `artifacts/`, and only the first three deploy. `artifacts/agents`,
+`artifacts/mockup-sandbox` and `artifacts/audit` were removed on 2026-08-18 (with
+`lib/agency-agents`) because nothing deployed them and their presence let external agents
+describe non-existent surfaces as part of the product. CLAUDE.md's table matches this.
 
 | Package | Name | Stack | Status |
 |---|---|---|---|
-| `artifacts/api-server` | `@workspace/api-server` | Express 5, Drizzle, BullMQ, Socket.IO — 348 `.ts` | The one backend. All money authority lives here |
-| `artifacts/storefront` | `@workspace/storefront` | Next.js 16 App Router — 413 `.ts/.tsx` | **Serves tanmatra.food** (cutover complete — DOMAIN-CUTOVER.md). Astryx is its design system (DS-0) |
-| `artifacts/tanmatra` | `@workspace/tanmatra` | React 19 + React Router v7 SPA on Vite — 327 files under `src/` | Legacy. No user-facing domain routes to it, but it is the storefront's `IMAGE_UPSTREAM` — `/images` (incl. all dish photos in `public/dishes`) serve from here |
-| `artifacts/tanmatra-mobile` | `@workspace/tanmatra-mobile` | Expo / expo-router | Live, thin |
-| `artifacts/agents` | `@workspace/agents` | Vite + wouter | Internal |
-| `artifacts/mockup-sandbox` | `@workspace/mockup-sandbox` | Vite preview | Internal |
+| `artifacts/api-server` | `@workspace/api-server` | Express 5, Drizzle, BullMQ, Socket.IO — 456 `.ts` | The one backend. All money authority lives here |
+| `artifacts/storefront` | `@workspace/storefront` | Next.js 16 App Router — 575 `.ts/.tsx` | **Serves tanmatra.food** (cutover complete — DOMAIN-CUTOVER.md). Astryx is its design system (DS-0) |
+| `artifacts/tanmatra` | `@workspace/tanmatra` | React 19 + React Router v7 SPA on Vite — 421 files under `src/` | Legacy. No user-facing domain routes to it, but it is the storefront's `IMAGE_UPSTREAM` — `/images` (incl. all dish photos in `public/dishes`) serve from here |
+| `artifacts/tanmatra-mobile` | `@workspace/tanmatra-mobile` | Expo / expo-router | **NOT LIVE.** No `eas.json`, no build/submit pipeline, not in either app store, no CI job runs it. In-progress work — not a shipping surface |
 
 > `artifacts/clinical-governance-engine` was removed 2026-08-08 by owner
 > decision — it was an orphaned package with zero dependents whose
@@ -97,7 +100,8 @@ admin and RD consoles are legacy and live only under `pages/`.
 and is exempt from the colour lint (`scripts/lint-colors.ts:13` skips any `*theme.css`). Do
 not treat it as a token registry and do not "tidy" it. The live registry for the legacy SPA
 is `src/index.css` `@theme`. For the storefront it is `lib/tokens/src/tokens.css` **plus the
-Astryx theme** (`lib/themes/` — see the runbook; the token bridge in `globals.css` is
+Astryx theme** (`artifacts/storefront/lib/themes/`, a directory in the storefront — not a
+workspace package — see the runbook; the token bridge in `globals.css` is
 value-pinned and carries a do-not-refactor warning backed by `astryxBridge.test.ts`).
 
 ---
@@ -108,10 +112,16 @@ CLAUDE.md was substantially rewritten on 2026-07-27 and most of the previous edi
 defect list is fixed (the package table is complete; the styleguide claim is corrected; the
 palette section documents the DS-0 revocations). What remains:
 
-| Claim | Reality |
-|---|---|
-| `pnpm --filter @workspace/tanmatra-mobile run dev` | No `dev` script in that package (scripts: start, android, ios, build, serve, typecheck, test). Use `run start` |
-| The storefront-internals callout still says the storefront is a "dark preview" with "no domain mapped" and that `docs/DOMAIN-CUTOVER.md` "does not exist" | Both false since 2026-07-25: the cutover is complete, the domain serves the storefront, and the runbook exists and proves it. Correct these lines when next touching CLAUDE.md |
+**Nothing, as of 2026-08-18.** Both entries that stood here have been applied to CLAUDE.md
+and are removed rather than left to read as outstanding defects:
+
+- the mobile `run dev` → `run start` correction, and
+- the stale "dark preview / no domain mapped / `DOMAIN-CUTOVER.md` does not exist" callout,
+  all three of which the 2026-07-25 cutover had already falsified.
+
+A correction listed here after it has been applied is itself a defect — it tells the next
+reader that CLAUDE.md is wrong when it is right. Empty this table when you fix the entry,
+in the same change.
 
 ### 2.1 The contract-first API flow is still ~90% vestigial
 
