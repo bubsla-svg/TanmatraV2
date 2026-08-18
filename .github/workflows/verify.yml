@@ -25,6 +25,9 @@ on:
       - "tsconfig.json"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
+      # The root Dockerfile matches none of the globs above, so a direct
+      # edit to it would skip the Dockerfile path gate entirely.
+      - "Dockerfile"
       - ".github/workflows/verify.yml"
   push:
     branches: [main]
@@ -65,6 +68,10 @@ jobs:
       # the workflow files and the tree.
       - name: Test-reach gate — no test file runs in no workflow
         run: pnpm run lint:test-reach
+
+      # Same job, same reason: no database, no build — it reads the tree.
+      - name: Dockerfile path gate — every COPY source exists
+        run: pnpm run lint:dockerfile-paths
 
   money-unit:
     runs-on: ubuntu-latest
