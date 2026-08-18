@@ -53,17 +53,77 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      api: ${{ steps.filter.outputs.api }}
-      web: ${{ steps.filter.outputs.web }}
-      storefront: ${{ steps.filter.outputs.storefront }}
+      # Each service's answer comes from ITS OWN filter run, because each is
+      # diffed from a different base — see "Diff from what is actually
+      # deployed" below.
+      api: ${{ steps.api.outputs.api }}
+      web: ${{ steps.web.outputs.web }}
+      storefront: ${{ steps.storefront.outputs.storefront }}
     steps:
+      # Full history: the bases below are arbitrary older commits (whatever a
+      # service is currently running), and paths-filter can only diff against
+      # a commit that exists locally.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── Diff from what is actually DEPLOYED, not from the previous push ────
+      #
+      # This closes the concurrency-group race documented at the top of this
+      # file. GitHub keeps one pending run per group, so when B is superseded
+      # by C the surviving run diffs only B..C — and a service that only B
+      # touched is never redeployed, with nothing red.
+      #
+      # The fix is to stop treating "the previous push" as the baseline. Every
+      # service now reports the commit it is actually serving at /api/build
+      # (the api-server gained that endpoint alongside this change), so the
+      # honest baseline is that sha. A service three commits behind gets a
+      # three-commit diff and redeploys itself; the pipeline becomes
+      # self-healing rather than needing the manual empty-commit nudge.
+      #
+      # Fallbacks, in order — every one of them errs toward DEPLOYING:
+      #   * endpoint unreachable, or sha unknown/absent from history (first
+      #     deploy, force-push, a revision predating /api/build) → empty base,
+      #     which makes paths-filter fall back to its own before..after
+      #     behaviour, i.e. exactly today's semantics.
+      #   * the reported sha IS the current commit → nothing changed for that
+      #     service and it correctly does not redeploy.
+      # A wrong guess therefore costs a redundant deploy, never a skipped one.
+      - name: Resolve each service's deployed sha
+        if: github.event_name == 'push'
+        id: deployed
+        env:
+          API_URL: https://wellness-foods-475157072474.asia-south2.run.app
+          WEB_URL: https://tanmatra-475157072474.asia-south2.run.app
+          SF_URL: https://storefront-475157072474.asia-south2.run.app
+        run: |
+          resolve() {
+            local name="$1" url="$2"
+            local sha
+            sha=$(curl -sf --max-time 15 "$url/api/build" 2>/dev/null \
+              | python3 -c 'import json,sys; print(json.load(sys.stdin).get("sha",""))' 2>/dev/null || true)
+            # Must look like a sha AND be present in this clone's history —
+            # a sha from a force-pushed-away branch would make the diff
+            # meaningless (or make paths-filter fail outright).
+            if [ -n "$sha" ] && git cat-file -e "${sha}^{commit}" 2>/dev/null; then
+              echo "$name: deployed=$sha"
+              echo "$name=$sha" >> "$GITHUB_OUTPUT"
+            else
+              echo "$name: no usable deployed sha (got '${sha:-<none>}') — falling back to push-range diff"
+              echo "$name=" >> "$GITHUB_OUTPUT"
+            fi
+          }
+          resolve api "$API_URL"
+          resolve web "$WEB_URL"
+          resolve storefront "$SF_URL"
+
       # Skipped on workflow_dispatch (nothing to diff); outputs come back
       # empty and the deploy jobs' event-name conditions take over.
       - uses: dorny/paths-filter@v3
         if: github.event_name == 'push'
-        id: filter
+        id: api
         with:
+          base: ${{ steps.deployed.outputs.api }}
           filters: |
             api:
               - 'artifacts/api-server/**'
@@ -72,12 +132,26 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - '.github/workflows/deploy.yml'
+
+      - uses: dorny/paths-filter@v3
+        if: github.event_name == 'push'
+        id: web
+        with:
+          base: ${{ steps.deployed.outputs.web }}
+          filters: |
             web:
               - 'artifacts/tanmatra/**'
               - 'lib/**'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - '.github/workflows/deploy.yml'
+
+      - uses: dorny/paths-filter@v3
+        if: github.event_name == 'push'
+        id: storefront
+        with:
+          base: ${{ steps.deployed.outputs.storefront }}
+          filters: |
             storefront:
               # OA-MED-1.25 (TODO_optimization-auditor.md): this used to be a
               # blanket 'lib/**', so e.g. a lib/db-only change triggered a

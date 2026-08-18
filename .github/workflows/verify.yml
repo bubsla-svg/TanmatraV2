@@ -451,6 +451,19 @@ jobs:
       # verifying nothing while still going green.
       # audit-validation 3.2: pool exhaustion had no signal anywhere, so it
       # surfaced as unrelated timeouts with nothing naming the cause.
+      # The legacy app's production static server. It answered 200 with the SPA
+      # shell for ANY missing path, assets included — which is what disguised
+      # the dish-photo outage as success for every monitor looking at status
+      # codes. Missing FILES now 404; missing ROUTES still get the shell, and
+      # the suite asserts both halves because a 404 on /menu would be a worse
+      # bug than the one being fixed.
+      - name: Legacy static server tells the truth about missing assets
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/tanmatra
+        run: |
+          node --test --import tsx \
+            ./tests/static-server.assets404.test.ts
+
       - name: DB connection-pool telemetry
         if: ${{ !cancelled() }}
         working-directory: artifacts/api-server

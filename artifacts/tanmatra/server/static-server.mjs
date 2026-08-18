@@ -107,6 +107,38 @@ function pickEncoding(req, ext) {
   return null;
 }
 
+/**
+ * Extensions that identify a request for a FILE rather than a client route.
+ *
+ * A missing client route must still return the SPA shell with 200 — that is
+ * how deep links work. A missing FILE must not: answering `200 text/html` for
+ * a JPEG tells the browser, the CDN and every monitor that the asset exists.
+ *
+ * That disguise hid a real outage. On 2026-08-18 all 63 dish photographs the
+ * live catalog serves from this origin were absent from the deployed
+ * container, and every one answered 200 with 8464 bytes of index.html. The
+ * storefront's SafeImage contract then degraded to its branded tile, so the
+ * pages looked deliberate, and nothing anywhere reported a problem. A real 404
+ * would have surfaced it on the first request. See
+ * docs/IMAGE-ASSET-STRATEGY.md.
+ *
+ * Matched on extension rather than on a path prefix so it holds for any asset
+ * directory, present or future. `.html` is deliberately absent: a request for
+ * a prerendered page that is missing should still fall through to the shell.
+ */
+const ASSET_EXTENSIONS = new Set([
+  "js", "mjs", "css", "map",
+  "jpg", "jpeg", "png", "gif", "webp", "avif", "svg", "ico", "bmp",
+  "woff", "woff2", "ttf", "otf", "eot",
+  "json", "webmanifest", "xml", "txt", "pdf",
+  "mp4", "webm", "mp3", "wav", "zip",
+]);
+
+function isAssetRequest(urlPath) {
+  const ext = path.extname(urlPath).slice(1).toLowerCase();
+  return ext !== "" && ASSET_EXTENSIONS.has(ext);
+}
+
 function serveStatic(req, res) {
   const u = decodeURIComponent(req.url.split("?")[0]);
   let f = path.join(ROOT, u === "/" ? "/index.html" : u);
@@ -120,6 +152,16 @@ function serveStatic(req, res) {
     const i = path.join(f, "index.html");
     f = fs.existsSync(i) ? i : SPA;
   } else if (!fs.existsSync(f)) {
+    // A missing FILE is a 404. A missing ROUTE is the SPA shell.
+    if (isAssetRequest(u)) {
+      res.writeHead(404, {
+        "Content-Type": "text/plain",
+        "Cache-Control": "no-store",
+        ...SECURITY_HEADERS,
+      });
+      res.end("Not Found");
+      return;
+    }
     f = SPA;
   }
   const ext = path.extname(f).slice(1);
