@@ -161,6 +161,12 @@ jobs:
           # how the admin password hash reached Cloud Run as "scrypt6384" and
           # locked every operator out with `invalid_credentials`.
           pnpm run lint:workflow-secrets
+          # A Dockerfile COPY is a hard path reference with no compiler
+          # behind it: every other gate here passes while the image build
+          # fails on the runner. That is exactly how removing
+          # lib/agency-agents left artifacts/tanmatra unbuildable and main
+          # only partially deployed (PR #79).
+          pnpm run lint:dockerfile-paths
       - name: Money-path unit suites (both web packages, by glob)
         working-directory: artifacts/api-server
         run: |
