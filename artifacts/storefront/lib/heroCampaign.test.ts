@@ -15,9 +15,30 @@ const OFFER: HeroCampaign = {
   endsAt: "2026-11-13T00:00:00Z",
 };
 
-test("ships with no campaign — a sample offer is indistinguishable from a real one", () => {
-  assert.deepEqual(HERO_CAMPAIGNS, []);
-  assert.equal(activeCampaign(AT("2026-08-13T00:00:00Z")), null);
+// Was `assert.deepEqual(HERO_CAMPAIGNS, [])`, guarding rule 2 — no SAMPLE
+// offer, because a demo is indistinguishable from a real one to the reader.
+// A real campaign now ships (the pre-launch notice), so emptiness is the wrong
+// assertion; it would only force the next author to delete the guard outright.
+// What actually has to hold is rule 1: whatever ships must retire ITSELF. An
+// offer that outlives its terms is a promise the counter gets asked to keep.
+test("every shipped campaign is time-boxed and self-retiring", () => {
+  for (const c of HERO_CAMPAIGNS) {
+    assert.ok(c.endsAt, `${c.id}: a shipped campaign must set endsAt so it removes itself`);
+    const end = Date.parse(c.endsAt!);
+    assert.ok(!Number.isNaN(end), `${c.id}: endsAt must parse — an unparseable date fails closed`);
+    assert.equal(activeCampaign(new Date(end), HERO_CAMPAIGNS)?.id, undefined,
+      `${c.id}: must not render at its own endsAt`);
+  }
+});
+
+test("the pre-launch notice runs now and stops when the kitchen opens", () => {
+  const live = activeCampaign(AT("2026-08-18T00:00:00Z"), HERO_CAMPAIGNS);
+  assert.equal(live?.id, "pre-launch-sep-2026", "should be live before launch");
+  // 2026-09-01T00:00+05:30 is 2026-08-31T18:30Z — the notice must survive right
+  // up to it and be gone on the other side.
+  assert.ok(activeCampaign(AT("2026-08-31T18:29:59Z"), HERO_CAMPAIGNS), "still live a second before");
+  assert.equal(activeCampaign(AT("2026-08-31T18:30:00Z"), HERO_CAMPAIGNS), null, "gone at launch");
+  assert.equal(activeCampaign(AT("2026-09-02T00:00:00Z"), HERO_CAMPAIGNS), null, "gone after launch");
 });
 
 test("runs inside its window and stops the moment it ends", () => {
