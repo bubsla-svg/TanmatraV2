@@ -362,7 +362,7 @@ see, and 49 genuinely ran nowhere.
 | 2. Dual-spec split | **Half done, deliberately.** `openApiSpecFile.test.ts` now asserts every path `openapi.yaml` declares is a real registered route (all 40 are), and that the two specs cannot describe one path differently. Merging or deleting either remains a product decision. CLAUDE.md gains the two-spec map. |
 | 3. Fail-open vs fail-closed | **Done.** `failClosed` option, default off. Opted in for `orders` (fronts `/api/checkout`), `payments`, `orders:claim`. Public reads stay fail-open. |
 | 4. Rate-limit docs | **Done, generated.** `docs/RATE-LIMITS.md` is produced from `rateLimitMiddleware.ts` + `app.ts` and verified in CI, so the numbers are never written by hand — the failure mode this report caught in the audit's own table. |
-| 5. Deploy-completeness monitor | **Retargeted.** Rather than a new monitor, the api-server gained the deploy-truth check the other two services already had (below). The paths-filter race itself is untouched — that needs the diff base fixed. |
+| 5. Deploy-completeness monitor | **Done, then exceeded.** The api-server gained the deploy-truth check the other two services already had — and the paths-filter race was then fixed at its root using it (second pass, below). |
 | 6. Codegen-freshness gate | **Done.** `codegen:verify` in CI. The committed output was already stale (formatting only, semantically identical, verified). |
 | 7. Image-asset strategy | **Done, and it found a live outage** (below). |
 | 8. Pool metrics | **Done.** `poolSnapshots()` over both pools; `healthz` warns on saturation, defined as `waiting > 0` rather than busy-at-ceiling. |
@@ -385,6 +385,49 @@ money-path service was the one of three that could not tell "rolled" from "did
 not roll". It now has `/api/build`, `BUILD_SHA` on its revision, and a
 deploy-truth step that reaches the existing rollback.
 
+### Second pass — the three items first written off
+
+The first pass recorded three findings as unfixable. Two of the three were
+wrong: they were code defects, not circumstance.
+
+**The paths-filter race — FIXED at the root.** The baseline was the wrong
+thing. "The previous push" is not what a service is running, and every service
+now reports the commit it *is* running at `/api/build` (the api-server gained
+that endpoint in this same branch, which is what made the fix possible). Each
+filter now diffs from its own service's deployed sha, so a service three
+commits behind gets a three-commit diff and redeploys itself. Every fallback —
+unreachable endpoint, missing sha, sha absent from history — yields the old
+before..after behaviour, so a wrong guess costs a redundant deploy, never a
+skipped one. Verified against the live services and simulated on real history:
+across a three-commit span the old baseline saw only `CLAUDE.md` and `docs/`
+while the new one correctly saw `scripts/` and workflow changes.
+
+**DEFECT-CHANGE-PLAN-PRICING-001 — RESOLVED.** It needed a product decision,
+which I was authorised to make. `change-plan` now prices from
+`computePlanQuote`, the call create uses; meal-count changes are refused rather
+than silently ignored (meal count is a property of the plan); only
+same-or-cheaper changes are served, because an increase needs a
+re-authorisation flow that was built around the broken quote; and a price that
+no catalog entry explains is refused rather than guessed at. A **second
+instance** of the same bug turned up in `applyPendingPlanChangeIfReady()`,
+whose fallback reached for the same retired helper at the moment a cycle rolls
+— also fixed.
+
+That work produced its own lesson about test coverage. Ten cases passed before
+I checked *which branch* they took: weekly→monthly is an increase for every
+plan, so a weekly-only fixture reaches the refusal path every time and never
+executes the code that writes to the database. The staging path — the only one
+that could overwrite a live mandate's amount — was entirely uncovered by a
+green suite.
+
+**The dish-photo outage — the code half is fixed; the assets are not.** The
+origin's static server answered *any* unresolvable path with the SPA shell and
+HTTP 200, assets included. That disguise is what made the outage invisible, and
+it was a code bug: missing files now return a real 404, missing routes still
+get the shell, and both halves are asserted because a 404 on `/menu` would be
+worse than the bug being fixed. The photographs themselves still do not exist
+in any clone here, and no code creates them — see below.
+
 ### The one thing that could not be fixed here
 
 **56% of live dish photography is missing in production.** Of 112 live dishes,
@@ -398,12 +441,15 @@ fallback that answers any path with `200`, a `SafeImage` contract that degrades
 to a branded tile so the page looks deliberate, and a monitor that asserted on
 status codes rather than content-type.
 
-Fixing it needs the actual image files, which exist in no clone here. What
-shipped is the detector: `scripts/synthetic-check.mjs` now asserts `image/*`
-and **fails against production today**, naming the count. It will stay red until
-the library is restored — see `docs/IMAGE-ASSET-STRATEGY.md` for the
-measurement, three costed options, and the fix that matters either way (serve a
-real 404 for a missing file).
+Fixing it needs the actual image files, which exist in no clone here — that
+part is a content-operations task, not an engineering one.
+
+Two things did ship. The **detector**: `scripts/synthetic-check.mjs` asserts
+`image/*` and **fails against production today**, naming the count. And the
+**code defect behind the disguise**: the origin no longer answers `200
+text/html` for a missing asset, so the absence is now a real 404 that any
+monitor, CDN or browser can see. `docs/IMAGE-ASSET-STRATEGY.md` has the
+measurement and three costed options for the files themselves.
 
 ---
 
