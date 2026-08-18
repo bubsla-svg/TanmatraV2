@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { pool } from "@workspace/db";
+import { pool, poolSnapshots } from "@workspace/db";
 import { HealthCheckResponse } from "@workspace/api-zod";
 import { isRedisConfigured, probeRedis } from "../lib/queue";
 
@@ -69,6 +69,30 @@ function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
 
 router.get("/healthz", async (req: Request, res: Response) => {
   const failures: string[] = [];
+
+  // Connection-pool telemetry.
+  //
+  // Pool exhaustion had no signal anywhere in this codebase. It does not
+  // announce itself — it surfaces as unrelated timeouts scattered across
+  // whichever routes happened to ask for a connection next, with nothing
+  // naming the cause. It is also self-reinforcing under load, which is why
+  // the money-route rate limiters now fail closed (rateLimitMiddleware):
+  // those 429s and this warning describe the same incident from two ends,
+  // and neither is much use without the other.
+  //
+  // Emitted from the health probe rather than a timer: Cloud Run already
+  // calls this on a schedule, so it costs no new moving part. Logged ONLY
+  // when a pool is actually saturated — an unconditional line here would be
+  // noise at probe frequency and would be filtered out long before the
+  // incident that needs it.
+  const pools = poolSnapshots();
+  const saturated = pools.filter((p) => p.saturated);
+  if (saturated.length > 0) {
+    req.log.warn(
+      { pools: saturated },
+      "db_pool_saturated: callers are queued waiting for a connection",
+    );
+  }
 
   let dbOk = false;
   try {

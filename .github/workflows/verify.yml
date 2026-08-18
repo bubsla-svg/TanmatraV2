@@ -428,6 +428,18 @@ jobs:
       # whole file. Anyone running codegen therefore reformats hand-written code
       # too — better that CI notices immediately than that it surfaces inside an
       # unrelated PR's diff.
+      # docs/RATE-LIMITS.md is generated from rateLimitMiddleware.ts + app.ts.
+      # The audit that prompted this shipped a hand-written rate-limit table in
+      # which nearly every number was wrong — menu called unlimited (120/min),
+      # orders 10/hour (30/min), the AI routes 20/day (20/min), plus a limiter
+      # that does not exist and a guest tier the code contradicts. A table like
+      # that is worse than none: it reads as authoritative and gets consulted
+      # during incidents. So the numbers are not written down by hand, and this
+      # fails the build if the doc and the limiters disagree.
+      - name: Rate-limit docs match the limiters
+        if: ${{ !cancelled() }}
+        run: pnpm run docs:rate-limits:check
+
       - name: Generated API client is in sync with openapi.yaml
         if: ${{ !cancelled() }}
         run: pnpm run codegen:verify
@@ -437,6 +449,15 @@ jobs:
       # the field name and the read-from-env behaviour are a contract between
       # this route and that workflow. Breaking it would leave the deploy
       # verifying nothing while still going green.
+      # audit-validation 3.2: pool exhaustion had no signal anywhere, so it
+      # surfaced as unrelated timeouts with nothing naming the cause.
+      - name: DB connection-pool telemetry
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: |
+          node --test --import tsx \
+            ./src/routes/health.pool.test.ts
+
       - name: api-server deploy-truth probe (/api/build)
         if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
