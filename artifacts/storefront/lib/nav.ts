@@ -91,11 +91,11 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Community",
     href: "/recipes",
     links: [
-      { label: "Recipes", href: "/recipes", desc: "RD-designed, macro-labelled" },
+      { label: "Recipes", href: "/recipes", desc: "Macro-labelled" },
       { label: "Community Q&A forum", href: "/qa", desc: "Clinical answers from dietitians" },
       { label: "Our team", href: "/team", desc: "Chefs & dietitians" },
       { label: "Challenges", href: "/challenges", desc: "RD-led cohort programmes" },
-      { label: "Corporate wellness", href: "/corporate-wellness", desc: "RD-designed team lunches for offices" },
+      { label: "Corporate wellness", href: "/corporate-wellness", desc: "Team lunches for offices" },
       { label: "Dietitian partner network", href: "/rd-partners", desc: "For clinical RDs & nutritionists" },
     ],
   },

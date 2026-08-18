@@ -17,9 +17,9 @@ import type { LandingBenefit, LandingHero } from "./partners";
 import type { FaqItem } from "@/content/faq";
 
 export const CORPORATE_META = {
-  title: "Corporate Wellness — RD-designed team lunches in Noida | Tanmatra",
+  title: "Corporate Wellness — macro-labelled team lunches in Noida | Tanmatra",
   description:
-    "Subsidised, RD-designed team lunches delivered hot inside Noida IT parks. Company budgets, office order windows, one consolidated delivery per floor, a single GST invoice. Book a 20-minute pilot call.",
+    "Subsidised team lunches delivered hot inside Noida IT parks. Company budgets, office order windows, one consolidated delivery per floor, a single GST invoice. Book a 20-minute pilot call.",
 };
 
 export const CORPORATE_HERO: LandingHero = {
@@ -27,7 +27,7 @@ export const CORPORATE_HERO: LandingHero = {
   title: "The lunch benefit that shows up in your",
   accent: "health-insurance renewals.",
   subtitle:
-    "RD-designed, subsidised team lunches — fired after the order window closes and delivered hot inside Candor TechSpace, Advant Navis, Stellar 135 and offices across the Noida corridor.",
+    "Subsidised team lunches — fired after the order window closes and delivered hot inside Candor TechSpace, Advant Navis, Stellar 135 and offices across the Noida corridor.",
   trust: [],
 };
 
@@ -60,7 +60,7 @@ export const HOW_IT_WORKS: LandingBenefit[] = [
   {
     icon: "fork-knife",
     title: "2 · Your team picks",
-    body: "Employees choose from the RD-designed menu inside your office order window — each person’s menu already gated by their own allergen profile.",
+    body: "Employees choose from the menu inside your office order window — each person’s menu already gated by their own allergen profile.",
   },
   {
     icon: "timer",

@@ -7,7 +7,7 @@ import { routerPlans } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: "Plans",
-  description: "RD-designed meal plans priced at the meal-card line. Pick your goal.",
+  description: "Meal plans priced at the meal-card line. Pick your goal.",
 };
 
 /**

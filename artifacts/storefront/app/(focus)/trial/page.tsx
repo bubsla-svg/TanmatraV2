@@ -11,7 +11,7 @@ import { FocusHeader } from "@/components/FocusHeader";
 export const metadata: Metadata = {
   title: "3-Day Taste Test",
   description:
-    "Three RD-designed lunches for ₹399 — every rupee credited back the moment you start a plan.",
+    "Three lunches for ₹399 — every rupee credited back the moment you start a plan.",
 };
 
 type TrialTrack = "veg" | "nonveg";
