@@ -11,10 +11,10 @@ pnpm install
 
 **Run apps (always filter — never run `pnpm dev` at the workspace root)**
 ```bash
+pnpm --filter @workspace/storefront run dev        # Customer web app (Next.js) — THIS is tanmatra.food; new customer work goes here
 pnpm --filter @workspace/api-server run dev        # Express API server
-pnpm --filter @workspace/storefront run dev        # Customer web app (Next.js) — new customer work goes here
-pnpm --filter @workspace/tanmatra run dev          # Legacy customer SPA (Vite) — still serves tanmatra.food
-pnpm --filter @workspace/tanmatra-mobile run start # Expo mobile app — `start`, not `dev` (expo start; also `run ios` / `run android`)
+pnpm --filter @workspace/tanmatra run dev          # Legacy SPA (Vite) — internal Admin ERP + RD console, and the /images/* origin
+pnpm --filter @workspace/tanmatra-mobile run start # Expo app — NOT LIVE, not deployed anywhere (`start`, not `dev`)
 ```
 
 **Type-checking and build**
@@ -35,10 +35,10 @@ node --test --import tsx ./src/lib/mealPlanner.test.ts
 node --test --import tsx ./src/routes/groupOrders.test.ts
 ```
 
-The storefront runs its own suite — 66 files, 372 tests, all under `artifacts/storefront/lib/`
+The storefront runs its own suite — 122 files, 951 tests, all under `artifacts/storefront/lib/`
 and all DB- and network-free (every API client takes an injectable `fetchImpl`):
 ```bash
-pnpm --filter @workspace/storefront run test     # all 372, ~8s
+pnpm --filter @workspace/storefront run test     # all 951, ~21s
 cd artifacts/storefront
 node --test --import tsx ./lib/catalog.test.ts   # one file
 ```
@@ -50,8 +50,8 @@ The legacy SPA (`artifacts/tanmatra`) also has a `test` script, and `verify.yml`
 `money-unit` job drives both packages by **glob**, not by a hand-written list:
 
 ```
-node --test --import tsx "../tanmatra/src/**/*.test.ts"     # 79 tests
-node --test --import tsx "../storefront/lib/**/*.test.ts"   # 372 tests
+node --test --import tsx "../tanmatra/src/**/*.test.ts"     # 163 tests
+node --test --import tsx "../storefront/lib/**/*.test.ts"   # 951 tests
 ```
 
 The quotes are load-bearing — Actions runs `run:` under bash with globstar OFF, where `**`
@@ -80,14 +80,20 @@ This is a pnpm monorepo for **Tanmatra** — a clinical-grade meal-delivery and 
 
 ### Package layout
 
+**Exactly three services are deployed** (`.github/workflows/deploy.yml`, three `SERVICE:` values).
+Everything else in this repo is a library those three import, or tooling. If you are describing
+what Tanmatra *is*, it is these three and nothing else:
+
+| Path | Cloud Run service | Role |
+|------|-------------------|------|
+| `artifacts/storefront` | `storefront` | **The customer web app, and what `tanmatra.food` serves.** Next.js 16 App Router. All new customer work goes here |
+| `artifacts/api-server` | `wellness-foods` | Express 5 backend, the source of truth for price and availability |
+| `artifacts/tanmatra` | `tanmatra` | Legacy React 19 + Vite SPA. Customer routes removed 2026-07-26; now an internal-only Admin ERP + RD console (`src/routes.ts`). **Still load-bearing for the live site**: the storefront's `IMAGE_UPSTREAM` proxies `/images/*` through it, so deleting it 404s every dish photo. See `docs/DOMAIN-CUTOVER.md` |
+
+Libraries, each imported by at least one deployed service:
+
 | Path | Role |
 |------|------|
-| `artifacts/api-server` | Express 5 backend |
-| `artifacts/storefront` | **Customer web app — Next.js 16 App Router.** The rebuild; all new customer work goes here |
-| `artifacts/tanmatra` | Legacy customer SPA — React 19 + React Router v7 + Vite. Customer routes were removed 2026-07-26; it is now an internal-only Admin ERP + RD console (`src/routes.ts`, `e2e/specs/erp_shell.spec.ts`). No longer mapped to `tanmatra.food` — see `docs/DOMAIN-CUTOVER.md` |
-| `artifacts/tanmatra-mobile` | Expo React Native app |
-| `artifacts/agents` | "Agency Agents Browser" — Vite + wouter app that browses the `lib/agency-agents` catalogue |
-| `artifacts/mockup-sandbox` | Vite preview server for UI mockup work |
 | `lib/api-spec` | **OpenAPI source of truth** (`openapi.yaml`) + Orval codegen config |
 | `lib/api-client-react` | Generated React Query hooks + Zod schemas (do not edit manually) |
 | `lib/api-zod` | Shared Zod request/response schemas |
@@ -96,9 +102,20 @@ This is a pnpm monorepo for **Tanmatra** — a clinical-grade meal-delivery and 
 | `lib/menu-catalog` | Shared dish/menu data types |
 | `lib/preferences-match` | Shared dietary preference-matching logic |
 | `lib/subscription-rules` | Pure, DB-free subscription lifecycle rules. Holds the 24 h skip/swap cutoff so the API and the UI cannot drift |
-| `lib/agency-agents` | Bundled agent content (`content/<division>/<slug>.md`) + a generated index. One-time MIT import; see its `LICENSE` |
 | `lib/integrations-gemini-ai` | Gemini AI integration utilities |
 | `scripts/` | One-off data scripts (seeding, backfills, audits) |
+
+**Not deployed — do not present it as part of the product:**
+
+| Path | Status |
+|------|--------|
+| `artifacts/tanmatra-mobile` | **NOT LIVE.** Expo React Native app. No `eas.json`, no build or submit pipeline, not in either app store, and no CI job touches it. Retained as in-progress work (`docs/NATIVE-ONBOARDING-PORT-PLAN.md`) — it is not a shipping surface |
+
+> **The catalogue is not in this repo.** Dish names, prices and macros live in Postgres and are
+> served by `/api/menu/public`. `lib/menu-catalog` holds *types* plus a small static fallback that
+> `fetchMenu()` returns as `source: "fallback"` when the API is unreachable. A clone with no
+> database renders the fallback, not the live menu — so never read dish content out of this repo
+> and describe it as what customers see.
 
 > **Agent workspaces are usually sparse checkouts.** `git sparse-checkout list` typically
 > materialises only `artifacts/api-server`, `artifacts/storefront`, `lib`, `scripts`, `docs`,
@@ -112,8 +129,9 @@ This is a pnpm monorepo for **Tanmatra** — a clinical-grade meal-delivery and 
 1. Edit `lib/api-spec/openapi.yaml` (single source of truth).
 2. Run `pnpm --filter @workspace/api-spec run codegen` — Orval regenerates `lib/api-client-react` (hooks) and `lib/api-zod` (schemas).
 3. The API server validates requests/responses using the same generated Zod schemas.
-4. `artifacts/tanmatra`, `artifacts/tanmatra-mobile` and `artifacts/agents` consume the generated
-   React Query hooks from `@workspace/api-client-react`.
+4. `artifacts/tanmatra` consumes the generated React Query hooks from
+   `@workspace/api-client-react`. (`artifacts/tanmatra-mobile` also imports them, but it is not
+   deployed — see the package table.)
 
 **The storefront is deliberately outside this flow.** It does not depend on
 `@workspace/api-client-react` at all; it calls the API through hand-written typed clients in

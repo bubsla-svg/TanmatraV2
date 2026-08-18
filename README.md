@@ -1,6 +1,6 @@
 # Tanmatra
 
-Therapeutic / clinical-grade meal-delivery & wellness platform — customer web app, mobile app, an internal Admin ERP + RD console, and an Express + Postgres backend, all in one pnpm monorepo.
+Therapeutic / clinical-grade meal-delivery & wellness platform. **Three services are deployed:** the customer web app (`artifacts/storefront`, which is `tanmatra.food`), an Express + Postgres backend, and an internal Admin ERP + RD console. Everything else here is a library those three import, or tooling.
 
 > **New here?** `CLAUDE.md` is the authoritative deep-dive (commands, architecture, conventions).
 > `docs/CLONE-HANDOVER.md` has the exact clone → install → verify steps for a fresh machine or external agent.
@@ -20,7 +20,7 @@ pnpm install --frozen-lockfile                     # canonical, CI-proven instal
 - `pnpm --filter @workspace/api-server run dev` — Express API server (port 8080)
 - `pnpm --filter @workspace/storefront run dev` — **customer web app** (Next.js 16) — all new customer work goes here
 - `pnpm --filter @workspace/tanmatra run dev` — legacy SPA, now internal-only Admin ERP + RD console
-- `cd artifacts/tanmatra-mobile && pnpm exec expo start` — Expo mobile app
+- `cd artifacts/tanmatra-mobile && pnpm exec expo start` — Expo app (NOT LIVE — not deployed anywhere)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run test` — every package with a `test` script
 - `pnpm run build` — typecheck + build all packages
@@ -37,21 +37,25 @@ required in production; `REDIS_URL` is optional (queue is skipped without it). F
 - API: Express 5, esbuild server bundle, BullMQ + Redis (optional), Socket.IO realtime, Gemini AI agents
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec) — consumed by the legacy SPA, mobile, and agents apps
+- API codegen: Orval (from OpenAPI spec) — consumed by the legacy SPA (and the non-deployed mobile app)
 - Customer web: **Next.js 16 App Router** (server-first) + Tailwind v4 + shadcn/Radix, Astryx design system
 - Legacy web (admin/RD): React 19 + Vite + React Router v7 + Tailwind v4, framer-motion, cmdk
-- Mobile: Expo + React Native
+- Mobile: Expo + React Native — **not deployed**, see `artifacts/tanmatra-mobile` below
 
 ## Where things live
 
+**Three services deploy** (`.github/workflows/deploy.yml`). That is the whole of Tanmatra:
+
+| Path | Cloud Run | Role |
+|------|-----------|------|
+| `artifacts/storefront` | `storefront` | **Customer web app** (Next.js 16) — serves `tanmatra.food` since the 2026-07-25 cutover (`docs/DOMAIN-CUTOVER.md`) |
+| `artifacts/api-server` | `wellness-foods` | Express 5 + Drizzle API (auth, dispatch, payments, AI agents, schedulers) |
+| `artifacts/tanmatra` | `tanmatra` | Legacy SPA — customer routes removed 2026-07-26; internal-only Admin ERP + RD console. Also the `/images/*` origin the storefront proxies, so it cannot simply be retired |
+
+Everything else is a library one of those three imports, or tooling:
+
 | Path | Role |
 |------|------|
-| `artifacts/storefront` | **Customer web app** (Next.js 16) — serves `tanmatra.food` since the 2026-07-25 cutover (`docs/DOMAIN-CUTOVER.md`) |
-| `artifacts/tanmatra` | Legacy SPA — customer routes removed 2026-07-26; internal-only Admin ERP + RD console |
-| `artifacts/tanmatra-mobile` | Expo React Native app |
-| `artifacts/api-server` | Express 5 + Drizzle API (auth, dispatch, payments, AI agents, schedulers) |
-| `artifacts/agents` | Agency Agents Browser (Vite + wouter) over the `lib/agency-agents` catalogue |
-| `artifacts/mockup-sandbox` | Vite preview server for mockup work |
 | `lib/api-spec` | OpenAPI source of truth (`openapi.yaml`) + Orval codegen config |
 | `lib/api-client-react` | Generated React Query hooks + Zod schemas — never edit by hand |
 | `lib/api-zod` | Shared Zod request/response schemas |
@@ -60,14 +64,19 @@ required in production; `REDIS_URL` is optional (queue is skipped without it). F
 | `lib/menu-catalog` | Shared dish/menu data types |
 | `lib/preferences-match` | Shared dietary preference-matching logic |
 | `lib/subscription-rules` | Pure, DB-free subscription lifecycle rules (24 h skip/swap cutoff) |
-| `lib/agency-agents` | Bundled agent content + generated index (MIT import) |
 | `lib/integrations-gemini-ai` | Gemini AI integration utilities |
 | `scripts/` | One-off data scripts (seeding, backfills, audits) + repo lint gates |
+
+Not deployed:
+
+| Path | Status |
+|------|--------|
+| `artifacts/tanmatra-mobile` | **NOT LIVE** — Expo app with no `eas.json`, no build/submit pipeline, not in either app store, and no CI job. In-progress work, not a shipping surface |
 
 ## Architecture decisions
 
 - **Contract-first APIs — except the storefront.** The OpenAPI spec in `lib/api-spec` drives
-  generated hooks/schemas for the legacy SPA, mobile, and agents apps, and the server validates
+  generated hooks/schemas for the legacy SPA, and the server validates
   with the same schemas. The storefront is deliberately outside this flow: it uses hand-written
   typed clients in `artifacts/storefront/lib/` (injectable `fetchImpl`, fully unit-tested), so
   contract changes must be mirrored there by hand.
@@ -84,7 +93,7 @@ required in production; `REDIS_URL` is optional (queue is skipped without it). F
 ## Design system
 
 - **Storefront** — Astryx design system (owner decision 2026-07-27): palette lives in
-  `lib/themes/tanmatra.ts` (brand hues as dark-mode values; `#7F6921` is light-mode gold).
+  `artifacts/storefront/lib/themes/tanmatraTheme.ts` (brand hues as dark-mode values; `#7F6921` is light-mode gold).
   One surviving caveat: **gold is the only action colour** — see `docs/ASTRYX-ADOPTION-RUNBOOK.md` §3.
   Live styleguide at `/styleguide` (`app/styleguide/page.tsx`). CI gates: `lint:filecap`
   (`.tsx` ≤ 400 lines), `lint:tokens`.
@@ -98,7 +107,7 @@ required in production; `REDIS_URL` is optional (queue is skipped without it). F
 
 ## Product
 
-Customer-facing capabilities (storefront + mobile):
+Customer-facing capabilities, all served by the storefront:
 
 - Browse a curated clinical menu (single dishes + Curated Selection combos with constituent dish drill-down)
 - Build a cart / checkout / track live order
@@ -111,8 +120,8 @@ Operator / RD surfaces live in the legacy SPA (admin-gated `/admin/*` routes and
 
 ## Testing
 
-- Storefront: 372 unit tests under `artifacts/storefront/lib/`, all DB- and network-free (~8 s).
-- Legacy SPA: 79 unit tests. Both suites are driven from `artifacts/api-server` with **quoted**
+- Storefront: 951 unit tests in 122 files under `artifacts/storefront/lib/`, all DB- and network-free (~21 s).
+- Legacy SPA: 163 unit tests. Both suites are driven from `artifacts/api-server` with **quoted**
   globs — `node --test --import tsx "../storefront/lib/**/*.test.ts"` — the quotes are
   load-bearing (unquoted `**` silently runs a subset under bash).
 - `pnpm run lint:test-reach` fails CI on any test file no workflow reaches.

@@ -123,8 +123,8 @@ curl -L https://github.com/tanmatra6-wq/Wellness-Foods/archive/refs/heads/main.t
 | `.npmrc` | Install flags (frozen lockfile, peer handling) |
 | `.nvmrc` | Node 22 pin |
 | `tsconfig.json`, `tsconfig.base.json` | Root TypeScript project references — `pnpm run typecheck:libs` runs `tsc --build` on these |
-| `artifacts/` | All 6 app packages: `api-server`, `storefront`, `tanmatra`, `tanmatra-mobile`, `agents`, `mockup-sandbox` (plus non-package `artifacts/audit/`, screenshots only) |
-| `lib/` | All 10 library packages: `api-spec`, `api-client-react`, `api-zod`, `db`, `tokens`, `menu-catalog`, `preferences-match`, `subscription-rules`, `agency-agents`, `integrations-gemini-ai` |
+| `artifacts/` | 4 app packages. Three deploy — `storefront` (this is `tanmatra.food`), `api-server`, `tanmatra` (internal ERP + the `/images/*` origin) — plus `tanmatra-mobile`, which is **not deployed anywhere** |
+| `lib/` | All 9 library packages: `api-spec`, `api-client-react`, `api-zod`, `db`, `tokens`, `menu-catalog`, `preferences-match`, `subscription-rules`, `integrations-gemini-ai` |
 | `scripts/` | Workspace package `@workspace/scripts` (one-off data scripts + lint gates used by root scripts) |
 | `tools/` | `verify-stitch-manifest.mjs` / `verify-stitch-wiring.mjs`, invoked by root `verify:stitch` and CI |
 | `.github/` | CI workflows — also the reference definition of "green" |

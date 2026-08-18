@@ -15,9 +15,7 @@ Phase 13 regression happened in the first place.
 | `artifacts/storefront` | Next.js 16 App Router | **Every customer-facing surface.** All 58 page routes. | Active — all new customer work lands here |
 | `artifacts/api-server` | Express 5 | Every business decision: pricing, quotes, orders, payments, dispatch, clinical gating, AI agents. 64 routers under `src/routes/`. | Active |
 | `artifacts/tanmatra` | React 19 + Vite SPA | Internal Admin ERP + RD console only. Customer routes removed 2026-07-26. | Legacy — retained for the `/images/*` proxy and internal consoles |
-| `artifacts/tanmatra-mobile` | Expo RN | Mobile app | Active, out of P0 scope |
-| `artifacts/clinical-governance-engine` | Zero-dep TS library | Contraindication engine, packing-station interlock, AE webhooks, WORM audit log | Active |
-| `artifacts/agents`, `artifacts/mockup-sandbox` | Vite tools | Internal browsing/preview | Non-production |
+| `artifacts/tanmatra-mobile` | Expo RN | Mobile app | **NOT LIVE** — no `eas.json`, no build/submit pipeline, not in either store, no CI job. In-progress work |
 
 ## 2. Domain ownership — who decides what
 

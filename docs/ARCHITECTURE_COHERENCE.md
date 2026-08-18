@@ -48,9 +48,7 @@ Seven packages under `artifacts/`. CLAUDE.md's table now lists all of them.
 | `artifacts/api-server` | `@workspace/api-server` | Express 5, Drizzle, BullMQ, Socket.IO — 348 `.ts` | The one backend. All money authority lives here |
 | `artifacts/storefront` | `@workspace/storefront` | Next.js 16 App Router — 413 `.ts/.tsx` | **Serves tanmatra.food** (cutover complete — DOMAIN-CUTOVER.md). Astryx is its design system (DS-0) |
 | `artifacts/tanmatra` | `@workspace/tanmatra` | React 19 + React Router v7 SPA on Vite — 327 files under `src/` | Legacy. No user-facing domain routes to it, but it is the storefront's `IMAGE_UPSTREAM` — `/images` (incl. all dish photos in `public/dishes`) serve from here |
-| `artifacts/tanmatra-mobile` | `@workspace/tanmatra-mobile` | Expo / expo-router | Live, thin |
-| `artifacts/agents` | `@workspace/agents` | Vite + wouter | Internal |
-| `artifacts/mockup-sandbox` | `@workspace/mockup-sandbox` | Vite preview | Internal |
+| `artifacts/tanmatra-mobile` | `@workspace/tanmatra-mobile` | Expo / expo-router | **NOT LIVE.** No `eas.json`, no build/submit pipeline, not in either app store, no CI job runs it. In-progress work — not a shipping surface |
 
 > `artifacts/clinical-governance-engine` was removed 2026-08-08 by owner
 > decision — it was an orphaned package with zero dependents whose
