@@ -673,16 +673,17 @@ jobs:
           ./src/lib/dispatch.priority.test.ts
 
       # subscriptions.changePlan.test.ts IS included, and that is a deliberate
-      # change from the note in the money-path step below. It was held off CI
-      # because it asserted correct behaviour against the DEFECT-CHANGE-PLAN-
-      # PRICING-001 bug. That defect is now MITIGATED, not fixed: all three
-      # change-plan entry points return a blanket 503, and the suite was
-      # rewritten to assert exactly that refusal plus "the live plan row is
-      # byte-identical before and after". It therefore certifies the mitigation
-      # holds and pins nothing about the broken pricing maths. The defect stays
-      # OPEN — see docs/DEFECT-CHANGE-PLAN-PRICING-001.md; if change-plan is
-      # ever re-enabled, this suite must be rewritten against the new contract
-      # before the 503 assertions are dropped.
+      # change from the note in the money-path step below, which was written
+      # while DEFECT-CHANGE-PLAN-PRICING-001 was merely contained behind a 503.
+      # That defect is now RESOLVED: change-plan prices from computePlanQuote,
+      # the same call create uses, and the suite asserts prices against that
+      # function's own output rather than against literals — so a legitimate
+      # reprice does not break it while a return to formula-based pricing does.
+      # It covers the staging path as well as the refusals, which needed a
+      # monthly seed: weekly→monthly is an increase for every plan and would
+      # otherwise only ever exercise the refusal branch. Price INCREASES remain
+      # unavailable pending a re-authorisation design; see
+      # docs/DEFECT-CHANGE-PLAN-PRICING-001.md.
       - name: Subscription lifecycle and remaining integration tests
         if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
