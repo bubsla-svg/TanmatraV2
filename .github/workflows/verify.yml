@@ -415,6 +415,23 @@ jobs:
       # This asserts every path it declares is still a real registered route,
       # and that it does not contradict the SECOND, separately-enforced spec in
       # routes/openApiContract.ts. See that file's header for the two-spec map.
+      # Codegen freshness. `openapi.yaml` feeds Orval, and until now nothing
+      # checked that the CHECKED-IN generated output still matched what the spec
+      # produces — so the spec and lib/api-client-react + lib/api-zod could drift
+      # apart silently, and did (the committed output was stale on formatting
+      # when this gate landed).
+      #
+      # Note the second-order reason this matters more than "generated code
+      # should be regenerated": lib/api-zod/src/index.ts is NOT purely generated.
+      # It also holds hand-written exports the server imports directly (AuthUser,
+      # SERVICEABLE_PINCODES, isServiceablePincode), and codegen rewrites the
+      # whole file. Anyone running codegen therefore reformats hand-written code
+      # too — better that CI notices immediately than that it surfaces inside an
+      # unrelated PR's diff.
+      - name: Generated API client is in sync with openapi.yaml
+        if: ${{ !cancelled() }}
+        run: pnpm run codegen:verify
+
       - name: OpenAPI spec file is grounded in real routes
         if: ${{ !cancelled() }}
         working-directory: artifacts/api-server

@@ -14,7 +14,9 @@
     "verify:stitch-wiring": "node tools/verify-stitch-wiring.mjs",
     "test": "pnpm -r --if-present run test",
     "evals": "pnpm --filter @workspace/api-server run evals",
-    "test:stitch-runtime": "pnpm --filter @workspace/storefront exec playwright test --config=e2e/playwright.config.ts --project=mobile stitch-runtime"
+    "test:stitch-runtime": "pnpm --filter @workspace/storefront exec playwright test --config=e2e/playwright.config.ts --project=mobile stitch-runtime",
+    "codegen": "pnpm --filter @workspace/api-spec run codegen",
+    "codegen:verify": "pnpm run codegen && git diff --exit-code -- lib/api-client-react lib/api-zod && [ -z \"$(git status --porcelain -- lib/api-client-react lib/api-zod)\" ]"
   },
   "private": true,
   "devDependencies": {
