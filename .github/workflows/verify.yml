@@ -344,6 +344,15 @@ jobs:
       - name: Money guards (DB-free)
         if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
+        # These suites issue no query, but they transitively import
+        # @workspace/db, whose module body THROWS when DATABASE_URL is absent —
+        # and money-unit deliberately provisions no Postgres. A syntactically
+        # valid DSN pointing at a closed port satisfies the import without ever
+        # being dialled; if one of these ever starts querying for real, it fails
+        # here loudly instead of silently acquiring a database. Same idiom the
+        # suites in this tree already use inline (see stockSync.test.ts).
+        env:
+          DATABASE_URL: postgres://dummy:dummy@127.0.0.1:1/dummy
         run: |
           node --test --import tsx \
             ./src/lib/bridgeCredit.test.ts \
@@ -358,6 +367,15 @@ jobs:
       - name: Clinical field encryption (PHI)
         if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
+        # These suites issue no query, but they transitively import
+        # @workspace/db, whose module body THROWS when DATABASE_URL is absent —
+        # and money-unit deliberately provisions no Postgres. A syntactically
+        # valid DSN pointing at a closed port satisfies the import without ever
+        # being dialled; if one of these ever starts querying for real, it fails
+        # here loudly instead of silently acquiring a database. Same idiom the
+        # suites in this tree already use inline (see stockSync.test.ts).
+        env:
+          DATABASE_URL: postgres://dummy:dummy@127.0.0.1:1/dummy
         run: |
           node --test --import tsx \
             ./src/lib/crypto.test.ts
@@ -368,6 +386,15 @@ jobs:
       - name: Auth, audit and consent contracts (DB-free)
         if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
+        # These suites issue no query, but they transitively import
+        # @workspace/db, whose module body THROWS when DATABASE_URL is absent —
+        # and money-unit deliberately provisions no Postgres. A syntactically
+        # valid DSN pointing at a closed port satisfies the import without ever
+        # being dialled; if one of these ever starts querying for real, it fails
+        # here loudly instead of silently acquiring a database. Same idiom the
+        # suites in this tree already use inline (see stockSync.test.ts).
+        env:
+          DATABASE_URL: postgres://dummy:dummy@127.0.0.1:1/dummy
         run: |
           node --test --import tsx \
             ./src/lib/adminGate.test.ts \
@@ -378,9 +405,30 @@ jobs:
             ./src/routes/cspReport.test.ts
 
       # Edge guards that decide whether a request reaches a handler at all.
+      # Own step, own process: this suite points DATABASE_URL at a closed port
+      # to induce a REAL store failure, so it must not share a process with
+      # anything that expects a working db handle. It pins which way each
+      # limiter resolves when the limiter itself cannot run — fail-open for
+      # public reads, fail-closed (429 + Retry-After) for money routes.
+      - name: Rate limiter fail-open vs fail-closed
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: |
+          node --test --import tsx \
+            ./src/middlewares/rateLimitMiddleware.failClosed.test.ts
+
       - name: Request guards and resilience
         if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
+        # These suites issue no query, but they transitively import
+        # @workspace/db, whose module body THROWS when DATABASE_URL is absent —
+        # and money-unit deliberately provisions no Postgres. A syntactically
+        # valid DSN pointing at a closed port satisfies the import without ever
+        # being dialled; if one of these ever starts querying for real, it fails
+        # here loudly instead of silently acquiring a database. Same idiom the
+        # suites in this tree already use inline (see stockSync.test.ts).
+        env:
+          DATABASE_URL: postgres://dummy:dummy@127.0.0.1:1/dummy
         run: |
           node --test --import tsx \
             ./src/middlewares/concurrencyGuard.test.ts \
@@ -391,6 +439,15 @@ jobs:
       - name: Catalog, planning and slot contracts (DB-free)
         if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
+        # These suites issue no query, but they transitively import
+        # @workspace/db, whose module body THROWS when DATABASE_URL is absent —
+        # and money-unit deliberately provisions no Postgres. A syntactically
+        # valid DSN pointing at a closed port satisfies the import without ever
+        # being dialled; if one of these ever starts querying for real, it fails
+        # here loudly instead of silently acquiring a database. Same idiom the
+        # suites in this tree already use inline (see stockSync.test.ts).
+        env:
+          DATABASE_URL: postgres://dummy:dummy@127.0.0.1:1/dummy
         run: |
           node --test --import tsx \
             ./src/routes/catalog.test.ts \
@@ -412,6 +469,15 @@ jobs:
       - name: Personalisation and RD copilot (DB-free)
         if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
+        # These suites issue no query, but they transitively import
+        # @workspace/db, whose module body THROWS when DATABASE_URL is absent —
+        # and money-unit deliberately provisions no Postgres. A syntactically
+        # valid DSN pointing at a closed port satisfies the import without ever
+        # being dialled; if one of these ever starts querying for real, it fails
+        # here loudly instead of silently acquiring a database. Same idiom the
+        # suites in this tree already use inline (see stockSync.test.ts).
+        env:
+          DATABASE_URL: postgres://dummy:dummy@127.0.0.1:1/dummy
         run: |
           node --test --import tsx \
             ./src/lib/userBrief/userBrief.test.ts \

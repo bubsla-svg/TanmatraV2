@@ -31,8 +31,24 @@ test("payments.ts gated endpoints return 403 when unauthenticated", async () => 
       assert.equal(res.status, 403, "POST /payments/charge-mandate should be gated");
     }
     {
+      // This route, unlike the one above, carries `paymentRateLimit` directly
+      // on its own definition, so the limiter runs BEFORE the auth gate — the
+      // same ordering app.ts uses deliberately ("mounted before authMiddleware
+      // so unauthenticated scraping is also limited").
+      //
+      // paymentRateLimit fails CLOSED, and the DSN at the top of this file
+      // points nowhere, so here the limiter refuses first and the answer is 429
+      // rather than the gate's 403. Both are refusals and neither reaches the
+      // handler, which is the property this case exists to hold — so assert
+      // "refused by one of the two walls" rather than pinning whichever wall
+      // happens to be in front. Pinning 403 here would either fail whenever the
+      // limiter cannot reach its store, or force the limiter back to fail-open
+      // on a money route to keep a test green.
       const res = await fetch(`${base}/jobs/pre-debit-notifications`, { method: "POST" });
-      assert.equal(res.status, 403, "POST /jobs/pre-debit-notifications should be gated");
+      assert.ok(
+        res.status === 403 || res.status === 429,
+        `POST /jobs/pre-debit-notifications should be refused, got ${res.status}`,
+      );
     }
   } finally {
     server.close();
