@@ -175,26 +175,78 @@ test.describe("stitch-runtime: dish image integrity (M-5 §3.5)", () => {
     await evidenceShot(page, "5.4-dish-drawer-image");
   });
 
+  /**
+   * Read every tile KEYED BY ITS DISH, not positionally.
+   *
+   * `.first()` used to be the anchor, and it made this test intermittently
+   * red on an unchanged tree (2 of 3 runs locally). A tile only exists once
+   * ImgWithFallback has RECORDED that dish's photo as broken — via `onError`
+   * at hydration, the `complete && naturalWidth === 0` mount check, or the
+   * 8s stall timeout — so which dishes are showing tiles at read time is a
+   * timing race, and the first one in the DOM was a different dish on each
+   * load. Two dishes sharing an initial is why the letter matched while the
+   * tint did not.
+   *
+   * The tile function is genuinely deterministic (`tintFor` is a pure hash of
+   * the dish name); the selector was not. Keying by the card's `?dish=<slug>`
+   * href tests the property the name claims — the same DISH keeps its tile —
+   * and is indifferent to how many dishes have degraded on any given load.
+   */
   test("fallback tiles are deterministic — the same dish keeps its tile across reloads", async ({
     page,
   }) => {
     const menu = new MenuPage(page);
     await menu.goto();
 
-    const read = async () =>
-      page.locator('[data-testid="dish-fallback-tile"]').first().evaluate((el) => ({
-        letter: el.textContent?.trim() ?? "",
-        bg: getComputedStyle(el).backgroundImage,
-      }));
+    // `evaluateAll` does NOT auto-wait the way `.first().evaluate()` does, so
+    // it would happily read an empty grid a millisecond after reload and
+    // report "nothing to compare". Wait for the section heading AND for at
+    // least one tile to have resolved, then give the rest of the visible grid
+    // the same window to degrade.
+    const settle = async () => {
+      await expect(page.getByTestId("menu-section-heading").first()).toBeVisible();
+      await expect(page.locator('[data-testid="dish-fallback-tile"]').first()).toBeAttached();
+      await page.waitForTimeout(1200);
+    };
 
+    const read = async (): Promise<Record<string, { letter: string; bg: string }>> =>
+      page.locator('[data-testid="dish-fallback-tile"]').evaluateAll((els) => {
+        const out: Record<string, { letter: string; bg: string }> = {};
+        for (const el of els) {
+          const slug = el.closest('a[href^="/menu?dish="]')?.getAttribute("href");
+          if (!slug) continue;
+          out[slug] = {
+            letter: el.textContent?.trim() ?? "",
+            bg: getComputedStyle(el).backgroundImage,
+          };
+        }
+        return out;
+      });
+
+    await settle();
     const before = await read();
     await page.reload();
-    await expect(page.getByTestId("menu-section-heading").first()).toBeVisible();
+    await settle();
     const after = await read();
 
-    expect(after.letter).toBe(before.letter);
-    expect(after.bg).toBe(before.bg);
-    expect(before.letter).toMatch(/^[A-Z0-9T]$/);
+    // Only dishes that rendered a tile on BOTH loads can be compared; the
+    // rest raced, which is the condition this rewrite stops mistaking for a
+    // determinism failure.
+    const shared = Object.keys(before).filter((slug) => slug in after);
+    expect(
+      shared.length,
+      "no dish rendered a fallback tile on both loads — nothing was actually compared",
+    ).toBeGreaterThan(0);
+
+    for (const slug of shared) {
+      expect(after[slug]!.letter, `${slug} changed its tile letter across reloads`).toBe(
+        before[slug]!.letter,
+      );
+      expect(after[slug]!.bg, `${slug} changed its tile tint across reloads`).toBe(
+        before[slug]!.bg,
+      );
+      expect(before[slug]!.letter).toMatch(/^[A-Z0-9T]$/);
+    }
   });
 });
 
