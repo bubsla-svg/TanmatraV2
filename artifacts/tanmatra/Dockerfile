@@ -42,7 +42,6 @@ COPY lib/api-client-react/package.json  lib/api-client-react/
 COPY lib/menu-catalog/package.json      lib/menu-catalog/
 COPY lib/preferences-match/package.json lib/preferences-match/
 COPY lib/integrations-gemini-ai/package.json lib/integrations-gemini-ai/
-COPY lib/agency-agents/package.json     lib/agency-agents/
 
 RUN pnpm install --frozen-lockfile --reporter=append-only
 
