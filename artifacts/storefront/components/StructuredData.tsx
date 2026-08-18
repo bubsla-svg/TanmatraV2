@@ -5,7 +5,7 @@ import type { DishData } from "@workspace/menu-catalog";
 import { SITE_URL, absoluteUrl } from "@/lib/siteUrl";
 
 const DESCRIPTION =
-  "RD-designed lunches delivered to your desk. Real food, verified macros, no jargon.";
+  "Lunches built around your macros, delivered to your desk. Real food, no jargon.";
 
 /** Emit an escaped ld+json <script>. Escaping `<` stops any dish name /
  *  description containing `</script>` from breaking out of the tag. */

@@ -38,7 +38,7 @@ function forMatch(dish: DishForMatch): DishForMatch {
 
 export const metadata: Metadata = {
   title: "Menu",
-  description: "Order RD-designed, verified-macro dishes for delivery today.",
+  description: "Browse today's dishes — ingredients, allergens and macros on every card.",
 };
 
 /**

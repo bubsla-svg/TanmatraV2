@@ -13,7 +13,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Tanmatra — clinical nutrition, cooked fresh",
     short_name: "Tanmatra",
     description:
-      "RD-designed lunches delivered to your desk. Real food, verified macros, no jargon.",
+      "Lunches built around your macros, delivered to your desk. Real food, no jargon.",
     start_url: "/",
     display: "standalone",
     // Same value the live theme-color meta tag uses (lib/stitchRoutes.ts) —
