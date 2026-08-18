@@ -28,6 +28,7 @@ import {
   type DietaryStyle,
 } from "@workspace/db";
 import { resolveDishBySlug } from "./menuResolver";
+import { invalidateMenuCatalogCache } from "./menuCatalogCache";
 import { DISHES, type DishData } from "@workspace/menu-catalog";
 
 const PENDING_DISH: DishData = {
@@ -376,6 +377,11 @@ test("DB-backed pending-review menu_items row: surfaces as rdReviewState='pendin
       // default — no explicit value needed.
     })
     .returning();
+  // Raw drizzle insert bypasses lib/menu.ts, so the merged-catalog cache is
+  // never invalidated the way a real CMS write would do it. Earlier cases in
+  // this file have already warmed the 30s snapshot, so the row is invisible
+  // to the resolver without this.
+  invalidateMenuCatalogCache();
   try {
     const merged = await resolveDishBySlug(slug);
     assert.ok(merged, "expected DB row to surface in merged catalog");

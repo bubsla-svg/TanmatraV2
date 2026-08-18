@@ -134,6 +134,15 @@ test("change-plan: always 503 change_plan_temporarily_disabled, regardless of pa
   const user = await makeUser();
   const subId = await seedActiveSubscription(user);
 
+  // Snapshot the live plan as the server actually stored it, before any
+  // change-plan attempt touches it.
+  const [before] = await db
+    .select()
+    .from(subscriptionsTable)
+    .where(eq(subscriptionsTable.id, subId));
+  assert.ok(before, "seeded subscription should be readable");
+  assert.equal(before!.cadence, "weekly");
+
   const attempts = [
     { cadence: "fortnightly" },
     { mealsPerDelivery: 25 },
@@ -146,12 +155,24 @@ test("change-plan: always 503 change_plan_temporarily_disabled, regardless of pa
   }
 
   // The live plan must be completely untouched — no pending fields set either.
+  //
+  // Compared against the snapshot taken BEFORE the attempts rather than
+  // against literals. mealsPerDelivery is server-derived: create ignores the
+  // client's requested count and takes computePlanQuote()'s mealsPerCycle
+  // (a weekly desk_fuel prorates the 22-meal monthly cycle to 6), which is
+  // the money-path rule — the server owns every amount — working as intended.
+  // Asserting the literal 18 the request sent pinned the client's number and
+  // broke the moment derivation landed; asserting a literal 6 would instead
+  // re-break on any plan-catalog reprice. What this case is actually about is
+  // that a refused change-plan mutates NOTHING, so diff the row against
+  // itself.
   const [row] = await db
     .select()
     .from(subscriptionsTable)
     .where(eq(subscriptionsTable.id, subId));
-  assert.equal(row!.cadence, "weekly");
-  assert.equal(row!.mealsPerDelivery, 18);
+  assert.equal(row!.cadence, before!.cadence);
+  assert.equal(row!.mealsPerDelivery, before!.mealsPerDelivery);
+  assert.equal(row!.pricePerDeliveryPaise, before!.pricePerDeliveryPaise);
   assert.equal(row!.pendingCadence, null);
   assert.equal(row!.pendingPricePerDeliveryPaise, null);
 });

@@ -319,6 +319,106 @@ jobs:
           node --test --import tsx \
             ./src/lib/rdIdentity.test.ts
 
+      # ───────────────────────────────────────────────────────────────────────
+      # Baseline recovery, DB-free half (2026-08-18).
+      #
+      # Everything below ran in NO workflow. They sat on
+      # scripts/test-reach-baseline.txt — green locally, reporting to nobody —
+      # which is the exact failure mode that register exists to make visible
+      # rather than to preserve. All were executed against a real Postgres
+      # before wiring: 50/50 files passed once four genuine breakages were
+      # fixed (see the commit), so none of these is wired-in-green by rewriting
+      # an assertion to match broken behaviour.
+      #
+      # NOTE ON `--test-force-exit`: deliberately NOT used in these steps. With
+      # it, this file set reports a DIFFERENT test count per run (measured:
+      # 319/294/319/286/299) and still exits 0 — the runner kills the process
+      # while files are still registering, so tests vanish silently and CI goes
+      # green having run an unknown subset. Without it the same set is 319 every
+      # time and still exits cleanly in ~20s. A gate that silently skips its own
+      # tests is worse than no gate.
+      #
+      # Split by concern, not by file count, so a red step names the thing that
+      # broke. DB-free: these run in money-unit because none of them opens a
+      # connection (verified by running the set against an unreachable DSN).
+      - name: Money guards (DB-free)
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: |
+          node --test --import tsx \
+            ./src/lib/bridgeCredit.test.ts \
+            ./src/lib/checkoutSafety.test.ts \
+            ./src/lib/purchaseIngest.test.ts \
+            ./src/lib/subscriptionRules.test.ts \
+            ./src/lib/b2b/b2b.test.ts
+
+      # crypto.test.ts covers the AES-256-GCM envelope for subscription-member
+      # clinical fields — the CLINICAL_KMS_MASTER_KEY path the server refuses to
+      # boot without in production. It had never run in CI.
+      - name: Clinical field encryption (PHI)
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: |
+          node --test --import tsx \
+            ./src/lib/crypto.test.ts
+
+      # Authorisation and session surfaces. adminGate is the role resolver every
+      # admin/ops route gates on; auditGates and tokenLifecycle pin the audit and
+      # token-expiry contracts; checkout.consent pins the DPDPA consent capture.
+      - name: Auth, audit and consent contracts (DB-free)
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: |
+          node --test --import tsx \
+            ./src/lib/adminGate.test.ts \
+            ./src/routes/auditGates.test.ts \
+            ./src/routes/tokenLifecycle.test.ts \
+            ./src/routes/checkout.consent.test.ts \
+            ./src/lib/truecaller.test.ts \
+            ./src/routes/cspReport.test.ts
+
+      # Edge guards that decide whether a request reaches a handler at all.
+      - name: Request guards and resilience
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: |
+          node --test --import tsx \
+            ./src/middlewares/concurrencyGuard.test.ts \
+            ./src/middlewares/requestValidationGuard.test.ts \
+            ./src/lib/circuitBreaker.test.ts \
+            ./src/lib/queue.redisConfig.test.ts
+
+      - name: Catalog, planning and slot contracts (DB-free)
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: |
+          node --test --import tsx \
+            ./src/routes/catalog.test.ts \
+            ./src/lib/mealPlanner.test.ts \
+            ./src/lib/dishRationale.test.ts \
+            ./src/lib/deliverySlotBooking.test.ts \
+            ./src/lib/funnelDefs.test.ts
+
+      # Petpooja POS stock/purchase arithmetic. The inbound-auth half already
+      # runs above; this is the half that decides stock counts and costs.
+      - name: POS inventory and stock sync (DB-free)
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: |
+          node --test --import tsx \
+            ./src/lib/petpoojaInventory.test.ts \
+            ./src/lib/stockSync.test.ts
+
+      - name: Personalisation and RD copilot (DB-free)
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: |
+          node --test --import tsx \
+            ./src/lib/userBrief/userBrief.test.ts \
+            ./src/lib/community/community.test.ts \
+            ./src/lib/rdCopilot/adherence.test.ts \
+            ./src/lib/wearableClient.test.ts
+
 
   money-integration:
     runs-on: ubuntu-latest
@@ -390,6 +490,78 @@ jobs:
           ./src/lib/dispatch.channel.test.ts
           ./src/lib/dispatch.batchPartnerQueries.test.ts
           ./src/lib/dispatch.paidGate.test.ts
+
+      # ───────────────────────────────────────────────────────────────────────
+      # Baseline recovery, DB-backed half (2026-08-18). See the long note in
+      # money-unit for why these were unreached and how they were verified.
+      #
+      # Three steps, and the split is load-bearing rather than cosmetic — it was
+      # derived by running each grouping repeatedly, not guessed:
+      #
+      #   * The scheduler sweeps below query the WHOLE table ("find every due
+      #     mandate"), so any other suite that seeds a due row concurrently
+      #     changes their answer. Run in parallel they fail intermittently
+      #     (measured: `expected exactly 1 due mandate, got 2`). Serialized they
+      #     are 23/23 every run. Same reasoning as the dispatch step above.
+      #   * dispatch.latency + dispatch.priority are stable alone (12/12 x5) and
+      #     stable in the existing dispatch step's absence, but the two sets
+      #     interfere when merged — so they get their own serialized step rather
+      #     than being appended to the one above.
+      #   * The remainder is per-user/per-order scoped and safe in parallel
+      #     (91/91 x3).
+      #
+      # `--test-force-exit` is omitted here for the same reason as the DB-free
+      # steps: it silently truncates the run while reporting success.
+      - name: Scheduler sweep integration tests (serialized)
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-concurrency=1 --import tsx
+          ./src/lib/chargeMandate.halt.test.ts
+          ./src/lib/chargeMandateScheduler.test.ts
+          ./src/lib/preDebitScheduler.test.ts
+          ./src/lib/subscriptionAbandonmentScheduler.test.ts
+          ./src/lib/trialLifecycleScheduler.test.ts
+
+      - name: Dispatch SLA and priority (serialized)
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: >
+          node --test --test-concurrency=1 --import tsx
+          ./src/lib/dispatch.latency.test.ts
+          ./src/lib/dispatch.priority.test.ts
+
+      # subscriptions.changePlan.test.ts IS included, and that is a deliberate
+      # change from the note in the money-path step below. It was held off CI
+      # because it asserted correct behaviour against the DEFECT-CHANGE-PLAN-
+      # PRICING-001 bug. That defect is now MITIGATED, not fixed: all three
+      # change-plan entry points return a blanket 503, and the suite was
+      # rewritten to assert exactly that refusal plus "the live plan row is
+      # byte-identical before and after". It therefore certifies the mitigation
+      # holds and pins nothing about the broken pricing maths. The defect stays
+      # OPEN — see docs/DEFECT-CHANGE-PLAN-PRICING-001.md; if change-plan is
+      # ever re-enabled, this suite must be rewritten against the new contract
+      # before the 503 assertions are dropped.
+      - name: Subscription lifecycle and remaining integration tests
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: >
+          node --test --import tsx
+          ./src/routes/subscriptions.pauseResume.test.ts
+          ./src/routes/subscriptions.unskip.test.ts
+          ./src/routes/subscriptions.fullLifecycle.test.ts
+          ./src/routes/subscriptions.changePlan.test.ts
+          ./src/routes/subscriptions.reactivateBilling.test.ts
+          ./src/routes/subscriptions.macroCap.test.ts
+          ./src/lib/loyaltyEngine.allergenGate.test.ts
+          ./src/lib/loyaltyEngine.bundles.test.ts
+          ./src/lib/rdCopilot/adherence.orderKind.test.ts
+          ./src/middlewares/idempotency.test.ts
+          ./src/routes/auth.truecaller.test.ts
+          ./src/routes/groupOrders.test.ts
+          ./src/routes/menu.test.ts
+          ./src/routes/preferences.sprint78.test.ts
+          ./src/routes/wearable.test.ts
 
       - name: Money-path integration tests
         working-directory: artifacts/api-server
