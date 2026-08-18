@@ -107,6 +107,63 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
+      # FRONTEND AUDIT — geometry, layering and target size, measured against
+      # the live DOM rather than the source.
+      #
+      # Promoted from opt-in to a standing gate by owner decision. It stayed
+      # opt-in (RUN_FRONTEND_AUDIT=1) until now for two stated reasons, and
+      # both have been answered:
+      #
+      #   1. "Don't gate on pre-existing debt." The five WCAG 2.2 AA
+      #      target-size failures the first run found were fixed in #70, so
+      #      the blocking classes now sit at zero and this gate ratchets
+      #      rather than blocks. The 24-44px comfort band is still 31
+      #      findings and is deliberately NOT gated — that debt is real and
+      #      would make this the kind of check people delete.
+      #   2. "It goes flaky on a slow runner." The settle window is
+      #      wall-clock (SETTLE_MS=2000), so that risk is genuine. It is
+      #      bounded here rather than hand-waved: its own server on its own
+      #      port, so a hang cannot be blamed on the CUJ run, and the report
+      #      is uploaded on every outcome so a red build is diagnosable from
+      #      the artifact instead of by re-running locally. If it does prove
+      #      flaky, the fix is to raise SETTLE_MS or narrow the gate — not to
+      #      silence the step.
+      #
+      # Own `next start` on port 3200, following the Lighthouse step's
+      # precedent: self-contained, reorderable, no hidden dependency on
+      # whichever server an earlier step happened to leave running.
+      - name: Frontend audit — occlusion, collapsed images, WCAG AA target size
+        env:
+          RUN_FRONTEND_AUDIT: "1"
+        run: |
+          PORT=3200 pnpm --filter @workspace/storefront run start \
+            > /tmp/storefront-audit.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:3200/ >/dev/null && break
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:3200 pnpm exec playwright test \
+            --config artifacts/storefront/e2e/playwright.config.ts \
+            --project=mobile frontend-audit
+      # `always()`, not `failure()`: the band findings are the point of the
+      # report even on a green run, and a gate whose evidence only appears
+      # when it fails teaches people to fear it rather than read it.
+      - name: Render + upload the frontend audit report
+        if: always()
+        continue-on-error: true
+        run: |
+          node --experimental-strip-types \
+            artifacts/storefront/e2e/support/audit/render-report.ts || true
+      - name: Upload frontend audit report
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: storefront-frontend-audit
+          path: artifacts/storefront/e2e/audit-report/
+          retention-days: 14
+          if-no-files-found: warn
+
       # Unit tests need no build, so they are not part of the chain above and
       # must not gate it: on the first run after the reorder this step failed
       # and took Build + e2e down with it, which is the same masking bug one
