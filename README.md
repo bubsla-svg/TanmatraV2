@@ -37,7 +37,7 @@ required in production; `REDIS_URL` is optional (queue is skipped without it). F
 - API: Express 5, esbuild server bundle, BullMQ + Redis (optional), Socket.IO realtime, Gemini AI agents
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec) — consumed by the legacy SPA (and the non-deployed mobile app)
+- API codegen: Orval (from OpenAPI spec) — generated, but almost entirely unconsumed (see Architecture decisions)
 - Customer web: **Next.js 16 App Router** (server-first) + Tailwind v4 + shadcn/Radix, Astryx design system
 - Legacy web (admin/RD): React 19 + Vite + React Router v7 + Tailwind v4, framer-motion, cmdk
 - Mobile: Expo + React Native — **not deployed**, see `artifacts/tanmatra-mobile` below
@@ -75,11 +75,13 @@ Not deployed:
 
 ## Architecture decisions
 
-- **Contract-first APIs — except the storefront.** The OpenAPI spec in `lib/api-spec` drives
-  generated hooks/schemas for the legacy SPA, and the server validates
-  with the same schemas. The storefront is deliberately outside this flow: it uses hand-written
-  typed clients in `artifacts/storefront/lib/` (injectable `fetchImpl`, fully unit-tested), so
-  contract changes must be mirrored there by hand.
+- **Contract-first APIs — mostly aspirational.** `lib/api-spec` declares 40 paths against the
+  server's 441 route handlers, the server imports exactly one generated schema
+  (`HealthCheckResponse`, for `/healthz`), and no generated React Query hook is imported
+  anywhere. Every app uses hand-written typed clients — the storefront's in
+  `artifacts/storefront/lib/` (injectable `fetchImpl`, fully unit-tested), the legacy SPA's in
+  `src/lib/`. A contract change must be mirrored by hand; codegen will not carry it.
+  See `CLAUDE.md` › Contract-first API flow for the measurements.
 - **Server owns every amount.** The browser never sends a price; Razorpay `keyId` comes from the
   server's order response. The money path moves as one unit (`docs/AGENT_WORKING_AGREEMENT.md`).
 - **Single design-token source per app.** Storefront: `lib/tokens/src/tokens.css`, bridged in

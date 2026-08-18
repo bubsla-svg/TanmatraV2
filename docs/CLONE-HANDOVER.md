@@ -17,7 +17,7 @@ the repo's own CI workflows (`.github/workflows/verify.yml`, `storefront.yml`, `
 | Size | ~450 MB of git data — prefer a shallow clone (§3) |
 | Git LFS | **Not used** |
 | Submodules | **None** |
-| Type | pnpm monorepo (17 workspace packages), TypeScript |
+| Type | pnpm monorepo (14 workspace packages), TypeScript |
 | Product | **Tanmatra** — clinical-grade meal-delivery and wellness platform |
 
 Pushing (not cloning) requires a GitHub account with write access, authenticated via a
@@ -87,8 +87,8 @@ pnpm run lint:test-reach    # fails if any test file is reached by no CI workflo
 
 # Fast, network- and DB-free unit suites (run from artifacts/api-server):
 cd artifacts/api-server
-node --test --import tsx "../storefront/lib/**/*.test.ts"   # 372 storefront tests, ~8s
-node --test --import tsx "../tanmatra/src/**/*.test.ts"     # 79 legacy-SPA tests
+node --test --import tsx "../storefront/lib/**/*.test.ts"   # 951 storefront tests, ~21s
+node --test --import tsx "../tanmatra/src/**/*.test.ts"     # 163 legacy-SPA tests
 cd ../..
 
 pnpm run test               # every package that has a `test` script (slower)

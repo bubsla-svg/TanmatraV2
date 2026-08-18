@@ -143,12 +143,30 @@ Libraries, each imported by at least one deployed service:
 
 ### Contract-first API flow
 
-1. Edit `lib/api-spec/openapi.yaml` (single source of truth).
+> **Read this before believing the four steps below.** Measured 2026-08-18, this pipeline is
+> ~90% vestigial. It is described here because it still *exists*, not because it is how the
+> system works:
+>
+> - **`openapi.yaml` declares 40 paths. The API server registers 441 route handlers.** The
+>   "single source of truth" describes roughly 9% of the surface.
+> - **The server imports exactly ONE generated schema** — `HealthCheckResponse`, for `/healthz`.
+>   Everything else it takes from `@workspace/api-zod` (`AuthUser`, `isServiceablePincode`,
+>   `SERVICEABLE_PINCODES`) is hand-written in that package's `src/index.ts`. Routes validate
+>   with `zod/v4` schemas declared inline.
+> - **Zero generated React Query hooks are imported anywhere in this repo.** Only three files
+>   import `@workspace/api-client-react` at all, and all three take hand-written helpers from
+>   `src/custom-fetch.ts`: the legacy SPA takes `setBaseUrl`; the (undeployed) mobile app takes
+>   `setBaseUrl`, `setAuthTokenGetter`, and the `WearableProvider` type.
+> - Hooks that *look* generated are not. `useJoinChallenge`, `useLeaveChallenge` and
+>   `usePostToChallenge` are hand-written in `artifacts/tanmatra/src/lib/contentApi.ts`, over raw
+>   `fetch` + `@tanstack/react-query` — the exact operations Orval generates and nobody imports.
+>
+> So: changing `openapi.yaml` propagates to almost nothing. Do not assume codegen will carry a
+> contract change to any consumer — find the hand-written client and edit it.
+
+1. Edit `lib/api-spec/openapi.yaml`.
 2. Run `pnpm --filter @workspace/api-spec run codegen` — Orval regenerates `lib/api-client-react` (hooks) and `lib/api-zod` (schemas).
-3. The API server validates requests/responses using the same generated Zod schemas.
-4. `artifacts/tanmatra` consumes the generated React Query hooks from
-   `@workspace/api-client-react`. (`artifacts/tanmatra-mobile` also imports them, but it is not
-   deployed — see the package table.)
+3. The generated output is then, in practice, almost entirely unconsumed (see above).
 
 **The storefront is deliberately outside this flow.** It does not depend on
 `@workspace/api-client-react` at all; it calls the API through hand-written typed clients in
@@ -210,7 +228,7 @@ because the storefront's `IMAGE_UPSTREAM` proxies `/images/*` through it. See
 - **Design system**: `src/index.css` is the single source of truth for all CSS custom properties (`@theme`): colors, type scale, radii, shadows, motion durations/easings. JS tokens are mirrored in `src/lib/motion.ts` for Framer Motion.
 - **Global chrome**: `src/components/layout/Header.tsx` (desktop) and `BottomNav.tsx` (mobile). IA grouping: **Eat / Plan / Track / Community / Account**. Update both when adding customer routes.
 - **Command palette**: `src/components/CommandPalette.tsx` — global ⌘K; register new customer routes here.
-- **Data fetching**: `@workspace/api-client-react` generated hooks + TanStack Query. `useMenuCatalog()` falls back to `STATIC_DISHES` so the UI never blanks.
+- **Data fetching**: hand-written TanStack Query hooks in `src/lib/` (e.g. `useMenuCatalog()` in `menuData.ts`, the challenge hooks in `contentApi.ts`) over raw `fetch` — NOT the generated `@workspace/api-client-react` hooks, which nothing imports. `useMenuCatalog()` falls back to `STATIC_DISHES` so the UI never blanks.
 - **Icons**: Phosphor (`@phosphor-icons/react`) on customer surfaces; Lucide (`lucide-react`) on
   admin/RD screens. The storefront allows Lucide **and** Heroicons (`@heroicons/react`) — the
   Lucide-only rule was revoked for DS-0 so Astryx templates compile verbatim (they import Heroicons).
