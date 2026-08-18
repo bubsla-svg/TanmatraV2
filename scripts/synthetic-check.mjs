@@ -88,6 +88,63 @@ console.log("Checking:", BASE, "\n");
   check("robots.txt: shields /api and points at the sitemap", /Disallow: \/api\//.test(robots) && /Sitemap:/.test(robots));
 }
 
+// ---- 1b. dish photography actually returns PHOTOS -------------------------
+//
+// Status codes cannot see this failure, which is why it went unnoticed. The
+// dish JPEGs are proxied (/images/* -> IMAGE_UPSTREAM) to the legacy service,
+// whose SPA fallback answers ANY unmatched path with index.html and HTTP 200.
+// A missing photo is therefore indistinguishable from a present one to
+// anything that only reads the status line — and the storefront's SafeImage
+// contract then degrades to a branded tile, so the page looks intentional
+// rather than broken. Both behaviours are correct on their own; together they
+// make a total photo outage silent.
+//
+// Measured 2026-08-18: ALL 63 of the 112 live dishes whose image is a local
+// /dishes/*.jpg path returned 8464 bytes of text/html — the photo library
+// (~280 JPGs, ~196 MB) is not in git, so it was never in the legacy service's
+// build context. See docs/IMAGE-ASSET-STRATEGY.md.
+//
+// Assert on CONTENT-TYPE, not status. Sampled rather than exhaustive: the
+// failure mode is all-or-nothing (a missing library, not individual gaps), and
+// this runs every two hours.
+{
+  const menuJson = await fetch(`${BASE}/api/menu/public`).then((r) => r.json()).catch(() => null);
+  const items = Array.isArray(menuJson) ? menuJson : (menuJson?.dishes ?? menuJson?.items ?? []);
+  // `/dishes/x.jpg` is served by the legacy app at both /dishes/ and
+  // /images/dishes/, but only /images/* is proxied — the storefront maps it
+  // (lib/catalog.ts). Mirror that mapping so this checks the URL a browser
+  // actually requests.
+  const localPaths = items
+    .map((d) => d?.image)
+    .filter((u) => typeof u === "string" && u.startsWith("/"))
+    .map((u) => (u.startsWith("/dishes/") ? `/images${u}` : u));
+
+  if (localPaths.length === 0) {
+    check("dish photos: catalog uses no proxied local images", true, "all remote-hosted");
+  } else {
+    const sample = localPaths.slice(0, 8);
+    const types = await Promise.all(
+      sample.map(async (p) => {
+        try {
+          const r = await fetch(`${BASE}${p}`);
+          return { p, ok: r.ok, ct: r.headers.get("content-type") || "" };
+        } catch (e) {
+          return { p, ok: false, ct: `unreachable: ${String(e).slice(0, 60)}` };
+        }
+      }),
+    );
+    const notImages = types.filter((t) => !/^image\//.test(t.ct));
+    check(
+      "dish photos: proxied /images/* returns image bytes, not the SPA fallback",
+      notImages.length === 0,
+      notImages.length === 0
+        ? `${sample.length}/${localPaths.length} sampled, all image/*`
+        : `${notImages.length}/${sample.length} served non-image (${notImages[0].ct}) e.g. ${notImages[0].p}` +
+          ` — ${localPaths.length} of ${items.length} live dishes use local paths`,
+    );
+  }
+}
+
 // ---- 2. same-origin API proxy (the login-fix load-bearing wall) ---------
 {
   let apiOk = false, apiDetail = "";
