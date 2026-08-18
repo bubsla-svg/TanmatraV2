@@ -10,9 +10,9 @@ the repo's own CI workflows (`.github/workflows/verify.yml`, `storefront.yml`, `
 
 | Fact | Value |
 |------|-------|
-| Repository | `tanmatra6-wq/Wellness-Foods` (public — no credentials needed to clone) |
-| Clone URL (HTTPS) | `https://github.com/tanmatra6-wq/Wellness-Foods.git` |
-| Clone URL (SSH) | `git@github.com:tanmatra6-wq/Wellness-Foods.git` |
+| Repository | `bubsla-svg/TanmatraV2` (public — no credentials needed to clone) |
+| Clone URL (HTTPS) | `https://github.com/bubsla-svg/TanmatraV2.git` |
+| Clone URL (SSH) | `git@github.com:bubsla-svg/TanmatraV2.git` |
 | Default branch | `main` |
 | Size | ~450 MB of git data — prefer a shallow clone (§3) |
 | Git LFS | **Not used** |
@@ -48,11 +48,11 @@ These are hard requirements. Installs or builds fail without them.
 
 ```bash
 # 1. Clone (shallow — fastest, sufficient for building and testing)
-git clone --depth 1 https://github.com/tanmatra6-wq/Wellness-Foods.git
-cd Wellness-Foods
+git clone --depth 1 https://github.com/bubsla-svg/TanmatraV2.git
+cd TanmatraV2
 
 #    …or, if you need commit history (blame, bisect, merging old branches):
-#    git clone --filter=blob:none https://github.com/tanmatra6-wq/Wellness-Foods.git
+#    git clone --filter=blob:none https://github.com/bubsla-svg/TanmatraV2.git
 
 # 2. Activate the exact pinned toolchain
 corepack enable
@@ -109,8 +109,8 @@ If the target environment cannot run `git clone`, download the archive of `main`
 (public repo, no auth):
 
 ```bash
-curl -L https://github.com/tanmatra6-wq/Wellness-Foods/archive/refs/heads/main.tar.gz -o wellness-foods.tar.gz
-# or .zip: https://github.com/tanmatra6-wq/Wellness-Foods/archive/refs/heads/main.zip
+curl -L https://github.com/bubsla-svg/TanmatraV2/archive/refs/heads/main.tar.gz -o tanmatrav2.tar.gz
+# or .zip: https://github.com/bubsla-svg/TanmatraV2/archive/refs/heads/main.zip
 ```
 
 ### 5.1 Mandatory files/directories (build breaks without them)
@@ -145,8 +145,9 @@ curl -L https://github.com/tanmatra6-wq/Wellness-Foods/archive/refs/heads/main.t
 `node_modules/`, `.next/`, `dist/`, `out-tsc/`, `coverage/`, `*.tsbuildinfo`,
 `playwright-report/`, `test-results/`, `blob-report/`, `.expo/`, `.cache/`, `.local/`,
 `tmp/`, `key.json`, any `.env` / `.env.*` file **except** the committed
-`artifacts/api-server/.env.example`, `artifacts/tanmatra/.env.example`, and
-`artifacts/tanmatra/.env.production` (public VITE_* build vars only).
+`artifacts/api-server/.env.example`, `artifacts/storefront/.env.example`,
+`artifacts/tanmatra/.env.example`, and `artifacts/tanmatra/.env.production`
+(public VITE_* build vars only).
 
 If you copied files from an existing working tree instead of cloning, delete every §5.3
 path before installing — stale `.next/` in particular causes typecheck failures unrelated
