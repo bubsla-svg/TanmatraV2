@@ -8,10 +8,7 @@
 # alphabetical positions merge without conflict.
 artifacts/api-server/src/lib/adminGate.test.ts
 artifacts/api-server/src/lib/b2b/b2b.test.ts
-artifacts/api-server/src/lib/backupRestoreTest.test.ts
 artifacts/api-server/src/lib/bridgeCredit.test.ts
-artifacts/api-server/src/lib/businessAlertsAndDlq.test.ts
-artifacts/api-server/src/lib/cdcEngine.test.ts
 artifacts/api-server/src/lib/chargeMandate.halt.test.ts
 artifacts/api-server/src/lib/chargeMandateScheduler.test.ts
 artifacts/api-server/src/lib/checkoutSafety.test.ts
@@ -33,12 +30,9 @@ artifacts/api-server/src/lib/purchaseIngest.test.ts
 artifacts/api-server/src/lib/queue.redisConfig.test.ts
 artifacts/api-server/src/lib/rdCopilot/adherence.orderKind.test.ts
 artifacts/api-server/src/lib/rdCopilot/adherence.test.ts
-artifacts/api-server/src/lib/secretsAndGitScan.test.ts
 artifacts/api-server/src/lib/stockSync.test.ts
 artifacts/api-server/src/lib/subscriptionAbandonmentScheduler.test.ts
 artifacts/api-server/src/lib/subscriptionRules.test.ts
-artifacts/api-server/src/lib/supplyChainSecurity.test.ts
-artifacts/api-server/src/lib/tenantIsolation.test.ts
 artifacts/api-server/src/lib/trialLifecycleScheduler.test.ts
 artifacts/api-server/src/lib/truecaller.test.ts
 artifacts/api-server/src/lib/userBrief/userBrief.test.ts
