@@ -30,6 +30,8 @@
     "bom-backfill": "tsx ./src/bom-backfill.ts",
     "propose-bom-map": "tsx ./src/propose-bom-map.ts",
     "menu-catalog-v2": "tsx ./src/menu-catalog-v2-apply.ts",
+    "test:dish-data-floor": "node --test --import tsx ./src/lib/dishDataFloorPlan.test.ts",
+    "draft-thin-dishes": "tsx ./src/draft-thin-dishes.ts",
     "test": "tsx ./src/verify-dish-integrity.ts",
     "stress-test-ledger": "tsx ./src/stress-test-ledger.ts",
     "optimize-images": "tsx ./src/optimize-dish-images.ts",

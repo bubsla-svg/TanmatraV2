@@ -146,13 +146,18 @@ jobs:
       # precedence, merge-source archival, idempotency, the non-integer-price
       # abort, and the slugify lockstep with the petpooja mapper. Prices move
       # through this engine, so it lives with the money-path units.
+      #
+      # dishDataFloorPlan decides which dishes leave the customer menu, so its
+      # tests belong to the same family: pure, DB-free, and the ones that
+      # matter are the ones pinning what it must NOT draft.
       - name: Menu v2 plan engine (scripts)
         if: ${{ !cancelled() }}
         working-directory: scripts
         run: |
           node --test --import tsx \
             ./src/lib/menuCatalogV2Plan.test.ts \
-            ./src/lib/menuOptionGroups.test.ts
+            ./src/lib/menuOptionGroups.test.ts \
+            ./src/lib/dishDataFloorPlan.test.ts
 
       # The step above predates the storefront and covers only the legacy SPA,
       # so the money path that is actually live — a-la-carte checkout, plan
