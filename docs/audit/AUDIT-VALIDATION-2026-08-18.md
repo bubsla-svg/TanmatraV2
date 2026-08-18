@@ -343,6 +343,70 @@ the premises must be corrected first).
 
 ---
 
+## Addendum — remediation, 2026-08-18
+
+Everything in Part 5 was actioned in the same branch. Two corrections to this
+report, and one finding that only appeared once the work started.
+
+**Corrections to this document.** The route count here (460, and CLAUDE.md's
+441) was grep-based and counted source occurrences. Walking the mounted router
+tree gives **396** actually-registered paths, so the two specs together cover
+~20% of the surface, not the 17.2% stated above. And the Finding B figure was
+"~49 unreached"; running all 50 baselined files established the true split —
+one (`dispatch.bulkhead`) is reached through a package script the gate cannot
+see, and 49 genuinely ran nowhere.
+
+| Priority | Outcome |
+|---|---|
+| 1. Wire the unreached suites | **Done.** All 50 run against a real Postgres; 46 passed, 4 were genuinely broken and were fixed rather than wired in green. 445 tests added across 10 steps. Baseline drained 50 → 1. `lint:test-reach` 304/354 → 357/358. |
+| 2. Dual-spec split | **Half done, deliberately.** `openApiSpecFile.test.ts` now asserts every path `openapi.yaml` declares is a real registered route (all 40 are), and that the two specs cannot describe one path differently. Merging or deleting either remains a product decision. CLAUDE.md gains the two-spec map. |
+| 3. Fail-open vs fail-closed | **Done.** `failClosed` option, default off. Opted in for `orders` (fronts `/api/checkout`), `payments`, `orders:claim`. Public reads stay fail-open. |
+| 4. Rate-limit docs | **Done, generated.** `docs/RATE-LIMITS.md` is produced from `rateLimitMiddleware.ts` + `app.ts` and verified in CI, so the numbers are never written by hand — the failure mode this report caught in the audit's own table. |
+| 5. Deploy-completeness monitor | **Retargeted.** Rather than a new monitor, the api-server gained the deploy-truth check the other two services already had (below). The paths-filter race itself is untouched — that needs the diff base fixed. |
+| 6. Codegen-freshness gate | **Done.** `codegen:verify` in CI. The committed output was already stale (formatting only, semantically identical, verified). |
+| 7. Image-asset strategy | **Done, and it found a live outage** (below). |
+| 8. Pool metrics | **Done.** `poolSnapshots()` over both pools; `healthz` warns on saturation, defined as `waiting > 0` rather than busy-at-ceiling. |
+
+### Two findings that only surfaced during the work
+
+**`--test-force-exit` silently drops tests.** Running the newly-wired DB-free
+set with the flag reported a different count per run — 319 / 294 / 319 / 286 /
+299 — while exiting 0 every time. Without it: 319, five times out of five. The
+runner kills the process while files are still registering, so tests vanish and
+CI goes green having run an unknown subset. The pre-existing money-path step is
+stable at 667 and was left alone; no new step uses the flag.
+
+**The api-server was deploying on a liveness check alone.** `deploy.yml`
+verifies the storefront and legacy SPA by polling `/api/build` until the serving
+revision reports the deployed sha, and its own comment explains that a smoke
+test "cannot catch a stale serve". The api-server had no such endpoint —
+confirmed live: `/api/livez` and `/api/healthz` 200, `/api/build` 404. The
+money-path service was the one of three that could not tell "rolled" from "did
+not roll". It now has `/api/build`, `BUILD_SHA` on its revision, and a
+deploy-truth step that reaches the existing rollback.
+
+### The one thing that could not be fixed here
+
+**56% of live dish photography is missing in production.** Of 112 live dishes,
+63 use a local `/dishes/<slug>.jpg` path, and all 63 return `200 text/html`
+(8464 bytes — the legacy SPA's `index.html`) instead of a JPEG. The library
+(~280 JPGs, ~196 MB) is not in the repository, so it was never in the legacy
+service's build context.
+
+It stayed invisible because three correct behaviours compose badly: an SPA
+fallback that answers any path with `200`, a `SafeImage` contract that degrades
+to a branded tile so the page looks deliberate, and a monitor that asserted on
+status codes rather than content-type.
+
+Fixing it needs the actual image files, which exist in no clone here. What
+shipped is the detector: `scripts/synthetic-check.mjs` now asserts `image/*`
+and **fails against production today**, naming the count. It will stay red until
+the library is restored — see `docs/IMAGE-ASSET-STRATEGY.md` for the
+measurement, three costed options, and the fix that matters either way (serve a
+real 404 for a missing file).
+
+---
+
 ## Ground truth captured during validation
 
 ```
