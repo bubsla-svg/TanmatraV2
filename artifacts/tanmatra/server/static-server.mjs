@@ -139,8 +139,28 @@ function isAssetRequest(urlPath) {
   return ext !== "" && ASSET_EXTENSIONS.has(ext);
 }
 
+/**
+ * The dish photo library lives at ONE location on disk —
+ * `public/images/dishes/` — because that is the path the storefront proxies
+ * (`next.config.ts` rewrites `/images/:path*` to this origin).
+ *
+ * The catalog, however, stores its `image` field as `/dishes/<slug>.jpg`, and
+ * the library has always been documented as reachable at both spellings (see
+ * the storefront's lib/catalog.ts). Rather than keep two copies of 16 MB, the
+ * bare `/dishes/` spelling is aliased onto the canonical location.
+ *
+ * Alias BEFORE the existence check, so a genuinely missing photo still reaches
+ * the 404 below instead of the SPA shell — that disguise is what hid the
+ * 2026-08-18 outage in the first place.
+ */
+function aliasLegacyDishPath(urlPath) {
+  return urlPath.startsWith("/dishes/")
+    ? `/images${urlPath}`
+    : urlPath;
+}
+
 function serveStatic(req, res) {
-  const u = decodeURIComponent(req.url.split("?")[0]);
+  const u = aliasLegacyDishPath(decodeURIComponent(req.url.split("?")[0]));
   let f = path.join(ROOT, u === "/" ? "/index.html" : u);
   // Path traversal guard — resolved file must stay inside ROOT.
   if (!path.resolve(f).startsWith(ROOT)) {

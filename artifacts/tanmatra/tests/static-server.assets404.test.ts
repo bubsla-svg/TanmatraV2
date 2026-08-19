@@ -119,6 +119,44 @@ test("missing assets of every kind 404 — not just images", async () => {
   }
 });
 
+// ── The /dishes/ alias ──────────────────────────────────────────────────────
+//
+// The catalog stores dish photos as `/dishes/<slug>.jpg`, but the storefront
+// proxies only `/images/*`, and the library is stored once under
+// `public/images/dishes/`. The bare spelling is aliased onto it rather than
+// keeping a second 16 MB copy. These cases pin that the alias resolves, and —
+// more importantly — that it did not reintroduce the disguise it sits next to.
+
+test("the legacy /dishes/ spelling resolves to the same file", async () => {
+  const viaImages = await fetch(`${base}/images/dishes/present.jpg`);
+  const viaLegacy = await fetch(`${base}/dishes/present.jpg`);
+  assert.equal(viaLegacy.status, 200, "the catalog's own spelling must serve");
+  assert.equal(viaLegacy.headers.get("content-type"), "image/jpeg");
+  assert.deepEqual(
+    Buffer.from(await viaLegacy.arrayBuffer()),
+    Buffer.from(await viaImages.arrayBuffer()),
+    "both spellings must serve identical bytes — they are one file",
+  );
+});
+
+test("a MISSING photo under the alias is still a 404, not the shell", async () => {
+  // The alias runs before the existence check precisely so this stays true.
+  // If it ever falls through to the SPA, the 2026-08-18 outage becomes
+  // invisible again by exactly the same mechanism.
+  const res = await fetch(`${base}/dishes/definitely-absent.jpg`);
+  assert.equal(res.status, 404);
+  const body = await res.text();
+  assert.ok(!/spa shell/i.test(body), "the alias must not resurrect the disguise");
+});
+
+test("the alias does not swallow a real route that starts with /dishes", async () => {
+  // `/dishes` (no extension) is a client route, not a file. It must still get
+  // the shell — aliasing must not turn navigation into a 404.
+  const res = await fetch(`${base}/dishes`);
+  assert.equal(res.status, 200);
+  assert.ok(/spa shell|home/i.test(await res.text()));
+});
+
 test("a missing .html page still falls through to the shell", async () => {
   // Deliberately NOT treated as an asset: a prerendered page that did not get
   // generated should still hydrate the right route rather than hard-404.

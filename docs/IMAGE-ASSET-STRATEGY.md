@@ -1,8 +1,12 @@
-# Dish photography — where it comes from, and why 56% of it is missing
+# Dish photography — how 56% of it went missing, and how it was restored
 
-**Status as of 2026-08-18: PARTIALLY BROKEN IN PRODUCTION.** 63 of the 112 live
-dishes render a placeholder tile instead of a photograph on `tanmatra.food`.
-This is not a prediction; it is measured (method at the bottom).
+**Status: RESOLVED in this branch, pending deploy.** All 63 affected photos have
+been recovered and re-encoded; the origin bug that hid the outage is fixed.
+
+The original diagnosis said the library "exists in no clone" and would need
+re-shooting. **That was wrong**, and the error mattered — it made a
+one-command recovery look like a photography project. Every one of the 63 was
+sitting in this repository's own git history the whole time.
 
 ---
 
@@ -46,7 +50,20 @@ GET https://tanmatra-475157072474.asia-south2.run.app/manifest.webmanifest
 
 ### Root cause
 
-The photo library is **not in the repository**. `next.config.ts` describes it as
+Commit `7656b473` (2026-08-02, "chore: remove all raster image assets") deleted
+all 3,065 tracked rasters — 368 MB, 97% of the repo's tracked bytes — "ahead of
+a full image redo". The redo had not happened 16 days later.
+
+Nothing in that change connected "tracked under `artifacts/tanmatra/public/`"
+to "served to paying customers at `/images/dishes/`", so a repo-hygiene commit
+silently took out over half the menu's photography.
+
+Worth noting for the next such cleanup: it did not even achieve its stated aim.
+`git count-objects` still reports a **480 MB** pack, because the blobs remain in
+history — the deletion shrank the working tree, not the clone. The saving was
+largely illusory; the outage was not.
+
+Historically the photo library is **not in the working tree**. `next.config.ts` describes it as
 "~280 base JPGs, ~196 MB … in the legacy app's public/ dir", but
 `git ls-tree HEAD artifacts/tanmatra/public` lists **17 files and nothing under
 `images/`**. The JPEGs were therefore never in the legacy service's Docker build
@@ -73,21 +90,39 @@ half the menu's photography.
 
 ## What has been done about it
 
-`scripts/synthetic-check.mjs` now samples the catalog's local image paths and
-asserts the response is `image/*`. It runs against production every two hours
-and after every deploy.
+**1. The origin no longer disguises a missing file.** `static-server.mjs` now
+returns a real `404` for a missing *file* while a missing *route* still gets the
+SPA shell. Both halves are asserted — a 404 on `/menu` would be worse than the
+bug being fixed.
 
-**It will fail until the library is restored.** That is intended — the outage is
-real and current. It is not a monitor that can be silenced by tuning; the only
-way to green is to make the photos load.
+**2. All 63 photos are restored.** Recovered from `7656b473^` / `a70b2754^` and
+re-encoded: 51.5 MB of near-uncompressed 1024px masters became **16 MB**, an 84%
+reduction at mean 132 KB, plus the `-200/-400/-800` derivatives
+`lib/imageLoader.ts` redirects to. Stored once under `public/images/dishes/`;
+the catalog's own `/dishes/<slug>.jpg` spelling is aliased onto that path rather
+than kept as a second copy.
+
+Verified end-to-end against the real container layout (`COPY build/client
+./public`), not just unit-tested: all 63 serve `200 image/jpeg` under **both**
+spellings, derivatives resolve, a missing photo still 404s, and `/menu` still
+returns the shell.
+
+**3. The detector stays.** `scripts/synthetic-check.mjs` asserts `image/*`
+rather than a status code. It still fails against production until this branch
+deploys — which is the point; it is the check that would have caught the
+original outage on day one.
 
 ---
 
-## Fixing it — the decision, and the options
+## Where the library should ultimately live
 
-The blocker is that **nobody in this repo has the ~196 MB of JPEGs**. They exist
-in whatever working copy last deployed the legacy service, or nowhere. Recover
-or re-shoot them first; everything below assumes they are in hand.
+Restoring to the repo fixes production now; it is not the end state. The
+options below stand, and Option B remains the destination.
+
+The decision taken here was to restore rather than wait: the site is visibly
+broken in customer-facing flows today, the 16 MB is 3.5% of a pack that already
+carries the 368 MB of originals, and it is revertible in one commit once a
+bucket exists.
 
 ### Option A — restore the library to the legacy service (fastest)
 Commit the JPEGs under `artifacts/tanmatra/public/images/dishes/` and redeploy.
