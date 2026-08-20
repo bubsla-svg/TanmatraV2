@@ -54,7 +54,7 @@ The legacy SPA (`artifacts/tanmatra`) also has a `test` script, and `verify.yml`
 `money-unit` job drives both packages by **glob**, not by a hand-written list:
 
 ```
-node --test --import tsx "../tanmatra/src/**/*.test.ts"     # 163 tests
+node --test --import tsx "../tanmatra/src/**/*.test.ts"     # 28 tests
 node --test --import tsx "../storefront/lib/**/*.test.ts"   # 952 tests
 ```
 

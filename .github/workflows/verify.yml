@@ -118,24 +118,28 @@ jobs:
       # still the app on tanmatra.food. It had no wired test script, so CI ran
       # these nowhere; they are driven through the api-server tsx loader.
       #
-      # This was a hand-written list of seven files. The package has ten, so
-      # three ran in no CI job at all — planMacroGuard (plan macro-deviation
-      # warnings), useWizardState (parsing untrusted URL/draft input) and
-      # sessionReplay: 28 tests, 40% of the package's corpus, all passing, all
-      # invisible. Enumeration is the bug, so this is a glob.
+      # This was a hand-written list, which silently missed files as the
+      # package grew. Enumeration is the bug, so this is a glob.
       #
       # The glob is QUOTED so **node** expands it, not the shell — the quotes
       # are load-bearing, not style. Actions runs `run:` under bash with
       # globstar OFF, and there `**` is just `*`: `src/**/*.test.ts` means
-      # "exactly one directory below src". Measured, unquoted, in this repo:
-      # bash yields the six files in `src/lib/` and silently drops the four in
-      # `src/components/*/` — the step goes green having run 6 of 10, which is
-      # harder to notice than running none. Node's expander treats `**` as
-      # zero-or-more segments, so quoted it finds all ten. Same reason the
-      # api-server's own `test` script quotes `"./src/**/*.test.ts"`.
+      # "exactly one directory below src", so anything under `src/components/*/`
+      # is silently dropped and the step goes green having run a subset — harder
+      # to notice than running none. Node's expander treats `**` as
+      # zero-or-more segments. Same reason the api-server's own `test` script
+      # quotes `"./src/**/*.test.ts"`. Keep the quotes even though every
+      # surviving file currently sits in `src/lib/`: the next one added a level
+      # down is what this protects.
       #
-      # Verified all ten are DB-free and network-free: 70 tests, 70 pass, with
-      # DATABASE_URL and REDIS_URL unset.
+      # 4 files, 28 tests, DB- and network-free (verified with DATABASE_URL and
+      # REDIS_URL unset). It was 40 files / 163 tests until the dead-code sweep;
+      # 36 of those files tested customer-route code deleted with it, and the
+      # two remaining subjects moved — checkoutLedger's penny invariant is
+      # covered by the api-server money suite, planMacroGuard by the
+      # storefront's (it was ported there). NOTE: a glob that matches NOTHING
+      # exits 0, so if this ever drops to zero files the step stays green while
+      # running nothing. Delete the step rather than leave it as a no-op.
       - name: Money-math unit tests (web — legacy SPA)
         if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
