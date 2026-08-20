@@ -57,9 +57,18 @@ or a cross-cutting one.
   doc appearing under `kg docs` claims to describe the file; it may be wrong or
   outdated. Treat it as a lead, not as truth.
 - **A file absent from the graph is not absent from the repo.** The extractor
-  covers TS/JS and markdown, skips `.claude/` and `.agents/` skill packs, and
-  resolves only static imports — dynamic `import()` and string-built paths are
-  invisible. When the graph says nothing, fall back to Grep.
+  covers TS/JS and markdown and skips `.claude/` and `.agents/` skill packs. It
+  resolves static imports, `@/` path-alias imports, and dynamic `import()` with
+  a **literal** specifier (so `React.lazy(() => import("@/x"))` is an edge).
+  Still invisible: paths built from variables or template strings, and anything
+  reached by a runtime registry. When the graph says nothing, fall back to Grep.
+
+- **A missing edge is the dangerous direction.** It makes a live module look
+  orphaned, which is how a dead-code sweep deletes something the app loads at
+  runtime. Before acting on "nothing depends on this", grep the basename — a
+  cheap second opinion that costs one call. Literal dynamic imports went
+  unresolved until 2026-08-20 and did exactly this to
+  `components/CommandPalette.tsx`.
 
 ## Staleness
 
