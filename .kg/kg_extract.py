@@ -78,7 +78,14 @@ def owning_pkg(path):
 
 
 # ---------- 2. modules + import edges ----------
-IMPORT_RE = re.compile(r"""(?:from|import|require\()\s*['"]([^'"]+)['"]""")
+# The optional `\(` is load-bearing: without it `import("x")` never matches,
+# because the original pattern demanded whitespace-then-quote straight after
+# `import`. That silently dropped every React.lazy/dynamic-import edge — and a
+# MISSING edge is the dangerous direction, since it makes a live module look
+# orphaned. Found by a dead-code sweep of artifacts/tanmatra: layout/Header.tsx
+# (live admin chrome) lazy-imports CommandPalette, which the graph reported as
+# unreachable and a naive cleanup would have deleted.
+IMPORT_RE = re.compile(r"""(?:\bfrom|\bimport|\brequire)\s*\(?\s*['"]([^'"]+)['"]""")
 module_ids = set()
 
 for p in files:
