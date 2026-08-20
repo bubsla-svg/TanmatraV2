@@ -81,6 +81,25 @@ test("an unset sha can never be mistaken for a real commit", async () => {
   assert.ok(body.sha && !/^[0-9a-f]{40}$/.test(body.sha), "fallback must not look like a sha");
 });
 
+test("builtAt is a clean ISO instant, not a shell-quoted string", async () => {
+  // Regression: the api-server's deploy step originally set
+  //   BUILT_AT='$(date -u ...)'
+  // inside an already-double-quoted --update-env-vars string, so bash never
+  // stripped the single quotes and the value shipped as "'2026-08-20T02:49:17Z'"
+  // — visible in production until it was fixed. sha was unaffected, which is
+  // why deploy-truth still worked and nothing else caught it.
+  //
+  // Asserting the SHAPE here means a malformed env value fails a test rather
+  // than quietly becoming an unparseable timestamp in an ops surface.
+  const { body } = await getBuild({ BUILT_AT: "2026-08-20T02:49:17Z", BUILD_SHA: "abc" });
+  assert.equal(body.builtAt, "2026-08-20T02:49:17Z");
+  assert.ok(!/['"]/.test(body.builtAt!), "builtAt must carry no quote characters");
+  assert.ok(
+    !Number.isNaN(Date.parse(body.builtAt!)),
+    `builtAt must parse as a date, got ${body.builtAt}`,
+  );
+});
+
 test("requires no database — it is polled before dependencies are trusted", async () => {
   // DATABASE_URL points at a dummy host throughout this file; reaching a real
   // connection here would hang the deploy's verification loop.
