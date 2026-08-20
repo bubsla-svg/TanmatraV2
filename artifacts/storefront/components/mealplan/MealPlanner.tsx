@@ -75,6 +75,26 @@ export function MealPlanner() {
       ) : (
         <>
           <PlanSummary plan={plan} accepted={mp.accepted} />
+          {/* Deliberately NOT role="alert": the swap succeeded. This is the
+              clinical consequence of it, and it sits under the summary because
+              that is where the day's macro claims are read. --warning paints the
+              signal only — the copy stays on --ink, which is the one that has to
+              pass contrast in both themes. */}
+          {mp.macroWarning && (
+            <p
+              role="status"
+              aria-live="polite"
+              className="flex items-start gap-2 rounded-2xl border bg-surface px-4 py-3 text-sm leading-relaxed text-ink"
+              style={{ borderColor: "var(--warning)" }}
+            >
+              <span
+                aria-hidden
+                className="mt-[0.4rem] h-2 w-2 shrink-0 rounded-[var(--radius-full)]"
+                style={{ backgroundColor: "var(--warning)" }}
+              />
+              {mp.macroWarning}
+            </p>
+          )}
           <div className="flex flex-col gap-4">
             {plan.days.map((day, i) => (
               <DayCard key={day.date + i} day={day} dayIndex={i} editable={editable} onSwap={handleSwapRequest} onRegen={handleRegenDay} />
