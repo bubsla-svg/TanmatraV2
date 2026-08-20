@@ -10,7 +10,9 @@ import { useEffect } from "react";
  * FILTER state across that (PersonalizedMenu seeds chip/filters/query from
  * the URL). Neither covers the case this fixes: leaving /menu entirely —
  * tapping into a dish PDP, Care, Account — and coming back. The route
- * remounts, the server re-renders 112 cards, and the reader lands at the
+ * remounts, the server re-renders every card (95 of them as of 2026-08-20;
+ * the exact number moves with the catalogue and is not what matters here —
+ * only that it is a long page), and the reader lands at the
  * top of section 1 having been in Smoothies & Juices. On a page this long
  * that is not a small annoyance; it is losing your place in a list you were
  * halfway through choosing from.

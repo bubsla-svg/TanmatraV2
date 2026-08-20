@@ -136,12 +136,19 @@ Libraries, each imported by at least one deployed service:
 >
 > | Count | Meaning | Where it comes from |
 > |------:|---------|---------------------|
-> | **112** | Live **orderable** dishes — what a customer actually browses | `GET /api/menu/public` (verified 2026-08-18) |
+> | **95** | Live **orderable** dishes — what a customer actually browses | `GET /api/menu/public` (verified 2026-08-20) |
 > | **116** | The **static fallback** catalog — what a DB-less clone renders | `DISHES` in `lib/menu-catalog/src/index.ts` |
-> | **145** | **All** DB rows, including dead and archived SKUs | `menu_items` table; the basis of finding F5 |
+> | **163** | **All** DB rows, including drafted, dead and archived SKUs | `menu_items` table (counted by the Draft Thin Dishes plan, 2026-08-20) |
 >
-> A statement like "17 of 145 dishes cannot state their macros" is about the whole table; "112
-> dishes" is about the live menu. Neither is the 116 in this repo's source.
+> A statement like "17 of 163 dishes cannot state their ingredients" is about the whole table;
+> "95 dishes" is about the live menu. Neither is the 116 in this repo's source.
+>
+> **The live count was 112 until 2026-08-20**, when the data-floor apply drafted the 17 dishes
+> whose `ingredients` was the placeholder `["fresh ingredients"]` — they now sit at
+> `allergen_review_state = 'pending_review'`, hidden from customers and visible to staff/RD.
+> They return to the live count the moment someone writes their ingredients and an RD reviews
+> them, so **re-measure rather than assuming 95 is durable**. The full breakdown that run
+> reported: 163 rows = 95 passing + 17 newly drafted + 18 already pending + 33 archived.
 
 > **Agent workspaces are usually sparse checkouts.** `git sparse-checkout list` typically
 > materialises only `artifacts/api-server`, `artifacts/storefront`, `lib`, `scripts`, `docs`,
