@@ -62,6 +62,13 @@ console.log("Checking:", BASE, "\n");
   // for a page that was serving 71 dishes perfectly. Cards link either to the
   // PDP (/dish/<slug>) or to the on-page quick view (/menu?dish=<slug>) — both
   // count, because what matters is that the menu came back with dishes in it.
+  // Fetched once and reused by the PDP check below, so the monitor makes one
+  // catalog request rather than two.
+  const menuJsonForPdp = await fetch(`${BASE}/api/menu/public`)
+    .then((r) => r.json())
+    .then((j) => (Array.isArray(j) ? j : (j?.dishes ?? j?.items ?? [])))
+    .catch(() => null);
+
   const menu = await fetch(`${BASE}/menu`).then((r) => r.text());
   const menuDishLinks = new Set(
     [...menu.matchAll(/href="\/(?:dish\/|menu\?dish=)([a-z0-9-]+)"/g)].map((m) => m[1]),
@@ -72,8 +79,33 @@ console.log("Checking:", BASE, "\n");
     `${menuDishLinks} dishes, ${menu.length}B`,
   );
 
-  const dish = await fetch(`${BASE}/dish/signature-quinoa-salad`).then((r) => r.text());
-  check("dish PDP: prerendered + structured data", /application\/ld\+json/.test(dish) && /Signature Quinoa/i.test(dish));
+  // The PDP subject is taken from the LIVE catalog, never hardcoded.
+  //
+  // This check used to pin the slug `signature-quinoa-salad`. That dish left
+  // the catalog at some point and nobody updated the monitor, so from then on
+  // it fetched a soft-404 page and failed every two hours — for a reason that
+  // had nothing to do with the health of dish PDPs. A monitor that is red for
+  // a stale fixture is worse than no monitor: it trains people to ignore it,
+  // and it masked the real dish-photo outage sitting alongside it.
+  //
+  // Deriving the subject from /api/menu/public means the check follows the
+  // catalog instead of drifting from it. It also asserts something stronger
+  // than the old literal did — that the PDP renders THAT dish's own name.
+  const firstDish = (menuJsonForPdp ?? []).find((d) => d?.slug && d?.name);
+  if (!firstDish) {
+    check("dish PDP: prerendered + structured data", false, "no dish with a slug+name in /api/menu/public");
+  } else {
+    const dish = await fetch(`${BASE}/dish/${firstDish.slug}`).then((r) => r.text());
+    const hasLd = /application\/ld\+json/.test(dish);
+    // Compare on the dish's own name, HTML-escaped the way the page emits it.
+    const escaped = firstDish.name.replace(/&/g, "&amp;").replace(/'/g, "&#39;");
+    const hasName = dish.includes(firstDish.name) || dish.includes(escaped);
+    check(
+      "dish PDP: prerendered + structured data",
+      hasLd && hasName,
+      `/dish/${firstDish.slug} — ld+json:${hasLd} name:${hasName}`,
+    );
+  }
 
   const sitemap = await fetch(`${BASE}/sitemap.xml`).then((r) => r.text());
   const locs = (sitemap.match(/<loc>/g) || []).length;
