@@ -66,7 +66,17 @@ All 277 dead source files were triaged for reuse value against what the
 storefront and api-server already have. Almost everything is superseded; one
 file is genuinely worth porting and one is actively dangerous to revive.
 
-**Port: `src/lib/planMacroGuard.ts` (+ its 8 tests).** When a patient on a
+**Port: `src/lib/planMacroGuard.ts` (+ its 8 tests). DONE — landed as
+`artifacts/storefront/lib/planMacroGuard.ts` with 12 tests, wired through
+`components/mealplan/useMealPlan.ts` (`macroWarning`) and rendered in
+`MealPlanner.tsx`.** One behaviour deliberately diverges: the storefront's
+`MealPlanDay` slots are optional where the SPA's were required, so an
+incomplete day is not judged at all — summing a half-loaded day would blame a
+missing dinner on the patient's protein intake. Rationale is in the file. The
+original is now safe to delete with the rest. The reasoning that justified the
+port:
+
+When a patient on a
 clinical plan swaps a slot, the new day can drift off the plan's prescribed
 macro targets, and a green "swapped ✓" toast hides that. This pure module
 computes day totals against plan targets and flags >10% drift so the UI can
