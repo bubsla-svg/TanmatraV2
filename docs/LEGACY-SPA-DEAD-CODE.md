@@ -101,7 +101,9 @@ SPA is a string literal, so #94's extractor resolves all of them.
 
 **This package is load-bearing for the live site.** The storefront's
 `IMAGE_UPSTREAM` proxies `/images/*` through this service, so a deletion that
-breaks its build 404s every dish photo on tanmatra.food. CSS is not in the
+breaks its build blanks the photos of the 46 live dishes served that way — of
+95; the other 49 carry absolute Unsplash URLs and would be unaffected
+(measured 2026-08-20). CSS is not in the
 graph at all — only `.ts`/`.tsx` — so a stylesheet imported solely by a dead
 component would appear in no reachability output. Checked by hand: every `.css`
 in the package (`src/index.css`, `src/tanmatra-v2/theme.css`, the three

@@ -101,7 +101,7 @@ what Tanmatra *is*, it is these three and nothing else:
 |------|-------------------|------|
 | `artifacts/storefront` | `storefront` | **The customer web app, and what `tanmatra.food` serves.** Next.js 16 App Router. All new customer work goes here |
 | `artifacts/api-server` | `wellness-foods` | Express 5 backend, the source of truth for price and availability |
-| `artifacts/tanmatra` | `tanmatra` | Legacy React 19 + Vite SPA. Customer routes removed 2026-07-26; now an internal-only Admin ERP + RD console (`src/routes.ts`). **Still load-bearing for the live site**: the storefront's `IMAGE_UPSTREAM` proxies `/images/*` through it, so deleting it 404s every dish photo. See `docs/DOMAIN-CUTOVER.md` |
+| `artifacts/tanmatra` | `tanmatra` | Legacy React 19 + Vite SPA. Customer routes removed 2026-07-26; now an internal-only Admin ERP + RD console (`src/routes.ts`). **Still load-bearing for the live site**: the storefront's `IMAGE_UPSTREAM` proxies `/images/*` through it, and **46 of the 95 live dishes** get their photo that way — deleting it blanks those cards. The other 49 carry absolute Unsplash URLs and are unaffected (measured 2026-08-20 off `/api/menu/public`; re-measure rather than trusting the split). Mind the indirection: the API serves `/dishes/<slug>.jpg` and `storefront/lib/catalog.ts#toProxiedImage` maps it onto `/images/dishes/…` — the raw `/dishes/*` path 404s on the storefront, so testing that form "proves" a breakage that isn't real. See `docs/DOMAIN-CUTOVER.md` |
 
 Libraries, each imported by at least one deployed service:
 
