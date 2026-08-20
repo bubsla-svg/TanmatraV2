@@ -60,6 +60,44 @@ quoted in `CLAUDE.md` and `docs/CLONE-HANDOVER.md`. Re-measure and update both
 in the same PR, or the handover doc goes stale the moment it merges — that has
 already happened twice.
 
+## Salvage before deleting — audited 2026-08-20
+
+All 277 dead source files were triaged for reuse value against what the
+storefront and api-server already have. Almost everything is superseded; one
+file is genuinely worth porting and one is actively dangerous to revive.
+
+**Port: `src/lib/planMacroGuard.ts` (+ its 8 tests).** When a patient on a
+clinical plan swaps a slot, the new day can drift off the plan's prescribed
+macro targets, and a green "swapped ✓" toast hides that. This pure module
+computes day totals against plan targets and flags >10% drift so the UI can
+show the amber "done, but you're now short on protein" state. The storefront
+HAS the swap flow (`lib/mealPlanApi.ts#swapSlot`, consumed by
+`components/mealplan/useMealPlan.ts`) and NO guard behind it — the exact gap
+this closes. The types line up (both sides speak `MealPlanDay` /
+`MealPlanConstraints`), so the port is near-mechanical; the real work is the
+UI warning state. Note the oddity meanwhile: the guard's tests still run in CI
+via `verify.yml`'s tanmatra glob — dead app code with live tests.
+
+**Never revive: `src/lib/nutritionLabel.ts`.** It fabricates the label:
+micronutrients invented by regexing ingredient names ("spinach → +1.6 mg
+iron"), sodium assigned from a per-category table, saturated fat as a flat 32%
+of fat — and then mints "Lower sodium" / "Low saturated fat" claims from those
+invented numbers. That is finding F5 (unearned clinical claims) as executable
+code. Delete with prejudice; if a nutrition label ships, its numbers come from
+the catalog/BOM pipeline, not from this.
+
+**Superseded — delete without ceremony:** the API clients
+(`subscriptionsApi`, `corporateApi`, `wellnessApi`, `fulfillmentApi`,
+`userAddressesApi`, `razorpayClient`) all have live storefront equivalents;
+`services/` (PlanGeneration, ConstraintEvaluation, Pricing, Checkout…) is the
+client-side ancestor of what the api-server now owns (`icmrPrecisionPlanner`,
+`cartMath`); `checkoutLedger`'s penny-invariant lives in the api-server money
+tests, because the storefront deliberately keeps no client-side amounts;
+`menuVariants` predates M-4's server-side option groups; `useDialogA11y` is
+what Radix now provides; `useWizardState`, `sessionReplay`, `attribution` have
+storefront counterparts. The pre-Astryx UI components are superseded by the
+DS-0 decision itself.
+
 ## Suggested shape, if it is done
 
 One PR, deletions only, no refactors folded in. Delete source and its tests
