@@ -9,6 +9,7 @@ import {
   getPlans, generatePlan, swapSlot as apiSwapSlot, acceptPlan, discardPlan, regenerateDay, pickActivePlan,
   WEEK_CALENDAR_CYCLE, type MealPlan, type MealPlanSlot, type AcceptResult, type WeekDayCalendarKind,
 } from "@/lib/mealPlanApi";
+import { planSwapWarning } from "@/lib/planMacroGuard";
 
 type Phase = "loading" | "ready" | "needsAuth";
 
@@ -21,6 +22,13 @@ export interface UseMealPlan {
   busy: boolean;
   error: string | null;
   accepted: AcceptResult | null;
+  /**
+   * Amber notice when the last swap left that day off its prescribed macro
+   * targets. Null when the day is on target, when the plan sets no targets, or
+   * when nothing has been swapped this session. NOT an error — the swap
+   * succeeded; this is the clinical consequence of it.
+   */
+  macroWarning: string | null;
   weekCalendar: WeekDayCalendarKind[];
   cycleDay: (dayIndex: number) => void;
   reload: () => Promise<void>;
@@ -45,6 +53,11 @@ export function useMealPlan(): UseMealPlan {
   const [hiddenPlanId, setHiddenPlanId] = useState<number | null>(null);
   // gym/travel/wfh per weekday — applied on the NEXT generate (as overrides).
   const [weekCalendar, setWeekCalendar] = useState<WeekDayCalendarKind[]>(() => Array(7).fill("normal"));
+  // Which day the last successful swap touched. Remembered rather than computed
+  // in onSuccess: the warning has to read the REFRESHED day, and onSuccess fires
+  // before the invalidated query has come back. Deriving it below means the
+  // notice appears once the new day actually lands, and updates if it changes.
+  const [lastSwappedDay, setLastSwappedDay] = useState<number | null>(null);
 
   const cycleDay = useCallback((dayIndex: number) => {
     setWeekCalendar((cal) => cal.map((k, i) => {
@@ -69,21 +82,24 @@ export function useMealPlan(): UseMealPlan {
   const generateMutation = useMutation({
     mutationFn: () => generatePlan({ overrides: { weekCalendar } }),
     onMutate: () => setWriteError(null),
-    onSuccess: () => { setAccepted(null); setHiddenPlanId(null); return invalidatePlans(); },
+    onSuccess: () => { setAccepted(null); setHiddenPlanId(null); setLastSwappedDay(null); return invalidatePlans(); },
     onError: (e) => onWriteError(e, "Couldn't generate a plan."),
   });
 
   const acceptMutation = useMutation({
     mutationFn: (planId: number) => acceptPlan(planId),
     onMutate: () => setWriteError(null),
-    onSuccess: (res) => { setAccepted(res); return invalidatePlans(); },
+    // Clearing on accept is deliberate: the notice exists to be seen BEFORE
+    // committing, and its copy ("This swap leaves the day…") reads as stale
+    // next to a scheduling confirmation.
+    onSuccess: (res) => { setAccepted(res); setLastSwappedDay(null); return invalidatePlans(); },
     onError: (e) => onWriteError(e, "Couldn't accept the plan."),
   });
 
   const discardMutation = useMutation({
     mutationFn: (planId: number) => discardPlan(planId),
     onMutate: () => setWriteError(null),
-    onSuccess: (_res, planId) => { setAccepted(null); setHiddenPlanId(planId); return invalidatePlans(); },
+    onSuccess: (_res, planId) => { setAccepted(null); setHiddenPlanId(planId); setLastSwappedDay(null); return invalidatePlans(); },
     onError: (e) => onWriteError(e, "Couldn't discard the plan."),
   });
 
@@ -91,14 +107,20 @@ export function useMealPlan(): UseMealPlan {
     mutationFn: (args: { planId: number; dayIndex: number; slot: MealPlanSlot; dishId: number }) =>
       apiSwapSlot(args.planId, args.dayIndex, args.slot, args.dishId),
     onMutate: () => setWriteError(null),
-    onSuccess: invalidatePlans,
+    onSuccess: (_res, args) => { setLastSwappedDay(args.dayIndex); return invalidatePlans(); },
     onError: (e) => onWriteError(e, "Couldn't swap that dish."),
   });
 
   const regenDayMutation = useMutation({
     mutationFn: (args: { planId: number; dayIndex: number }) => regenerateDay(args.planId, args.dayIndex),
     onMutate: () => setWriteError(null),
-    onSuccess: invalidatePlans,
+    // Only the regenerated day forgets its swap; a warning about a DIFFERENT
+    // day is still true and stays. Functional updater so this reads the current
+    // value rather than the one captured when the mutation was created.
+    onSuccess: (_res, args) => {
+      setLastSwappedDay((d) => (d === args.dayIndex ? null : d));
+      return invalidatePlans();
+    },
     onError: (e) => onWriteError(e, "Couldn't refresh that day."),
   });
 
@@ -140,5 +162,5 @@ export function useMealPlan(): UseMealPlan {
     regenDayMutation.mutate({ planId: plan.id, dayIndex }, { onSettled: () => resolve() });
   }), [regenDayMutation, plan]);
 
-  return { plan, phase, busy, error: writeError ?? readError, accepted, weekCalendar, cycleDay, reload, generate, accept, discard, swap, regenDay };
+  return { plan, phase, busy, error: writeError ?? readError, accepted, macroWarning: planSwapWarning(plan, lastSwappedDay), weekCalendar, cycleDay, reload, generate, accept, discard, swap, regenDay };
 }
