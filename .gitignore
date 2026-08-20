@@ -73,3 +73,4 @@ blob-report/
 # evidence trail stays reproducible without carrying binaries in git.
 artifacts/audit/
 .kg/graph.json
+.kg/__pycache__/
