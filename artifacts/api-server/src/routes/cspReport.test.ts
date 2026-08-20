@@ -57,12 +57,25 @@ describe("Content Security Policy (CSP) Report-Only & Audit Route", () => {
     assert.strictEqual(logged["effective-directive"], "script-src");
   });
 
-  it("exposes the GET /v1/csp-report/audit inspection endpoint", async () => {
+  // The audit endpoint is ops-gated on purpose: violation reports carry
+  // internal document/source URLs and inline script samples — reconnaissance
+  // material. Ingestion above stays open because browsers' report-uri POSTs
+  // cannot authenticate, but reading the pile back must not be public.
+  //
+  // This asserts the GATE, not the payload. An unauthenticated 200 here would
+  // be the actual defect; reaching the body would mean the gate had been
+  // removed. (This case previously asserted 200 against an ungated route and
+  // was never re-run after requireOps landed, so it silently rotted.)
+  it("gates GET /v1/csp-report/audit behind ops — no anonymous read", async () => {
     const res = await fetch(`${baseUrl}/v1/csp-report/audit`);
-    assert.strictEqual(res.status, 200);
-
-    const body = (await res.json()) as { totalViolations: number; violations: any[] };
-    assert.ok(typeof body.totalViolations === "number");
-    assert.ok(Array.isArray(body.violations));
+    assert.notStrictEqual(
+      res.status,
+      200,
+      "CSP violation logs must never be readable without ops credentials",
+    );
+    assert.ok(
+      res.status === 401 || res.status === 403,
+      `expected an auth/permission refusal, got ${res.status}`,
+    );
   });
 });

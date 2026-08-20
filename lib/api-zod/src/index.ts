@@ -115,10 +115,19 @@ export type LogoutResponse = z.infer<typeof LogoutResponse>;
 // ops expands. Keep in sync with the frontend map in serviceablePincodes.ts.
 export const SERVICEABLE_PINCODES = new Set([
   // Noida Core
-  "201301", "201303", "201304", "201305", "201306", "201307", "201309", "201318",
+  "201301",
+  "201303",
+  "201304",
+  "201305",
+  "201306",
+  "201307",
+  "201309",
+  "201318",
 ]);
 
-export function isServiceablePincode(pincode: string | null | undefined): boolean {
+export function isServiceablePincode(
+  pincode: string | null | undefined,
+): boolean {
   if (!pincode) return false;
   return SERVICEABLE_PINCODES.has(pincode.trim());
 }

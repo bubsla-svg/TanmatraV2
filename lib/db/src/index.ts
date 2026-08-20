@@ -71,6 +71,61 @@ for (const [name, p] of [
  */
 export type DrizzleDb = typeof db;
 
+/** A point-in-time read of one pg Pool's occupancy. */
+export interface PoolSnapshot {
+  name: string;
+  /** Connections currently open (busy + idle). */
+  total: number;
+  /** Open and unused. */
+  idle: number;
+  /** Callers blocked waiting for a connection. Non-zero means the pool is
+   *  already the bottleneck — this is the number that matters. */
+  waiting: number;
+  /** Configured ceiling. */
+  max: number;
+  /** busy / max, 0..1. */
+  utilisation: number;
+  /** True once the pool is at its ceiling with callers queued behind it. */
+  saturated: boolean;
+}
+
+/**
+ * Read both pools' occupancy.
+ *
+ * Nothing in this codebase reported connection-pool state, which made
+ * exhaustion invisible: it surfaces as unrelated timeouts scattered across
+ * whichever routes happened to ask for a connection, with nothing naming the
+ * actual cause. `waiting > 0` names it directly.
+ *
+ * Cheap enough to call on every health probe — these are plain counters on the
+ * Pool object, not a query.
+ */
+export function poolSnapshots(): PoolSnapshot[] {
+  return ([
+    ["main", pool, MAIN_POOL_MAX],
+    ["override", overridePool, OVERRIDE_POOL_MAX],
+  ] as const).map(([name, p, max]) => {
+    const total = p.totalCount ?? 0;
+    const idle = p.idleCount ?? 0;
+    const waiting = p.waitingCount ?? 0;
+    const busy = Math.max(0, total - idle);
+    return {
+      name,
+      total,
+      idle,
+      waiting,
+      max,
+      // Guard the divide: max comes from an env var and a malformed value
+      // must not turn telemetry into NaN or a crash.
+      utilisation: max > 0 ? busy / max : 0,
+      // Busy-at-ceiling ALONE is not saturation — a pool running full with
+      // nobody queued is a pool being used correctly. Saturation is when the
+      // ceiling is reached AND callers are blocked behind it.
+      saturated: waiting > 0,
+    };
+  });
+}
+
 export * from "./schema";
 export * from "./crypto";
 export * from "./operationalDate";

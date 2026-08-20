@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { pool } from "@workspace/db";
+import { pool, poolSnapshots } from "@workspace/db";
 import { HealthCheckResponse } from "@workspace/api-zod";
 import { isRedisConfigured, probeRedis } from "../lib/queue";
 
@@ -11,6 +11,31 @@ const router: IRouter = Router();
 // recycle the container. Use /healthz for readiness (deep dependency check).
 router.get("/livez", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
+});
+
+/**
+ * Deploy-truth probe. Reports the commit this process was built from.
+ *
+ * /livez proves the service is UP. It cannot prove the service is the one that
+ * was just deployed — a revision from two days ago answers it exactly as
+ * happily, so a deploy that never actually rolled looks identical to one that
+ * did. The storefront and the legacy SPA both already close that hole with an
+ * /api/build endpoint their deploy jobs poll until the sha matches; this is the
+ * money-path service and it was the only one of the three without one, so its
+ * deploy step verified liveness and nothing else.
+ *
+ * Deliberately unauthenticated and dependency-free, matching /livez: it is
+ * polled by the deploy job before traffic is trusted, and a commit sha is not
+ * a secret (the storefront has served the same field publicly since cutover).
+ */
+router.get("/build", (_req: Request, res: Response) => {
+  res.json({
+    app: "tanmatra-api",
+    // Set at deploy time by the cloud-run job, not baked into the image, so
+    // this reflects the running revision rather than whatever was compiled.
+    sha: process.env["BUILD_SHA"] ?? "unknown",
+    builtAt: process.env["BUILT_AT"] ?? null,
+  });
 });
 
 const DB_PROBE_TIMEOUT_MS = 1500;
@@ -44,6 +69,30 @@ function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
 
 router.get("/healthz", async (req: Request, res: Response) => {
   const failures: string[] = [];
+
+  // Connection-pool telemetry.
+  //
+  // Pool exhaustion had no signal anywhere in this codebase. It does not
+  // announce itself — it surfaces as unrelated timeouts scattered across
+  // whichever routes happened to ask for a connection next, with nothing
+  // naming the cause. It is also self-reinforcing under load, which is why
+  // the money-route rate limiters now fail closed (rateLimitMiddleware):
+  // those 429s and this warning describe the same incident from two ends,
+  // and neither is much use without the other.
+  //
+  // Emitted from the health probe rather than a timer: Cloud Run already
+  // calls this on a schedule, so it costs no new moving part. Logged ONLY
+  // when a pool is actually saturated — an unconditional line here would be
+  // noise at probe frequency and would be filtered out long before the
+  // incident that needs it.
+  const pools = poolSnapshots();
+  const saturated = pools.filter((p) => p.saturated);
+  if (saturated.length > 0) {
+    req.log.warn(
+      { pools: saturated },
+      "db_pool_saturated: callers are queued waiting for a connection",
+    );
+  }
 
   let dbOk = false;
   try {

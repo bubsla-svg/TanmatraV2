@@ -31,6 +31,7 @@ import { TEST_DISHES as DISHES } from "../test-fixtures/dishes.js";
 const SYNTHETIC_ID_OFFSET = 100000;
 
 import groupOrdersRouter from "./groupOrders";
+import { invalidateMenuCatalogCache } from "../lib/menuCatalogCache";
 
 interface TestUser {
   id: string;
@@ -227,6 +228,12 @@ test("POST /group-orders/:code/items rejects an unavailable dish with 409", asyn
     })
     .returning({ id: menuItemsTable.id });
   CREATED_MENU_ITEM_IDS.push(row!.id);
+  // This insert goes straight to drizzle, bypassing lib/menu.ts — so nothing
+  // busts the merged-catalog cache the way a real CMS write would. Earlier
+  // cases in this file have already warmed that 30s snapshot, so without this
+  // the resolver never sees the row and the route 404s ("dish not found")
+  // instead of reaching the availability gate this case exists to pin.
+  invalidateMenuCatalogCache();
   const dishId = SYNTHETIC_ID_OFFSET + row!.id;
   const r = await api(
     "POST",

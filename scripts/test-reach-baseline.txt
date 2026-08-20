@@ -6,53 +6,19 @@
 #
 # Sorted, one repo-relative path per line, so additive edits in different
 # alphabetical positions merge without conflict.
-artifacts/api-server/src/lib/adminGate.test.ts
-artifacts/api-server/src/lib/b2b/b2b.test.ts
-artifacts/api-server/src/lib/bridgeCredit.test.ts
-artifacts/api-server/src/lib/chargeMandate.halt.test.ts
-artifacts/api-server/src/lib/chargeMandateScheduler.test.ts
-artifacts/api-server/src/lib/checkoutSafety.test.ts
-artifacts/api-server/src/lib/circuitBreaker.test.ts
-artifacts/api-server/src/lib/community/community.test.ts
-artifacts/api-server/src/lib/crypto.test.ts
-artifacts/api-server/src/lib/deliverySlotBooking.test.ts
-artifacts/api-server/src/lib/dishRationale.test.ts
+#
+# 2026-08-18: drained from 50 entries to 1. The other 49 are now named in
+# verify.yml (see the two "Baseline recovery" blocks). They were all executed
+# against a real Postgres first; four were genuinely broken and were fixed
+# rather than wired in green — a stale-catalog cache race in two suites, an
+# assertion pinning a client-supplied meal count the server correctly
+# overrides, and an ops-gated route that 500'd instead of denying.
+#
+# The single survivor is NOT unreached. dispatch.bulkhead.test.ts runs in
+# bulkhead-ci.yml, which invokes it through the `ci:bulkhead` package script
+# rather than naming the file — and this gate matches filenames in workflow
+# command text, so it cannot see through that indirection. It is listed here to
+# keep the gate honest about its own blind spot rather than to record debt.
+# Wiring it a second time in verify.yml would run a p95-latency load test twice
+# per PR for no added signal.
 artifacts/api-server/src/lib/dispatch.bulkhead.test.ts
-artifacts/api-server/src/lib/dispatch.latency.test.ts
-artifacts/api-server/src/lib/dispatch.priority.test.ts
-artifacts/api-server/src/lib/funnelDefs.test.ts
-artifacts/api-server/src/lib/loyaltyEngine.allergenGate.test.ts
-artifacts/api-server/src/lib/loyaltyEngine.bundles.test.ts
-artifacts/api-server/src/lib/mealPlanner.test.ts
-artifacts/api-server/src/lib/petpoojaInventory.test.ts
-artifacts/api-server/src/lib/preDebitScheduler.test.ts
-artifacts/api-server/src/lib/purchaseIngest.test.ts
-artifacts/api-server/src/lib/queue.redisConfig.test.ts
-artifacts/api-server/src/lib/rdCopilot/adherence.orderKind.test.ts
-artifacts/api-server/src/lib/rdCopilot/adherence.test.ts
-artifacts/api-server/src/lib/stockSync.test.ts
-artifacts/api-server/src/lib/subscriptionAbandonmentScheduler.test.ts
-artifacts/api-server/src/lib/subscriptionRules.test.ts
-artifacts/api-server/src/lib/trialLifecycleScheduler.test.ts
-artifacts/api-server/src/lib/truecaller.test.ts
-artifacts/api-server/src/lib/userBrief/userBrief.test.ts
-artifacts/api-server/src/lib/wearableClient.test.ts
-artifacts/api-server/src/middlewares/concurrencyGuard.test.ts
-artifacts/api-server/src/middlewares/idempotency.test.ts
-artifacts/api-server/src/middlewares/requestValidationGuard.test.ts
-artifacts/api-server/src/routes/auditGates.test.ts
-artifacts/api-server/src/routes/auth.truecaller.test.ts
-artifacts/api-server/src/routes/catalog.test.ts
-artifacts/api-server/src/routes/checkout.consent.test.ts
-artifacts/api-server/src/routes/cspReport.test.ts
-artifacts/api-server/src/routes/groupOrders.test.ts
-artifacts/api-server/src/routes/menu.test.ts
-artifacts/api-server/src/routes/preferences.sprint78.test.ts
-artifacts/api-server/src/routes/subscriptions.changePlan.test.ts
-artifacts/api-server/src/routes/subscriptions.fullLifecycle.test.ts
-artifacts/api-server/src/routes/subscriptions.macroCap.test.ts
-artifacts/api-server/src/routes/subscriptions.pauseResume.test.ts
-artifacts/api-server/src/routes/subscriptions.reactivateBilling.test.ts
-artifacts/api-server/src/routes/subscriptions.unskip.test.ts
-artifacts/api-server/src/routes/tokenLifecycle.test.ts
-artifacts/api-server/src/routes/wearable.test.ts

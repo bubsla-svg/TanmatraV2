@@ -53,17 +53,77 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      api: ${{ steps.filter.outputs.api }}
-      web: ${{ steps.filter.outputs.web }}
-      storefront: ${{ steps.filter.outputs.storefront }}
+      # Each service's answer comes from ITS OWN filter run, because each is
+      # diffed from a different base — see "Diff from what is actually
+      # deployed" below.
+      api: ${{ steps.api.outputs.api }}
+      web: ${{ steps.web.outputs.web }}
+      storefront: ${{ steps.storefront.outputs.storefront }}
     steps:
+      # Full history: the bases below are arbitrary older commits (whatever a
+      # service is currently running), and paths-filter can only diff against
+      # a commit that exists locally.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── Diff from what is actually DEPLOYED, not from the previous push ────
+      #
+      # This closes the concurrency-group race documented at the top of this
+      # file. GitHub keeps one pending run per group, so when B is superseded
+      # by C the surviving run diffs only B..C — and a service that only B
+      # touched is never redeployed, with nothing red.
+      #
+      # The fix is to stop treating "the previous push" as the baseline. Every
+      # service now reports the commit it is actually serving at /api/build
+      # (the api-server gained that endpoint alongside this change), so the
+      # honest baseline is that sha. A service three commits behind gets a
+      # three-commit diff and redeploys itself; the pipeline becomes
+      # self-healing rather than needing the manual empty-commit nudge.
+      #
+      # Fallbacks, in order — every one of them errs toward DEPLOYING:
+      #   * endpoint unreachable, or sha unknown/absent from history (first
+      #     deploy, force-push, a revision predating /api/build) → empty base,
+      #     which makes paths-filter fall back to its own before..after
+      #     behaviour, i.e. exactly today's semantics.
+      #   * the reported sha IS the current commit → nothing changed for that
+      #     service and it correctly does not redeploy.
+      # A wrong guess therefore costs a redundant deploy, never a skipped one.
+      - name: Resolve each service's deployed sha
+        if: github.event_name == 'push'
+        id: deployed
+        env:
+          API_URL: https://wellness-foods-475157072474.asia-south2.run.app
+          WEB_URL: https://tanmatra-475157072474.asia-south2.run.app
+          SF_URL: https://storefront-475157072474.asia-south2.run.app
+        run: |
+          resolve() {
+            local name="$1" url="$2"
+            local sha
+            sha=$(curl -sf --max-time 15 "$url/api/build" 2>/dev/null \
+              | python3 -c 'import json,sys; print(json.load(sys.stdin).get("sha",""))' 2>/dev/null || true)
+            # Must look like a sha AND be present in this clone's history —
+            # a sha from a force-pushed-away branch would make the diff
+            # meaningless (or make paths-filter fail outright).
+            if [ -n "$sha" ] && git cat-file -e "${sha}^{commit}" 2>/dev/null; then
+              echo "$name: deployed=$sha"
+              echo "$name=$sha" >> "$GITHUB_OUTPUT"
+            else
+              echo "$name: no usable deployed sha (got '${sha:-<none>}') — falling back to push-range diff"
+              echo "$name=" >> "$GITHUB_OUTPUT"
+            fi
+          }
+          resolve api "$API_URL"
+          resolve web "$WEB_URL"
+          resolve storefront "$SF_URL"
+
       # Skipped on workflow_dispatch (nothing to diff); outputs come back
       # empty and the deploy jobs' event-name conditions take over.
       - uses: dorny/paths-filter@v3
         if: github.event_name == 'push'
-        id: filter
+        id: api
         with:
+          base: ${{ steps.deployed.outputs.api }}
           filters: |
             api:
               - 'artifacts/api-server/**'
@@ -72,12 +132,26 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - '.github/workflows/deploy.yml'
+
+      - uses: dorny/paths-filter@v3
+        if: github.event_name == 'push'
+        id: web
+        with:
+          base: ${{ steps.deployed.outputs.web }}
+          filters: |
             web:
               - 'artifacts/tanmatra/**'
               - 'lib/**'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - '.github/workflows/deploy.yml'
+
+      - uses: dorny/paths-filter@v3
+        if: github.event_name == 'push'
+        id: storefront
+        with:
+          base: ${{ steps.deployed.outputs.storefront }}
+          filters: |
             storefront:
               # OA-MED-1.25 (TODO_optimization-auditor.md): this used to be a
               # blanket 'lib/**', so e.g. a lib/db-only change triggered a
@@ -556,7 +630,7 @@ jobs:
             --image asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }} \
             --region ${GCP_REGION} \
             --project ${GCP_PROJECT} \
-            --update-env-vars "^;^ADMIN_USERNAME=${ADMIN_USERNAME};ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH};DISABLE_SCHEDULERS=true;FLAG_PLAN_V2=true;PLAN_CHECKOUT_DISABLED=1;ORDER_FINALIZE_DISABLED=1;SESSION_SAMESITE=none;ALLOWED_ORIGINS=https://tanmatra.food,https://www.tanmatra.food,https://tanmatra-yftxztp3xq-em.a.run.app,https://tanmatra-475157072474.asia-south2.run.app,http://localhost:5173,http://localhost:3000;RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID};RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET};PETPOOJA_RESTAURANT_ID=cq5hnj3629;PETPOOJA_MENU_SHARING_CODE=cq5hnj3629;PETPOOJA_INVENTORY_RID=355738;PETPOOJA_PURCHASE_SYNC_DRY_RUN=1;PETPOOJA_STOCK_SYNC_DRY_RUN=1;REDIS_HOST=redis-17230.crce280.asia-south1-1.gcp.cloud.redislabs.com;REDIS_PORT=17230;REDIS_PASSWORD=${REDIS_PASSWORD};BULLMQ_PREFIX=prod;GOOGLE_VERTEX_PROJECT=${GCP_PROJECT};GOOGLE_VERTEX_LOCATION=global;RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET};PRIVATE_OBJECT_DIR=${PRIVATE_OBJECT_DIR}" \
+            --update-env-vars "^;^ADMIN_USERNAME=${ADMIN_USERNAME};ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH};DISABLE_SCHEDULERS=true;FLAG_PLAN_V2=true;PLAN_CHECKOUT_DISABLED=1;ORDER_FINALIZE_DISABLED=1;SESSION_SAMESITE=none;ALLOWED_ORIGINS=https://tanmatra.food,https://www.tanmatra.food,https://tanmatra-yftxztp3xq-em.a.run.app,https://tanmatra-475157072474.asia-south2.run.app,http://localhost:5173,http://localhost:3000;RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID};RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET};PETPOOJA_RESTAURANT_ID=cq5hnj3629;PETPOOJA_MENU_SHARING_CODE=cq5hnj3629;PETPOOJA_INVENTORY_RID=355738;PETPOOJA_PURCHASE_SYNC_DRY_RUN=1;PETPOOJA_STOCK_SYNC_DRY_RUN=1;REDIS_HOST=redis-17230.crce280.asia-south1-1.gcp.cloud.redislabs.com;REDIS_PORT=17230;REDIS_PASSWORD=${REDIS_PASSWORD};BULLMQ_PREFIX=prod;GOOGLE_VERTEX_PROJECT=${GCP_PROJECT};GOOGLE_VERTEX_LOCATION=global;RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET};PRIVATE_OBJECT_DIR=${PRIVATE_OBJECT_DIR};BUILD_SHA=${{ github.sha }};BUILT_AT='$(date -u +%Y-%m-%dT%H:%M:%SZ)'" \
             --set-secrets "ADMIN_SESSION_SECRET=brand-tanmatra-admin-session-secret:latest,DATABASE_URL=brand-tanmatra-database-url:latest,SESSION_SECRET=brand-tanmatra-session-secret:latest,CLINICAL_KMS_MASTER_KEY=brand-tanmatra-clinical-kms-key:latest,PETPOOJA_APP_KEY=brand-tanmatra-petpooja-app-key:latest,PETPOOJA_APP_SECRET=brand-tanmatra-petpooja-app-secret:latest,PETPOOJA_ACCESS_TOKEN=brand-tanmatra-petpooja-access-token:latest,GOOGLE_API_KEY=brand-tanmatra-google-api-key:latest" \
             --add-cloudsql-instances "${GCP_PROJECT}:asia-south2:brand-tanmatra-db" \
             --memory=1Gi \
@@ -587,6 +661,35 @@ jobs:
             echo "livez attempt $i failed, retrying..."; sleep 5
           done
           echo "livez never returned 200"; exit 1
+
+      # Deploy-truth. The smoke above proves the service ANSWERS; it cannot
+      # prove the answering revision is this commit — a two-day-old revision
+      # returns the same {"status":"ok"}. That is the exact hole the storefront
+      # and legacy jobs already close by polling /api/build, and this service,
+      # which owns the money path, was the only one of the three deploying on a
+      # liveness check alone.
+      #
+      # It also bounds the accepted concurrency race documented at the top of
+      # this file: when a superseded run means this service never actually
+      # rolled, the failure now shows up here instead of passing silently.
+      #
+      # Failing here reaches the rollback step below, same as a failed smoke.
+      - name: Verify the serving revision is this commit (deploy-truth)
+        run: |
+          URL=$(gcloud run services describe ${SERVICE} \
+            --region ${GCP_REGION} --project ${GCP_PROJECT} \
+            --format='value(status.url)')
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            SHA=$(curl -sf "$URL/api/build" \
+              | python3 -c 'import json,sys; print(json.load(sys.stdin).get("sha",""))' 2>/dev/null || true)
+            if [ "$SHA" = "${{ github.sha }}" ]; then
+              echo "deploy-truth OK: $SHA"; exit 0
+            fi
+            echo "attempt $i: serving sha=${SHA:-<none>}, want ${{ github.sha }}"
+            sleep 5
+          done
+          echo "deploy-truth FAILED: /api/build never reported ${{ github.sha }}"
+          exit 1
 
       # Same rollback discipline as the frontend jobs — this service serves
       # the money path and now deploys unattended on merge. Schema-ahead-of-

@@ -63,7 +63,15 @@ export async function isRoleRequest(req: Request, role: string | string[]): Prom
     return { allowed: true, operatorId: `admin:${adminSession.username}` };
   }
 
-  if (req.isAuthenticated()) {
+  // `isAuthenticated` is installed by authMiddleware (app.ts), which runs
+  // ahead of every mounted router in the real app — so in production this is
+  // always a function. Calling it unguarded still makes the gate throw a
+  // TypeError if a router is ever mounted outside that stack, and a throwing
+  // authorization check becomes a 500 rather than a denial. That inverts the
+  // rule this function already states for the admin_roles lookup below: a
+  // failure must DENY, never throw. Absent auth plumbing means "not
+  // authenticated", which falls through to the deny at the end.
+  if (typeof req.isAuthenticated === "function" && req.isAuthenticated()) {
     // 1. Check database for ANY roles this user has.
     //
     // A failure here must DENY, never throw. Letting the rejection escape

@@ -4,9 +4,83 @@
 |---|---|
 | **Title** | `POST /subscriptions/:id/change-plan` computes the new price with the legacy per-meal helper, not the plan catalog |
 | **Severity** | **P1** — it bills a wrong amount, and misclassifies every change as a price increase |
-| **Status** | **OPEN — needs a product decision** |
+| **Status** | **RESOLVED (2026-08-18)** — pricing now comes from the catalog. One deliberate carve-out and one open data question, both below. |
 | **Found** | 2026-08-10, while repairing `subscriptions.changePlan.test.ts` |
 | **Blast radius** | Every plan-v2 subscription, i.e. every subscription created since `planId` became required |
+
+---
+
+## RESOLUTION (2026-08-18)
+
+The product decision this document asked for, made and implemented.
+
+**Price comes from the catalog.** `change-plan` now calls
+`computePlanQuote(planId, track, cadence)` — the same function `POST
+/subscriptions` prices with. One pricing model, one source. This removes the
+3.7x divergence at its root.
+
+**Meal count is no longer customer-settable.** Under catalog pricing a plan's
+meal count is a property *of the plan* — create already ignores the client's
+`mealsPerDelivery` and takes `q.mealsPerCycle`. "Change my meal count" is
+therefore not a coherent operation; the coherent equivalent is switching plan.
+Sending it is now **refused** (`meals_not_independently_changeable`) rather
+than silently ignored, so a client cannot believe it did something.
+
+**Only same-or-cheaper changes are served.** A price *increase* needs the
+mandate re-authorised, and that flow was built around the broken quote — so
+rather than re-enable machinery whose inputs were wrong, an increase is refused
+with `change_plan_price_increase_unsupported`, quoting the catalog figure. A
+decrease needs no re-authorisation: the existing mandate is already authorised
+for a larger amount. This is the half that cannot overcharge anyone.
+
+**An unexplainable current price is refused, not guessed.** `track` is not
+persisted, so `resolveBilledTrack()` identifies it from what the customer is
+actually charged. When no catalog price matches — a legacy row, an
+add-on-bearing price, a hand-adjusted amount — the row is not repriceable and
+says so (`current_price_unexplained`). Refusing costs one unavailable plan
+change; guessing costs a wrong bill.
+
+**A second instance of the same bug, also fixed.**
+`applyPendingPlanChangeIfReady()` fell back to `computeDeliveryPricePaise`
+whenever a pending row carried no explicit price — the same overcharge, at the
+moment the cycle rolls. It now prices from the catalog when the plan is
+knowable and otherwise keeps the *current* price rather than inventing one.
+
+**Proration:** unchanged and therefore not opened. A change still applies at
+the next cycle boundary, never mid-cycle.
+
+### Still open
+
+- [ ] **Price increases are unavailable.** Customers wanting a dearer cadence
+      must go through support. Re-enabling self-service requires designing the
+      re-authorisation flow against the corrected quote — a separate piece of
+      work, not a bug.
+- [ ] **Existing rows have not been audited in production.**
+      `scripts/src/audit-subscription-pricing.ts` answers it and is READ-ONLY;
+      it has only been run against an empty local database here, which proves
+      the tooling and nothing about live data. Run it against production:
+
+      ```
+      pnpm --filter @workspace/scripts run audit-subscription-pricing
+      ```
+
+      A `LEGACY_FORMULA` hit is the defect's fingerprint and means a real
+      customer was billed the wrong amount.
+
+### Covered by
+
+`src/routes/subscriptions.changePlan.test.ts`, now on CI (verify.yml,
+"Subscription lifecycle and remaining integration tests"). It asserts prices
+against `computePlanQuote`'s own output rather than literals, so a legitimate
+reprice does not break it while a return to formula-based pricing does. It
+covers both directions — the refusal path *and* the staging path that writes to
+the database, which required seeding a monthly subscription because
+weekly→monthly is an increase for every plan and would only ever exercise the
+refusal branch.
+
+---
+
+## Original report (2026-08-10)
 
 ## The two halves disagree
 

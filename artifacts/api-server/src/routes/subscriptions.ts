@@ -37,6 +37,7 @@ import {
 } from "../lib/subscriptionPricing";
 import {
   type PlanId,
+  type PlanCycle,
   type DietTrack,
   type AddOnLineItem,
   PLAN_CATALOG,
@@ -393,6 +394,66 @@ type DbExecutor = Pick<typeof db, "select" | "insert" | "update">;
 // still awaiting re-authorisation (price increase, mandate not yet
 // re-confirmed) is left untouched — it stays pending until the customer
 // completes POST .../change-plan/confirm.
+/**
+ * Cadences the plan catalog can actually price.
+ *
+ * SubscriptionCadence carries "fortnightly"; PlanCycle does not. A fortnightly
+ * subscription therefore has no catalog price at all, which is exactly the
+ * kind of gap that produced DEFECT-CHANGE-PLAN-PRICING-001 — the old code
+ * papered over it with a per-meal formula that produced A number for any
+ * input, just not the right one. Returning null here makes the gap explicit so
+ * callers refuse rather than invent.
+ */
+function asPlanCycle(cadence: SubscriptionCadence): PlanCycle | null {
+  return cadence === "fortnightly" ? null : cadence;
+}
+
+/**
+ * Recover the diet track an existing subscription is BILLED at.
+ *
+ * `track` is chosen at create time to pick a price variant and is never
+ * persisted, so it cannot simply be read back. Asking the client for it is not
+ * an option on a money path — the caller would be choosing its own price, and
+ * the whole point of this defect's fix is that the server owns the amount.
+ *
+ * So derive it from the billing record itself: for the subscription's CURRENT
+ * cadence, only one track's catalog price can equal what the customer is
+ * actually being charged. That identifies the track from evidence rather than
+ * from a claim.
+ *
+ * Returns null when nothing matches — a legacy row priced on the retired
+ * formula, a price carrying plan_review add-ons, or a hand-adjusted amount.
+ * Callers must then REFUSE to reprice. Refusing costs a customer one
+ * unavailable plan change; guessing costs them the wrong bill.
+ */
+function resolveBilledTrack(
+  sub: typeof subscriptionsTable.$inferSelect,
+  planId: PlanId,
+): DietTrack | null {
+  const cycle = asPlanCycle(sub.cadence);
+  if (!cycle) return null;
+  const tracks: DietTrack[] = ["veg", "egg", "nonveg"];
+  const matches = tracks.filter(
+    (t) => computePlanQuote(planId, t, cycle).cycleTotalPaise === sub.pricePerDeliveryPaise,
+  );
+  // Several tracks can share a price (a plan with no variant pricing). That is
+  // not ambiguity for our purposes — every candidate yields the same figure at
+  // any cadence, so any of them reprices identically.
+  if (matches.length === 0) return null;
+  const [first, ...rest] = matches;
+  for (const other of rest) {
+    for (const c of ["weekly", "monthly", "quarterly"] as const) {
+      if (
+        computePlanQuote(planId, first!, c).cycleTotalPaise !==
+        computePlanQuote(planId, other, c).cycleTotalPaise
+      ) {
+        return null; // genuinely ambiguous — they diverge at some cadence
+      }
+    }
+  }
+  return first!;
+}
+
 async function applyPendingPlanChangeIfReady(
   sub: typeof subscriptionsTable.$inferSelect,
 ): Promise<{ cadence: SubscriptionCadence; mealsPerDelivery: number }> {
@@ -401,8 +462,30 @@ async function applyPendingPlanChangeIfReady(
   }
   const cadence = sub.pendingCadence;
   const mealsPerDelivery = sub.pendingMealsPerDelivery ?? sub.mealsPerDelivery;
-  const pricePerDeliveryPaise =
-    sub.pendingPricePerDeliveryPaise ?? computeDeliveryPricePaise(cadence, mealsPerDelivery);
+  // DEFECT-CHANGE-PLAN-PRICING-001, second instance. This fallback reached for
+  // computeDeliveryPricePaise — the retired per-meal helper — whenever a
+  // pending row carried no explicit price. On a plan-v2 subscription that is
+  // the same 3.7x overcharge as the route itself had: the mandate would then
+  // charge the legacy figure. change-plan now always writes
+  // pendingPricePerDeliveryPaise, so this is only reachable by a row written
+  // before that; price it from the catalog when the plan is knowable, and keep
+  // the CURRENT price rather than inventing one when it is not. Never raising
+  // the amount is the safe direction for a value a live mandate is authorised
+  // against.
+  const pendingPlanId = planIdFromNotes(sub.notes);
+  let pricePerDeliveryPaise: number;
+  if (sub.pendingPricePerDeliveryPaise != null) {
+    pricePerDeliveryPaise = sub.pendingPricePerDeliveryPaise;
+  } else if (pendingPlanId) {
+    const track = resolveBilledTrack(sub, pendingPlanId);
+    const cycle = asPlanCycle(cadence);
+    pricePerDeliveryPaise =
+      track && cycle
+        ? computePlanQuote(pendingPlanId, track, cycle).cycleTotalPaise
+        : sub.pricePerDeliveryPaise;
+  } else {
+    pricePerDeliveryPaise = computeDeliveryPricePaise(cadence, mealsPerDelivery);
+  }
   await db
     .update(subscriptionsTable)
     .set({
@@ -2222,23 +2305,48 @@ const changePlanSchema = z
   });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CONTAINMENT — DEFECT-CHANGE-PLAN-PRICING-001
+// DEFECT-CHANGE-PLAN-PRICING-001 — RESOLVED for the half that is safe to serve
 // (docs/DEFECT-CHANGE-PLAN-PRICING-001.md, docs/audit/P0-2-PLAN-CHANGE-CONTRACT-TRACE.md)
 //
-// change-plan reprices with computeDeliveryPricePaise, the retired per-meal
-// helper — NOT the plan catalog (computePlanQuote) a plan-v2 subscription was
-// actually created and billed at. Measured on a same-cadence/same-meals no-op:
-// legacy 448875 vs catalog 119900, a 3.7x divergence. Every change-plan on a
-// plan-v2 subscription is therefore misclassified as a price increase, and if
-// applied, overwrites pricePerDeliveryPaise with the wrong figure — the live
-// autopay mandate then charges that.
+// The defect: change-plan repriced with computeDeliveryPricePaise, the retired
+// per-meal helper, NOT the plan catalog a plan-v2 subscription was created and
+// billed at. Measured on a same-cadence/same-meals no-op: legacy 448875 vs
+// catalog 119900, a 3.7x divergence. Every change was misclassified as an
+// increase, and applying one overwrote pricePerDeliveryPaise with the wrong
+// figure — which the live autopay mandate would then charge. It was contained
+// behind a blanket 503 rather than fixed, because the fix needed a product
+// decision the trace doc set out but did not make.
 //
-// Disabled server-side at all three route entry points (this one plus its two
-// re-authorisation follow-ups below) until a safe, server-authoritative
-// contract is designed and reviewed — see the trace doc for the options. This
-// is a blanket block, not a client-only hide: it must hold regardless of which
-// client calls it, and it also stops completion of any pending change that was
-// already quoted against the wrong price before this shipped.
+// That decision, made here:
+//
+//   * PRICE COMES FROM THE CATALOG. computePlanQuote(planId, track, cadence) —
+//     the same call POST /subscriptions prices with. One pricing model, one
+//     source of truth. This alone removes the 3.7x divergence.
+//
+//   * MEAL COUNT IS NO LONGER CUSTOMER-SETTABLE. Under catalog pricing a
+//     plan's meal count is a property OF THE PLAN: create already ignores the
+//     client's mealsPerDelivery and takes q.mealsPerCycle. "Change my meal
+//     count" is therefore not a coherent operation — the coherent equivalent
+//     is switching plan. Sending it is REFUSED rather than silently ignored,
+//     so a client cannot believe it did something.
+//
+//   * ONLY SAME-OR-CHEAPER CHANGES ARE SERVED. A price increase needs the
+//     mandate re-authorised, and that flow was built around the broken quote.
+//     Rather than re-enable machinery whose inputs were wrong, an increase is
+//     refused with its own code. A decrease needs no re-authorisation: the
+//     existing mandate is already authorised for a larger amount. This is the
+//     conservative half, and the half that cannot overcharge anyone.
+//
+//   * WHEN THE CURRENT PRICE CANNOT BE EXPLAINED, REFUSE. resolveBilledTrack
+//     identifies the diet track from what the customer is actually charged. If
+//     no catalog price matches — a legacy row, an add-on-bearing price, a
+//     hand-adjusted amount — the subscription is not safely repriceable and
+//     says so. Refusing costs one unavailable plan change; guessing costs a
+//     wrong bill.
+//
+// Unchanged: the change still applies at the NEXT cycle boundary, never
+// mid-cycle, so no proration question is introduced. The two re-authorisation
+// endpoints below stay disabled; nothing routes to them any more.
 // ─────────────────────────────────────────────────────────────────────────────
 function sendChangePlanDisabled(res: Response): void {
   res.status(503).json({
@@ -2255,8 +2363,121 @@ router.post(
     if (!userId) return;
     const subId = parseIdParam(req.params.id, res);
     if (subId === null) return;
-    sendChangePlanDisabled(res);
-    return;
+
+    const parsed = changePlanSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(422).json({ error: "invalid payload", code: "invalid_payload" });
+      return;
+    }
+    const data = parsed.data;
+
+    // Refused, not ignored: a client that sent it must not believe it applied.
+    if (data.mealsPerDelivery !== undefined) {
+      res.status(422).json({
+        error:
+          "Meal count follows the plan and cannot be changed on its own. Switch to a different plan instead.",
+        code: "meals_not_independently_changeable",
+      });
+      return;
+    }
+    if (data.cadence === undefined) {
+      res.status(422).json({ error: "cadence is required", code: "cadence_required" });
+      return;
+    }
+
+    const [sub] = await db
+      .select()
+      .from(subscriptionsTable)
+      .where(and(eq(subscriptionsTable.id, subId), eq(subscriptionsTable.userId, userId)));
+    // 404 rather than 403 for someone else's subscription — never confirm an
+    // id exists to a caller who does not own it.
+    if (!sub) {
+      res.status(404).json({ error: "subscription not found" });
+      return;
+    }
+    if (sub.status !== "active") {
+      res.status(409).json({
+        error: "only an active subscription can change plan",
+        code: "subscription_not_active",
+      });
+      return;
+    }
+
+    const planId = planIdFromNotes(sub.notes);
+    if (!planId) {
+      res.status(409).json({
+        error:
+          "This subscription predates catalog pricing and cannot be repriced automatically.",
+        code: "not_plan_v2",
+      });
+      return;
+    }
+
+    const newCycle = asPlanCycle(data.cadence);
+    if (!newCycle) {
+      res.status(422).json({
+        error: "That billing cycle is not offered for this plan.",
+        code: "cadence_not_in_catalog",
+      });
+      return;
+    }
+
+    const track = resolveBilledTrack(sub, planId);
+    if (!track) {
+      res.status(409).json({
+        error:
+          "We cannot verify this subscription's current pricing, so we will not reprice it automatically.",
+        code: "current_price_unexplained",
+      });
+      return;
+    }
+
+    const quote = computePlanQuote(planId, track, newCycle);
+    const newPricePaise = quote.cycleTotalPaise;
+    const newMeals = quote.mealsPerCycle ?? sub.mealsPerDelivery;
+
+    if (data.cadence === sub.cadence && newPricePaise === sub.pricePerDeliveryPaise) {
+      res.status(409).json({ error: "no change requested", code: "no_change" });
+      return;
+    }
+
+    if (newPricePaise > sub.pricePerDeliveryPaise) {
+      // The mandate is authorised for the CURRENT amount. Charging more needs
+      // re-authorisation, and that flow was built around the broken quote.
+      res.status(409).json({
+        error:
+          "This change costs more than your current plan. Please contact support to authorise it.",
+        code: "change_plan_price_increase_unsupported",
+        currentPricePerDeliveryPaise: sub.pricePerDeliveryPaise,
+        newPricePerDeliveryPaise: newPricePaise,
+      });
+      return;
+    }
+
+    await db
+      .update(subscriptionsTable)
+      .set({
+        pendingCadence: data.cadence,
+        // From the catalog, not from the request — the rule create follows.
+        pendingMealsPerDelivery: newMeals,
+        pendingPricePerDeliveryPaise: newPricePaise,
+        pendingChangeRequestedAt: new Date(),
+        pendingChangeReauthRequired: false,
+        pendingChangeRazorpayOrderId: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(subscriptionsTable.id, subId));
+
+    res.status(200).json({
+      status: "pending",
+      appliesAt: "next_cycle",
+      // Echoed so a client can render the change without recomputing a price,
+      // and so a tampered clientQuotedPricePerDeliveryPaise is visibly ignored.
+      pendingCadence: data.cadence,
+      pendingMealsPerDelivery: newMeals,
+      pendingPricePerDeliveryPaise: newPricePaise,
+      currentPricePerDeliveryPaise: sub.pricePerDeliveryPaise,
+    });
   },
 );
 

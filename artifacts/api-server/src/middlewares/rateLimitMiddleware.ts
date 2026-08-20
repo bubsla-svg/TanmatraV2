@@ -14,6 +14,27 @@ export interface RateLimitOptions {
    *  WHICH budget it exhausted and react appropriately. Defaults to the
    *  generic `rate_limited`. */
   code?: string;
+  /**
+   * What to do when the rate-limit CHECK ITSELF fails (the store is
+   * unreachable, the statement times out, the pool is exhausted).
+   *
+   * Default `false` — fail OPEN, admit the request. Right for public reads:
+   * serving the menu through a database blip is worth more than the scraping
+   * it lets through, and those routes have a static fallback anyway.
+   *
+   * `true` — fail CLOSED, answer 429. Right for money and mutating routes,
+   * for a reason that is not "money is important" but a specific failure
+   * shape. A TOTAL outage is not the interesting case: the handler needs the
+   * same database, so the request was going to fail regardless and fail-open
+   * buys nothing. The interesting case is PARTIAL degradation — pool
+   * exhaustion or statement timeouts — where the limiter starts throwing
+   * while handlers still partly succeed. Failing open there removes the brake
+   * at exactly the moment a flood is causing the degradation, and the load it
+   * admits deepens it: a self-reinforcing collapse. A 429 carries
+   * Retry-After, sheds load instead of adding to it, and is a far better
+   * answer than the 500 most of those requests were heading for.
+   */
+  failClosed?: boolean;
 }
 
 /**
@@ -39,6 +60,7 @@ export function rateLimitMiddleware(
 ) {
   const deriveKey = opts.key ?? ((req: Request) => `ip:${clientIp(req)}`);
   const code = opts.code ?? "rate_limited";
+  const failClosed = opts.failClosed ?? false;
   const resolveMax = typeof max === "function" ? max : () => max;
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -56,8 +78,20 @@ export function rateLimitMiddleware(
         return;
       }
     } catch (err) {
-      // If the rate-limit check itself fails (DB down, etc.), log and allow
-      // through — a broken rate limiter should not take down the API.
+      // The check itself failed — the store is unreachable, timing out, or the
+      // pool is exhausted. `failClosed` decides which way that resolves; see
+      // RateLimitOptions.failClosed for why money routes take the other branch
+      // from public reads.
+      if (failClosed) {
+        req.log?.warn({ err, scope }, "rate limit check failed, refusing request");
+        res.setHeader("Retry-After", String(Math.ceil(windowMs / 1000)));
+        res.status(429).json({
+          error: "rate_limited",
+          code,
+          retryAfterSeconds: Math.ceil(windowMs / 1000),
+        });
+        return;
+      }
       req.log?.warn({ err, scope }, "rate limit check failed, allowing request");
     }
     next();
@@ -92,8 +126,11 @@ export function planDraftRateLimitKey(req: Request): string {
 /** Public catalog browsing — generous for real users, still blocks scrapers. */
 export const publicMenuRateLimit = rateLimitMiddleware("public:menu", 120, 60_000);
 
-/** Order creation and status — stricter to prevent order-spam. */
-export const orderRateLimit = rateLimitMiddleware("orders", 30, 60_000);
+/** Order creation and status — stricter to prevent order-spam. Fails closed:
+ *  this bucket also fronts /api/checkout. */
+export const orderRateLimit = rateLimitMiddleware("orders", 30, 60_000, {
+  failClosed: true,
+});
 
 /**
  * AI / agent endpoints — GPU-backed, expensive.
@@ -205,8 +242,11 @@ export const planDraftReadRateLimit = rateLimitMiddleware(
   { key: planDraftRateLimitKey, code: "PLAN_DRAFT_READ_RATE_LIMITED" },
 );
 
-/** Payment initiation — very tight to block synthetic order fraud. */
-export const paymentRateLimit = rateLimitMiddleware("payments", 10, 60_000);
+/** Payment initiation — very tight to block synthetic order fraud. Fails
+ *  closed; the webhook is exempted from this limiter entirely, below. */
+export const paymentRateLimit = rateLimitMiddleware("payments", 10, 60_000, {
+  failClosed: true,
+});
 
 /**
  * Mounted on /api/payments in app.ts. Applies paymentRateLimit to every
@@ -242,6 +282,9 @@ export async function paymentRouteRateLimit(
 export const orderClaimRateLimit = rateLimitMiddleware("orders:claim", 10, 60_000, {
   key: (req: Request) => (req.isAuthenticated?.() ? `user:${req.user.id}` : `ip:${clientIp(req)}`),
   code: "ORDER_CLAIM_RATE_LIMITED",
+  // This one moves ownership of a paid order. If the second wall cannot be
+  // checked, it must not simply be absent.
+  failClosed: true,
 });
 
 /**
