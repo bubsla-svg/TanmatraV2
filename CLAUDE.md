@@ -78,6 +78,15 @@ pnpm --filter @workspace/db run push    # Push Drizzle schema to database
 pnpm run evals    # Runs api-server AI evals
 ```
 
+**Repo knowledge graph — use BEFORE broad Grep/Read.** The import graph answers
+"what uses this / what breaks if I change it" in a few hundred tokens instead of
+a grep sweep. Full usage and honesty caveats: `.claude/skills/kg/SKILL.md`.
+```bash
+python3 .kg/kg_extract.py . .kg/graph.json   # build once per fresh clone (~4 s; graph.json is gitignored)
+python3 .kg/kg.py context <path>             # the read-set: file + deps + callers + docs
+python3 .kg/kg.py blast <path> --depth 3     # transitive dependents — run before editing anything under lib/
+```
+
 ## Architecture
 
 This is a pnpm monorepo for **Tanmatra** — a clinical-grade meal-delivery and wellness platform.
