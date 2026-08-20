@@ -5,10 +5,12 @@
 //   cd scripts && node --test --import tsx ./src/lib/dishDataFloorPlan.test.ts
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
 import {
   buildPlan,
   evaluateFloors,
-  hasNoCalorieData,
   hasNoIngredientData,
   normalizeIngredient,
   renderPlanMarkdown,
@@ -22,7 +24,6 @@ const row = (over: Partial<DbDishRow> = {}): DbDishRow => ({
   reviewState: "reviewed",
   archived: false,
   ingredients: ["Paneer – 100 g", "Olive oil – 1 tsp"],
-  macros: { calories: 320 },
   ...over,
 });
 
@@ -62,36 +63,50 @@ test("one real entry beside a placeholder passes — thin is not blank", () => {
   assert.equal(hasNoIngredientData(["fresh ingredients", "Paneer – 100 g"]), false);
 });
 
-// ── Floor 2: calories ───────────────────────────────────────────────────────
+// ── The floor that was REMOVED, pinned so it is not casually re-added ───────
 
-test("an explicit zero is data, not absence", () => {
-  // Diet Coke and the zero-calorie mojito are honestly zero. Failing these
-  // would draft the dishes whose macros are most obviously correct.
-  assert.equal(hasNoCalorieData({ calories: 0 }), false);
-});
+/**
+ * A NO_MACROS floor shipped in the first version of this engine and was wrong
+ * twice over; the 2026-08-20 production plan run flagged ~100 of 112 dishes.
+ * These two tests are the evidence, executable, so a re-add has to confront it.
+ *
+ * The unit tests that accompanied the broken floor all passed — they asserted
+ * against fixtures written with the same wrong field name as the code. That is
+ * why this pair reads the REAL schema and the REAL resolver off disk instead
+ * of restating my belief about them.
+ */
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 
-test("absence in each of its forms is caught", () => {
-  assert.equal(hasNoCalorieData(null), true);
-  assert.equal(hasNoCalorieData({}), true);
-  assert.equal(hasNoCalorieData({ calories: null }), true);
-  assert.equal(hasNoCalorieData({ calories: undefined }), true);
-});
-
-test("a non-finite or non-numeric calorie value is absence, never a number", () => {
-  assert.equal(hasNoCalorieData({ calories: NaN }), true);
-  assert.equal(hasNoCalorieData({ calories: Infinity }), true);
-  // jsonb can hold a string where a number belongs if a writer was sloppy.
-  assert.equal(
-    hasNoCalorieData({ calories: "320" } as unknown as { calories?: number | null }),
-    true,
+test("the DB macro key is `kcal`, not `calories` — bug 1, from the schema itself", () => {
+  const schema = readFileSync(
+    resolve(repoRoot, "lib/db/src/schema/menuItems.ts"),
+    "utf8",
+  );
+  const macrosBlock = schema.slice(schema.indexOf('macros: jsonb("macros")'));
+  assert.match(
+    macrosBlock.slice(0, 400),
+    /kcal:\s*number/,
+    "menu_items.macros is typed with `kcal`; a floor reading `.calories` sees undefined on every populated row",
   );
 });
 
-test("a negative calorie count is a number, and not this engine's problem", () => {
-  // Nonsense, but it is a stated value: the floor is absence, not validity.
-  // Drafting on -5 would make this engine a data validator, and every future
-  // validity rule would then arrive as a silent menu removal.
-  assert.equal(hasNoCalorieData({ calories: -5 }), false);
+test("a null macros column is NOT a blank card — bug 2, from the resolver itself", () => {
+  const resolver = readFileSync(
+    resolve(repoRoot, "artifacts/api-server/src/lib/menuResolver.ts"),
+    "utf8",
+  );
+  // Matched rows fall back to the static catalog's curated macros...
+  assert.match(
+    resolver,
+    /:\s*stat\.macros/,
+    "the merge path falls back to stat.macros, so a null column still renders numbers",
+  );
+  // ...and unmatched rows get zeros that macroTrust already grades unverified.
+  assert.match(
+    resolver,
+    /\{\s*calories:\s*0,\s*protein:\s*0/,
+    "the DB-only path substitutes an all-zero block that macroTrust already gates",
+  );
 });
 
 // ── Candidate selection ─────────────────────────────────────────────────────
@@ -114,20 +129,20 @@ test("only reviewed, unarchived rows are candidates", () => {
 test("an archived row is reported as archived even when it is also below the floor", () => {
   // Order matters: archived is checked first, so an M-3 CUT keeps its own
   // reason rather than being re-labelled as unfinished content.
-  const plan = buildPlan([row({ slug: "cut", archived: true, ingredients: null, macros: null })]);
+  const plan = buildPlan([row({ slug: "cut", archived: true, ingredients: null })]);
   assert.deepEqual(plan.reports.archived, ["cut"]);
   assert.equal(plan.actions.length, 0);
 });
 
 // ── Plan shape ──────────────────────────────────────────────────────────────
 
-test("a row failing both floors reports both, in declaration order", () => {
-  const plan = buildPlan([
-    row({ slug: "empty", ingredients: ["fresh ingredients"], macros: null }),
-  ]);
-  assert.deepEqual(plan.actions[0]!.failures, ["NO_INGREDIENTS", "NO_MACROS"]);
+test("a failing row reports its floor and a note naming the reason", () => {
+  const plan = buildPlan([row({ slug: "empty", ingredients: ["fresh ingredients"] })]);
+  assert.deepEqual(plan.actions[0]!.failures, ["NO_INGREDIENTS"]);
   assert.match(plan.actions[0]!.note, /no ingredient data/);
-  assert.match(plan.actions[0]!.note, /no calorie figure/);
+  // The note reaches an rd_note column, so it must name the allergen stake
+  // rather than just the field — that is what a reader acts on.
+  assert.match(plan.actions[0]!.note, /allergen/);
 });
 
 test("actions and reports are slug-sorted, so a re-run diffs clean", () => {
@@ -145,20 +160,19 @@ test("the note is stable for a given failure set — it reaches an audit row", (
   assert.equal(a, b, "same failure set must produce the identical note");
 });
 
-test("counts add up and separate the two floors", () => {
+test("counts add up, per-floor tallies keyed off the FLOORS table", () => {
   const plan = buildPlan([
     row({ slug: "no-ing", ingredients: ["fresh ingredients"] }),
-    row({ slug: "no-kcal", macros: {} }),
-    row({ slug: "both", ingredients: [], macros: null }),
+    row({ slug: "empty-list", ingredients: [] }),
     row({ slug: "fine" }),
     row({ slug: "cut", archived: true }),
   ]);
-  assert.equal(plan.counts["rows"], 5);
-  assert.equal(plan.counts["draft"], 3);
+  assert.equal(plan.counts["rows"], 4);
+  assert.equal(plan.counts["draft"], 2);
   assert.equal(plan.counts["passing"], 1);
   assert.equal(plan.counts["archived"], 1);
-  assert.equal(plan.counts["noIngredients"], 2);
-  assert.equal(plan.counts["noMacros"], 2);
+  // Keyed off the FLOORS table, not hand-listed.
+  assert.equal(plan.counts["NO_INGREDIENTS"], 2);
 });
 
 // ── Blockers ────────────────────────────────────────────────────────────────
@@ -231,7 +245,7 @@ test("evaluateFloors passes a fully-populated dish untouched", () => {
   // The regression that would matter most: a rule that drafts good dishes.
   assert.deepEqual(evaluateFloors(row()), []);
   assert.deepEqual(
-    evaluateFloors(row({ ingredients: ["Chicken breast – 120 g"], macros: { calories: 0 } })),
+    evaluateFloors(row({ ingredients: ["Chicken breast – 120 g"] })),
     [],
   );
 });
