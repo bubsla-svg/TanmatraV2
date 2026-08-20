@@ -72,3 +72,4 @@ blob-report/
 # Traces under it were already gitignored; the screenshots now match, so the
 # evidence trail stays reproducible without carrying binaries in git.
 artifacts/audit/
+.kg/graph.json
