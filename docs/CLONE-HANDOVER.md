@@ -88,7 +88,7 @@ pnpm run lint:test-reach    # fails if any test file is reached by no CI workflo
 # Fast, network- and DB-free unit suites (run from artifacts/api-server):
 cd artifacts/api-server
 node --test --import tsx "../storefront/lib/**/*.test.ts"   # 968 storefront tests, ~21s
-node --test --import tsx "../tanmatra/src/**/*.test.ts"     # 163 legacy-SPA tests
+node --test --import tsx "../tanmatra/src/**/*.test.ts"     # 28 legacy-SPA tests
 cd ../..
 
 pnpm run test               # every package that has a `test` script (slower)
