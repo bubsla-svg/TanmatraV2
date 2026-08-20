@@ -78,7 +78,6 @@ function toPlanRow(r: {
   allergenReviewState: string;
   archived: boolean;
   ingredients: unknown;
-  macros: unknown;
 }): DbDishRow {
   return {
     slug: r.slug,
@@ -91,7 +90,6 @@ function toPlanRow(r: {
     ingredients: Array.isArray(r.ingredients)
       ? (r.ingredients.filter((x) => typeof x === "string") as string[])
       : null,
-    macros: (r.macros as { calories?: number | null } | null) ?? null,
   };
 }
 
@@ -119,9 +117,13 @@ async function fetchRows(): Promise<{ planRows: DbDishRow[]; raw: Map<string, un
 
 function report(plan: Plan): void {
   console.log(`rows ${plan.counts["rows"]} · draft ${plan.counts["draft"]} · passing ${plan.counts["passing"]} · already drafted ${plan.counts["alreadyDrafted"]} · archived ${plan.counts["archived"]}`);
-  console.log(
-    `  below floor: ${plan.counts["noIngredients"]} with no ingredients, ${plan.counts["noMacros"]} with no calories`,
-  );
+  // Per-floor counts come from the plan's own keys, so this line cannot drift
+  // out of step with the FLOORS table the way a hand-written one did.
+  const perFloor = Object.entries(plan.counts)
+    .filter(([k]) => k === k.toUpperCase())
+    .map(([k, v]) => `${v} ${k}`)
+    .join(", ");
+  if (perFloor) console.log(`  below floor: ${perFloor}`);
   for (const b of plan.blockers) console.error(`BLOCKER  ${b}`);
   for (const a of plan.actions) {
     console.log(`  draft  ${a.slug.padEnd(44)} ${a.failures.join(",")}  ${a.name}`);

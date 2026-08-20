@@ -24,21 +24,42 @@
  * `rd_verified` is true on 112/112), carrying ingredient data that was never
  * written. This engine applies the existing rule to the rows that skipped it.
  *
- * THE FLOOR IS ABSENCE, NEVER DISAGREEMENT. Two failures, both of them "we
- * hold no data", and deliberately nothing else:
+ * THE FLOOR IS ABSENCE, NEVER DISAGREEMENT — and it must be absence the
+ * CUSTOMER can see, which is a stricter test than "the column is empty".
  *
- *   1. NO_INGREDIENTS — `ingredients` is empty, or is a placeholder phrase
- *      carrying no food in it ("fresh ingredients"). tanmatra.food ships an
- *      allergen filter and a Diabetic Safe filter; a dish that answers "what
- *      is in this?" with nothing cannot be filtered by either, so a customer
- *      excluding peanuts is shown it as though it had passed their filter.
- *      That is the safety case, and it is the whole reason this engine exists.
+ *   NO_INGREDIENTS — `ingredients` is empty, or is a placeholder phrase
+ *   carrying no food in it ("fresh ingredients"). tanmatra.food ships an
+ *   allergen filter and a Diabetic Safe filter; a dish that answers "what is
+ *   in this?" with nothing cannot be filtered by either, so a customer
+ *   excluding peanuts is shown it as though it had passed their filter. That
+ *   is the safety case, and it is the whole reason this engine exists.
  *
- *   2. NO_MACROS — no macro block at all, or one with no calorie figure.
- *      Note the asymmetry: an explicit `calories: 0` is DATA (Diet Coke and
- *      the zero-calorie mojito are honestly zero) and passes. Only absence
- *      fails. A macro card that renders nothing where a number belongs is a
- *      blank, not a claim, and the site sells macro transparency.
+ *   It is the one floor because `menuResolver.ts` reads ingredients straight
+ *   off the row — `ingredients: row.ingredients ?? []`, no fallback — so an
+ *   empty column IS an empty card.
+ *
+ * THERE WAS A SECOND FLOOR (NO_MACROS) AND IT WAS WRONG TWICE OVER. Do not
+ * re-add it without re-reading menuResolver first. The 2026-08-20 production
+ * plan run flagged ~100 of 112 dishes, including ones that visibly render
+ * macros today (Quinoa Khichdi, Cheese Omelette, Diet Coke), because:
+ *
+ *   1. WRONG FIELD. It read `macros.calories`. The DB jsonb key is `kcal`
+ *      (see lib/db schema); `calories` is the MERGED catalog's name, mapped at
+ *      menuResolver.ts's `calories: row.macros.kcal`. So it saw `undefined` on
+ *      every row that in fact had macros.
+ *
+ *   2. WRONG LAYER, which survives fixing (1). A null `macros` column is not
+ *      a blank card. menuResolver has two paths and both already cover it: a
+ *      row with a static counterpart falls back to `stat.macros` (curated
+ *      numbers render), and a row without one gets an all-zero block that
+ *      `macroTrust` already grades `unverified`. There is no dish whose null
+ *      macros column produces an ungated customer-visible claim, so the floor
+ *      had no legitimate target — it could only ever draft dishes that were
+ *      rendering correctly.
+ *
+ * The lesson generalises: this engine reads `menu_items`, but the customer
+ * reads the MERGED catalog. Before adding a floor, check which of the two the
+ * field actually comes from. Ingredients pass that test; macros do not.
  *
  * Deliberately NOT a floor: macros that disagree with the recipe. The macro
  * truth report found 33 dishes off by ≥40%, but those have both ingredients
@@ -60,14 +81,15 @@ export interface DbDishRow {
   archived: boolean;
   /** `ingredients` jsonb — null when the column was never written. */
   ingredients: string[] | null;
-  /** `macros` jsonb. Only `calories` is read; the rest is carried untouched. */
-  macros: { calories?: number | null } | null;
 }
 
 // ---------------------------------------------------------------------------
 // Output shapes
 
-export type FloorFailure = "NO_INGREDIENTS" | "NO_MACROS";
+/** One member today. Kept as a union — the FLOORS table below is built to take
+ *  more, and a second floor is legitimate the moment one is checked against
+ *  the merged catalog rather than the raw row. */
+export type FloorFailure = "NO_INGREDIENTS";
 
 export interface DraftAction {
   kind: "draft";
@@ -148,27 +170,6 @@ export function hasNoIngredientData(ingredients: string[] | null): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Floor 2 — calories
-
-/**
- * True when the row states no calorie figure.
- *
- * `calories: 0` is a STATEMENT and passes — a diet soda is honestly zero, and
- * failing it would draft the dishes whose macros are most obviously right.
- * Only `macros: null`, a missing key, an explicit null, and a non-finite
- * number (NaN/Infinity survive a jsonb round-trip as `null`, but a bad writer
- * could store a string) count as absence.
- */
-export function hasNoCalorieData(
-  macros: { calories?: number | null } | null,
-): boolean {
-  if (!macros) return true;
-  const kcal = macros.calories;
-  if (kcal === undefined || kcal === null) return true;
-  return typeof kcal !== "number" || !Number.isFinite(kcal);
-}
-
-// ---------------------------------------------------------------------------
 // The plan
 
 /** Floors in the order they are reported, so a row's `failures` array and the
@@ -183,11 +184,6 @@ const FLOORS: ReadonlyArray<{
     id: "NO_INGREDIENTS",
     fails: (row) => hasNoIngredientData(row.ingredients),
     phrase: "no ingredient data (allergen and Diabetic Safe filters cannot see it)",
-  },
-  {
-    id: "NO_MACROS",
-    fails: (row) => hasNoCalorieData(row.macros),
-    phrase: "no calorie figure",
   },
 ];
 
@@ -271,8 +267,12 @@ export function buildPlan(rows: readonly DbDishRow[]): Plan {
       passing: passing.length,
       alreadyDrafted: alreadyDrafted.length,
       archived: archived.length,
-      noIngredients: actions.filter((a) => a.failures.includes("NO_INGREDIENTS")).length,
-      noMacros: actions.filter((a) => a.failures.includes("NO_MACROS")).length,
+      // Per-floor tallies derived from FLOORS rather than hand-listed, so a
+      // floor added later cannot be silently missing from the plan log — the
+      // hand-listed version is how a wrong floor stayed unexamined.
+      ...Object.fromEntries(
+        FLOORS.map((f) => [f.id, actions.filter((a) => a.failures.includes(f.id)).length]),
+      ),
     },
   };
 }
