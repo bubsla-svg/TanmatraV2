@@ -18,19 +18,27 @@ function alreadyMasked(value: string): boolean {
 }
 
 /**
- * Mask an E.164 number for log output. Keeps the country code and the last 2
- * digits visible — enough for ops staff to disambiguate two concurrent OTP
- * attempts on the same line — and hides the rest.
+ * Mask an E.164 number for log output. Keeps the leading "+" and the last 2
+ * digits — enough for ops staff to tell two concurrent OTP attempts apart on
+ * the same line — and hides every digit before them.
+ *
+ * It deliberately does NOT keep the country code, because it cannot locate one.
+ * ITU-T E.164 dial codes are 1-3 digits and prefix-free; the boundary is only
+ * knowable from a full dial-code table, which this module does not carry. The
+ * previous version guessed with a greedy `\d{1,4}` group, so on an Indian
+ * number it published four of the ten subscriber digits (+919876543210 ->
+ * +9198******10) while its docblock claimed to be showing the country code.
+ * A caller that genuinely needs the dial code already has it as its own field
+ * (`normalisePhone` returns `countryCode` separately) and can log that; it must
+ * not be re-derived by guessing here.
  */
 export function maskE164(e164: string): string {
   if (alreadyMasked(e164)) return e164;
-  const m = /^(\+\d{1,4})(\d+)$/.exec(e164);
+  const m = /^\+(\d+)$/.exec(e164);
   if (!m) return "***";
-  const cc = m[1] ?? "";
-  const rest = m[2] ?? "";
-  if (rest.length <= 2) return `${cc}**`;
-  const tail = rest.slice(-2);
-  return `${cc}${"*".repeat(rest.length - 2)}${tail}`;
+  const digits = m[1] ?? "";
+  if (digits.length <= 2) return "+**";
+  return `+${"*".repeat(digits.length - 2)}${digits.slice(-2)}`;
 }
 
 /**

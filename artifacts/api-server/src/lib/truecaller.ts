@@ -1,4 +1,8 @@
 import { logger } from "./logger";
+// This file used to keep its own byte-identical copy of maskE164, to stay
+// DB-free. piiMask.ts imports nothing, so the copy buys nothing and costs the
+// obvious thing: the greedy-country-code bug had to be found and fixed twice.
+import { maskE164 } from "./piiMask";
 
 /**
  * Truecaller 1-Tap sign-in verification (OAuth 2.0 + PKCE).
@@ -71,20 +75,6 @@ function hasTruecallerCreds(): boolean {
 /** Mock is only allowed outside production — same posture as sms.ts. */
 function mockAllowed(): boolean {
   return (process.env["NODE_ENV"] ?? "development") !== "production";
-}
-
-/**
- * Mask an E.164 number for logs — keep the country code + last 2 digits, hide
- * the rest. Kept local (rather than importing sms.ts' maskE164) so this pure
- * verifier carries no database import and stays unit-testable without a DB.
- */
-function maskE164(e164: string): string {
-  const m = /^(\+\d{1,4})(\d+)$/.exec(e164);
-  if (!m) return "***";
-  const cc = m[1] ?? "";
-  const rest = m[2] ?? "";
-  if (rest.length <= 2) return `${cc}**`;
-  return `${cc}${"*".repeat(rest.length - 2)}${rest.slice(-2)}`;
 }
 
 /** Validate an already-combined E.164 string (e.g. "+919876543210"). */

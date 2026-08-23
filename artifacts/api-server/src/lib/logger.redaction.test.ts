@@ -62,17 +62,23 @@ function captureLogger(): { log: pino.Logger; records: () => string } {
 
 // ── Layer 1: the masks ──────────────────────────────────────────────────────
 
-test("maskE164 hides the middle of the number", () => {
-  // NOTE the actual output: "+9198******10", not "+91********10". The
-  // `\d{1,4}` country-code group is GREEDY, so for a +91 number it swallows
-  // two digits of the subscriber number as well — the function shows 4 of the
-  // 10 subscriber digits, not the "country code and last 2" its docblock
-  // claims. That behaviour is PRE-EXISTING and is asserted here as-is rather
-  // than quietly changed: narrowing it alters every masked line already in
-  // log storage and is a decision about what ops needs, not part of closing
-  // F-1. Recorded as its own finding.
-  assert.equal(maskE164(RAW_E164), "+9198******10");
+test("maskE164 leaves only the last 2 digits, never a guessed country code", () => {
+  // F-10 regression. The mask used to match `^(\+\d{1,4})(\d+)$` and treat
+  // group 1 as "the country code". That group is greedy and E.164 dial codes
+  // are 1-3 digits, so on a +91 number it kept "+9198" — four of the ten
+  // subscriber digits — while its docblock claimed to be keeping the country
+  // code. The digits before the last two are PII; a mask that publishes them
+  // because a regex guessed wrong is not a mask.
+  assert.equal(maskE164(RAW_E164), "+**********10");
+
+  // The specific leak that was live: two subscriber digits behind the +91.
+  assert.ok(!maskE164(RAW_E164).includes("98"));
   assert.ok(!maskE164(RAW_E164).includes("76543"));
+
+  // A 1-digit and a 3-digit dial code mask identically — no boundary is being
+  // inferred in either direction.
+  assert.equal(maskE164("+12125550142"), "+*********42");
+  assert.equal(maskE164("+971501234567"), "+**********67");
 });
 
 test("maskE164 is idempotent — masking a masked number does not degrade it", () => {
@@ -115,7 +121,7 @@ test("a raw e164 logged top-level never reaches the output", () => {
   log.info({ e164: RAW_E164 }, "unmasked.call.site");
   const out = records();
   assert.ok(!out.includes(RAW_E164), `raw number leaked: ${out}`);
-  assert.ok(out.includes("+9198******10"), `expected masked form, got: ${out}`);
+  assert.ok(out.includes("+**********10"), `expected masked form, got: ${out}`);
 });
 
 test("a raw email logged top-level never reaches the output", () => {
@@ -139,13 +145,13 @@ test("phone and phoneE164 are covered, nested one level as well as top-level", (
 
 test("an already-masked call site survives the censor unchanged", () => {
   // The regression this guards: a naive censor replaces the value with
-  // "[Redacted]" (or re-masks it to "***"), silently destroying the
-  // country-code + last-two-digits that ops uses to tell two concurrent OTP
-  // attempts apart — turning a security fix into an observability outage.
+  // "[Redacted]" (or re-masks it to "***"), silently destroying the last two
+  // digits that ops uses to tell two concurrent OTP attempts apart — turning a
+  // security fix into an observability outage.
   const { log, records } = captureLogger();
   log.info({ e164: maskE164(RAW_E164) }, "masked.call.site");
   const out = records();
-  assert.ok(out.includes("+9198******10"), `masked value was destroyed: ${out}`);
+  assert.ok(out.includes("+**********10"), `masked value was destroyed: ${out}`);
   assert.ok(!out.includes("[Redacted]"), `masked value was blanked: ${out}`);
 });
 
