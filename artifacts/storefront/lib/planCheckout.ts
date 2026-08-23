@@ -16,6 +16,19 @@ export const PLAN_DELIVERY_WINDOW = "12:30–13:30";
  */
 export const PLAN_DELIVERY_DAYS_LABEL = "Weekdays, Monday to Friday";
 
+/**
+ * The same fact worded to sit mid-sentence ("Delivered weekdays, Monday to
+ * Friday, 12:30–1:30 pm.").
+ *
+ * It exists because two surfaces reached for `PLAN_DELIVERY_DAYS_LABEL
+ * .toLowerCase()` and rendered "monday to friday" — lowercasing proper nouns
+ * along with the leading W they actually wanted (F-9). Only the first word
+ * changes case between the two forms, so they are written out rather than
+ * derived: a `.replace()` clever enough to spare the weekday names is harder
+ * to read than the seven words it saves.
+ */
+export const PLAN_DELIVERY_DAYS_SENTENCE = "weekdays, Monday to Friday";
+
 function to12Hour(hhmm: string): { time: string; suffix: "am" | "pm" } {
   const [rawH = "0", rawM = "00"] = hhmm.trim().split(":");
   const h = Number(rawH);

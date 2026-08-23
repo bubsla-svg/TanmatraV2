@@ -835,6 +835,7 @@ jobs:
           ./src/routes/corporateLeads.test.ts
           ./src/routes/partnerLeads.test.ts
           ./src/middlewares/rateLimitMiddleware.webhookExemption.test.ts
+          ./src/app.rateLimitCoverage.test.ts
           ./src/middlewares/rateLimitMiddleware.trustProxy.test.ts
           ./src/lib/b2b/accountHealth.test.ts
           ./src/lib/ai/aiHardening.test.ts

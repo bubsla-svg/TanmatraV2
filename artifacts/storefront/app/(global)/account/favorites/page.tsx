@@ -5,7 +5,7 @@ import { ProtocolVaultGrid } from "@/components/account/ProtocolVaultGrid";
 
 export const metadata: Metadata = {
   title: "My Protocol Vault & Favorites",
-  description: "Manage your personal bookmarked therapeutic meal prescriptions, custom annotations, and rapid recurring order presets.",
+  description: "The meals you saved, with your notes, ready to reorder.",
 };
 
 export default async function ProtocolVaultPage() {
@@ -15,7 +15,7 @@ export default async function ProtocolVaultPage() {
     <section className="mx-auto max-w-5xl px-4 py-12 flex flex-col gap-8">
       <div className="flex flex-col gap-4">
         <span className="w-fit rounded-full border border-[color-mix(in_srgb,var(--gold)_20%,transparent)] bg-[color-mix(in_srgb,var(--gold)_10%,transparent)] px-3 py-1 text-xs font-bold uppercase tracking-wider text-gold-text">
-          Personal Clinical Repository
+          Saved by you
         </span>
         <h1 className="text-3xl font-semibold tracking-tight text-ink">
           My Protocol Vault

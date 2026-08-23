@@ -60,7 +60,11 @@ test("the trial says when the food arrives", () => {
   // Law 1. It stated a price and a promise and left the buyer to find out the
   // rest after paying.
   const src = read("trial", "TrialStart.tsx");
-  assert.match(src, /PLAN_DELIVERY_DAYS_LABEL/);
+  // Either form of the shared constant satisfies this: what Law 1 asks is that
+  // the delivery days come from planCheckout.ts rather than being retyped here.
+  // The _SENTENCE variant exists because rendering _LABEL.toLowerCase() mid-
+  // sentence lowercased "Monday to Friday" too (F-9).
+  assert.match(src, /PLAN_DELIVERY_DAYS_(LABEL|SENTENCE)/);
   assert.match(src, /PLAN_DELIVERY_WINDOW_LABEL/);
   assert.match(PLAN_DELIVERY_WINDOW_LABEL, /\d/, "the label must carry a real time");
 });

@@ -4,7 +4,7 @@ import { SymptomTrackerView } from "@/components/symptoms/SymptomTrackerView";
 
 export const metadata: Metadata = {
   title: "Health Symptom & Reaction Tracker",
-  description: "Correlate post-meal digestive comfort, glycemic alertness, and satiety levels directly with your dietary prescriptions.",
+  description: "Tell us how a meal left you feeling, so your dietitian can adjust what comes next.",
 };
 
 export default function SymptomTrackerPage() {
@@ -18,13 +18,13 @@ export default function SymptomTrackerPage() {
       <AccountNav active="symptoms" />
       <div className="flex flex-col gap-2">
         <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
-          Clinical Feedback Loop
+          How meals are landing
         </span>
         <h1 className="text-3xl font-semibold tracking-tight text-ink">
           Health Symptom &amp; Reaction Tracker
         </h1>
         <p className="text-sm leading-relaxed text-ink-muted max-w-2xl">
-          Log physiological post-meal reactions to provide our registered dietitians with verified clinical telemetry for adjusting your upcoming culinary formulas.
+          Note how you felt after a meal — digestion, energy, how full it kept you. Your dietitian reads these and changes what we cook for you next.
         </p>
       </div>
 

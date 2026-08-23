@@ -124,8 +124,14 @@ export function PlanServiceabilityGate({
         // Not a dead end (Laws 9, 10): an unserved PIN ends in notify-me, and
         // the customer can correct a typo without reloading.
         <div className="flex flex-col gap-3 border-t border-line pt-4">
+          {/* The {" "} is load-bearing (F-8). A literal space written after an
+              interpolation is swallowed here — the rendered text read
+              "…deliver to 560001yet…". A space BEFORE an expression survives
+              (the notify-me line below renders "delivers in 560001" correctly),
+              which is exactly why this was invisible in review. Verified
+              against rendered DOM text, not by eye. */}
           <p className="text-sm leading-relaxed text-ink-muted">
-            We don&rsquo;t deliver to {state.pincode} yet — we currently serve Noida sectors
+            We don&rsquo;t deliver to {state.pincode}{" "}yet — we currently serve Noida sectors
             only. Leave your number and we&rsquo;ll tell you the day we reach you.
           </p>
           <NotifyMeForm
