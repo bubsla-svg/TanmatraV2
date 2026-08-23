@@ -29,6 +29,16 @@ E2E_CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome \
 Spec: `artifacts/storefront/e2e/specs/stitch-runtime/trial-flipbook.spec.ts`.
 Every seam is `page.route`-stubbed — no real API, database, gateway, or OTP.
 
+**The whole suite is gated behind `E2E_LIVE_CHECKOUT=1`, deliberately.**
+`storefront.yml` runs the entire mobile project on every PR, so an ungated
+frame here would become a blocking merge check. Two reasons that is wrong:
+most frames need the live `PlanCheckout` (the flag is inlined at *build* time,
+and the PR-gate build is flag-dark, so `/checkout` renders `CheckoutFlow` — no
+PIN gate, no plan details, no pay CTA), and F06 is designed to fail while F-2
+stands. A frame that reddens every unrelated PR is not evidence, it is a broken
+gate. In PR CI all 13 frames skip; run the flipbook deliberately with the
+command above.
+
 ## Frames
 
 | Frame | State | Reviewed |

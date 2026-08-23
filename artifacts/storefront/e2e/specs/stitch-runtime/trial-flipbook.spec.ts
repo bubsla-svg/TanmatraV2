@@ -39,7 +39,26 @@ import { evidenceShot } from "./support";
  * read-through, not an excavation.
  */
 
-const liveCheckout = process.env["E2E_LIVE_CHECKOUT"] === "1" ? test : test.skip;
+/**
+ * THE WHOLE SUITE IS GATED, and that is deliberate.
+ *
+ * This is an evidence-capture run, not a merge gate. `storefront.yml` runs the
+ * entire mobile project on every PR, so an ungated frame here would become a
+ * blocking check — and two things make that wrong:
+ *
+ *  1. Most frames need the LIVE PlanCheckout. `NEXT_PUBLIC_LIVE_CHECKOUT` is
+ *     inlined at BUILD time, and the PR-gate build is flag-dark, so
+ *     `/checkout` renders CheckoutFlow instead — no PIN gate, no plan details,
+ *     no pay CTA. Frames asserting those would fail for a reason that has
+ *     nothing to do with the change under review.
+ *  2. F06 is designed to FAIL while F-2 stands. A frame that reddens every
+ *     unrelated PR is not evidence, it is a broken gate.
+ *
+ * So: run the flipbook deliberately, with E2E_LIVE_CHECKOUT=1 against a
+ * live-checkout build (see docs/red-team/PHASE-0-TRIAL-FLIPBOOK.md). In PR CI
+ * every frame skips and the storefront gate stays about the PR.
+ */
+const frame = process.env["E2E_LIVE_CHECKOUT"] === "1" ? test : test.skip;
 
 const json = (body: unknown, status = 200) => ({
   status,
@@ -215,7 +234,7 @@ async function payAndAwaitSheet(page: Page): Promise<void> {
 // ---------------------------------------------------------------------------
 
 test.describe("flipbook · trial · offer", () => {
-  test("F01 offer, veg default — price, creditback, no-auto-renew, the trio", async ({ page }) => {
+  frame("F01 offer, veg default — price, creditback, no-auto-renew, the trio", async ({ page }) => {
     await page.goto("/trial");
     await expect(page.getByRole("heading", { name: /try 3 lunches for ₹399/i })).toBeVisible();
     // The two commercial promises must both be on the first screen, above any
@@ -225,14 +244,14 @@ test.describe("flipbook · trial · offer", () => {
     await evidenceShot(page, "trial-F01-offer-veg");
   });
 
-  test("F02 offer, non-veg track — the trio swaps, the price does not", async ({ page }) => {
+  frame("F02 offer, non-veg track — the trio swaps, the price does not", async ({ page }) => {
     await page.goto("/trial");
     await page.getByRole("button", { name: "Non-veg" }).click();
     await expect(page.getByText(/₹399/).first()).toBeVisible();
     await evidenceShot(page, "trial-F02-offer-nonveg");
   });
 
-  test("F03 serviceability gate — asked BEFORE phone, allergens or address", async ({ page }) => {
+  frame("F03 serviceability gate — asked BEFORE phone, allergens or address", async ({ page }) => {
     await clearServiceabilityMemory(page);
     await stubServiceability(page);
     await page.goto("/checkout?plan=trial_3day&track=veg");
@@ -242,7 +261,7 @@ test.describe("flipbook · trial · offer", () => {
     await evidenceShot(page, "trial-F03-serviceability-gate");
   });
 
-  test("F04 unserviceable PIN — states the verdict and names a next action", async ({ page }) => {
+  frame("F04 unserviceable PIN — states the verdict and names a next action", async ({ page }) => {
     await clearServiceabilityMemory(page);
     await stubServiceability(page);
     await page.goto("/checkout?plan=trial_3day&track=veg");
@@ -259,7 +278,7 @@ test.describe("flipbook · trial · offer", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("flipbook · trial · money path", () => {
-  liveCheckout("F05 identity gate — the phone ask, after serviceability", async ({ page }) => {
+  frame("F05 identity gate — the phone ask, after serviceability", async ({ page }) => {
     await clearServiceabilityMemory(page);
     await stubServiceability(page);
     await page.route("**/api/auth/user", (route) => route.fulfill(json({ user: null }, 401)));
@@ -269,7 +288,7 @@ test.describe("flipbook · trial · money path", () => {
     await evidenceShot(page, "trial-F05-identity-gate");
   });
 
-  liveCheckout("F06 plan details — the pay screen and its total label", async ({ page }) => {
+  frame("F06 plan details — the pay screen and its total label", async ({ page }) => {
     await clearServiceabilityMemory(page);
     await stubServiceability(page);
     await stubTrialMoneyPath(page);
@@ -293,7 +312,7 @@ test.describe("flipbook · trial · money path", () => {
     ).toHaveCount(0);
   });
 
-  liveCheckout("F07 Law 2 — the sheet takes over with our summary still on screen", async ({ page }) => {
+  frame("F07 Law 2 — the sheet takes over with our summary still on screen", async ({ page }) => {
     await clearServiceabilityMemory(page);
     await stubServiceability(page);
     await stubTrialMoneyPath(page);
@@ -309,7 +328,7 @@ test.describe("flipbook · trial · money path", () => {
     await evidenceShot(page, "trial-F07-sheet-handoff");
   });
 
-  liveCheckout("F08 payment processing — honest progress on captured money", async ({ page }) => {
+  frame("F08 payment processing — honest progress on captured money", async ({ page }) => {
     await clearServiceabilityMemory(page);
     await stubServiceability(page);
     await stubTrialMoneyPath(page);
@@ -328,7 +347,7 @@ test.describe("flipbook · trial · money path", () => {
     await evidenceShot(page, "trial-F08-payment-processing");
   });
 
-  liveCheckout("F09 payment unresolved — never a re-payable CTA on captured money", async ({ page }) => {
+  frame("F09 payment unresolved — never a re-payable CTA on captured money", async ({ page }) => {
     await clearServiceabilityMemory(page);
     await stubServiceability(page);
     await stubTrialMoneyPath(page);
@@ -354,7 +373,7 @@ test.describe("flipbook · trial · money path", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("flipbook · trial · edges", () => {
-  liveCheckout("F10 back pressed during the sheet — dismissal, not a charge", async ({ page }) => {
+  frame("F10 back pressed during the sheet — dismissal, not a charge", async ({ page }) => {
     await clearServiceabilityMemory(page);
     await stubServiceability(page);
     await stubTrialMoneyPath(page);
@@ -371,7 +390,7 @@ test.describe("flipbook · trial · edges", () => {
     await evidenceShot(page, "trial-F10-sheet-dismissed");
   });
 
-  test("F11 back from checkout to the offer — one step, state intact", async ({ page }) => {
+  frame("F11 back from checkout to the offer — one step, state intact", async ({ page }) => {
     await clearServiceabilityMemory(page);
     await stubServiceability(page);
     await page.goto("/trial");
@@ -387,7 +406,7 @@ test.describe("flipbook · trial · edges", () => {
     await evidenceShot(page, "trial-F11-back-to-offer");
   });
 
-  test("F12 slow 3G — the offer's loading state, not a blank screen", async ({ page }) => {
+  frame("F12 slow 3G — the offer's loading state, not a blank screen", async ({ page }) => {
     // Law 10: what the customer looks at while the server-rendered offer
     // streams in. A blank or black frame here is the defect.
     await page.route("**/*", async (route) => {
@@ -402,7 +421,7 @@ test.describe("flipbook · trial · edges", () => {
     await evidenceShot(page, "trial-F12b-slow-3g-loaded");
   });
 
-  test("F13 two tabs — the second tab does not inherit a half-finished first", async ({ context }) => {
+  frame("F13 two tabs — the second tab does not inherit a half-finished first", async ({ context }) => {
     const tabA = await context.newPage();
     await clearServiceabilityMemory(tabA);
     await stubServiceability(tabA);
