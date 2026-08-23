@@ -37,6 +37,25 @@ on:
       - ".github/workflows/verify.yml"
   workflow_dispatch: {}
 
+concurrency:
+  # COST GATE. Without this, a PR that pushes again leaves the superseded run
+  # billing to completion — and the PRs here are agent-driven burst-pushers
+  # (#100 landed 9 commits), so the wasted runs outnumbered the useful ones.
+  #
+  # Keyed on the PR number, so cancellation is scoped to that one PR. A push to
+  # main (or a workflow_dispatch) has no `pull_request` context and falls back
+  # to `github.run_id`, which is unique per run — such a run is therefore alone
+  # in its group and can never be cancelled by a later one. That fallback is
+  # load-bearing: main must keep verifying every commit, because "a green PR
+  # check on a stale base is exactly how this shipped" (see the Dockerfile path
+  # gate, #81).
+  #
+  # Deliberately NOT applied to deploy.yml or the backfill workflows: those
+  # carry `cancel-in-progress: false` because cancelling them mid-write is how
+  # you get a half-applied migration.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   typecheck:
     runs-on: ubuntu-latest
@@ -183,6 +202,13 @@ jobs:
       # 211 tests today. The quoting is what keeps that true once someone adds
       # a subdirectory — unquoted, bash's one-level `**` would match the nested
       # files and drop all 43 of these.
+      #
+      # LOAD-BEARING AS OF THE CI-COST PASS: storefront.yml used to run this
+      # exact glob too, and that duplicate was removed because the two overlap
+      # on every storefront PR. This is now the ONLY copy that gates a pull
+      # request (deploy.yml has a third, but it runs post-merge). Deleting it
+      # does not fail `lint:test-reach` — deploy.yml's copy keeps the gate green
+      # — so it would go silently.
       - name: Wire + money-path unit tests (web — storefront)
         if: ${{ !cancelled() }}
         working-directory: artifacts/api-server

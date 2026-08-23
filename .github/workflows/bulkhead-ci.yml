@@ -16,6 +16,25 @@ on:
       - ".github/workflows/bulkhead-ci.yml"
   workflow_dispatch: {}
 
+concurrency:
+  # COST GATE. Without this, a PR that pushes again leaves the superseded run
+  # billing to completion — and the PRs here are agent-driven burst-pushers
+  # (#100 landed 9 commits), so the wasted runs outnumbered the useful ones.
+  #
+  # Keyed on the PR number, so cancellation is scoped to that one PR. A push to
+  # main (or a workflow_dispatch) has no `pull_request` context and falls back
+  # to `github.run_id`, which is unique per run — such a run is therefore alone
+  # in its group and can never be cancelled by a later one. That fallback is
+  # load-bearing: main must keep verifying every commit, because "a green PR
+  # check on a stale base is exactly how this shipped" (see the Dockerfile path
+  # gate, #81).
+  #
+  # Deliberately NOT applied to deploy.yml or the backfill workflows: those
+  # carry `cancel-in-progress: false` because cancelling them mid-write is how
+  # you get a half-applied migration.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 # Task #7 acceptance: the manual-mode bulkhead must be guarded by a
 # CI smoke that exercises the lock semantics + audit outbox + p95
 # latency envelope on every change to the API server or the db schema.

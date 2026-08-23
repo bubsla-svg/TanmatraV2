@@ -15,6 +15,12 @@ on:
 permissions:
   contents: write
 
+# Pinned in ONE place. It is both the package this installs and the cache key
+# below; two literals would drift the moment someone bumped one of them, and a
+# stale key silently means "never hits" rather than a visible failure.
+env:
+  PLAYWRIGHT_VERSION: "1.49.1"
+
 jobs:
   synthetic:
     runs-on: ubuntu-latest
@@ -28,10 +34,23 @@ jobs:
         with:
           node-version: 22
 
+      # COST: this workflow runs every 2 hours plus after every deploy — the
+      # highest run count in the repo — and re-downloaded two browser engines
+      # each time. The download is cached; the install command is unchanged and
+      # still runs unconditionally.
+      #
+      # Unconditional matters MORE here than anywhere else in this repo: this is
+      # the production monitor, so a job that fails for a CI-infrastructure
+      # reason reads as "prod is broken". A cache miss must cost seconds, never
+      # a false alarm.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-chromium-webkit-${{ env.PLAYWRIGHT_VERSION }}
       - name: Install Playwright (chromium + webkit)
         run: |
           npm init -y >/dev/null 2>&1 || true
-          npm install --no-save playwright@1.49.1
+          npm install --no-save "playwright@$PLAYWRIGHT_VERSION"
           npx playwright install --with-deps chromium webkit
 
       - name: Run synthetic checks against production

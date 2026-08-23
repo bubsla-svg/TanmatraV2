@@ -57,6 +57,25 @@ on:
     - cron: "37 2 * * *"
   workflow_dispatch: {}
 
+concurrency:
+  # COST GATE. Without this, a PR that pushes again leaves the superseded run
+  # billing to completion — and the PRs here are agent-driven burst-pushers
+  # (#100 landed 9 commits), so the wasted runs outnumbered the useful ones.
+  #
+  # Keyed on the PR number, so cancellation is scoped to that one PR. A push to
+  # main (or a workflow_dispatch) has no `pull_request` context and falls back
+  # to `github.run_id`, which is unique per run — such a run is therefore alone
+  # in its group and can never be cancelled by a later one. That fallback is
+  # load-bearing: main must keep verifying every commit, because "a green PR
+  # check on a stale base is exactly how this shipped" (see the Dockerfile path
+  # gate, #81).
+  #
+  # Deliberately NOT applied to deploy.yml or the backfill workflows: those
+  # carry `cancel-in-progress: false` because cancelling them mid-write is how
+  # you get a half-applied migration.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   storefront:
     # Everything except the nightly trigger. `workflow_dispatch` still runs
@@ -85,11 +104,35 @@ jobs:
         run: pnpm --filter @workspace/storefront run typecheck
       - name: Build (server-first, no money path)
         run: pnpm --filter @workspace/storefront run build
+      # COST: the browser download is the bulk of this step and is byte-identical
+      # run to run. Cached on the resolved Playwright version, so a version bump
+      # re-downloads and everything else hits.
+      #
+      # `playwright install` still runs on a cache hit. It is a no-op when the
+      # browser is already present, and keeping it UNCONDITIONAL is what makes
+      # this safe: a cold, evicted or partially-restored cache cannot leave the
+      # job running specs with no browser. Skipping the install on a hit would
+      # trade a real failure mode for a few seconds.
+      #
+      # `--with-deps` also apt-installs OS libraries, which live outside the
+      # cached directory — another reason the command must not be skipped.
+      #
+      # The key names the browser SET: call sites in this repo install different
+      # sets into the same runner cache namespace, so a chromium-only key would
+      # otherwise satisfy a firefox+webkit restore.
+      - name: Resolve Playwright version
+        id: pw
+        run: |
+          echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-chromium-${{ steps.pw.outputs.version }}
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
       # CUJ specs against the built app (TNM-SF-01 §6). Same specs re-run
       # against the deployed service URL at each wave gate via E2E_BASE_URL;
       # here they gate the merge on a real served build (e2e-pr.yml pattern).
-      - name: Install Playwright browser
-        run: pnpm exec playwright install --with-deps chromium
       - name: CUJ e2e (mobile) against the built app
         run: |
           PORT=3000 pnpm --filter @workspace/storefront run start &
@@ -170,17 +213,34 @@ jobs:
       # step to the left. `!cancelled()` keeps the suite blocking while letting
       # the build and the e2e specs report on the same run.
       #
-      # Quoted so **node** expands the glob, not the shell. Actions runs `run:`
-      # under bash with globstar off, where `**` is only `*` — one directory
-      # level, no more and no less. All 43 files sit directly in `lib/` today,
-      # so the previous `lib/*.test.ts` and this `lib/**/*.test.ts` both yield
-      # 211 tests; the quoting is what keeps that true once someone adds a
-      # subdirectory. Unquoted it would silently invert — bash would match the
-      # nested files and drop all 43 of these.
-      - name: Money-path invariants (checkout · trial · attach)
-        if: ${{ !cancelled() }}
-        working-directory: artifacts/api-server
-        run: node --test --import tsx "../storefront/lib/**/*.test.ts"
+      # The storefront's own lib/ suite USED TO RUN HERE TOO, identically, as
+      # "Money-path invariants (checkout · trial · attach)". verify.yml's
+      # money-unit job runs the same glob, and the two workflows overlap on
+      # every storefront PR — so it was billed twice per PR push for one set of
+      # results.
+      #
+      # verify.yml is the copy that survives, and the direction is not
+      # arbitrary. Its path filter (`artifacts/**`, `lib/**`, `scripts/**`) is a
+      # near-superset of this file's, and its own comment records why the suite
+      # was added there: a change under `lib/` could otherwise reach main
+      # without these ever running. Deleting THAT copy instead would have
+      # reopened exactly the hole it was written to close.
+      #
+      # Diffed mechanically, not by eye: of this file's 23 PR path patterns,
+      # verify.yml's 9 cover all but four — `docs/stitch/stitch-screen-
+      # manifest.json`, the two `tools/verify-stitch-*.mjs`, and this workflow
+      # itself. A PR touching ONLY those is the entire set that now runs the
+      # storefront's lib suite nowhere, and none of them can change the outcome
+      # of a test under `artifacts/storefront/lib`.
+      #
+      # There is a THIRD copy, in deploy.yml's pre-deploy gate — deliberate, and
+      # untouched: it runs on the MERGE COMMIT, which is the only thing that
+      # catches a PR that was green against a stale base.
+      #
+      # `lint:test-reach` will NOT protect this. It asks whether some workflow
+      # names a file, and deploy.yml's copy answers yes unconditionally — so the
+      # gate stays green even with BOTH pull_request copies deleted (verified).
+      # Anyone changing this must redo the path-filter diff by hand.
 
       # ---------------------------------------------------------------------
       # STYLE / ANTI-ROT GATES — last, and unconditional.
@@ -331,7 +391,15 @@ jobs:
       # into its own job without a hidden dependency. Chrome comes from the
       # runner image (`google-chrome-stable` on PATH); the script probes for it
       # and honours CHROME_PATH.
+      #
+      # COST / CORRECTNESS: not run on pull_request. Requirement (a) above asks
+      # for baseline data "from main" — a PR branch's numbers are not that data,
+      # they are noise mixed into it, and this step cannot fail a PR anyway
+      # (both reasons above). It was 3-5 min on every PR push buying nothing.
+      # Runs on push-to-main and on workflow_dispatch, which is where the
+      # baseline the four conditions require actually accumulates.
       - name: Performance baseline — Lighthouse (NON-BLOCKING, see comment)
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         continue-on-error: true
         env:
           LH_BASE: http://127.0.0.1:3100
@@ -344,7 +412,12 @@ jobs:
           done
           node scripts/src/lighthouse-audit.mjs
       - name: Upload Lighthouse baseline reports
-        if: always()
+        # Carries the producer's gate as well as `always()`. `always()` alone is
+        # what uploads a report when the audit step itself failed — worth
+        # keeping — but on a pull_request the audit no longer runs at all, and
+        # an unconditional upload would warn about files that were never meant
+        # to exist on that run.
+        if: ${{ always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
         continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
@@ -390,6 +463,30 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build (server-first, no money path)
         run: pnpm --filter @workspace/storefront run build
+      # COST: the browser download is the bulk of this step and is byte-identical
+      # run to run. Cached on the resolved Playwright version, so a version bump
+      # re-downloads and everything else hits.
+      #
+      # `playwright install` still runs on a cache hit. It is a no-op when the
+      # browser is already present, and keeping it UNCONDITIONAL is what makes
+      # this safe: a cold, evicted or partially-restored cache cannot leave the
+      # job running specs with no browser. Skipping the install on a hit would
+      # trade a real failure mode for a few seconds.
+      #
+      # `--with-deps` also apt-installs OS libraries, which live outside the
+      # cached directory — another reason the command must not be skipped.
+      #
+      # The key names the browser SET: call sites in this repo install different
+      # sets into the same runner cache namespace, so a chromium-only key would
+      # otherwise satisfy a firefox+webkit restore.
+      - name: Resolve Playwright version
+        id: pw
+        run: |
+          echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-firefox-webkit-${{ steps.pw.outputs.version }}
       - name: Install Playwright browsers (firefox + webkit)
         run: pnpm exec playwright install --with-deps firefox webkit
       - name: Primary funnel on Gecko + WebKit
