@@ -18,6 +18,7 @@ import { getAddresses, type Address, type AuthUser, type AddOnId, type DietTrack
 // humanizeOrderError, not ApiError.message: #42 replaced the raw machine string
 // with copy that names the next step. This branch predated that change.
 import { humanizeOrderError } from "@/lib/orderErrors";
+import { billedTotalLabel } from "@/lib/planDecisionFacts";
 import type { PlanOffer } from "@/lib/planOffer";
 import { PlanIdentityGate } from "./PlanIdentityGate";
 import { PlanOfferPreview } from "./PlanOfferPreview";
@@ -317,6 +318,12 @@ export function PlanCheckout({
         // time. A saved address still wins — it is the more complete answer.
         initialAddress={savedAddress ?? { line1: "", city: "", pincode: servicePincode }}
         finePrint={finePrint}
+        // F-2: the label over the amount comes from the SAME cadence the
+        // identity gate's recap prints ("one-time" for the trial), not from a
+        // hardcoded string. `recap.cadence` is `recapQuote.cycle` — the
+        // catalog's own answer for what is being bought — so the pay screen
+        // cannot disagree with the screen before it.
+        billedLabel={recap ? billedTotalLabel(recap.cadence) : undefined}
         // Law 7: the trial is three fixed dishes bought once — it asks for
         // nothing it cannot act on. Derived from the plan id rather than passed
         // as another prop, so it cannot disagree with what is being bought.

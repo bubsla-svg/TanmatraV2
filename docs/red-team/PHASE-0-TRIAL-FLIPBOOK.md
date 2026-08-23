@@ -46,9 +46,9 @@ command above.
 | F01 | Offer, veg default — price, creditback, no-auto-renew, trio | clean |
 | F02 | Offer, non-veg track — trio swaps, price does not | clean |
 | F03 | Serviceability gate — asked before phone/allergens/address | clean |
-| F04 | Unserviceable PIN — verdict + notify-me | **2 defects** (F-7, F-8) |
-| F05 | Identity gate — phone ask, after serviceability | **1 defect** (F-9) |
-| F06 | Plan details — the pay screen and its total label | **F-2 confirmed** |
+| F04 | Unserviceable PIN — verdict + notify-me | **2 defects open** (F-8, F-9) |
+| F05 | Identity gate — phone ask, after serviceability | **F-7 FIXED** (phase 3) |
+| F06 | Plan details — the pay screen and its total label | **F-2 FIXED** (phase 3) |
 | F07 | Gateway sheet takes over, our summary still on screen | clean |
 | F08 | Payment processing — honest progress on captured money | clean |
 | F09 | Payment unresolved — no re-payable CTA on captured money | clean |
@@ -59,24 +59,28 @@ command above.
 
 ## What the frames established
 
-**F06 confirms F-2 with a picture.** The ₹399 one-off trial's pay screen labels
-its total `Billed each cycle (incl. GST)` and its sticky bar `BILLED EACH CYCLE`.
-The spec asserts this string is absent and therefore FAILS while the defect
-stands — that failure is the evidence, and it turns green the moment the fix
-lands. The shot is taken *before* the assertion on purpose: a flipbook frame
-that only exists when the screen is already correct is not evidence.
+**F06 confirmed F-2 with a picture, and now confirms the fix.** The ₹399 one-off
+trial's pay screen used to label its total `Billed each cycle (incl. GST)` with a
+sticky `BILLED EACH CYCLE` beside the pay button. The spec asserts that string is
+absent, so it FAILED while the defect stood and went green the moment phase 3
+landed — the frame now reads **`ONE-TIME CHARGE  ₹399`**. It also asserts the
+one-time label is positively present, because absence alone would still pass if
+someone deleted the label outright, which is its own defect: an unlabelled amount
+on a pay screen. The shot is taken *before* the assertions on purpose: a flipbook
+frame that only exists when the screen is already correct is not evidence.
 
-**F05 is a second instance of the same root cause (new — F-9).** The identity
-gate's recap card renders, for the same one-off trial:
+**F05 was a second instance of the same root cause (F-7), now fixed.** The
+identity gate's recap card used to render, for the same one-off trial:
 
 > 3 lunches · one-time    ₹399
 > Final total confirmed after sign-in — any credit applies automatically.
 > **Pause or cancel anytime.**
 
-`CADENCE_LABEL` correctly prints `one-time` two lines above an unconditional
+`CADENCE_LABEL` correctly printed `one-time` two lines above an unconditional
 subscription-management promise about a purchase that has nothing to pause or
-cancel. Both halves are in one card, in one screenshot. Source review found F-2
-and missed this; the flipbook found it in the frame.
+cancel. Both halves in one card, in one screenshot. Source review found F-2 and
+missed this; the flipbook found it in the frame. Phase 3 gates the sentence on
+the cadence, and the frame now ends at "…applies automatically."
 
 **F04 carries two copy defects (new — F-7, F-8),** both confirmed against
 rendered DOM text rather than by eye:

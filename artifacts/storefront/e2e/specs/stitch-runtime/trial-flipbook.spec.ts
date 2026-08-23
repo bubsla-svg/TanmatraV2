@@ -285,6 +285,17 @@ test.describe("flipbook · trial · money path", () => {
     await page.goto("/checkout?plan=trial_3day&track=veg");
     await passServiceabilityGate(page);
     await expect(page.getByRole("heading", { name: /start your .* plan/i })).toBeVisible();
+
+    // F-7 (fixed): the recap card prints "one-time" for this plan, so it must
+    // NOT also promise subscription management. A ₹399 one-off has no future
+    // delivery to pause and no mandate to cancel — the sentence would tell the
+    // buyer they had purchased a subscription.
+    await expect(page.getByText(/one-time/i).first()).toBeVisible();
+    await expect(
+      page.getByText(/pause or cancel/i),
+      "F-7: a one-off must not promise pause/cancel",
+    ).toHaveCount(0);
+
     await evidenceShot(page, "trial-F05-identity-gate");
   });
 
@@ -310,6 +321,11 @@ test.describe("flipbook · trial · money path", () => {
       page.getByText(/billed each cycle/i).first(),
       "F-2: the one-off ₹399 trial must not label its total as a recurring charge",
     ).toHaveCount(0);
+
+    // …and says the true thing in its place. Absence alone would still pass if
+    // the label were deleted outright, which would be its own defect: an
+    // unlabelled amount on a pay screen.
+    await expect(page.getByText(/one-time charge/i).first()).toBeVisible();
   });
 
   frame("F07 Law 2 — the sheet takes over with our summary still on screen", async ({ page }) => {
