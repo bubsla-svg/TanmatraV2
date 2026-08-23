@@ -172,6 +172,7 @@ test("payment_link.paid: matching amount promotes the order (reconciled by refer
     assert.equal(order!.status, "preparing", "matching link payment must promote the order");
     assert.equal(order!.razorpayPaymentId, "pay_link_ok");
   } finally {
+    await db.delete(deliveryEventsTable).where(eq(deliveryEventsTable.orderId, orderId));
     await db.delete(ordersTable).where(eq(ordersTable.id, orderId));
   }
 });
@@ -194,6 +195,7 @@ test("payment_link.paid: underpayment does NOT promote (the ₹1-for-any-order a
     const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, orderId));
     assert.equal(order!.status, "placed", "underpaid link payment must NOT promote the order");
   } finally {
+    await db.delete(deliveryEventsTable).where(eq(deliveryEventsTable.orderId, orderId));
     await db.delete(ordersTable).where(eq(ordersTable.id, orderId));
   }
 });
@@ -324,6 +326,7 @@ async function allEvents(orderId: number) {
 async function cleanupOrder(orderId: number): Promise<void> {
   await db.delete(deliveryEventsTable).where(eq(deliveryEventsTable.orderId, orderId));
   await db.delete(refundRequestsTable).where(eq(refundRequestsTable.orderId, orderId));
+  await db.delete(deliveryEventsTable).where(eq(deliveryEventsTable.orderId, orderId));
   await db.delete(ordersTable).where(eq(ordersTable.id, orderId));
 }
 

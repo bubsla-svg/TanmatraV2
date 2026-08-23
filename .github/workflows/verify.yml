@@ -839,6 +839,7 @@ jobs:
           ./src/lib/b2b/accountHealth.test.ts
           ./src/lib/ai/aiHardening.test.ts
           ./src/lib/anomalies.golden.test.ts
+          ./src/lib/anomalies.webhookInbox.test.ts
           ./src/lib/menuResolver.cache.test.ts
           ./src/lib/menuResolver.allergenReview.test.ts
           ./src/lib/menuResolver.macroProvenance.test.ts

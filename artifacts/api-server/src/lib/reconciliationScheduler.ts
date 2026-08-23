@@ -157,12 +157,17 @@ export async function promoteSettledZeroChargeOrders(now: Date): Promise<number>
       void sendOrderConfirmation(order.id).catch((err: unknown) =>
         logger.error({ err, orderId: order.id }, "sendOrderConfirmation failed"),
       );
-      if (order.orderKind === "meal" && order.userId) {
-        const [user] = await db
-          .select()
-          .from(usersTable)
-          .where(eq(usersTable.id, order.userId))
-          .limit(1);
+      // The kitchen push is gated on orderKind ONLY. It used to also require
+      // `order.userId`, which meant a GUEST zero-charge meal order was flipped
+      // to "preparing" and then never sent to Petpooja — strictly worse than
+      // leaving it alone, because the customer is now told their food is being
+      // made while no kitchen has heard of it. The user row is an optional
+      // enrichment of the push (a nicer name on the ticket), never a
+      // precondition for it.
+      if (order.orderKind === "meal") {
+        const [user] = order.userId
+          ? await db.select().from(usersTable).where(eq(usersTable.id, order.userId)).limit(1)
+          : [];
         const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
         pushOrderToPetpooja(order, {
           name: fullName || "Customer",
@@ -226,8 +231,19 @@ export async function runOrderReconciliationSweep(opts?: {
   let errors = 0;
 
   for (const order of staleOrders) {
-    if (!order.razorpayOrderId || !order.userId) continue;
-    const orderUserId = order.userId;
+    // `userId` is deliberately NOT a condition here. It used to be, and that
+    // excluded every GUEST order from the only path that heals a capture whose
+    // webhook was dropped — the customer is charged, the order stays "placed",
+    // and nothing ever looks at it again. Guests are exactly the population
+    // that cannot chase it themselves: no account, no order history, no way
+    // back in. The sibling sweep above (promoteSettledZeroChargeOrders) never
+    // filtered on userId either; this one was the outlier.
+    //
+    // Everything downstream already copes with a null userId:
+    // `sendOrderConfirmation` left-joins the user and prefers `order.phone`,
+    // Petpooja falls back to a placeholder name, and `emitServerEvent` takes
+    // `string | null`. Only the user-row lookup below needs guarding.
+    if (!order.razorpayOrderId) continue;
     try {
       const res = await fetcher(`https://api.razorpay.com/v1/orders/${order.razorpayOrderId}/payments`, {
         method: "GET",
@@ -290,11 +306,13 @@ export async function runOrderReconciliationSweep(opts?: {
             logger.error({ err, orderId: order.id }, "reconciliation: corporate subsidy commit failed");
           }
 
-          const [user] = await db
-            .select()
-            .from(usersTable)
-            .where(eq(usersTable.id, orderUserId))
-            .limit(1);
+          // Guest orders have no user row to fetch. Skipping the query is not
+          // just tidiness: `eq(usersTable.id, null)` renders as `= NULL`,
+          // which matches nothing in SQL, so the lookup would silently cost a
+          // round-trip to return the empty result we can name up front.
+          const [user] = order.userId
+            ? await db.select().from(usersTable).where(eq(usersTable.id, order.userId)).limit(1)
+            : [];
           const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
 
           // Kitchen push is meal-only by schema contract (orders.ts: "the
@@ -317,7 +335,7 @@ export async function runOrderReconciliationSweep(opts?: {
             charge_paise: order.chargePaise ?? order.totalPaise,
             razorpay_payment_id: validPayment.id,
             reconciled_by: "sweep",
-          }, orderUserId);
+          }, order.userId);
         }
       } else {
         unresolved++;
