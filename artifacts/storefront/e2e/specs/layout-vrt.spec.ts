@@ -49,6 +49,15 @@ import { test, expect } from "@playwright/test";
  * Each needs one CI run with `--update-snapshots` (see above) before it asserts
  * anything. Until then this spec reports them as skipped, by name, on every
  * run. It does not pretend they pass.
+ *
+ * HISTORICAL NOTE, because this file asserted its own coverage wrongly for a
+ * while: until the commit that added the CI step, the sentence above was FALSE
+ * in the strongest way — `artifacts/storefront/.gitignore` carried
+ * `*.spec.ts-snapshots/`, so the directory could not be tracked and no baseline
+ * existed anywhere in the repository. This spec ran in no workflow either, so
+ * nothing contradicted it. `lint:test-reach` does not cover `e2e/specs`, which
+ * is why. Both are fixed; the claim above is now true, and the CI step in
+ * storefront.yml is what keeps it true.
  */
 const BASELINED_PROJECTS: ReadonlySet<string> = new Set(["chromium"]);
 
@@ -92,14 +101,34 @@ test.describe("Visual Regression Tests: Global Chrome", () => {
     });
   });
 
-  // Specifically check the Marketplace to ensure it doesn't drift
-  // from the global layout
-  test("Marketplace header matches global baseline", async ({ page }) => {
+  /**
+   * The Marketplace header, against ITS OWN baseline — deliberately not the
+   * one `/` uses.
+   *
+   * This test used to assert `global-header.png`, i.e. that the marketplace
+   * header is pixel-identical to the home header, "to ensure it doesn't drift
+   * from the global layout". That premise is false and always was:
+   * `HeaderShell` is `bg-[color-mix(in_srgb,var(--surface) 88%,transparent)]`
+   * with `backdrop-blur`, and `sticky top-0`. Twelve percent of whatever the
+   * route renders behind it bleeds through, blurred — so the same component on
+   * two routes produces two different images by design. Measured on the first
+   * CI run that ever executed this file: 77338 of 80640 pixels differed,
+   * ratio 0.96.
+   *
+   * Nothing caught it because the spec ran in no workflow and its baselines
+   * were gitignored, so the assertion had never once executed.
+   *
+   * Cross-route structural drift is still worth checking; pixels are just the
+   * wrong instrument for it on a translucent element. A DOM-level assertion
+   * (same nav items, same order, same landmark roles) would do it, and is left
+   * as its own change rather than smuggled in here.
+   */
+  test("Marketplace header appearance", async ({ page }) => {
     await page.goto("/marketplace");
     await page.waitForLoadState("networkidle");
     const header = page.locator("header").first();
 
-    await expect(header).toHaveScreenshot("global-header.png", {
+    await expect(header).toHaveScreenshot("marketplace-header.png", {
       maxDiffPixels: 100,
     });
   });

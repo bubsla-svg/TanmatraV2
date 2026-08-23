@@ -218,6 +218,63 @@ jobs:
       # gate stays green even with BOTH pull_request copies deleted (verified).
       # Anyone changing this must redo the path-filter diff by hand.
 
+      # VISUAL REGRESSION — the global chrome, pixel-compared to a committed
+      # baseline.
+      #
+      # `layout-vrt.spec.ts` existed for a long time and ran in NO workflow, so
+      # it asserted nothing. Two things kept it that way and both are fixed in
+      # the commit that added this step: `artifacts/storefront/.gitignore`
+      # carried `*.spec.ts-snapshots/`, so a baseline could not be tracked even
+      # if someone generated one, and `lint:test-reach` does not scan
+      # `e2e/specs`, so nothing reported the spec as unreached. Wiring the step
+      # without un-ignoring the baselines would have produced a check that
+      # writes its own reference on every run and passes against itself — the
+      # exact non-gate the .gitignore comment warned about.
+      #
+      # BLOCKING, deliberately. A non-blocking VRT is indistinguishable from no
+      # VRT: nobody reads a green-with-warnings pixel diff. The flake surface is
+      # real (a runner image bump can shift font rasterisation), and it is
+      # bounded rather than hand-waved: `maxDiffPixels` is set per assertion in
+      # the spec, only `chromium` has a baseline so only it asserts, and the
+      # diff PNGs upload on failure so a red build is diagnosable from the
+      # artifact. If a runner bump does move the rendering, the fix is to look
+      # at the diff and regenerate on purpose — never `--update-snapshots` to
+      # get to green.
+      #
+      # Own `next start` on port 3300, following the Lighthouse and audit steps'
+      # precedent: self-contained, reorderable, no hidden dependency on
+      # whichever server an earlier step happened to leave running.
+      - name: Visual regression — global chrome vs committed baseline
+        if: ${{ !cancelled() }}
+        run: |
+          PORT=3300 pnpm --filter @workspace/storefront run start \
+            > /tmp/storefront-vrt.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:3300/ >/dev/null && break
+            sleep 1
+          done
+          # --retries=0 OVERRIDES the config's `retries: 1`, and it is the
+          # difference between a gate and a decoration. With a retry, a MISSING
+          # baseline fails attempt 1, Playwright writes the snapshot ("writing
+          # actual"), and attempt 2 passes against the file just written — the
+          # check goes green having compared the run to itself. That is exactly
+          # the "writes one on first run and passes against itself" failure the
+          # old .gitignore comment predicted, and it is why wiring this step
+          # without committing baselines would have gated nothing.
+          E2E_BASE_URL=http://127.0.0.1:3300 pnpm exec playwright test \
+            --config artifacts/storefront/e2e/playwright.config.ts \
+            --retries=0 --project=chromium specs/layout-vrt.spec.ts
+      - name: Upload VRT diff images on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: storefront-vrt-diff
+          path: |
+            playwright-report/
+            artifacts/storefront/e2e/test-results/
+          retention-days: 7
+          if-no-files-found: warn
+
       # ---------------------------------------------------------------------
       # STYLE / ANTI-ROT GATES — last, and unconditional.
       # ---------------------------------------------------------------------
