@@ -73,30 +73,6 @@ jobs:
 
       # @playwright/test is a workspace devDependency (npm can't install at a
       # pnpm workspace root) — only the browser binary needs fetching here.
-      # COST: the browser download is the bulk of this step and is byte-identical
-      # run to run. Cached on the resolved Playwright version, so a version bump
-      # re-downloads and everything else hits.
-      #
-      # `playwright install` still runs on a cache hit. It is a no-op when the
-      # browser is already present, and keeping it UNCONDITIONAL is what makes
-      # this safe: a cold, evicted or partially-restored cache cannot leave the
-      # job running specs with no browser. Skipping the install on a hit would
-      # trade a real failure mode for a few seconds.
-      #
-      # `--with-deps` also apt-installs OS libraries, which live outside the
-      # cached directory — another reason the command must not be skipped.
-      #
-      # The key names the browser SET: call sites in this repo install different
-      # sets into the same runner cache namespace, so a chromium-only key would
-      # otherwise satisfy a firefox+webkit restore.
-      - name: Resolve Playwright version
-        id: pw
-        run: |
-          echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: pw-${{ runner.os }}-chromium-${{ steps.pw.outputs.version }}
       - name: Install Playwright browser
         run: pnpm exec playwright install --with-deps chromium
 
