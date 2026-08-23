@@ -245,6 +245,22 @@ jobs:
         run: |
           node --test --import tsx \
             ./src/lib/supportTriage.test.ts
+      # Customer PII must never reach log output in plaintext (red-team F-1).
+      # DB-free: the masks are pure, and the backstop is asserted against a
+      # real pino instance writing to memory. Its own step, named for what it
+      # is, so a failure reads as "a phone number is leaking into logs" rather
+      # than being buried in a money run.
+      #
+      # Worth keeping as a STANDING gate rather than a one-off: the twelve
+      # sites this closed drifted in the first place because nothing failed
+      # when they logged raw — sms.ts by documented policy, whatsapp.ts by
+      # accident. This step is what makes the next such drift fail.
+      - name: PII never reaches log output
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: |
+          node --test --import tsx \
+            ./src/lib/logger.redaction.test.ts
       # The /delivery access-control contract used to sit here, DB-free. ADM-02
       # moved it: the gate now resolves named roles from the `admin_roles`
       # table, so an AUTHENTICATED non-ops caller — which is exactly what that
