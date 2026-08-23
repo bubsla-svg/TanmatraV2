@@ -228,7 +228,7 @@ router.post(
       res.status(502).json({ error: result.error ?? "send failed" });
       return;
     }
-    logger.info({ e164: num.e164 }, "auth.phone.otp_sent");
+    logger.info({ e164: maskE164(num.e164) }, "auth.phone.otp_sent");
     res.json(
       PhoneSendOtpResponse.parse({
         ok: true,
@@ -300,7 +300,7 @@ router.post(
       .returning();
 
     if (!user) {
-      logger.error({ e164: phoneE164 }, "auth.phone.upsert_failed");
+      logger.error({ e164: maskE164(phoneE164) }, "auth.phone.upsert_failed");
       res.status(500).json({ error: "could not create session" });
       return;
     }
