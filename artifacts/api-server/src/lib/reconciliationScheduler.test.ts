@@ -193,6 +193,115 @@ test("a wrong-amount capture does NOT promote — same reconciliation rule as th
   assert.equal(row?.status, "placed", "a wrong-amount capture must not confirm the order");
 });
 
+// ORDERING NOTE, learned the hard way: these live AFTER the
+// "ignores orders newer than 15 minutes" test on purpose. The sweep is global
+// — it processes every stale `placed` order in the database — and that test
+// asserts `reconciled === 0` while using a catch-all fetchFn that reports a
+// capture for ANY url. Any test placed before it that leaves a stale, still
+// -placed order (the wrong-amount cases below do exactly that) gets promoted
+// by that catch-all and turns its assertion red. Put new non-promoting cases
+// here, not above.
+/**
+ * F-3 regression. The sweep used to `continue` on `!order.userId`, so a GUEST
+ * order whose webhook was dropped stayed "placed" forever: charged, never
+ * cooked, and invisible to the only process that heals it. Guests are exactly
+ * the population that cannot chase it themselves — no account, no order
+ * history, no way back in.
+ *
+ * These two tests are the pair that matters. Promoting guests is only correct
+ * if the amount rule still holds for them, so the second test proves the fix
+ * did not widen into "promote any guest capture".
+ */
+test("F-3: a GUEST order (userId null) with a matching capture is reconciled", async () => {
+  const now = new Date();
+  const twentyMinutesAgo = new Date(now.getTime() - 20 * 60 * 1000);
+  const rzpOrderId = `order_rzp_guest_${RUN}`;
+
+  const [order] = await db
+    .insert(ordersTable)
+    .values({
+      userId: null,
+      phone: "+919876500011",
+      status: "placed",
+      totalPaise: 25000,
+      chargePaise: 25000,
+      razorpayOrderId: rzpOrderId,
+      createdAt: twentyMinutesAgo,
+      items: [],
+      orderKind: "meal",
+    })
+    .returning({ id: ordersTable.id });
+  orderIds.push(order!.id);
+
+  const fakeFetch = async (url: any) => {
+    if (String(url).includes(`api.razorpay.com/v1/orders/${rzpOrderId}/payments`)) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ items: [{ id: `pay_guest_${RUN}`, status: "captured", amount: 25000 }] }),
+      } as unknown as Response;
+    }
+    // Benign default for every OTHER stale order the global sweep will also
+    // walk: an empty payment list leaves them unresolved rather than counting
+    // an error. The sweep's result counters are cross-test totals in this
+    // shared database, so this test asserts on its own order row instead.
+    return { ok: true, status: 200, json: async () => ({ items: [] }) } as unknown as Response;
+  };
+
+  await runOrderReconciliationSweep({ now, fetchFn: fakeFetch as any });
+
+  const [updated] = await db
+    .select({ status: ordersTable.status, payId: ordersTable.razorpayPaymentId })
+    .from(ordersTable)
+    .where(eq(ordersTable.id, order!.id));
+
+  assert.equal(updated?.status, "preparing", "a guest capture must reconcile, not be skipped");
+  assert.equal(updated?.payId, `pay_guest_${RUN}`);
+});
+
+test("F-3: a GUEST order with a WRONG-amount capture still does NOT promote", async () => {
+  const now = new Date();
+  const twentyMinutesAgo = new Date(now.getTime() - 20 * 60 * 1000);
+  const rzpOrderId = `order_rzp_guest_bad_${RUN}`;
+
+  const [order] = await db
+    .insert(ordersTable)
+    .values({
+      userId: null,
+      phone: "+919876500012",
+      status: "placed",
+      totalPaise: 25000,
+      chargePaise: 25000,
+      razorpayOrderId: rzpOrderId,
+      createdAt: twentyMinutesAgo,
+      items: [],
+      orderKind: "meal",
+    })
+    .returning({ id: ordersTable.id });
+  orderIds.push(order!.id);
+
+  const fakeFetch = async (url: any) => {
+    if (String(url).includes(`api.razorpay.com/v1/orders/${rzpOrderId}/payments`)) {
+      // ₹1 against a ₹250 order — the integrity alarm, not a promotion.
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ items: [{ id: `pay_guest_bad_${RUN}`, status: "captured", amount: 100 }] }),
+      } as unknown as Response;
+    }
+    return { ok: true, status: 200, json: async () => ({ items: [] }) } as unknown as Response;
+  };
+
+  await runOrderReconciliationSweep({ now, fetchFn: fakeFetch as any });
+
+  const [updated] = await db
+    .select({ status: ordersTable.status })
+    .from(ordersTable)
+    .where(eq(ordersTable.id, order!.id));
+
+  assert.equal(updated?.status, "placed", "including guests must not weaken the amount rule");
+});
+
 test("a payment reporting no amount at all still promotes (unknown defers, per isCaptureAmountReconciled)", async () => {
   // Documented behaviour, not an accident: when either side of the
   // comparison is unknown we cannot prove a mismatch, and the guarded CAS

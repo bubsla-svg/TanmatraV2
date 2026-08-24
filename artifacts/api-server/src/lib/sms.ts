@@ -1,4 +1,5 @@
 import { logger } from "./logger";
+import { maskE164 } from "./piiMask";
 import { shouldDeferMessage } from "./quietHours";
 import { db, messageDispatchesTable } from "@workspace/db";
 
@@ -29,22 +30,24 @@ export interface PhoneE164 {
 }
 
 /**
- * Mask an E.164 number for log output. Keeps the country code and the
- * last 2 digits visible (enough for ops staff to disambiguate two
- * concurrent OTP attempts on the same line) but hides the rest. We
- * deliberately log the masked form at info level only — the unmasked
- * number stays in the DB row that the OTP belongs to. Error-level
- * logs that need the full number for forensics still pass it raw.
+ * Re-exported from `piiMask.ts`, which owns the implementation — `logger.ts`
+ * needs it for its redaction censor and cannot import this module (line 1
+ * imports the logger, so that would be a cycle). Kept exported here because
+ * `routes/auth.ts` imports it from this path.
+ *
+ * NOTE — the policy this comment used to state has been REVOKED. It read:
+ * "Error-level logs that need the full number for forensics still pass it
+ * raw." That sanctioned three raw error-level logs in this file, and the
+ * forensics argument does not survive contact with the rest of the record:
+ * every one of those lines already carries the `err` and the OTP row the
+ * number belongs to, so the unmasked number bought nothing that the DB row
+ * did not already have — while putting customer phone numbers in plaintext
+ * into log storage, which has a different retention, a different access
+ * list, and no encryption, in a service that encrypts clinical PII at rest.
+ * The masked form keeps the country code and last two digits, which is what
+ * disambiguating concurrent attempts actually needs.
  */
-export function maskE164(e164: string): string {
-  const m = /^(\+\d{1,4})(\d+)$/.exec(e164);
-  if (!m) return "***";
-  const cc = m[1] ?? "";
-  const rest = m[2] ?? "";
-  if (rest.length <= 2) return `${cc}**`;
-  const tail = rest.slice(-2);
-  return `${cc}${"*".repeat(rest.length - 2)}${tail}`;
-}
+export { maskE164 };
 
 export function normalisePhone(
   countryCodeRaw: string,
@@ -120,7 +123,7 @@ export async function sendSmsOtp(
       logger.info({ e164: maskE164(number.e164), deferTime, delayMs }, "sms.otp.deferred");
       setTimeout(() => {
         void sendSmsOtp(number, true).catch((err) => {
-          logger.error({ err, e164: number.e164 }, "sms.otp.deferred_send_failed");
+          logger.error({ err, e164: maskE164(number.e164) }, "sms.otp.deferred_send_failed");
         });
       }, delayMs);
       return { ok: true };
@@ -163,7 +166,7 @@ export async function sendSmsOtp(
     );
     return { ok: true };
   } catch (err) {
-    logger.error({ err, e164: number.e164 }, "sms.otp.twilio_send_threw");
+    logger.error({ err, e164: maskE164(number.e164) }, "sms.otp.twilio_send_threw");
     return { ok: false, error: "Could not send verification code" };
   }
 }
@@ -299,7 +302,7 @@ export async function verifySmsOtp(
     }
     return { ok: false, error: "Incorrect code" };
   } catch (err) {
-    logger.error({ err, e164: number.e164 }, "sms.otp.twilio_verify_threw");
+    logger.error({ err, e164: maskE164(number.e164) }, "sms.otp.twilio_verify_threw");
     return { ok: false, error: "Could not verify code" };
   }
 }

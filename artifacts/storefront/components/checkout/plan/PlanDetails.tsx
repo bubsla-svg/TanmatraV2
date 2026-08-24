@@ -31,6 +31,7 @@ export function PlanDetails({
   creditAppliedPaise,
   initialAddress,
   finePrint,
+  billedLabel = "Billed each cycle",
   busy,
   verifying,
   error,
@@ -57,6 +58,11 @@ export function PlanDetails({
   /** Offer terms stated under the total (spine copy — e.g. trial creditback +
    *  no-auto-renew). Never a price of its own. */
   finePrint?: string[];
+  /** Label over the amount. Defaults to the recurring wording; the host passes
+   *  the one-off form for a plan that bills once (F-2 — the ₹399 trial was
+   *  labelled "Billed each cycle" on its own pay screen). Derived by the host
+   *  from the quote's cadence so it cannot disagree with what is being bought. */
+  billedLabel?: string;
   busy: boolean;
   /** True once Razorpay has captured the money and verify is retrying — the
    *  CTA copy must say so; "Opening payment…" after the modal already closed
@@ -186,7 +192,7 @@ export function PlanDetails({
           </p>
         )}
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-sm text-ink-muted">Billed each cycle (incl. GST)</span>
+          <span className="text-sm text-ink-muted">{billedLabel} (incl. GST)</span>
           <span className="tabular text-xl font-semibold text-gold-text">
             {quoteLoading || quoteTotalPaise === null ? "…" : formatPaise(quoteTotalPaise)}
           </span>
@@ -225,7 +231,7 @@ export function PlanDetails({
         <div className="mx-auto max-w-md px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 flex-col">
-              <span className="text-3xs font-bold uppercase tracking-widest text-ink-muted">Billed each cycle</span>
+              <span className="text-3xs font-bold uppercase tracking-widest text-ink-muted">{billedLabel}</span>
               <span className="tabular text-lg font-bold text-ink">
                 {quoteLoading || quoteTotalPaise === null ? "…" : formatPaise(quoteTotalPaise)}
               </span>

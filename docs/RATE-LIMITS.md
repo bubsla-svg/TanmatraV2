@@ -41,7 +41,7 @@ pool exhausted — each limiter resolves according to its **fail** column:
 | Scope | Mounted on | Max | Window | Fail | Export |
 |---|---|---:|---|---|---|
 | `public:menu` | `/api/menu`, `/api/dish` | 120 | 1 min | open | `publicMenuRateLimit` |
-| `orders` | `/api/orders`, `/api/checkout` | 30 | 1 min | **closed** | `orderRateLimit` |
+| `orders` | `/api/orders`, `/api/checkout`, `/api/subscriptions` | 30 | 1 min | **closed** | `orderRateLimit` |
 | `ai:agent:customer` | `/api/coach-agent`, `/api/support-agent` | 20 | 1 min | open | `aiRateLimit` |
 | `ai:agent:staff` | `/api/cms-agent`, `/api/ops-agent` | 20 | 1 min | open | `aiStaffRateLimit` |
 | `ai:rationale` | `/api/dish-rationales` | 40 | 1 min | open | `rationaleRateLimit` |

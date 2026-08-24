@@ -15,6 +15,7 @@
     "verify-ledger": "tsx ./src/verify-ledger.ts",
     "audit-order-status": "tsx ./src/audit-order-status.ts",
     "audit-vouchers": "tsx ./src/audit-vouchers.ts",
+    "audit-webhook-inbox": "tsx ./src/audit-webhook-inbox.ts",
     "audit-data-retention": "tsx ./src/audit-data-retention.ts",
     "audit-subscription-pricing": "tsx ./src/audit-subscription-pricing.ts",
     "verify-dpdpa": "tsx ./src/verify-dpdpa-kms.ts",

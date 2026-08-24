@@ -1,5 +1,5 @@
 import { formatMacroLine, formatPaise } from "@/lib/format";
-import { PLAN_DELIVERY_DAYS_LABEL, PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
+import { PLAN_DELIVERY_DAYS_SENTENCE, PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
 import type { PlanOffer } from "@/lib/planOffer";
 
 const CADENCE_LABEL: Record<string, string> = {
@@ -40,7 +40,7 @@ export function PlanOfferPreview({ offer }: { offer: PlanOffer }) {
       </div>
 
       <p className="text-sm leading-relaxed text-ink-muted">
-        Delivered {PLAN_DELIVERY_DAYS_LABEL.toLowerCase()}, {PLAN_DELIVERY_WINDOW_LABEL}.
+        Delivered {PLAN_DELIVERY_DAYS_SENTENCE}, {PLAN_DELIVERY_WINDOW_LABEL}.
       </p>
 
       {offer.dishes.length > 0 && (

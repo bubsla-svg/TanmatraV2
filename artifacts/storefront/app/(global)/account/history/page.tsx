@@ -4,7 +4,7 @@ import { MealHistoryDashboard } from "@/components/history/MealHistoryDashboard"
 
 export const metadata: Metadata = {
   title: "Meal History & Macro Dashboard",
-  description: "Inspect verified clinical nutritional logs and evaluate cumulative daily macronutrient target compliance over time.",
+  description: "See what you have eaten from Tanmatra, and how it added up against your daily targets.",
 };
 
 export default function MealHistoryPage() {
@@ -18,13 +18,13 @@ export default function MealHistoryPage() {
       <AccountNav active="history" />
       <div className="flex flex-col gap-2">
         <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
-          Nutritional Telemetry
+          Your meals so far
         </span>
         <h1 className="text-3xl font-semibold tracking-tight text-ink">
           Meal History Dashboard
         </h1>
         <p className="text-sm leading-relaxed text-ink-muted max-w-2xl">
-          Track cumulative macronutrient assimilation across automated recurring deliveries and evaluate adherence against registered dietitian daily prescription ceilings.
+          Every meal you have had from us, with the day's calories and protein totalled up and set against the targets your dietitian agreed with you.
         </p>
       </div>
 

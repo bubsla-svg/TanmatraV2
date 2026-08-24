@@ -1,6 +1,7 @@
 import { db, ordersTable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { logger } from "./logger";
+import { maskE164, maskEmail } from "./piiMask";
 import { normalisePhone, sendWhatsappMessage } from "./whatsapp";
 import { sendMail } from "./mail";
 
@@ -45,9 +46,9 @@ export async function sendOrderConfirmation(orderId: number): Promise<void> {
       if (normalized) {
         const whatsappBody = `Hello! Your Tanmatra order #${order.id} (${order.externalOrderId || ""}) is confirmed. Total: ₹${totalINR}. Items: ${itemsSummary}. We are preparing your meal now!`;
         await sendWhatsappMessage(normalized, whatsappBody);
-        logger.info({ orderId, phone: normalized.e164 }, "orderNotification: WhatsApp sent");
+        logger.info({ orderId, phone: maskE164(normalized.e164) }, "orderNotification: WhatsApp sent");
       } else {
-        logger.warn({ orderId, phone }, "orderNotification: phone normalization failed for WhatsApp");
+        logger.warn({ orderId, phone: maskE164(phone) }, "orderNotification: phone normalization failed for WhatsApp");
       }
     }
 
@@ -57,7 +58,7 @@ export async function sendOrderConfirmation(orderId: number): Promise<void> {
       const text = `Thank you for ordering with Tanmatra!\n\nOrder ID: #${order.id} (${order.externalOrderId || ""})\nTotal: ₹${totalINR}\nItems: ${itemsSummary}\n\nWe are preparing your meal now!`;
       const html = `<p>Thank you for ordering with <strong>Tanmatra</strong>!</p><p><strong>Order ID:</strong> #${order.id} (${order.externalOrderId || ""})<br/><strong>Total:</strong> ₹${totalINR}<br/><strong>Items:</strong> ${itemsSummary}</p><p>We are preparing your meal now!</p>`;
       await sendMail({ to: email, subject, text, html });
-      logger.info({ orderId, email }, "orderNotification: Email sent");
+      logger.info({ orderId, email: maskEmail(email) }, "orderNotification: Email sent");
     }
   } catch (err) {
     logger.error({ err, orderId }, "orderNotification: failed to send order confirmation");

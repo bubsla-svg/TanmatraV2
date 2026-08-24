@@ -59,6 +59,40 @@ export function registersAutopayMandate(cadence: PlanCadence | PlanCycle): boole
 }
 
 /**
+ * The label that sits over the amount on the pay screen, and the promise that
+ * sits under it.
+ *
+ * These exist because BOTH were hardcoded to subscription vocabulary and shown
+ * verbatim over a ₹399 one-off trial: `PlanDetails` labelled its total "Billed
+ * each cycle" (F-2) and `PlanIdentityGate` promised "Pause or cancel anytime"
+ * (F-7) — on a purchase that bills once, renews nothing, and has nothing to
+ * pause or cancel. Both sat inches from a cadence label that already printed
+ * "one-time" correctly.
+ *
+ * They live here, exported, rather than as a fourth private map in a fourth
+ * component. Three cadence→label maps already exist in this codebase
+ * (`CYCLE_NOUN` below, `PlanOfferPreview`, `PlanIdentityGate`) and the drift
+ * between them is precisely what shipped F-2. New callers use these.
+ */
+// Both take a loose `string`, not the cadence union, on purpose: their callers
+// hold `recap.cadence`, which arrives from the host page as a plain string and
+// is not validated at that boundary. Casting it to the union at each call site
+// would assert a guarantee nobody checked; a plain equality test needs no such
+// claim.
+export function billedTotalLabel(cadence: string): string {
+  return cadence === "one_off" ? "One-time charge" : "Billed each cycle";
+}
+
+/**
+ * Whether it is true to tell this buyer they can pause or cancel. A one-off
+ * has no future delivery to pause and no mandate to cancel, so the sentence is
+ * not a reassurance — it is a claim that they bought a subscription.
+ */
+export function offersPauseOrCancel(cadence: string): boolean {
+  return cadence !== "one_off";
+}
+
+/**
  * Every cadence the checkout can pass. `PlanCadence` (lib/api) carries
  * `fortnightly`, which the catalog's own PlanCycle does not — an exhaustive
  * Record makes the compiler, not a reviewer, catch the day a fifth is added.

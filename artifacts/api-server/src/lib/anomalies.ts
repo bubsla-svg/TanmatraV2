@@ -4,6 +4,7 @@ import {
   anomalyAlertsTable,
   ordersTable,
   deliveryEventsTable,
+  webhookInboxTable,
   type AnomalyAlert,
 } from "@workspace/db";
 import { logger } from "./logger";
@@ -16,7 +17,8 @@ export type MetricKey =
   | "kitchen_ready_minutes"
   | "rider_acceptance_minutes"
   | "payment_failure_rate"
-  | "low_rating_rate";
+  | "low_rating_rate"
+  | "webhook_inbox_failed";
 
 export interface MetricSample {
   metric: MetricKey;
@@ -138,6 +140,30 @@ const METRICS: Record<MetricKey, MetricSpec> = {
       `${fmtPct(s.value)} of rated orders in the last hour scored ≤2★ (${s.sampleSize} ratings); baseline ${s.baseline != null ? fmtPct(s.baseline) : "n/a"}.`,
     suggestedAction: () =>
       "Open the support agent and review the linked orders; cluster by dish or rider before issuing make-good credits.",
+  },
+  // F-4. `webhook_inbox` is written on every verified Razorpay callback and
+  // read by NOTHING in the running system — repo-wide, its only other readers
+  // are two manual verification scripts. A rotated webhook secret, a payload
+  // schema drift, or a sustained gateway outage therefore piles up `failed`
+  // rows in complete silence, while the customer's money is captured and the
+  // order never leaves "placed".
+  //
+  // Unlike the five metrics above this is a COUNT, not a rate, and it is not
+  // baseline-relative: the correct number of unprocessed webhooks is zero, so
+  // there is no "normal level" to learn. floor 0 + direction high + minSamples
+  // 1 means a single stuck row in the hour fires, which is the intent.
+  webhook_inbox_failed: {
+    key: "webhook_inbox_failed",
+    label: "Unprocessed payment webhooks",
+    minSamples: 1,
+    floor: 0,
+    k: 2,
+    direction: "high",
+    unit: "",
+    summaryTemplate: (s) =>
+      `${fmt(s.value)} Razorpay webhook${s.value === 1 ? "" : "s"} between ${fmtTime(s.windowStart)}–${fmtTime(s.windowEnd)} are still unprocessed (failed or pending). Each one is a capture whose order may never have been confirmed.`,
+    suggestedAction: () =>
+      "Run `pnpm --filter @workspace/scripts run audit-webhook-inbox` for the backlog and the stranded captures behind it, then check the webhook secret and the gateway's delivery log before replaying.",
   },
 };
 
@@ -285,6 +311,39 @@ async function sampleLowRatings(
   };
 }
 
+
+// F-4: unprocessed Razorpay webhooks in the window. "sampleSize" is the total
+// razorpay rows written in that hour, so the alert can say "3 of 40 stuck"
+// rather than a bare count; the VALUE is the stuck count itself.
+async function sampleWebhookInboxFailed(
+  start: Date,
+  end: Date,
+): Promise<WindowBucket> {
+  const [row] = await db
+    .select({
+      total: sql<number>`count(*)::int`,
+      stuck: sql<number>`count(*) filter (where ${webhookInboxTable.status} <> 'processed' and ${webhookInboxTable.status} <> 'duplicate')::int`,
+    })
+    .from(webhookInboxTable)
+    .where(
+      and(
+        eq(webhookInboxTable.source, "razorpay"),
+        gte(webhookInboxTable.createdAt, start),
+        lt(webhookInboxTable.createdAt, end),
+      ),
+    );
+  const stuck = row?.stuck ?? 0;
+  return {
+    start,
+    end,
+    value: stuck,
+    // minSamples is 1 and a stuck row is itself the evidence, so the sample
+    // size must be the stuck count — keying it to total rows would mute the
+    // alarm in exactly the outage where NO webhook is being processed.
+    sampleSize: stuck,
+  };
+}
+
 const SAMPLERS: Record<
   MetricKey,
   (start: Date, end: Date) => Promise<WindowBucket>
@@ -294,6 +353,7 @@ const SAMPLERS: Record<
   rider_acceptance_minutes: sampleRiderAcceptance,
   payment_failure_rate: samplePaymentFailures,
   low_rating_rate: sampleLowRatings,
+  webhook_inbox_failed: sampleWebhookInboxFailed,
 };
 
 // ─── Batch (grouped-by-hour) samplers for buildBaseline ────────────────────
@@ -443,6 +503,23 @@ async function batchLowRatings(lookbackStart: Date, windowEnd: Date): Promise<Bu
   return map;
 }
 
+
+async function batchWebhookInboxFailed(lookbackStart: Date, windowEnd: Date): Promise<BucketMap> {
+  const rows = await db.execute<{ bucket: Date; stuck: number }>(sql`
+    select date_trunc('hour', created_at) as bucket,
+           count(*) filter (where status <> 'processed' and status <> 'duplicate')::int as stuck
+    from ${webhookInboxTable}
+    where source = 'razorpay' and created_at >= ${lookbackStart} and created_at < ${windowEnd}
+    group by bucket
+  `);
+  const map: BucketMap = new Map();
+  for (const r of rows.rows) {
+    const stuck = Number(r.stuck);
+    map.set(new Date(r.bucket).getTime(), bucketOf(new Date(r.bucket), stuck, stuck));
+  }
+  return map;
+}
+
 const BATCH_SAMPLERS: Record<
   MetricKey,
   (lookbackStart: Date, windowEnd: Date) => Promise<BucketMap>
@@ -452,6 +529,7 @@ const BATCH_SAMPLERS: Record<
   rider_acceptance_minutes: batchRiderAcceptance,
   payment_failure_rate: batchPaymentFailures,
   low_rating_rate: batchLowRatings,
+  webhook_inbox_failed: batchWebhookInboxFailed,
 };
 
 // ─── Detector ──────────────────────────────────────────────────────────────

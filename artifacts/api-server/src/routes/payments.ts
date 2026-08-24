@@ -39,6 +39,46 @@ import { isPlanV2Enabled } from "../lib/flags";
 import { hashTrialPhone } from "../lib/trialEligibility";
 import { recordAndGrantTrialCredit } from "../lib/trialRedemption";
 
+/**
+ * F-4. Record a captured-money integrity halt as a DURABLE row, not just a log
+ * line.
+ *
+ * Four places in this file deliberately refuse to confirm an order while the
+ * customer's money is already captured: a wrong-amount capture and a capture
+ * against a cancelled/failed order, each on both the order and the payment-link
+ * path. Refusing is the correct call. The problem was that the refusal existed
+ * ONLY as `req.log.error` — log storage nothing queries, no scheduler sweeps,
+ * and no anomaly metric covers. The money sat captured, the order sat
+ * unconfirmed, and the "needs refund review" the message names had no path to
+ * a human.
+ *
+ * A delivery_events row is queryable by the support agent, the order timeline,
+ * and the ops surfaces that already read this table by order_id. The log line
+ * stays for debugging; this is what someone can actually find.
+ *
+ * Deliberately NOT an auto-refund: issuing money back on a mismatch is a
+ * product decision, not a side effect of detecting one.
+ */
+async function recordCaptureIntegrityHalt(
+  orderId: number,
+  reason: "amount_mismatch" | "order_not_payable",
+  meta: Record<string, unknown>,
+  log: { error: (obj: unknown, msg: string) => void },
+): Promise<void> {
+  try {
+    await db.insert(deliveryEventsTable).values({
+      orderId,
+      event: "needs_refund_review",
+      meta: { reason, ...meta },
+    });
+  } catch (err) {
+    // Never let the bookkeeping failure mask the halt itself — the webhook
+    // must still return 200 so the gateway stops retrying a call we HAVE
+    // processed, and the log line beside this stays the record of last resort.
+    log.error({ err, orderId, reason }, "webhook: failed to record capture integrity halt");
+  }
+}
+
 const router: IRouter = Router();
 
 // ---------------------------------------------------------------------------
@@ -853,6 +893,8 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
             { razorpayOrderId, capturedAmount, expected, orderId: order.id },
             "webhook: captured amount does not match order total — not confirming",
           );
+          await recordCaptureIntegrityHalt(order.id, "amount_mismatch",
+            { razorpayOrderId, capturedAmount, expected, path: "order" }, req.log);
         } else if (order) {
           // Guarded: only a placed order becomes preparing. Never resurrect a
           // cancelled/failed order or downgrade a later state. Capture the
@@ -907,6 +949,8 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
               { razorpayOrderId, orderId: order.id, status: order.status },
               "webhook: capture arrived for a cancelled/failed order — needs refund review",
             );
+            await recordCaptureIntegrityHalt(order.id, "order_not_payable",
+              { razorpayOrderId, orderStatus: order.status, capturedAmount, path: "order" }, req.log);
           }
 
           if (razorpayPaymentId && order.status !== "cancelled" && order.status !== "failed") {
@@ -950,6 +994,8 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
             { referenceId, capturedAmount, expected, orderId: order.id },
             "webhook: payment link paid amount does not match order total — not confirming",
           );
+          await recordCaptureIntegrityHalt(order.id, "amount_mismatch",
+            { referenceId, capturedAmount, expected, path: "payment_link" }, req.log);
         } else if (order) {
           const razorpayPaymentId = paymentEntity?.id ?? null;
           const updated = await db
@@ -999,6 +1045,8 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
               { referenceId, orderId: order.id, status: order.status },
               "webhook: payment link capture arrived for a cancelled/failed order — needs refund review",
             );
+            await recordCaptureIntegrityHalt(order.id, "order_not_payable",
+              { referenceId, orderStatus: order.status, capturedAmount, path: "payment_link" }, req.log);
           }
         }
       }

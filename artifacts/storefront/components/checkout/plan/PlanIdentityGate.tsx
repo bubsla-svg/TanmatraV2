@@ -6,6 +6,7 @@ import { firebaseConfigured } from "@/lib/firebase";
 import { formatPaise } from "@/lib/format";
 import { PhoneAuth } from "../PhoneAuth";
 import type { AuthUser } from "@/lib/api";
+import { offersPauseOrCancel } from "@/lib/planDecisionFacts";
 
 const CADENCE_LABEL: Record<string, string> = {
   weekly: "billed weekly",
@@ -50,9 +51,15 @@ export function PlanIdentityGate({
               {formatPaise(recap.cycleTotalPaise)}
             </span>
           </div>
+          {/* F-7: "Pause or cancel anytime" used to render unconditionally —
+              two lines under a cadence label that correctly said "one-time".
+              A ₹399 one-off has no future delivery to pause and no mandate to
+              cancel, so the sentence did not reassure the buyer, it told them
+              they had bought a subscription. Same defect as F-2 one screen
+              later, and the same fix: ask the cadence. */}
           <p className="mt-1.5 text-xs text-ink-muted">
-            Final total confirmed after sign-in — any credit applies automatically. Pause or cancel
-            anytime.
+            Final total confirmed after sign-in — any credit applies automatically.
+            {offersPauseOrCancel(recap.cadence) ? " Pause or cancel anytime." : ""}
           </p>
         </div>
       )}

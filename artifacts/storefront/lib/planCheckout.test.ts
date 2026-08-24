@@ -7,7 +7,12 @@
  */
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildSubscriptionInput, nextWeekdayISO, PLAN_DELIVERY_WINDOW } from "./planCheckout";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
+import { buildSubscriptionInput, nextWeekdayISO, PLAN_DELIVERY_WINDOW, PLAN_DELIVERY_DAYS_LABEL, PLAN_DELIVERY_DAYS_SENTENCE } from "./planCheckout";
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
 import type { MemberInput } from "./api";
 
 const MEMBERS: MemberInput[] = [
@@ -88,3 +93,53 @@ test("buildSubscriptionInput: threads ref parameter when provided (L-7)", () => 
   assert.ok(!("ref" in withoutRef), "absent ref omitted");
 });
 
+
+// ─── F-9 / F-8: copy defects the flipbook caught, pinned here ───────────────
+
+test("the sentence-case delivery label keeps its proper nouns capitalised", () => {
+  // F-9. Two surfaces rendered `PLAN_DELIVERY_DAYS_LABEL.toLowerCase()`, which
+  // lowercased "Monday to Friday" along with the leading "W" they wanted —
+  // "Delivered weekdays, monday to friday, 12:30–1:30 pm."
+  assert.equal(PLAN_DELIVERY_DAYS_SENTENCE, "weekdays, Monday to Friday");
+  assert.ok(PLAN_DELIVERY_DAYS_SENTENCE.includes("Monday"), "Monday must stay capitalised");
+  assert.ok(PLAN_DELIVERY_DAYS_SENTENCE.includes("Friday"), "Friday must stay capitalised");
+  // Both forms state the same fact; only the first word differs in case.
+  assert.equal(
+    PLAN_DELIVERY_DAYS_SENTENCE.toLowerCase(),
+    PLAN_DELIVERY_DAYS_LABEL.toLowerCase(),
+    "the two forms must not drift apart in substance",
+  );
+});
+
+test("no surface lowercases the delivery label wholesale any more", () => {
+  // The regression this guards is a re-introduced `.toLowerCase()`, which is
+  // how F-9 shipped in the first place — twice, in two components.
+  const componentsDir = path.join(HERE, "..", "components");
+  const offenders: string[] = [];
+  const walk = (dir: string): void => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name.endsWith(".tsx") &&
+               fs.readFileSync(full, "utf8").includes("PLAN_DELIVERY_DAYS_LABEL.toLowerCase()")) {
+        offenders.push(path.relative(componentsDir, full));
+      }
+    }
+  };
+  walk(componentsDir);
+  assert.deepEqual(offenders, [], `use PLAN_DELIVERY_DAYS_SENTENCE instead: ${offenders.join(", ")}`);
+});
+
+test("F-8: the unserviceable line keeps its space after the PIN", () => {
+  // The rendered DOM read "We don't deliver to 560001yet". A literal space
+  // written after the interpolation is swallowed; an explicit {" "} is not.
+  // Asserted against source because the defect is invisible in the JSX itself.
+  const src = fs.readFileSync(
+    path.join(HERE, "..", "components", "checkout", "plan", "PlanServiceabilityGate.tsx"),
+    "utf8",
+  );
+  assert.ok(
+    src.includes('{state.pincode}{" "}yet'),
+    "the explicit {\" \"} after the PIN is load-bearing — see F-8",
+  );
+});

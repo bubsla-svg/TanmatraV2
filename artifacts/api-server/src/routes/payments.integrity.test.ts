@@ -35,6 +35,7 @@ import {
   db,
   ordersTable,
   webhookInboxTable,
+  deliveryEventsTable,
   usersTable,
   subscriptionsTable,
   subscriptionMandatesTable,
@@ -148,6 +149,13 @@ await new Promise<void>((resolve) => {
 after(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));
   if (CREATED_ORDER_IDS.length > 0) {
+    // delivery_events.order_id is a FK, and the webhook's integrity halts now
+    // write needs_refund_review rows against these orders (F-4) — so the child
+    // rows have to go before the parent, or this delete fails on the
+    // constraint rather than on anything the tests did wrong.
+    await db
+      .delete(deliveryEventsTable)
+      .where(inArray(deliveryEventsTable.orderId, CREATED_ORDER_IDS));
     await db.delete(ordersTable).where(inArray(ordersTable.id, CREATED_ORDER_IDS));
   }
   if (CREATED_EVENT_IDS.length > 0) {
@@ -458,6 +466,26 @@ test("verify refuses a cancelled order with 409 and does not resurrect it", asyn
 // 4. webhook payment.captured reconciles the captured amount
 // ---------------------------------------------------------------------------
 
+
+/**
+ * F-4: the durable record behind a captured-money integrity halt. Before the
+ * fix these refusals existed only as a log line, so "needs refund review" had
+ * no path to a human — no query, no sweep, no metric. A delivery_events row is
+ * what the support agent and the order timeline can actually find.
+ */
+async function refundReviewRows(orderId: number): Promise<{ reason: unknown; path: unknown }[]> {
+  const rows = await db
+    .select({ event: deliveryEventsTable.event, meta: deliveryEventsTable.meta })
+    .from(deliveryEventsTable)
+    .where(eq(deliveryEventsTable.orderId, orderId));
+  return rows
+    .filter((r) => r.event === "needs_refund_review")
+    .map((r) => ({
+      reason: (r.meta as Record<string, unknown> | null)?.["reason"],
+      path: (r.meta as Record<string, unknown> | null)?.["path"],
+    }));
+}
+
 test("webhook payment.captured ingests but does not promote on amount mismatch, promotes on match", async () => {
   const externalOrderId = ext("amt");
   const storedRzp = rzp("AMT");
@@ -477,6 +505,13 @@ test("webhook payment.captured ingests but does not promote on amount mismatch, 
   assert.equal(mismatch.json.ok, true);
   assert.equal(mismatch.json.processed, true);
   assert.equal(await orderStatus(id), "placed", "amount mismatch must NOT promote");
+
+  // F-4: refusing is correct, but the refusal must be findable. Money is
+  // captured and the order is unconfirmed — that combination needs a row.
+  const halts = await refundReviewRows(id);
+  assert.equal(halts.length, 1, "an amount-mismatch halt must write a needs_refund_review row");
+  assert.equal(halts[0]?.reason, "amount_mismatch");
+  assert.equal(halts[0]?.path, "order");
 
   // Correct amount captured — order becomes preparing.
   const match = await postWebhook(
@@ -509,6 +544,12 @@ test("webhook payment.captured does not resurrect a cancelled order even at the 
   assert.equal(res.status, 200);
   assert.equal(res.json.processed, true);
   assert.equal(await orderStatus(id), "cancelled", "cancelled order must stay cancelled");
+
+  // F-4: the customer has been charged for an order that will never ship.
+  // That is the single most important thing in this file to leave a trace of.
+  const halts = await refundReviewRows(id);
+  assert.equal(halts.length, 1, "a capture on a cancelled order must write a needs_refund_review row");
+  assert.equal(halts[0]?.reason, "order_not_payable");
 });
 
 // ---------------------------------------------------------------------------

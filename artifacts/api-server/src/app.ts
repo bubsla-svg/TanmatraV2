@@ -186,6 +186,14 @@ app.use("/api/menu", publicMenuRateLimit);
 app.use("/api/dish", publicMenuRateLimit);
 app.use("/api/orders", orderRateLimit);
 app.use("/api/checkout", orderRateLimit);
+// Subscriptions shares the order budget because it IS an order path:
+// `POST /subscriptions` runs createOrderForNewSubscription and bills the first
+// cycle. It was the one money-path mount with no limiter at all — not by
+// policy, and not because the router carries its own (planDrafts below does,
+// and says so; this one does not) — so plan creation was the cheapest way to
+// pressure the order pipeline. 30/min/IP is the budget already chosen for a
+// create-an-order write; there is no reason this route deserves a looser one.
+app.use("/api/subscriptions", orderRateLimit);
 // Staff (cms/ops) and customer (coach/support) agents get separate buckets —
 // office/VPN egress IPs would otherwise exhaust the shared customer quota.
 // See aiStaffRateLimit's comment (OA-MED-1.9).

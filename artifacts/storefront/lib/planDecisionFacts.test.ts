@@ -4,7 +4,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SKIP_SWAP_CUTOFF_MS, PLAN_CATALOG, type PlanId } from "@workspace/subscription-rules";
-import { planDecisionFacts, registersAutopayMandate, SKIP_SWAP_CUTOFF_HOURS } from "./planDecisionFacts";
+import { planDecisionFacts, registersAutopayMandate, SKIP_SWAP_CUTOFF_HOURS, billedTotalLabel, offersPauseOrCancel } from "./planDecisionFacts";
 
 /**
  * Laws 5 and 6 at the decision moment.
@@ -130,5 +130,66 @@ test("checkout wires plans to this, not to undefined", () => {
     page,
     /finePrint=\{isTrial \? \[[^\]]*\] : undefined\}/,
     "plans must not fall back to no disclosure",
+  );
+});
+
+// ─── F-2 / F-7: one-off purchases must not be described as subscriptions ────
+
+test("billedTotalLabel: a one-off is never labelled as a recurring charge", () => {
+  // F-2. The ₹399 trial's own pay screen labelled its total "Billed each
+  // cycle (incl. GST)" with a sticky "BILLED EACH CYCLE" beside the pay
+  // button — on a purchase that bills once and renews nothing.
+  const oneOff = billedTotalLabel("one_off");
+  assert.ok(!/cycle/i.test(oneOff), `one-off label must not mention a cycle: ${oneOff}`);
+  assert.ok(!/billed each/i.test(oneOff), `one-off label must not claim recurrence: ${oneOff}`);
+  assert.equal(oneOff, "One-time charge");
+});
+
+test("billedTotalLabel: recurring cadences keep the wording they shipped with", () => {
+  // The fix is scoped to the one-off case. Changing the recurring label would
+  // be an unrelated copy change riding along on a defect fix.
+  for (const cadence of ["weekly", "fortnightly", "monthly", "quarterly"]) {
+    assert.equal(billedTotalLabel(cadence), "Billed each cycle", `changed for ${cadence}`);
+  }
+});
+
+test("offersPauseOrCancel: false for a one-off, true for every recurring cadence", () => {
+  // F-7. A one-off has no future delivery to pause and no mandate to cancel,
+  // so "Pause or cancel anytime" is not a reassurance — it is a claim that
+  // the buyer purchased a subscription.
+  assert.equal(offersPauseOrCancel("one_off"), false);
+  for (const cadence of ["weekly", "fortnightly", "monthly", "quarterly"]) {
+    assert.equal(offersPauseOrCancel(cadence), true, `should offer for ${cadence}`);
+  }
+});
+
+test("PlanDetails no longer hardcodes the recurring label over its amount", () => {
+  // The regression this guards: someone re-types the literal into the JSX and
+  // the trial silently claims recurrence again. Asserted against the source
+  // because the string's ABSENCE from the markup is the invariant — a render
+  // test would only prove the label for whichever cadence it happened to pass.
+  const src = fs.readFileSync(
+    path.join(HERE, "..", "components", "checkout", "plan", "PlanDetails.tsx"),
+    "utf8",
+  );
+  assert.ok(
+    !/>\s*Billed each cycle/.test(src),
+    "PlanDetails must render {billedLabel}, not a hardcoded cadence string",
+  );
+  assert.ok(src.includes("{billedLabel}"), "PlanDetails should render the injected label");
+});
+
+test("PlanIdentityGate guards its pause/cancel promise on the cadence", () => {
+  const src = fs.readFileSync(
+    path.join(HERE, "..", "components", "checkout", "plan", "PlanIdentityGate.tsx"),
+    "utf8",
+  );
+  assert.ok(
+    src.includes("offersPauseOrCancel(recap.cadence)"),
+    "the pause/cancel sentence must be conditional on the cadence",
+  );
+  assert.ok(
+    !/automatically\. Pause or cancel/.test(src),
+    "the unconditional pause/cancel sentence must be gone",
   );
 });

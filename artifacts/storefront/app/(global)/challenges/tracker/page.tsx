@@ -3,7 +3,7 @@ import { ChallengeTrackerView } from "@/components/challenges/ChallengeTrackerVi
 
 export const metadata: Metadata = {
   title: "Dietary Regimen & Challenge Tracker",
-  description: "Monitor consecutive daily health streaks, evaluate metabolic regimen consistency, and attend live dietitian cohort check-ins.",
+  description: "Track your streak, see how consistent you have been, and join the group check-ins.",
 };
 
 export default function ChallengeTrackerPage() {
@@ -16,13 +16,13 @@ export default function ChallengeTrackerPage() {
     >
       <div className="flex flex-col gap-2">
         <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
-          Behavioral Consistency
+          Your streak
         </span>
         <h1 className="text-3xl font-semibold tracking-tight text-ink">
           Dietary Challenge Tracker
         </h1>
         <p className="text-sm leading-relaxed text-ink-muted max-w-2xl">
-          Evaluate consecutive compliance across multi-week metabolic reset routines and join structured group accountability check-ins.
+          See how many days in a row you have stayed on plan across a multi-week challenge, and join the group check-ins that run alongside it.
         </p>
       </div>
 

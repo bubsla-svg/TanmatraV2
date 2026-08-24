@@ -1,4 +1,5 @@
 import { logger } from "./logger";
+import { maskE164 } from "./piiMask";
 import { shouldDeferMessage } from "./quietHours";
 import { db, messageDispatchesTable } from "@workspace/db";
 
@@ -69,10 +70,10 @@ export async function sendWhatsappOtp(
     const deferTime = shouldDeferMessage(now);
     if (deferTime) {
       const delayMs = deferTime.getTime() - now.getTime();
-      logger.info({ e164: number.e164, deferTime, delayMs }, "whatsapp.otp.deferred");
+      logger.info({ e164: maskE164(number.e164), deferTime, delayMs }, "whatsapp.otp.deferred");
       setTimeout(() => {
         void sendWhatsappOtp(number, true).catch((err) => {
-          logger.error({ err, e164: number.e164 }, "whatsapp.otp.deferred_send_failed");
+          logger.error({ err, e164: maskE164(number.e164) }, "whatsapp.otp.deferred_send_failed");
         });
       }, delayMs);
       return { ok: true };
@@ -192,13 +193,13 @@ export async function sendWhatsappMessage(
     const deferTime = shouldDeferMessage(now);
     if (deferTime) {
       const delayMs = deferTime.getTime() - now.getTime();
-      logger.info({ e164: number.e164, deferTime, delayMs }, "whatsapp.message.deferred");
+      logger.info({ e164: maskE164(number.e164), deferTime, delayMs }, "whatsapp.message.deferred");
       setTimeout(() => {
         void sendWhatsappMessage(number, body, {
           ...options,
           bypassQuietHours: true,
         }).catch((err) => {
-          logger.error({ err, e164: number.e164 }, "whatsapp.message.deferred_send_failed");
+          logger.error({ err, e164: maskE164(number.e164) }, "whatsapp.message.deferred_send_failed");
         });
       }, delayMs);
       return { ok: true };

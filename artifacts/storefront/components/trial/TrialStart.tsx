@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { emitFunnel } from "@/lib/funnel";
 import { formatMacroLine, formatPaise } from "@/lib/format";
-import { PLAN_DELIVERY_DAYS_LABEL, PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
+import { PLAN_DELIVERY_DAYS_SENTENCE, PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
 import { TRIAL_COPY } from "@/lib/trial";
 
 export interface TrioDish {
@@ -123,7 +123,7 @@ export function TrialStart({
           discovered after paying. Same constants the create call books the
           delivery with, so this cannot drift from what is actually scheduled. */}
       <p className="text-center text-xs text-ink-muted">
-        Delivered {PLAN_DELIVERY_DAYS_LABEL.toLowerCase()}, {PLAN_DELIVERY_WINDOW_LABEL}.
+        Delivered {PLAN_DELIVERY_DAYS_SENTENCE}, {PLAN_DELIVERY_WINDOW_LABEL}.
       </p>
 
       {/* Glass sticky footer (checkout vocabulary, BATCH-4-BRIEFS.md) — the ONE
