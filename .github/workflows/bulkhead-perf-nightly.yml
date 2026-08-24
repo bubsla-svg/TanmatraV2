@@ -39,6 +39,14 @@ jobs:
           ids=$(node artifacts/api-server/scripts/seed-loadtest-fixtures.mjs)
           echo "order_ids=$ids" >> "$GITHUB_OUTPUT"
           echo "Seeded orders: $ids"
+      # This job had failed 8 times out of 8 since it was created, every night,
+      # unread. `api-server run start` is `node ./dist/index.mjs` and nothing
+      # here ever built dist — so the process exited immediately, "Boot
+      # api-server" completed in 0s, and "Wait for /healthz" burned its full
+      # 60s before failing. bulkhead-ci.yml builds first; this workflow was
+      # written without that step and never once produced a p95 number.
+      - name: Build api-server
+        run: pnpm --filter @workspace/api-server run build
       - name: Boot api-server
         env:
           PORT: "8080"
