@@ -2,7 +2,7 @@
  * Legal/Policy CMS client (ADM-20). The api-server exposes PUBLIC, read-only
  * endpoints — `GET /api/legal-documents` (list, title/summary only) and
  * `GET /api/legal-documents/:slug` (full body) — both also returning the
- * `legal_company_profile` singleton (entity name, FSSAI licence, contacts).
+ * `legal_company_profile` singleton (entity name, FSSAI registration, contacts).
  * Server components call these directly via API_BASE_URL, same pattern as
  * lib/recipesApi.ts. Fetches use a short ISR window (not `force-cache`) so
  * publishing a new version — or editing the company profile — is live on the
@@ -129,7 +129,7 @@ export async function getLegalDocuments(fetchImpl: FetchImpl = fetch): Promise<L
   }
 }
 
-/** Company/entity singleton alone (FSSAI licence, registered office, …) —
+/** Company/entity singleton alone (FSSAI registration, registered office, …) —
  *  for chrome like the Footer that needs it on every page but not the
  *  document list. There is no separate endpoint for it (the runbook specs
  *  exactly the two document routes), so this wraps `getLegalDocuments`. */

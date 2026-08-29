@@ -18,7 +18,7 @@ export const privacyDoc: LegalDoc = {
       heading: "1. Who we are",
       body: [
         `${C.brand} is operated, and its app and data managed, by ${C.legalName} ("we", "us", "our"), the data fiduciary responsible for your personal data under the Digital Personal Data Protection Act, 2023 (the "DPDP Act") and the rules made under it.`,
-        `Registered office: ${C.registeredOffice}. FSSAI Licence No. ${C.fssaiLicenseNo}. For any privacy question or to exercise your rights, contact us at ${C.privacyEmail} or reach our Grievance Officer (see the "Grievance" section).`,
+        `Registered office: ${C.registeredOffice}. FSSAI Registration No. ${C.fssaiLicenseNo}. For any privacy question or to exercise your rights, contact us at ${C.privacyEmail} or reach our Grievance Officer (see the "Grievance" section).`,
       ],
     },
     {
@@ -48,7 +48,7 @@ export const privacyDoc: LegalDoc = {
         "To take payments and prevent fraud — via Razorpay, and to detect and prevent misuse.",
         "To personalise your experience — rank menus, tailor the nutrition coach, and honour your dietary preferences and allergen filters.",
         "To provide dietitian (RD) bookings and support you when you contact us.",
-        "To keep food safe and meet legal duties — including our obligations as an FSSAI-licensed food business, and tax, accounting, and other legal requirements.",
+        "To keep food safe and meet legal duties — including our obligations as an FSSAI-registered food business, and tax, accounting, and other legal requirements.",
         "To send service messages, and — only with your consent — marketing about offers and new features. You can opt out of marketing at any time.",
       ],
     },

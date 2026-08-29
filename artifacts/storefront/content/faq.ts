@@ -16,7 +16,7 @@ export interface FaqItem {
 export const FAQS: FaqItem[] = [
   {
     q: "What makes Tanmatra meals 'clinical-grade'?",
-    a: "Every dish on the Tanmatra menu is formulated by qualified registered dietitians (RDs) and macro-calibrated to specific therapeutic targets — protein, fibre, glycaemic load, sodium, and caloric density. Meals are prepared in an FSSAI-licensed kitchen with ISO 22000-aligned processes, without preservatives or artificial flavours. Our meals are designed to support your health goals and any care plan from your doctor — they are not a medical treatment in themselves.",
+    a: "Every dish on the Tanmatra menu is formulated by qualified registered dietitians (RDs) and macro-calibrated to specific therapeutic targets — protein, fibre, glycaemic load, sodium, and caloric density. Meals are prepared in an FSSAI-registered kitchen with ISO 22000-aligned processes, without preservatives or artificial flavours. Our meals are designed to support your health goals and any care plan from your doctor — they are not a medical treatment in themselves.",
   },
   {
     q: "Who designs the meal plans?",

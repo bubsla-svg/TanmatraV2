@@ -154,7 +154,7 @@ export function Section01ClinicalHero({
               Bring it back when reviews are a number we can read. */}
           <div className="mt-9 flex flex-wrap justify-center items-center gap-x-3 gap-y-1.5 border-t border-line pt-5 text-xs font-medium text-ink-muted">
             <TrustItem>Cooked after you order</TrustItem>
-            <TrustItem>FSSAI licensed kitchen</TrustItem>
+            <TrustItem>FSSAI-registered kitchen</TrustItem>
             <TrustItem>Checked by our dietitians</TrustItem>
           </div>
         </div>
@@ -168,9 +168,14 @@ export function Section01ClinicalHero({
           )}
           <div className="overflow-hidden rounded-card border border-line bg-surface-raised shadow-2xl shadow-black/40">
             <div className="relative aspect-[16/9] w-full">
+              {/* The photo is the real shop front in Sector 104, Noida —
+                  owner-supplied, pre-cropped to this frame's 16:9 so the
+                  signboard can never be shaved off by object-cover. A physical
+                  address a visitor could walk to is the strongest trust signal
+                  this page owns; the alt carries it for screen readers. */}
               <SafeImage
-                src="/brand/hero-dish.jpg"
-                alt="A Tanmatra lunch plated from above"
+                src="/brand/storefront.jpg"
+                alt="The Tanmatra store front at Hazipur, Sector 104, Noida"
                 className="h-full w-full"
                 imgClassName="transition-transform duration-700 hover:scale-105"
               />

@@ -29,6 +29,7 @@ export async function Footer() {
   const company = await getCompanyProfile();
   const brand = company?.brand ?? SITE.brand;
   const fssai = company?.fssaiLicenseNo ?? SITE.fssai;
+  const address = company?.registeredOffice ?? SITE.address;
   return (
     // pt-16, not mt-16: the gap above the footer has to be INSIDE the footer's
     // own background. A top margin here does not collapse — its previous
@@ -74,7 +75,11 @@ export async function Footer() {
           <div className="mt-10 flex flex-col gap-1 border-t border-line pt-6 text-xs text-ink-faint">
             <p className="text-sm font-semibold text-ink">{brand}</p>
             <p className="text-xs text-ink-faint">{SITE.tagline}</p>
-            <p className="mt-1 text-xs text-ink-faint">FSSAI Licence No. {fssai} · RD-reviewed kitchen · Made in India</p>
+            {/* "Reg.", not "Licence": the certificate on file is an FSSAI
+                Registration (petty-FBO tier), a distinct instrument from a
+                licence — see content/legal/company.ts. */}
+            <p className="mt-1 text-xs text-ink-faint">FSSAI Reg. No. {fssai} · RD-reviewed kitchen · Made in India</p>
+            <p className="text-xs text-ink-faint">{address}</p>
             <p className="text-xs text-ink-faint">&copy; {brand}. All rights reserved.</p>
           </div>
         </div>

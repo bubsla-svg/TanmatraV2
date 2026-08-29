@@ -184,5 +184,11 @@ export const PARTNER_LINKS: NavLink[] = [
 export const SITE = {
   brand: "Tanmatra",
   tagline: "Clinical nutrition, cooked fresh.",
+  // FSSAI *Registration* number (petty-FBO tier, not a licence) — render it
+  // as "FSSAI Reg. No.", per the certificate. See content/legal/company.ts.
   fssai: "22725926001018",
+  // Owner-supplied business address (2026-08-29); the footer's fallback when
+  // the legal_company_profile singleton is unseeded/unreachable. Keep in
+  // lockstep with COMPANY.registeredOffice (content/legal/company.ts).
+  address: "237, Hazipur, Sector 104, Noida, Uttar Pradesh 201301",
 } as const;

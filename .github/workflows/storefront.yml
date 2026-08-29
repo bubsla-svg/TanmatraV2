@@ -269,8 +269,17 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: storefront-vrt-diff
+          # Playwright writes outputDir/report relative to the storefront
+          # package, not the e2e/ config dir: run 33241427636's failure put
+          # the actual/diff PNGs under artifacts/storefront/test-results/,
+          # and the original two paths matched nothing — the artifact this
+          # step exists for was never uploaded. Both old candidates stay
+          # (harmless if empty) in case a Playwright upgrade moves resolution.
           path: |
             playwright-report/
+            artifacts/storefront/playwright-report/
+            artifacts/storefront/test-results/
+            artifacts/storefront/e2e/playwright-report/
             artifacts/storefront/e2e/test-results/
           retention-days: 7
           if-no-files-found: warn

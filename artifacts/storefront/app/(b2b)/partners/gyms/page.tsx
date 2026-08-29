@@ -33,7 +33,7 @@ const jsonLd = {
  */
 const PROOF_ITEMS = [
   { icon: "shield-check" as const, value: "ISO 22000", label: "Certified central kitchen (2018)" },
-  { icon: "check" as const, value: "FSSAI", label: "Lic. 22725926001018" },
+  { icon: "check" as const, value: "FSSAI", label: "Reg. 22725926001018" },
   { icon: "trend-up" as const, label: "Commission on every active member subscription" },
   { icon: "clock" as const, label: "No kitchen space or meal-handling staff needed" },
 ];
