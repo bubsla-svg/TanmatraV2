@@ -185,7 +185,15 @@ export function PlanCheckout({
     // guard above, so this never reports a plan purchase as costing nothing.
     emitFunnel("payment_opened", { method: "razorpay", total_paise: quote.payableTotalPaise, plan_id: planId });
     const phone = user.phoneE164 ?? "";
-    const adapter = createRazorpayAdapter({ name: "Tanmatra", description: `${planName} plan`, contact: phone });
+    // Prefill everything the session already knows — the sheet never re-asks
+    // for the OTP-verified phone, and email rides along when the account has
+    // one (payment receipts land somewhere useful).
+    const adapter = createRazorpayAdapter({
+      name: "Tanmatra",
+      description: `${planName} plan`,
+      contact: phone,
+      email: user.email ?? undefined,
+    });
     try {
       let result;
       if (createdRef.current) {

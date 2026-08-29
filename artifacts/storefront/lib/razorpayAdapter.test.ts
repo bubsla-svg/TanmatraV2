@@ -8,7 +8,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as fs from "node:fs";
-import { createRazorpayAdapter, RazorpayDismissed, RAZORPAY_DISPLAY_CONFIG } from "./razorpayAdapter";
+import {
+  buildRazorpayOptions,
+  createRazorpayAdapter,
+  RazorpayDismissed,
+  RAZORPAY_DISPLAY_CONFIG,
+} from "./razorpayAdapter";
+import { ACCENT_GOLD_LIGHT } from "./themes/brand";
 
 interface RzpOpts {
   key: string;
@@ -20,7 +26,7 @@ interface RzpOpts {
     razorpay_order_id: string;
     razorpay_signature: string;
   }) => void;
-  modal: { ondismiss: () => void };
+  modal: { ondismiss: () => void; confirm_close?: boolean };
 }
 
 const ORDER = { razorpayOrderId: "rzp_1", amount: 41800, currency: "INR", keyId: "key_x" };
@@ -80,6 +86,79 @@ test("rejects with RazorpayDismissed when the modal is dismissed", async () => {
       (err) => err instanceof RazorpayDismissed && /payment_dismissed/.test((err as Error).message),
     );
   });
+});
+
+// ── The modal's UX configuration (buildRazorpayOptions) ──────────────────────
+
+test("the modal is configured from the SERVER order, verbatim", () => {
+  const o = buildRazorpayOptions(ORDER);
+  assert.equal(o.key, ORDER.keyId);
+  assert.equal(o.amount, ORDER.amount);
+  assert.equal(o.currency, ORDER.currency);
+  assert.equal(o.order_id, ORDER.razorpayOrderId);
+  assert.equal(o.config, RAZORPAY_DISPLAY_CONFIG);
+});
+
+test("prefill carries what the checkout already knows — never re-ask for it", () => {
+  const o = buildRazorpayOptions(ORDER, { contact: "+919999999999", email: "a@b.in" });
+  assert.equal(o.prefill.contact, "+919999999999");
+  assert.equal(o.prefill.email, "a@b.in");
+  // And degrades to empty strings, never undefined, when a surface has none.
+  const bare = buildRazorpayOptions(ORDER);
+  assert.deepEqual(bare.prefill, { contact: "", email: "" });
+});
+
+test("the modal theme is the LIGHT-arm brand gold, never the dark-arm value", () => {
+  // The modal is a Razorpay-hosted LIGHT sheet that sets white text over
+  // theme.color. The dark-arm gold #D4AF37 measures ~2:1 under white — the
+  // light arm is the one that carries white ink on our own surfaces too
+  // (--color-accent-ink light = #ffffff). See lib/themes/brand.ts.
+  const o = buildRazorpayOptions(ORDER);
+  assert.equal(o.theme.color, ACCENT_GOLD_LIGHT);
+  assert.notEqual(o.theme.color.toUpperCase(), "#D4AF37");
+});
+
+test("brand.ts's restated gold cannot drift from tanmatraTheme's accent tuple", () => {
+  // tanmatraTheme.ts must keep its tuples literal (astryxBridge.test.ts
+  // parses the source), so brand.ts RESTATES the light arm rather than
+  // feeding it. This is the drift pin, by the same source-parsing technique:
+  // the day someone repoints --color-accent's light arm, this fails and
+  // names brand.ts as the second site to update.
+  const src = fs.readFileSync(new URL("./themes/tanmatraTheme.ts", import.meta.url), "utf8");
+  const m = src.match(/'--color-accent':\s*\[\s*'([^']+)'/);
+  assert.ok(m, "--color-accent tuple not found in tanmatraTheme.ts");
+  assert.equal(m![1]!.toUpperCase(), ACCENT_GOLD_LIGHT.toUpperCase());
+});
+
+test("send_sms_hash is on, so Android can auto-read the card OTP", () => {
+  assert.equal(buildRazorpayOptions(ORDER).send_sms_hash, true);
+});
+
+test("a backdrop tap asks before abandoning the payment (confirm_close)", async () => {
+  // Captured from the real constructor call, not buildRazorpayOptions — the
+  // modal outcome wiring lives in open()'s promise, and this is the one UX
+  // flag that rides with it.
+  let captured: RzpOpts | undefined;
+  const g = globalThis as Record<string, unknown>;
+  const prevWindow = g.window;
+  const prevDocument = g.document;
+  class CapturingRazorpay {
+    constructor(opts: RzpOpts) {
+      captured = opts;
+    }
+    open(): void {
+      captured!.modal.ondismiss();
+    }
+  }
+  g.document = { getElementById: () => ({}) };
+  g.window = { Razorpay: CapturingRazorpay };
+  try {
+    await assert.rejects(createRazorpayAdapter().open(ORDER), RazorpayDismissed);
+    assert.equal(captured!.modal.confirm_close, true);
+  } finally {
+    g.window = prevWindow;
+    g.document = prevDocument;
+  }
 });
 
 // ── Script-load retry (the 3G brick) ─────────────────────────────────────────

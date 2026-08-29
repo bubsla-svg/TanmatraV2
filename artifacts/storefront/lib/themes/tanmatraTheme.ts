@@ -33,6 +33,11 @@ export const tanmatraTheme = defineTheme({
     // never regenerated for Stone, so accent had silently split in two: gold in
     // Astryx components, near-black in our Tailwind utilities. Stitch specified
     // the same pair (#D4AF37 on #111318, 8.84:1), so unifying moved nothing.
+    // The light arm is restated in ./brand.ts (ACCENT_GOLD_LIGHT) for
+    // surfaces that need the literal outside the CSS pipeline — Razorpay's
+    // modal theme.color. astryxBridge.test.ts parses this file for literal
+    // tuples, so the tuple stays literal; razorpayAdapter.test.ts pins the
+    // brand.ts restatement against this line the same source-parsing way.
     '--color-accent': ['#7F6921', '#D4AF37'],
     '--color-accent-ink': ['#ffffff', '#111318'],
     '--color-blue': ['#506072', '#99adc6'],
