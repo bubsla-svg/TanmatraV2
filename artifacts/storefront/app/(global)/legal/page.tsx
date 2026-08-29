@@ -21,7 +21,7 @@ const FALLBACK_DEK =
 export default async function LegalIndexPage() {
   const { documents, company } = await getLegalDocuments();
   const dek = company
-    ? `${company.brand} is operated by ${company.legalName}. Food is prepared under FSSAI Licence No. ${company.fssaiLicenseNo}.`
+    ? `${company.brand} is operated by ${company.legalName}. Food is prepared under FSSAI Registration No. ${company.fssaiLicenseNo}.`
     : FALLBACK_DEK;
 
   return (

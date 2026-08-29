@@ -149,7 +149,7 @@ export function TrialStart({
               the trial surface). Same house copy as the checkout pay bars —
               licence-backed kitchen claims only, never per-dish RD badges (F5). */}
           <p className="mt-1 text-center text-2xs text-ink-faint">
-            FSSAI-licensed, RD-reviewed kitchen · secure UPI checkout
+            FSSAI-registered, RD-reviewed kitchen · secure UPI checkout
           </p>
         </div>
       </div>

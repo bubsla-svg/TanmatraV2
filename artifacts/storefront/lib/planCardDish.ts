@@ -12,7 +12,7 @@ import { DIET_TRACKS } from "./plans";
  * buyers, with invented macros, an invented glycemic classification, an
  * invented dietitian's note, and a price borrowed from a DIFFERENT plan's
  * table when its own lookup missed. On a page whose copy claims ISO 22000,
- * FSSAI licensing and ±2 g weighing precision, that is the one set of claims a
+ * FSSAI registration and ±2 g weighing precision, that is the one set of claims a
  * sceptical visitor can actually check.
  *
  * None of it needed inventing. `poolForPlan()` already knows which dishes a

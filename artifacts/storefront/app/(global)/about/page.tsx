@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getRds, initialsOf, givenNameOf } from "@/lib/rdApi";
+import { SITE } from "@/lib/nav";
 
 export const metadata: Metadata = {
   title: "Our Story",
@@ -89,6 +90,12 @@ export default async function AboutPage() {
             <p className="mt-1 text-sm leading-relaxed text-ink-faint">
               Every dish is prepared in a facility adhering to strict international food-safety
               management standards.
+            </p>
+            {/* The verifiable credential + the premises it attaches to, from
+                the same constants the footer and legal pages render — one
+                source, no drift (lib/fssaiClaims.test.ts pins the lockstep). */}
+            <p className="tabular mt-2 text-xs text-ink-faint">
+              FSSAI Reg. No. {SITE.fssai} · {SITE.address}
             </p>
           </div>
         </div>

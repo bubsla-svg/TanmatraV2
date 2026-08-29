@@ -40,7 +40,7 @@ export const termsDoc: LegalDoc = {
     {
       heading: "5. Food, menus, and FSSAI compliance",
       body: [
-        `Our food is prepared under FSSAI Licence No. ${C.fssaiLicenseNo}. We prepare food in a licensed kitchen and follow applicable food-safety standards.`,
+        `Our food is prepared under FSSAI Registration No. ${C.fssaiLicenseNo}. We prepare food in an FSSAI-registered kitchen and follow applicable food-safety standards.`,
         "Nutrition information (such as calories and macros), ingredients, and images are provided in good faith to help you choose, and may be estimates that vary with natural ingredients and preparation. Menu photos are indicative.",
         "Allergen information is provided to help you decide, but our meals are prepared in a shared kitchen where cross-contact can occur. If you have a food allergy or intolerance, please read the Health & Nutrition Disclaimer and take your own precautions.",
       ],

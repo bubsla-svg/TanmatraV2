@@ -106,6 +106,6 @@ export const METABOLIC_FAQ: FaqItem[] = [
   },
   {
     q: "When do meals arrive?",
-    a: "Fired in our Sector 63 kitchen only after you order, sealed hot, and delivered in about 40–45 minutes inside our Noida service zones — never a morning cold-drop.",
+    a: "Fired in our Sector 104 kitchen only after you order, sealed hot, and delivered in about 40–45 minutes inside our Noida service zones — never a morning cold-drop.",
   },
 ];
