@@ -2,7 +2,7 @@
  * SINGLE SOURCE OF TRUTH for the legal-entity + contact details shown across
  * every /legal page and the site footer.
  *
- * ▸ CONFIRMED values (legal name, FSSAI licence, brand) are set below.
+ * ▸ CONFIRMED values (legal name, FSSAI registration, brand, address) are set below.
  * ▸ Everything wrapped in [ … ] is a PLACEHOLDER — fill it in before these
  *   pages go live. They are deliberately loud so they're obvious on the
  *   rendered page and in review. This is the ONLY file you must edit to
@@ -15,6 +15,15 @@ export const COMPANY = {
   // ── Confirmed by the business owner ───────────────────────────────────────
   legalName: "Trending Media Service Private Limited",
   brand: "Tanmatra",
+  // FSSAI REGISTRATION, not a licence. The certificate on file (FBO: Anuradha,
+  // issued 06-09-2025, valid up to 05-09-2026, premises: Hajipur, Sector 104,
+  // Noida) is a Registration Certificate under the FSS Act, 2006 — the petty-FBO
+  // tier. User-facing copy must therefore say "Registration"/"Reg. No.", never
+  // "Licence": the two are distinct instruments under the Licensing and
+  // Registration Regulations, and claiming the one we don't hold is a false
+  // declaration under §61. The field NAME stays `fssaiLicenseNo` because it
+  // mirrors the `legal_company_profile` wire/DB column — renaming it is API
+  // churn, not honesty.
   fssaiLicenseNo: "22725926001018",
   // Owner-confirmed contact. All company contact (grievance, data/privacy, and
   // support) currently routes to this single verified inbox + phone; split into
@@ -26,15 +35,21 @@ export const COMPANY = {
   // Grounded in the current delivery footprint (Noida / Delhi NCR).
   serviceAreas: "Noida and surrounding serviceable pincodes (Delhi NCR)",
 
+  // Owner-supplied business address (2026-08-29). The FSSAI registration's
+  // premises line reads "Shop Number 5, Gali No. 3, Vill. Hajipur, Sector-104
+  // Noida" — same locality; the owner's stated display address is used here.
+  registeredOffice: "237, Hazipur, Sector 104, Noida, Uttar Pradesh 201301",
+  // Derived from the address above, per the placeholder's own note
+  // ("usually the registered-office city").
+  jurisdictionCity: "Noida",
+  jurisdictionState: "Uttar Pradesh, India",
+
   // ── Still to confirm before publishing (loud placeholders) ────────────────
   cin: "[Company CIN — to be inserted]",
-  registeredOffice: "[Registered office address — to be inserted]",
   grievanceOfficer: "[Grievance Officer name — to be inserted]",
-  jurisdictionCity: "[City — usually the registered-office city]",
-  jurisdictionState: "[State], India",
 
   // Human "Last updated" stamp shown on every legal page.
-  updated: "24 July 2026",
+  updated: "29 August 2026",
 } as const;
 
 export type Company = typeof COMPANY;

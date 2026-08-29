@@ -11,7 +11,7 @@ export const grievanceDoc: LegalDoc = {
   slug: "grievance",
   title: "Grievance Redressal",
   summary:
-    "How to raise a complaint with Tanmatra, who handles it, the timelines we follow, and how to escalate — plus our company and licence details.",
+    "How to raise a complaint with Tanmatra, who handles it, the timelines we follow, and how to escalate — plus our company and registration details.",
   updated: C.updated,
   sections: [
     {
@@ -49,11 +49,11 @@ export const grievanceDoc: LegalDoc = {
       ],
     },
     {
-      heading: "6. Company and licence details",
+      heading: "6. Company and registration details",
       body: [
         `Legal name: ${C.legalName}`,
         `Brand: ${C.brand}`,
-        `FSSAI Licence No.: ${C.fssaiLicenseNo}`,
+        `FSSAI Registration No.: ${C.fssaiLicenseNo}`,
         `CIN: ${C.cin}`,
         `Registered office: ${C.registeredOffice}`,
         `Support: ${C.supportEmail} · ${C.supportPhone}`,

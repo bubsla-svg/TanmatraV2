@@ -334,7 +334,7 @@ export function AlacarteDetails({
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
 
       <p className="text-center text-2xs text-ink-faint">
-        UPI · FSSAI licensed · RD-reviewed kitchen · you won&rsquo;t be charged until you confirm in the payment step.
+        UPI · FSSAI registered · RD-reviewed kitchen · you won&rsquo;t be charged until you confirm in the payment step.
       </p>
 
       {/* Sticky pay bar. The amount is the quote's payable-now — the figure
