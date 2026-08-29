@@ -134,16 +134,18 @@ test("send_sms_hash is on, so Android can auto-read the card OTP", () => {
   assert.equal(buildRazorpayOptions(ORDER).send_sms_hash, true);
 });
 
-test("a backdrop tap asks before abandoning the payment (confirm_close)", async () => {
-  // Captured from the real constructor call, not buildRazorpayOptions — the
-  // modal outcome wiring lives in open()'s promise, and this is the one UX
-  // flag that rides with it.
-  let captured: RzpOpts | undefined;
+test("every configured option actually reaches the Razorpay constructor", async () => {
+  // Captured from the REAL constructor call. The buildRazorpayOptions tests
+  // above pin the pure function; this pins the wiring — without it, inlining
+  // the constructor body (say, in a bad merge-conflict resolution) would keep
+  // every pure-function test green while the live modal silently lost the
+  // theme, prefill, send_sms_hash and the UPI-first config.
+  let captured: (RzpOpts & Record<string, unknown>) | undefined;
   const g = globalThis as Record<string, unknown>;
   const prevWindow = g.window;
   const prevDocument = g.document;
   class CapturingRazorpay {
-    constructor(opts: RzpOpts) {
+    constructor(opts: RzpOpts & Record<string, unknown>) {
       captured = opts;
     }
     open(): void {
@@ -153,8 +155,20 @@ test("a backdrop tap asks before abandoning the payment (confirm_close)", async 
   g.document = { getElementById: () => ({}) };
   g.window = { Razorpay: CapturingRazorpay };
   try {
-    await assert.rejects(createRazorpayAdapter().open(ORDER), RazorpayDismissed);
+    await assert.rejects(
+      createRazorpayAdapter({ contact: "+919999999999", email: "a@b.in" }).open(ORDER),
+      RazorpayDismissed,
+    );
+    // The dismissal guard — the one UX flag that rides with the outcome
+    // wiring (handler + ondismiss) rather than inside buildRazorpayOptions.
     assert.equal(captured!.modal.confirm_close, true);
+    // And the full built bundle, spread into the same constructor call.
+    assert.equal(captured!.config, RAZORPAY_DISPLAY_CONFIG);
+    assert.deepEqual(captured!.theme, { color: ACCENT_GOLD_LIGHT });
+    assert.equal(captured!.send_sms_hash, true);
+    assert.deepEqual(captured!.prefill, { contact: "+919999999999", email: "a@b.in" });
+    assert.equal(captured!.order_id, ORDER.razorpayOrderId);
+    assert.equal(captured!.key, ORDER.keyId);
   } finally {
     g.window = prevWindow;
     g.document = prevDocument;
@@ -302,6 +316,11 @@ test("UPI is ordered first without hiding any other method", () => {
 });
 
 test("the adapter actually passes the ordering to Razorpay", () => {
+  // Since the buildRazorpayOptions extraction, `config: RAZORPAY_DISPLAY_CONFIG`
+  // appears inside the BUILDER, so grepping for it would prove declaration,
+  // not passing — the exact thing this test's failure message disclaims. The
+  // constructor-capture test above is the real proof; this grep now pins the
+  // one line that connects the two (the spread inside `new Razorpay(...)`).
   const src = fs.readFileSync(new URL("./razorpayAdapter.ts", import.meta.url), "utf8");
-  assert.match(src, /config: RAZORPAY_DISPLAY_CONFIG/, "declaring the config is not passing it");
+  assert.match(src, /\.\.\.buildRazorpayOptions\(order, opts\)/, "the constructor must spread the built options");
 });

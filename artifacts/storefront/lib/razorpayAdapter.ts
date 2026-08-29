@@ -108,9 +108,10 @@ export interface RazorpayAdapterOpts {
 }
 
 /**
- * Everything the modal is configured with EXCEPT the outcome wiring (handler
- * + ondismiss, which belong to open()'s promise). Pure and exported so every
- * UX choice below is assertable without a browser:
+ * Everything the modal is configured with EXCEPT the `modal` block and the
+ * handler — the outcome wiring belongs to open()'s promise, and
+ * `confirm_close` rides with it (see the constructor call). Pure and
+ * exported so every UX choice below is assertable without a browser:
  *
  *  - `prefill` — the OTP-verified phone (and email where a surface has one)
  *    lands in the sheet, so UPI collect / card flows never re-ask for what
@@ -160,10 +161,10 @@ export function createRazorpayAdapter(opts?: RazorpayAdapterOpts): RazorpayAdapt
               razorpayOrderId: r.razorpay_order_id,
               razorpaySignature: r.razorpay_signature,
             }),
-          // confirm_close: a backdrop tap mid-UPI-collect is far more often a
-          // slip than a decision — Razorpay's own "cancel payment?" prompt
-          // turns it into one. Escape/close still work; a confirmed dismissal
-          // rejects exactly as before (RazorpayDismissed, before verify).
+          // confirm_close: closing mid-UPI-collect (backdrop tap, X, Escape)
+          // is far more often a slip than a decision — Razorpay's own "cancel
+          // payment?" prompt turns it into one. A confirmed dismissal rejects
+          // exactly as before (RazorpayDismissed, before verify).
           modal: { ondismiss: () => reject(new RazorpayDismissed()), confirm_close: true },
         });
         rzp.open();
