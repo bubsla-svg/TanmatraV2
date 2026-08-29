@@ -210,6 +210,44 @@ test("premium checkout prices from the server; verify flips pending_payment→ac
   assert.equal(row!.razorpayPaymentId, paymentId);
 });
 
+test("a checkout retry reuses the pending gateway order — the first capture's binding survives", async () => {
+  // The regression this pins: a retry used to mint a FRESH Razorpay order and
+  // overwrite the stored razorpayOrderId. Verify's guarded update binds on
+  // that column, so a customer who paid the first order and then re-tapped
+  // checkout had their capture permanently orphaned — and premium rows are
+  // not in ordersTable, so the webhook could not recover it either.
+  const user = await makeUser("retry");
+  const first = await api("POST", "/premium/checkout", {}, user);
+  assert.equal(first.status, 200, JSON.stringify(first.json));
+  const ordersAfterFirst = rzpOrders.length;
+
+  const second = await api("POST", "/premium/checkout", {}, user);
+  assert.equal(second.status, 200, JSON.stringify(second.json));
+  assert.equal(
+    second.json.razorpayOrderId,
+    first.json.razorpayOrderId,
+    "a retry must return the SAME gateway order, never mint a new one",
+  );
+  assert.equal(second.json.amount, PREMIUM_PRICE);
+  assert.equal(second.json.keyId, KEY_ID);
+  assert.equal(rzpOrders.length, ordersAfterFirst, "no second POST /v1/orders may fire");
+
+  // The point of the reuse: a payment of the FIRST order still verifies.
+  const paymentId = `pay_prem_retry_${first.json.razorpayOrderId}`;
+  const verify = await api(
+    "POST",
+    "/premium/verify",
+    {
+      razorpayPaymentId: paymentId,
+      razorpayOrderId: first.json.razorpayOrderId,
+      razorpaySignature: sign(first.json.razorpayOrderId, paymentId),
+    },
+    user,
+  );
+  assert.equal(verify.status, 200, JSON.stringify(verify.json));
+  assert.equal((await membershipRow(user.id))!.status, "active");
+});
+
 test("a bad signature is rejected and the membership stays pending_payment", async () => {
   const user = await makeUser("badsig");
   const checkout = await api("POST", "/premium/checkout", {}, user);
