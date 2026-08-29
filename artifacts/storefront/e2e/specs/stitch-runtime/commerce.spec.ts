@@ -151,9 +151,18 @@ test.describe("stitch-runtime: commerce (5.x)", () => {
   test("5.9 meal deals is wired", async ({ page }) => {
     await page.goto("/meal-deals");
     await expect(page.getByRole("heading", { name: "Meal Bundles", exact: true })).toBeVisible();
-    // Primary action ("Add combo to cart") renders as the bundle CTA.
-    await expect(page.getByRole("button", { name: "Select Bundle" }).first()).toBeVisible();
     await expect(marker(page, "5.9", "default")).toBeVisible();
+    // The bundle card IS the primary action (CLAUDE.md combo convention):
+    // tapping it opens the combo drawer — constituent dishes, each a link to
+    // its PDP, under an Add Combo CTA. The previous assertion here pinned a
+    // "Select Bundle" button that had NO handler at all (a Server-Component
+    // dead end), so this spec certified an unclickable control as "wired";
+    // now it proves the interaction, not just the paint.
+    const card = page.getByRole("button", { name: /See what.s inside/i }).first();
+    await expect(card).toBeVisible();
+    await card.click();
+    await expect(page.getByRole("button", { name: "Add Combo" })).toBeVisible();
+    await expect(page.locator('a[href^="/dish/"]').first()).toBeVisible();
     await evidenceShot(page, "5.9");
   });
 
