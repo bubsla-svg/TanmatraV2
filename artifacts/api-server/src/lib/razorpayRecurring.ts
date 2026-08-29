@@ -17,6 +17,7 @@ import {
   type SubscriptionCadence,
 } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { billingCadenceDays } from "./billingCadence";
 
 /** Minimal logger shape (pino-compatible). */
 type Logger = { error: (...args: any[]) => void; warn?: (...args: any[]) => void };
@@ -109,9 +110,10 @@ export async function upsertActiveMandate(
   customerId: string,
   tokenId: string,
 ): Promise<void> {
-  const days = cadence === "weekly" ? 7 : cadence === "fortnightly" ? 14 : 30;
+  // One billed cycle per delivered cycle — the shared table in
+  // billingCadence.ts (monthly = the 6-week protocol, not 30 days).
   const nextChargeAt = new Date();
-  nextChargeAt.setDate(nextChargeAt.getDate() + days);
+  nextChargeAt.setDate(nextChargeAt.getDate() + billingCadenceDays(cadence));
 
   await db.transaction(async (tx) => {
     const [existing] = await tx

@@ -18,12 +18,12 @@ export const metadata: Metadata = {
  * prints the fine print beneath the pay button. Nothing on this page is copy
  * that could drift from the screen it explains; see lib/howItWorks.
  *
- * The renewal section splits by CYCLE, not by plan. Every bookable plan
- * defaults to a non-renewing cycle, so a per-plan verdict would print "does not
- * renew" against all of them — and be flatly wrong for anyone who picked weekly
- * in the builder, which registers a real UPI Autopay mandate. Those customers
- * are precisely the ones who get charged again, so they are the ones a help
- * page cannot afford to mislead. See lib/howItWorks.
+ * The renewal section splits by CYCLE, not by plan. The answer genuinely
+ * differs per cycle — weekly and monthly register a real UPI Autopay mandate
+ * (lib/planDecisionFacts mirrors api-server's AUTOPAY_CADENCES), quarterly is
+ * prepaid, the trial is one-off — so a single per-plan verdict would be wrong
+ * for whoever picked the other cycle. The customers a help page most cannot
+ * afford to mislead are the ones who get charged again. See lib/howItWorks.
  */
 export default function HowItWorksPage() {
   const plans = bookablePlans();
@@ -61,11 +61,11 @@ export default function HowItWorksPage() {
       {mixed && (
         <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-muted">
           It depends on the billing frequency you choose, not on which plan you
-          choose. Weekly billing sets up UPI Autopay and renews until you
-          cancel, with a notification before each charge. Monthly and quarterly
-          do not — you pay once for that period, nothing renews automatically,
-          and you come back when you want the next one. Every plan below is
-          quoted monthly unless you pick otherwise.
+          choose. Weekly and monthly billing set up UPI Autopay and renew until
+          you cancel, with a notification before each charge. Quarterly does
+          not — you pay once for that quarter, nothing renews automatically,
+          and you come back when you want the next one. The one-off trial never
+          renews. Every plan below is quoted monthly unless you pick otherwise.
         </p>
       )}
 

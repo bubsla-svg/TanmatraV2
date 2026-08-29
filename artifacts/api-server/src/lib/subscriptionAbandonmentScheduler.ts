@@ -21,14 +21,17 @@
  * (any status — active or cancelled, since even a cancelled mandate proves a
  * payment attempt happened) + created more than GRACE_MS ago.
  *
- * Cadence scope — weekly/fortnightly ONLY, monthly is deliberately excluded:
- * `POST /payments/razorpay/order` only requests a Razorpay recurring token
- * (`isRecurring`) for `cadence === "weekly" || "fortnightly"` (see
- * ../routes/payments.ts). A monthly plan is a one-time prepaid charge for the
- * whole 6-week cycle — it NEVER gets a `subscription_mandates` row, even when
- * fully and successfully paid. So "zero mandate" is not an unambiguous zombie
- * signal for monthly subscriptions; sweeping them would cancel legitimately
- * -paid customers. (Trial subscriptions are not a special case here: the
+ * Cadence scope — weekly/fortnightly ONLY, monthly is deliberately excluded,
+ * and the reason has CHANGED since this sweep was written. Monthly is now an
+ * autopay cadence (lib/billingCadence.ts's AUTOPAY_CADENCES; the isRecurring
+ * gate in ../routes/payments.ts), so a NEW monthly subscription that pays
+ * successfully does get a `subscription_mandates` row. But every monthly
+ * subscription paid BEFORE that change was a one-time prepaid charge with no
+ * mandate row at all — so "zero mandate" still cannot distinguish an
+ * abandoned monthly checkout from that fully-paid historical population, and
+ * sweeping monthly would cancel legitimately-paid customers. If monthly
+ * coverage is ever wanted, gate it on createdAt after the autopay-enablement
+ * deploy date. (Trial subscriptions are not a special case here: the
  * client always sends `cadence: "weekly"` for a trial — see Subscribe.tsx's
  * `activeCadence` — so a completed trial payment registers a mandate exactly
  * like a normal weekly subscription and is covered by the same check.)

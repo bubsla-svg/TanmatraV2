@@ -20,10 +20,12 @@
  *       mere existence proves a payment attempt happened, which is the only
  *       thing this sweep is allowed to use as a "not a zombie" signal.
  *   (d) a `monthly`-cadence subscription is never swept, even past the grace
- *       window with no mandate — monthly plans are one-time prepaid charges
- *       that never register a mandate even when fully paid (see
- *       ../routes/payments.ts's `isRecurring` gate), so "no mandate" is not
- *       an unambiguous zombie signal for them.
+ *       window with no mandate. New monthly subscriptions DO register a
+ *       mandate now (lib/billingCadence.ts's AUTOPAY_CADENCES), but every
+ *       monthly plan paid before that change was a one-time prepaid charge
+ *       with no mandate row — so "no mandate" still cannot separate an
+ *       abandoned monthly checkout from that fully-paid historical
+ *       population (see the sweep's own docstring).
  *
  * Run with:
  *   node --test --import tsx ./src/lib/subscriptionAbandonmentScheduler.test.ts

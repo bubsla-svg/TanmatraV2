@@ -28,13 +28,14 @@ import { planDecisionFacts, registersAutopayMandate, SKIP_SWAP_CUTOFF_HOURS } fr
  * THE RENEWAL TRUTH IS KEYED ON THE CYCLE, NOT THE PLAN — and that distinction
  * is the whole reason this module exists rather than a paragraph of copy.
  *
- * Every bookable plan DEFAULTS to a non-renewing cycle (desk_fuel and
- * protein_build are monthly, the trial is one-off), so a page that reported
- * renewal per plan would print "does not renew" against all of them. But the
- * builder lets a customer pick WEEKLY (see BUILDER_CYCLES), and weekly
- * registers a real UPI Autopay mandate. That page would therefore be flatly
- * wrong for every customer who chose weekly — the exact question a help page
- * most has to get right.
+ * The builder offers three cycles (BUILDER_CYCLES) and they genuinely differ:
+ * weekly and monthly register a real UPI Autopay mandate (planDecisionFacts
+ * mirrors api-server's AUTOPAY_CADENCES; quarterly stays prepaid because its
+ * cycle can bill over the mandate's ₹15,000 ceiling), and the trial is a
+ * one-off. Any single per-plan verdict is therefore flatly wrong for whoever
+ * picked the other cycle — the exact question a help page most has to get
+ * right, because those are the customers who get charged again (or believe
+ * food keeps arriving when it will not).
  *
  * So each plan reports which of ITS CHOOSABLE cycles renew. A plan whose cycle
  * cannot be chosen (the one-off trial) reports only its own.

@@ -24,10 +24,11 @@ test("a fortnightly customer is never told 'weekly'", () => {
 });
 
 test("an unmapped cadence is described generally, never specifically wrong", () => {
-  // Today the cadence gate in POST /payments/razorpay/order lets only weekly
-  // and fortnightly reach mandate registration. If a third is ever enabled,
-  // saying nothing about the period beats saying "Weekly" about it — that
-  // substitution is how the fortnightly case became wrong in the first place.
+  // Monthly DOES reach mandate registration now (lib/billingCadence.ts) and
+  // stays deliberately unmapped: its billed cycle is the 6-week protocol
+  // (42 days), so "Monthly payments" would be specific and false — the exact
+  // substitution that made the fortnightly case wrong in the first place.
+  // Saying nothing about the period beats saying the wrong word about it.
   for (const cadence of ["monthly", "quarterly", "daily", ""]) {
     const line = autopayDisclaimerFor(cadence);
     assert.doesNotMatch(line, /Weekly|Fortnightly/, `"${cadence}" must not borrow another cadence's word`);

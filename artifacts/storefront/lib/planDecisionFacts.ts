@@ -41,18 +41,20 @@ export const SKIP_SWAP_CUTOFF_HOURS = Math.round(SKIP_SWAP_CUTOFF_MS / 3_600_000
  *
  * Not a product decision restated here — it is what the server does. At order
  * creation (api-server routes/payments.ts) the Razorpay `token` block, which is
- * what makes a payment a mandate registration, is attached only when
- * `sub.cadence === "weekly" || sub.cadence === "fortnightly"` and the
- * subscription is not a live trial. Without that block Razorpay returns no
- * `token_id`, `registerAutopayMandate` bails, no `subscription_mandates` row
- * exists, and `chargeMandateScheduler` — which sweeps active mandate rows —
- * has nothing to charge. A monthly or quarterly plan therefore never bills
- * itself a second time.
+ * what makes a payment a mandate registration, is attached only for the
+ * cadences in api-server lib/billingCadence.ts's AUTOPAY_CADENCES — weekly,
+ * fortnightly and monthly — and never for a live trial. Without that block
+ * Razorpay returns no `token_id`, `registerAutopayMandate` bails, no
+ * `subscription_mandates` row exists, and `chargeMandateScheduler` — which
+ * sweeps active mandate rows — has nothing to charge. A quarterly plan
+ * therefore never bills itself a second time: its cycle can bill over the
+ * mandate's ₹15,000 max_amount ceiling, so it stays a prepaid single charge.
  *
- * So "does it auto-renew?" has no single answer for this product: it depends on
- * the cadence the customer picked, and the default one (monthly) does not.
+ * This list mirrors that server set and must move with it — it decides
+ * whether the pay button says "renews by UPI Autopay" or "nothing renews",
+ * and either sentence is a lie when the two drift.
  */
-const AUTOPAY_CADENCES: readonly (PlanCadence | PlanCycle)[] = ["weekly", "fortnightly"];
+const AUTOPAY_CADENCES: readonly (PlanCadence | PlanCycle)[] = ["weekly", "fortnightly", "monthly"];
 
 export function registersAutopayMandate(cadence: PlanCadence | PlanCycle): boolean {
   return AUTOPAY_CADENCES.includes(cadence);
@@ -154,9 +156,16 @@ export function planDecisionFacts(
     ];
   }
 
+  // "Renews every month" would be specific and false for the monthly plan:
+  // its billed cycle is the 6-week protocol (api-server billingCadenceDays
+  // maps monthly to 42 days, the same step deliveries generate on), not a
+  // calendar month. Same doctrine as the server's autopayDisclaimer: a
+  // general word beats a specific wrong one.
+  const renewPeriod = effective === "monthly" ? "cycle" : period;
+
   return [
     recurring,
     cutoff,
-    `Renews every ${period} by UPI Autopay until you cancel, with a notification before each charge. Cancel any time before the next one — there is no lock-in.`,
+    `Renews every ${renewPeriod} by UPI Autopay until you cancel, with a notification before each charge. Cancel any time before the next one — there is no lock-in.`,
   ];
 }

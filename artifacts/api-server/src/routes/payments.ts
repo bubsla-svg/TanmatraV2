@@ -25,6 +25,7 @@ import {
   REFUND_EVENT_NAMES,
 } from "../lib/paymentIntegrity";
 import { chargeMandateCore } from "../lib/chargeMandate";
+import { isAutopayCadence, MANDATE_MAX_AMOUNT_PAISE } from "../lib/billingCadence";
 import { autopayDisclaimerFor } from "../lib/autopayDisclaimer";
 import { requireRole } from "../lib/adminGate";
 import { paymentRateLimit } from "../middlewares/rateLimitMiddleware";
@@ -341,12 +342,10 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
     // surface, so they must never get a recurring token — even though they
     // reuse cadence:"weekly" for scheduling. Only a converted trial
     // re-enters the recurring path (isLiveTrialState is false once
-    // trialState becomes "converted").
-    if (
-      sub &&
-      !isLiveTrialState(sub.trialState) &&
-      (sub.cadence === "weekly" || sub.cadence === "fortnightly")
-    ) {
+    // trialState becomes "converted"). Which cadences are autopay-eligible
+    // (and why quarterly is not — its cycle can bill over the token's
+    // max_amount ceiling) lives in lib/billingCadence.ts.
+    if (sub && !isLiveTrialState(sub.trialState) && isAutopayCadence(sub.cadence)) {
       isRecurring = true;
       try {
         razorpayCustomerId = await getOrCreateRazorpayCustomer(
@@ -373,7 +372,7 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
     rpOrderPayload.customer_id = razorpayCustomerId;
     rpOrderPayload.token = {
       auth_type: "otp",
-      max_amount: 1500000,
+      max_amount: MANDATE_MAX_AMOUNT_PAISE,
       expire_by: Math.floor(Date.now() / 1000) + 10 * 365 * 24 * 60 * 60, // 10 years
       frequency: "as_presented",
     };
