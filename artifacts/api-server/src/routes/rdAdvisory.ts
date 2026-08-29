@@ -593,6 +593,21 @@ router.post(
       res.status(409).json({ error: "appointment is free — nothing to pay" });
       return;
     }
+    // An unpaid appointment that already carries a gateway order is REUSED,
+    // never re-ordered. Re-minting overwrote the stored razorpayOrderId that
+    // verify's guarded update binds on — so a customer who paid the first
+    // order and then re-tapped Pay had that capture permanently orphaned
+    // (appointments are not in ordersTable, so the webhook cannot recover it
+    // either). Gateway orders stay payable in "created" until paid.
+    if (appt.razorpayOrderId) {
+      res.json({
+        razorpayOrderId: appt.razorpayOrderId,
+        amount: amountPaise,
+        currency: "INR",
+        keyId,
+      });
+      return;
+    }
     const rpRes = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",
       headers: {

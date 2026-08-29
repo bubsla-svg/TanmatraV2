@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import * as fs from "node:fs";
 import { DISHES, isAlaCarteEnabled, type DishData } from "@workspace/menu-catalog";
 import { buildBundle, buildBundles, BUNDLE_SPECS } from "./mealBundles";
 
@@ -146,4 +147,18 @@ test("every real-catalog bundle prices above zero", () => {
   for (const b of buildBundles(DISHES)) {
     assert.ok(b.totalPaise > 0, `${b.id} priced at ${b.totalPaise}`);
   }
+});
+
+test("the page mounts the interactive BundleCard — never a handler-less CTA", () => {
+  // The dead-button regression: /meal-deals once rendered a solid-gold
+  // "Select Bundle" <button> inside the Server Component — no onClick, no
+  // form, no Link. Pricing tests cannot see a dead control, so this pins the
+  // wiring at the source level: the page must delegate its cards to the
+  // client BundleCard island (which opens the combo drawer and adds lines).
+  const page = fs.readFileSync(
+    new URL("../app/(global)/meal-deals/page.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(page, /BundleCard/, "the page must render BundleCard");
+  assert.doesNotMatch(page, /<button(?![^>]*onClick)/, "no handler-less button may live in the RSC page");
 });

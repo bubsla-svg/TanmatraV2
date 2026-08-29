@@ -169,6 +169,23 @@ router.post("/premium/checkout", async (req: Request, res: Response) => {
     .limit(1);
   let membershipId: number;
   if (pending) {
+    // A pending row that already carries a gateway order is REUSED, never
+    // re-ordered. Minting a fresh Razorpay order here overwrote the stored
+    // razorpayOrderId — and verify's guarded update binds on that column, so
+    // a customer who PAID the first order and then re-tapped checkout had
+    // their capture permanently orphaned (verify matches zero rows, and the
+    // Razorpay webhook cannot see premium orders either — they are not in
+    // ordersTable). The stored order is still payable: gateway orders stay
+    // open in "created" until paid.
+    if (pending.razorpayOrderId) {
+      res.json({
+        razorpayOrderId: pending.razorpayOrderId,
+        amount: pending.monthlyPricePaise,
+        currency: "INR",
+        keyId,
+      });
+      return;
+    }
     membershipId = pending.id;
   } else {
     const [created] = await db

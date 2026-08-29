@@ -227,6 +227,43 @@ test("paid consult: checkout prices from the server (RD_PRICING); verify flips p
   assert.equal(row!.razorpayPaymentId, paymentId);
 });
 
+test("a checkout retry reuses the pending gateway order — the first capture's binding survives", async () => {
+  // The regression this pins: a retry used to mint a FRESH Razorpay order and
+  // overwrite the stored razorpayOrderId that verify's guarded update binds
+  // on — orphaning a capture of the first order (appointments are not in
+  // ordersTable, so the webhook cannot recover it either).
+  const user = await makeUser("retry");
+  const appt = await book(user, "follow_up_30m");
+  const first = await api("POST", `/rd/appointments/${appt.id}/checkout`, {}, user);
+  assert.equal(first.status, 200, JSON.stringify(first.json));
+  const ordersAfterFirst = rzpOrders.length;
+
+  const second = await api("POST", `/rd/appointments/${appt.id}/checkout`, {}, user);
+  assert.equal(second.status, 200, JSON.stringify(second.json));
+  assert.equal(
+    second.json.razorpayOrderId,
+    first.json.razorpayOrderId,
+    "a retry must return the SAME gateway order, never mint a new one",
+  );
+  assert.equal(second.json.amount, PAID_PRICE);
+  assert.equal(rzpOrders.length, ordersAfterFirst, "no second POST /v1/orders may fire");
+
+  // The point of the reuse: a payment of the FIRST order still verifies.
+  const paymentId = `pay_appt_retry_${first.json.razorpayOrderId}`;
+  const verify = await api(
+    "POST",
+    `/rd/appointments/${appt.id}/verify`,
+    {
+      razorpayPaymentId: paymentId,
+      razorpayOrderId: first.json.razorpayOrderId,
+      razorpaySignature: sign(first.json.razorpayOrderId, paymentId),
+    },
+    user,
+  );
+  assert.equal(verify.status, 200, JSON.stringify(verify.json));
+  assert.equal((await apptRow(appt.id))!.paymentStatus, "paid");
+});
+
 test("a bad signature is rejected and the appointment stays pending", async () => {
   const user = await makeUser("badsig");
   const appt = await book(user, "follow_up_45m");
