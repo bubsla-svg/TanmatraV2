@@ -76,7 +76,21 @@ export function Section01ClinicalHero({
   campaign?: HeroCampaign | null;
 }) {
   return (
-    <section className="mx-auto w-full max-w-screen-xl px-4 py-section-py sm:px-6">
+    <section className="relative w-full overflow-hidden">
+      {/* Full-bleed background: the real shop front in Sector 104, Noida —
+          owner-supplied, owner-requested as the hero backdrop (2026-08-29).
+          Decorative here (aria-hidden, empty alt): the address it evidences is
+          carried in visible text by the footer and the About page. Two scrim
+          layers keep the dark ink readable over a busy photograph: a flat wash
+          of the page background token, then a vertical gradient that fades the
+          section into the plain page at its top and bottom edges — both from
+          `--bg`, so the treatment survives a theme change untouched. */}
+      <div aria-hidden className="absolute inset-0">
+        <SafeImage src="/brand/storefront.jpg" alt="" className="h-full w-full" priority />
+        <div className="absolute inset-0 bg-bg/65" />
+        <div className="absolute inset-0 bg-gradient-to-b from-bg via-bg/40 to-bg" />
+      </div>
+      <div className="relative mx-auto w-full max-w-screen-xl px-4 py-section-py sm:px-6">
       <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
         {/* Centered Hero Architecture */}
         {/* Decorative only, and hidden from AT on the wrapper rather than on
@@ -168,14 +182,14 @@ export function Section01ClinicalHero({
           )}
           <div className="overflow-hidden rounded-card border border-line bg-surface-raised shadow-2xl shadow-black/40">
             <div className="relative aspect-[16/9] w-full">
-              {/* The photo is the real shop front in Sector 104, Noida —
-                  owner-supplied, pre-cropped to this frame's 16:9 so the
-                  signboard can never be shaved off by object-cover. A physical
-                  address a visitor could walk to is the strongest trust signal
-                  this page owns; the alt carries it for screen readers. */}
+              {/* Food back in the frame: with the shop front now wrapping the
+                  whole section as its background, repeating the same photo
+                  here would show the building twice and the food never — so
+                  the framed card returns to the plated-lunch shot it carried
+                  before the storefront photo arrived. */}
               <SafeImage
-                src="/brand/storefront.jpg"
-                alt="The Tanmatra store front at Hazipur, Sector 104, Noida"
+                src="/brand/hero-dish.jpg"
+                alt="A Tanmatra lunch plated from above"
                 className="h-full w-full"
                 imgClassName="transition-transform duration-700 hover:scale-105"
               />
@@ -194,6 +208,7 @@ export function Section01ClinicalHero({
             </div>
           </div>
         </GsapScrollImage>
+      </div>
     </section>
   );
 }
