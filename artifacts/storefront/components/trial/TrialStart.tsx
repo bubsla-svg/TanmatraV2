@@ -145,6 +145,12 @@ export function TrialStart({
             Start the taste test · {formatPaise(pricePaise)}
           </Button>
           <p className="mt-2 text-center text-xs text-ink-muted">{TRIAL_COPY.noAutoConvert}</p>
+          {/* Kitchen-level trust, at the money moment (N5.10's counterpart on
+              the trial surface). Same house copy as the checkout pay bars —
+              licence-backed kitchen claims only, never per-dish RD badges (F5). */}
+          <p className="mt-1 text-center text-2xs text-ink-faint">
+            FSSAI-licensed, RD-reviewed kitchen · secure UPI checkout
+          </p>
         </div>
       </div>
     </section>

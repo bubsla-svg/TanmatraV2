@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { fetchMarketplaceItemsServer } from "@/lib/marketplaceApi";
 import { SafeImage } from "@/components/ui/SafeImage";
+import { MarketplaceAddToCart } from "@/components/cart/MarketplaceAddToCart";
 import { formatPaise } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -21,8 +22,12 @@ export default async function MarketplacePage() {
 
       <div className="px-gutter pt-6">
         <div className="grid grid-cols-2 gap-4">
+          {/* Card body navigates; the quick-add is a sibling of the Link, not
+              a child (a button inside an anchor is invalid HTML) — same
+              add → [− qty +] on-card grammar as dish cards (D-08 outline). */}
           {items.map((item) => (
-            <Link key={item.id} href={`/marketplace/${item.slug}`} className="group flex flex-col rounded-2xl border border-line bg-surface p-3 transition-transform active:scale-[0.98]">
+            <div key={item.id} className="flex flex-col rounded-2xl border border-line bg-surface p-3">
+              <Link href={`/marketplace/${item.slug}`} className="group flex flex-1 flex-col transition-transform active:scale-[0.98]">
               <div className="relative mb-3 overflow-hidden rounded-xl bg-surface-raised border border-line">
                 {item.badges.length > 0 && (
                   <div className="absolute top-2 left-2 flex gap-1 z-10 flex-col">
@@ -43,7 +48,15 @@ export default async function MarketplacePage() {
                   <span className="font-clinical-data text-ink">{formatPaise(item.pricePaise)}</span>
                 </div>
               </div>
-            </Link>
+              </Link>
+              {/* /marketplace shows the FULL catalogue, out-of-stock included —
+                  no quick-add on an unbuyable item; the PDP states its status. */}
+              {item.stockQty > 0 && (
+                <div className="mt-3">
+                  <MarketplaceAddToCart item={item} variant="card" />
+                </div>
+              )}
+            </div>
           ))}
           {items.length === 0 && (
             <div className="col-span-2 py-10 text-center text-ink-muted">
