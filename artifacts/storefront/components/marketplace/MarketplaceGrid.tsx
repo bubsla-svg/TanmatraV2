@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SafeImage } from "@/components/ui/SafeImage";
+import { MarketplaceAddToCart } from "@/components/cart/MarketplaceAddToCart";
 import { formatPaise } from "@/lib/format";
 import type { MarketplaceItem } from "@/lib/marketplaceApi";
 
@@ -20,7 +21,13 @@ import type { MarketplaceItem } from "@/lib/marketplaceApi";
  * shop window is to show what can be bought today. (`lib/upsell.ts` filters the
  * same way.) /marketplace remains the full catalogue.
  *
- * Server Component: it is a list of links, so nothing here needs the client.
+ * Server Component; the quick-add is a client island (MarketplaceAddToCart,
+ * card variant). It sits BELOW the Link, never inside it — a button inside an
+ * anchor is invalid HTML and unreachable to assistive tech — so the card body
+ * still navigates while quantity is adjustable right on the card, the same
+ * add → [− qty +] grammar every dish card already has (AddToCart, D-08
+ * outline gold). Before this, a pantry item's quantity lived only on the PDP
+ * or in the cart drawer, one navigation away from the browse moment.
  */
 export function MarketplaceGrid({
   initialItems,
@@ -40,10 +47,13 @@ export function MarketplaceGrid({
   return (
     <ul className="grid grid-cols-2 gap-4 md:grid-cols-4">
       {items.map((item) => (
-        <li key={item.slug}>
+        <li
+          key={item.slug}
+          className="flex h-full flex-col rounded-2xl border border-line bg-surface p-3"
+        >
           <Link
             href={`/marketplace/${item.slug}`}
-            className="group flex h-full flex-col rounded-2xl border border-line bg-surface p-3 transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
+            className="group flex flex-1 flex-col transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
           >
             <div className="relative mb-3 overflow-hidden rounded-xl border border-line bg-surface-raised">
               <SafeImage
@@ -68,6 +78,9 @@ export function MarketplaceGrid({
               </span>
             </div>
           </Link>
+          <div className="mt-3">
+            <MarketplaceAddToCart item={item} variant="card" />
+          </div>
         </li>
       ))}
     </ul>

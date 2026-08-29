@@ -1,4 +1,5 @@
 import type { RazorpayAdapter } from "./moneyPath";
+import { ACCENT_GOLD_LIGHT } from "./themes/brand";
 
 /**
  * The concrete browser Razorpay adapter (SF-05). Loads checkout.js on demand
@@ -99,11 +100,49 @@ export const RAZORPAY_DISPLAY_CONFIG = {
   },
 } as const;
 
-export function createRazorpayAdapter(opts?: {
+export interface RazorpayAdapterOpts {
   name?: string;
   description?: string;
   contact?: string;
-}): RazorpayAdapter {
+  email?: string;
+}
+
+/**
+ * Everything the modal is configured with EXCEPT the `modal` block and the
+ * handler — the outcome wiring belongs to open()'s promise, and
+ * `confirm_close` rides with it (see the constructor call). Pure and
+ * exported so every UX choice below is assertable without a browser:
+ *
+ *  - `prefill` — the OTP-verified phone (and email where a surface has one)
+ *    lands in the sheet, so UPI collect / card flows never re-ask for what
+ *    the checkout already knows.
+ *  - `theme.color` — the LIGHT-arm brand gold from lib/themes/brand. The
+ *    modal is a Razorpay-hosted light sheet that paints white text over this
+ *    colour; the dark-arm gold would measure ~2:1 under it (see brand.ts).
+ *  - `send_sms_hash` — lets Android Chrome auto-read the card-OTP SMS
+ *    (WebOTP), one less transcription at the most abandonment-prone step.
+ *  - `config` — UPI first, everything else still present (constant above).
+ */
+export function buildRazorpayOptions(
+  order: { razorpayOrderId: string; amount: number; currency: string; keyId: string },
+  opts?: RazorpayAdapterOpts,
+) {
+  return {
+    key: order.keyId,
+    amount: order.amount,
+    currency: order.currency,
+    order_id: order.razorpayOrderId,
+    name: opts?.name ?? "Tanmatra",
+    description: opts?.description ?? "Order",
+    prefill: { contact: opts?.contact ?? "", email: opts?.email ?? "" },
+    theme: { color: ACCENT_GOLD_LIGHT },
+    send_sms_hash: true,
+    // UPI first, every other method still present — see the constant.
+    config: RAZORPAY_DISPLAY_CONFIG,
+  } as const;
+}
+
+export function createRazorpayAdapter(opts?: RazorpayAdapterOpts): RazorpayAdapter {
   return {
     async open(order) {
       await loadCheckoutScript();
@@ -111,15 +150,7 @@ export function createRazorpayAdapter(opts?: {
       if (!Razorpay) throw new Error("razorpay_unavailable");
       return new Promise((resolve, reject) => {
         const rzp = new Razorpay({
-          key: order.keyId,
-          amount: order.amount,
-          currency: order.currency,
-          order_id: order.razorpayOrderId,
-          name: opts?.name ?? "Tanmatra",
-          description: opts?.description ?? "Order",
-          prefill: { contact: opts?.contact ?? "" },
-          // UPI first, every other method still present — see the constant.
-          config: RAZORPAY_DISPLAY_CONFIG,
+          ...buildRazorpayOptions(order, opts),
           handler: (r: {
             razorpay_payment_id: string;
             razorpay_order_id: string;
@@ -130,7 +161,11 @@ export function createRazorpayAdapter(opts?: {
               razorpayOrderId: r.razorpay_order_id,
               razorpaySignature: r.razorpay_signature,
             }),
-          modal: { ondismiss: () => reject(new RazorpayDismissed()) },
+          // confirm_close: closing mid-UPI-collect (backdrop tap, X, Escape)
+          // is far more often a slip than a decision — Razorpay's own "cancel
+          // payment?" prompt turns it into one. A confirmed dismissal rejects
+          // exactly as before (RazorpayDismissed, before verify).
+          modal: { ondismiss: () => reject(new RazorpayDismissed()), confirm_close: true },
         });
         rzp.open();
       });

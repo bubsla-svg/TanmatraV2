@@ -1,12 +1,11 @@
 /**
  * The help page that answers "does this keep charging me?" (plan item 2.1).
  *
- * The trap this guards is specific. Every bookable plan DEFAULTS to a
- * non-renewing cycle — desk_fuel and protein_build quote monthly, the trial is
- * one-off — so the obvious implementation, reporting renewal per plan, prints
- * "does not renew" against all of them. It is also wrong for every customer who
- * picked weekly in the builder, because weekly registers a real UPI Autopay
- * mandate. Those are exactly the customers who get charged again.
+ * The trap this guards is specific. Renewal differs per CYCLE, not per plan —
+ * weekly and monthly register a real UPI Autopay mandate, quarterly is
+ * prepaid, the trial is one-off — so any single per-plan verdict is wrong for
+ * whoever picked the other cycle. Those are exactly the customers who get
+ * charged again (or believe food keeps coming when it will not).
  *
  * Run: node --test --import tsx ./lib/howItWorks.test.ts
  */
@@ -45,15 +44,19 @@ test("renewal is reported per cycle, and weekly is reported as renewing", () => 
   }
 });
 
-test("every plan still defaults to a NON-renewing cycle", () => {
-  // If this ever flips, the page's "quoted monthly unless you pick otherwise"
-  // line becomes wrong and someone should be told by a failure, not by a
-  // customer.
+test("each plan's default-cycle renewal matches the mandate rule", () => {
+  // The previous form of this guard asserted every default cycle was
+  // NON-renewing — true while monthly was prepaid, and it fired (as designed)
+  // when monthly joined the autopay cadences. The page copy was revised with
+  // that change; this now pins the general invariant so the NEXT cadence
+  // change trips it again: what the page reports for a plan's default must be
+  // exactly what the mandate rule says, and the one-off trial must never
+  // renew.
   for (const p of PLANS) {
     assert.equal(
       registersAutopayMandate(p.defaultCycle as never),
-      false,
-      `${p.planId} now defaults to a renewing cycle — the page copy needs revisiting`,
+      p.defaultCycle === "one_off" ? false : ["weekly", "fortnightly", "monthly"].includes(p.defaultCycle),
+      `${p.planId}'s default-cycle renewal no longer matches the autopay set — revisit the page copy`,
     );
   }
 });

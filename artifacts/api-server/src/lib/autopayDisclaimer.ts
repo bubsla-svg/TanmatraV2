@@ -17,15 +17,21 @@
  */
 
 /**
- * Only weekly and fortnightly reach mandate registration today — the cadence
- * gate in POST /payments/razorpay/order attaches Razorpay's `token` block for
- * no others, and without it no mandate is ever written.
+ * Weekly, fortnightly and monthly reach mandate registration — the cadence
+ * gate in POST /payments/razorpay/order (see lib/billingCadence.ts's
+ * AUTOPAY_CADENCES) attaches Razorpay's `token` block for no others, and
+ * without it no mandate is ever written.
  *
  * A lookup rather than a ternary on purpose. With `cadence === "fortnightly"
  * ? … : "Weekly"`, enabling autopay for a third cadence would silently start
  * telling those customers "Weekly payments" — which is precisely how the
  * fortnightly case came to be wrong. An unmapped cadence gets a sentence that
  * is general instead of one that is specific and false.
+ *
+ * Monthly is autopay-eligible yet DELIBERATELY unmapped: its billed cycle is
+ * the 6-week protocol (billingCadenceDays("monthly") = 42 days), so "Monthly
+ * payments" would be the same specific-and-false substitution this map exists
+ * to prevent. The general sentence is the honest one for it.
  */
 const AUTOPAY_PERIOD_WORD: Record<string, string> = {
   weekly: "Weekly",

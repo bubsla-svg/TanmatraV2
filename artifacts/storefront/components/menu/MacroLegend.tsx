@@ -58,10 +58,22 @@ export function MacroLegend({
   sharedMacroKeys: ReadonlySet<string>;
 }) {
   const anyEstimated = dishes.some((d) => macroTrust(d, sharedMacroKeys) === "estimated");
-  if (!anyEstimated) return null;
+  if (dishes.length === 0) return null;
   return (
-    <p className="mt-1 text-xs text-ink-faint" data-testid="macro-legend">
-      <span aria-hidden>≈</span> = estimated from the recipe; RD verification in progress.
-    </p>
+    <div className="mt-1 flex flex-col gap-0.5">
+      {anyEstimated && (
+        <p className="text-xs text-ink-faint" data-testid="macro-legend">
+          <span aria-hidden>≈</span> = estimated from the recipe; RD verification in progress.
+        </p>
+      )}
+      {/* The FSSAI menu-labelling reference statement. Gated only on kcal
+          figures being on screen at all (any dish rendered), not on the ≈
+          mark — it contextualises every calorie number, estimated or not.
+          Wording per the Labelling & Display Regulations, 2020. */}
+      <p className="text-xs text-ink-faint" data-testid="kcal-reference">
+        An average active adult requires 2,000 kcal energy per day; individual
+        calorie needs may vary.
+      </p>
+    </div>
   );
 }

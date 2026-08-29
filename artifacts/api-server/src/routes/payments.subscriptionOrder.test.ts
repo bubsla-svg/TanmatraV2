@@ -24,9 +24,11 @@
  *      subscriptionId passed through, mints a Razorpay customer + recurring
  *      token block on the gateway order; verify() registers a real
  *      subscription_mandates row and reactivates the subscription.
- *   2. Cadence gate — a monthly subscription (still owned + subscriptionId
- *      correct) must NOT mint a recurring token; verify() must not write a
- *      mandate.
+ *   2. Cadence gate — a monthly subscription mints a recurring token too
+ *      (autopay set = lib/billingCadence.ts's AUTOPAY_CADENCES), and its
+ *      mandate schedules one 42-day protocol cycle out; a quarterly
+ *      subscription must NOT mint one (its cycle can bill over the token's
+ *      max_amount ceiling).
  *   3. Ownership/security — a caller may not attach a recurring token to
  *      ANOTHER user's subscriptionId, even when paying for their own order.
  *
@@ -71,8 +73,9 @@ import {
   preDebitNotificationsTable,
 } from "@workspace/db";
 
-import subscriptionsRouter from "./subscriptions";
+import subscriptionsRouter, { CADENCE_DAYS } from "./subscriptions";
 import paymentsRouter from "./payments";
+import { billingCadenceDays } from "../lib/billingCadence";
 
 const KEY_ID = "rzp_test_x";
 const KEY_SECRET = "secret_test";
@@ -521,10 +524,25 @@ test("weekly subscription + subscriptionId passed through mints a recurring Razo
 });
 
 // ---------------------------------------------------------------------------
-// 2. Cadence gate — monthly cadence must never mint a recurring token.
+// 2. Cadence gate — monthly is autopay-eligible (lib/billingCadence.ts), and
+//    its mandate must schedule the 6-week protocol cycle, never a 30-day
+//    calendar month: pricePerDeliveryPaise is one cycleTotal for one 42-day
+//    cycle of meals, so a 30-day recurrence would over-collect ~1.4 cycle
+//    payments per delivered cycle. Quarterly stays excluded (next test).
 // ---------------------------------------------------------------------------
 
-test("monthly cadence never mints a recurring token even with a correctly-owned subscriptionId, and verify writes no mandate", async () => {
+test("billing cycle length mirrors the delivery cycle length for every cadence", () => {
+  // The lockstep pin billingCadence.test.ts cannot hold (it stays DB-free;
+  // importing routes/subscriptions reaches the DB pool at module load). If
+  // the delivery table and the billing table ever disagree, a mandate would
+  // bill on a different period than the food it pays for — the monthly case
+  // is exactly the "billed every 30 days for a 42-day cycle" over-collection.
+  for (const cadence of ["weekly", "fortnightly", "monthly", "quarterly"] as const) {
+    assert.equal(billingCadenceDays(cadence), CADENCE_DAYS[cadence], cadence);
+  }
+});
+
+test("monthly cadence mints a recurring token; verify registers a mandate scheduled one 42-day protocol cycle out", async () => {
   const user = await makeUser("monthly");
   const { subId } = await createSubscription(user, "monthly");
   const externalOrderId = `sub-${subId}`;
@@ -544,18 +562,18 @@ test("monthly cadence never mints a recurring token even with a correctly-owned 
 
   assert.equal(
     rzpCustomerCalls.length,
-    customerCallsBefore,
-    "monthly cadence must never create a Razorpay customer",
+    customerCallsBefore + 1,
+    "a Razorpay customer must be created for the monthly recurring branch",
   );
   const rzpCall = rzpOrderCalls.find((c) => c.id === razorpayOrderId);
-  assert.ok(rzpCall);
-  assert.equal(rzpCall!.body.customer_id, undefined);
-  assert.equal(rzpCall!.body.token, undefined);
+  assert.ok(rzpCall, "order-create call must be recorded");
+  assert.ok(rzpCall!.body.customer_id, "recurring order must carry customer_id");
+  assert.equal(rzpCall!.body.token?.auth_type, "otp");
+  assert.equal(rzpCall!.body.token?.frequency, "as_presented");
 
-  // paymentId intentionally left unregistered in paymentToOrder — a genuine
-  // non-recurring capture from Razorpay carries no customer_id/token_id
-  // either, which is exactly what the mock returns by default.
   const paymentId = `pay_${razorpayOrderId}`;
+  paymentToOrder.set(paymentId, razorpayOrderId);
+
   const verifyRes = await postVerify({
     orderId: externalOrderId,
     razorpayPaymentId: paymentId,
@@ -563,8 +581,24 @@ test("monthly cadence never mints a recurring token even with a correctly-owned 
     razorpaySignature: verifySignature(razorpayOrderId, paymentId),
   });
   assert.equal(verifyRes.status, 200, JSON.stringify(verifyRes.json));
-  assert.equal(verifyRes.json.autopayDisclaimer, undefined, "no mandate ⇒ no autopay disclaimer");
-  assert.equal(await mandateRow(subId), null, "no mandate row for a monthly plan");
+  assert.ok(
+    verifyRes.json.autopayDisclaimer,
+    "a real mandate registration must surface the autopay disclaimer",
+  );
+  // Monthly's billed cycle is the 6-week protocol, so the period-specific
+  // word would be false — the disclaimer must be the general sentence, never
+  // borrow another cadence's word (see autopayDisclaimer.ts).
+  assert.doesNotMatch(String(verifyRes.json.autopayDisclaimer), /Weekly|Fortnightly|Monthly/);
+
+  const mandate = await mandateRow(subId);
+  assert.ok(mandate, "a subscription_mandates row must be written");
+  assert.equal(mandate!.status, "active");
+  assert.ok(mandate!.nextChargeAt, "nextChargeAt must be set");
+  const daysAhead = (new Date(mandate!.nextChargeAt!).getTime() - Date.now()) / 86_400_000;
+  assert.ok(
+    daysAhead > 41.5 && daysAhead < 42.5,
+    `monthly mandate must schedule one 42-day protocol cycle out, got ${daysAhead}`,
+  );
 });
 
 test("quarterly cadence never mints a recurring token even with a correctly-owned subscriptionId, and verify writes no mandate (prepaid single charge)", async () => {

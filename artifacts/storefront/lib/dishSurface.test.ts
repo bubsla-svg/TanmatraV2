@@ -51,9 +51,10 @@ test("a saving renders only when the offer carries one", () => {
 });
 
 test("renewal copy branches on what the server actually does", () => {
-  // registersAutopayMandate is the api-server's own condition. A monthly plan
-  // registers no mandate, so claiming it renews would repeat the defect #49
-  // was corrected for.
+  // registersAutopayMandate is the api-server's own condition (weekly,
+  // fortnightly and monthly mint mandates; quarterly stays prepaid — see
+  // lib/planDecisionFacts.ts). Claiming renewal where no mandate registers
+  // would repeat the defect #49 was corrected for.
   assert.match(TOGGLE, /registersAutopayMandate\(offer\.cycle\)/);
   assert.match(TOGGLE, /Nothing renews automatically/);
   assert.match(TOGGLE, /UPI Autopay/);

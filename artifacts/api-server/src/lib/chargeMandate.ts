@@ -51,6 +51,7 @@ import {
 } from "../routes/subscriptions";
 import { pushOrderToPetpooja } from "./petpoojaClient";
 import { emitServerEvent } from "./serverEvents";
+import { billingCadenceDays } from "./billingCadence";
 
 export type ChargeLogger = {
   info: (...args: any[]) => void;
@@ -88,16 +89,13 @@ function razorpayBasicAuth(keyId: string, keySecret: string): string {
   return Buffer.from(`${keyId}:${keySecret}`).toString("base64");
 }
 
-/** cadence → billing-cycle length in days. Mirrors the mapping already used
- * for mandate registration (registerAutopayMandate in routes/payments.ts) —
- * intentionally NOT subscriptions.ts's CADENCE_DAYS (monthly=42, a delivery-
- * scheduling concept), since a Razorpay UPI Autopay mandate is only ever
- * registered for weekly/fortnightly subscriptions in practice (see the
- * isRecurring gate in POST /payments/razorpay/order); this keeps the
- * billing-cadence mapping consistent with how the mandate was created. */
-function billingCadenceDays(cadence: Subscription["cadence"]): number {
-  return cadence === "weekly" ? 7 : cadence === "fortnightly" ? 14 : 30;
-}
+// cadence → billing-cycle length now lives in lib/billingCadence.ts, shared
+// with upsertActiveMandate (razorpayRecurring.ts) so registration and every
+// subsequent charge advance nextChargeAt by the SAME cycle length — and
+// pinned to subscriptions.ts's CADENCE_DAYS by billingCadence.test.ts, so a
+// monthly mandate bills once per delivered 6-week protocol cycle, never on a
+// shorter 30-day calendar intuition (that mismatch would over-collect ~1.4
+// cycle payments per delivered cycle).
 
 /**
  * Find the earliest not-yet-billed upcoming delivery for this subscription

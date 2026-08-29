@@ -121,6 +121,13 @@ test.describe("stitch-runtime: menu display integrity (M-5 §4)", () => {
       expect(await legend.count()).toBe(0);
     }
 
+    // The FSSAI reference statement is gated on kcal figures being on screen
+    // at all, not on the ≈ mark — with any dish rendered it must be present,
+    // exactly once (MacroLegend renders it page-level, never per card).
+    const kcalReference = page.getByTestId("kcal-reference");
+    await expect(kcalReference, "kcal figures render with no 2,000 kcal reference statement").toBeVisible();
+    expect(await kcalReference.count()).toBe(1);
+
     await evidenceShot(page, "5.2-macro-legend");
   });
 

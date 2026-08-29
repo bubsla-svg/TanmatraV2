@@ -37,30 +37,35 @@ test("an autopay cadence states what arrives, the cutoff, and that it renews", (
 });
 
 test("a prepaid cadence is never described as renewing", () => {
-  // The first draft said "Renews every month until you cancel" for every
-  // non-one-off cadence. The server attaches Razorpay's `token` block — the
-  // thing that makes a payment a mandate registration — only for weekly and
-  // fortnightly, so a monthly plan registers no mandate and the charge sweep
-  // has nothing to bill. The promise could not be kept.
-  //
-  // And monthly is the DEFAULT cadence, so this was the common case. Its
-  // ending is worse than a one-off mislabelled as renewing: the customer
-  // believes food keeps arriving, and it stops on a date nobody named.
-  for (const cadence of ["monthly", "quarterly"] as const) {
-    const all = planDecisionFacts("desk_fuel", cadence).join(" ");
-    assert.doesNotMatch(all, /Renews every/, `${cadence} registers no mandate and must not claim renewal`);
-    assert.match(all, /[Nn]othing renews automatically/);
-    assert.match(all, /no recurring charge is set up/);
-  }
+  // Quarterly registers no mandate — its cycle can bill over the token's
+  // ₹15,000 max_amount ceiling (api-server lib/billingCadence.ts), so the
+  // charge sweep has nothing to bill and a renewal promise could not be
+  // kept. The customer must instead be told, at the pay button, that food
+  // stops unless they come back.
+  const all = planDecisionFacts("desk_fuel", "quarterly").join(" ");
+  assert.doesNotMatch(all, /Renews every/, "quarterly registers no mandate and must not claim renewal");
+  assert.match(all, /[Nn]othing renews automatically/);
+  assert.match(all, /no recurring charge is set up/);
+});
+
+test("monthly renews by autopay, described as a cycle — never as a calendar month", () => {
+  // Monthly mints a mandate now, and its billed cycle is the 6-week protocol
+  // (api-server billingCadenceDays maps monthly to 42 days). "Renews every
+  // month" would therefore be specific and false — the same substitution the
+  // server's autopayDisclaimer refuses. General beats specifically wrong.
+  const all = planDecisionFacts("desk_fuel", "monthly").join(" ");
+  assert.match(all, /Renews every cycle by UPI Autopay/);
+  assert.doesNotMatch(all, /Renews every month/);
+  assert.match(all, /no lock-in/);
 });
 
 test("the renewal claim tracks the cadences that actually register a mandate", () => {
   // Guards the mapping itself against drift from api-server's own condition
-  // (routes/payments.ts: cadence === "weekly" || cadence === "fortnightly",
-  // and not a live trial).
+  // (routes/payments.ts: isAutopayCadence — weekly/fortnightly/monthly, from
+  // lib/billingCadence.ts's AUTOPAY_CADENCES — and not a live trial).
   assert.equal(registersAutopayMandate("weekly"), true);
   assert.equal(registersAutopayMandate("fortnightly"), true);
-  assert.equal(registersAutopayMandate("monthly"), false);
+  assert.equal(registersAutopayMandate("monthly"), true);
   assert.equal(registersAutopayMandate("quarterly"), false);
   assert.equal(registersAutopayMandate("one_off"), false);
 });
@@ -69,7 +74,8 @@ test("only an autopay cadence mentions UPI Autopay", () => {
   // The disclaimer describes a mandate. Naming the mechanism where none is
   // registered would be precise and wrong — the worst combination.
   assert.match(planDecisionFacts("desk_fuel", "weekly").join(" "), /UPI Autopay/);
-  assert.doesNotMatch(planDecisionFacts("desk_fuel", "monthly").join(" "), /UPI Autopay/);
+  assert.match(planDecisionFacts("desk_fuel", "monthly").join(" "), /UPI Autopay/);
+  assert.doesNotMatch(planDecisionFacts("desk_fuel", "quarterly").join(" "), /UPI Autopay/);
   assert.doesNotMatch(planDecisionFacts("trial_3day", undefined).join(" "), /UPI Autopay/);
 });
 

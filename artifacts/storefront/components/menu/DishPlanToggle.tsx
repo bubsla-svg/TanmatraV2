@@ -109,7 +109,10 @@ export function DishPlanToggle({
           )}
           <Text type="supporting" color="secondary">
             {autopay
-              ? `Renews every ${period} by UPI Autopay, with a notification before each charge. Cancel any time.`
+              ? // "every month" would be specific and false for the monthly plan —
+                // its billed cycle is the 6-week protocol (see planDecisionFacts's
+                // renewPeriod note). Same rule, same word.
+                `Renews every ${offer.cycle === "monthly" ? "cycle" : period} by UPI Autopay, with a notification before each charge. Cancel any time.`
               : `Paid once for this ${period}. Nothing renews automatically and no recurring charge is set up.`}
           </Text>
           <Button
