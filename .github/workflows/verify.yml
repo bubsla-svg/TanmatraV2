@@ -214,6 +214,23 @@ jobs:
         if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
         run: node --test --import tsx "../storefront/lib/**/*.test.ts"
+
+      # Printed-code acquisition. `normalizeQrCode` is what makes an
+      # all-uppercase QR (HTTPS://TANMATRA.FOOD/Q/BOX — alphanumeric mode, so
+      # the symbol scans from across a room) resolve against a lowercase
+      # placement row at all, and `isSafeDestination` is the open-redirect
+      # guard in front of an operator-editable destination column. A break in
+      # either is invisible in a diff and expensive in the wild: the first
+      # silently sends every scan to the generic landing, the second sends them
+      # off-origin.
+      #
+      # Its own step, and DB-free on purpose — both functions are pure string
+      # guards, so they belong in the fast pre-merge job rather than behind the
+      # Postgres-backed suites.
+      - name: QR placement guards (api-server)
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: node --test --import tsx ./src/routes/qr.pure.test.ts
       # Inbound Petpooja authentication. These three files existed and passed
       # locally while running in no workflow at all — they were on the
       # test-reach baseline — which is precisely why two fail-open branches in

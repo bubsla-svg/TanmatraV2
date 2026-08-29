@@ -57,6 +57,7 @@ export * from "./ledger";
 export * from "./userConsents";
 export * from "./webhookInbox";
 export * from "./funnelEvents";
+export * from "./qrPlacements";
 export * from "./funnelRollup";
 export * from "./refundRequests";
 export * from "./messageDispatches";

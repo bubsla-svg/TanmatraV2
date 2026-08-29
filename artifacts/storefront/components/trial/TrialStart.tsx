@@ -11,20 +11,13 @@ import { emitFunnel } from "@/lib/funnel";
 import { formatMacroLine, formatPaise } from "@/lib/format";
 import { PLAN_DELIVERY_DAYS_SENTENCE, PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
 import { TRIAL_COPY } from "@/lib/trial";
+import type { TrialTrack, TrioDish } from "@/lib/trialTrio";
 
-export interface TrioDish {
-  slug: string;
-  name: string;
-  image: string;
-  /** Law 8 — the trio is the highest-intent dish moment in this funnel and it
-   *  carried a name and a photo only, on a product whose whole claim is that
-   *  the numbers are known. Absent when the catalog has none to give, never
-   *  filled in. */
-  macros?: { calories: number; protein: number };
-  macrosEstimated?: boolean;
-}
+// The shape lives in lib/trialTrio.ts, where the resolver that BUILDS it also
+// lives — /trial and the QR landing both render this trio, and a second local
+// copy of the type is how the two surfaces start disagreeing about it.
+export type { TrioDish } from "@/lib/trialTrio";
 
-type TrialTrack = "veg" | "nonveg";
 const TRACKS: { id: TrialTrack; label: string }[] = [
   { id: "veg", label: "Veg" },
   { id: "nonveg", label: "Non-veg" },

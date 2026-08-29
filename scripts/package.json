@@ -25,6 +25,7 @@
     "apply-menu-engineering": "tsx ./src/apply-menu-engineering.ts",
     "unpause-menu": "tsx ./src/unpause-menu.ts",
     "assign-admin-role": "tsx ./src/assign-admin-role.ts",
+    "qr-placements": "tsx ./src/qr-placements.ts",
     "test:menu-engineering": "node --test --import tsx ./src/lib/menuEngineeringPlan.test.ts",
     "test:menu-catalog-v2": "node --test --import tsx ./src/lib/menuCatalogV2Plan.test.ts",
     "test:bom-backfill": "node --test --import tsx ./src/lib/bomPlan.test.ts",

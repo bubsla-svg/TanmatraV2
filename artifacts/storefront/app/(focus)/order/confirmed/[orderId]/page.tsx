@@ -5,6 +5,7 @@ import { fetchOrderStatus, statusLabel, statusTone, TRACKABLE_STATUSES } from "@
 import { PlanPerks } from "@/components/order/PlanPerks";
 import { ThankYouRecommendations } from "@/components/order/ThankYouRecommendations";
 import { ClaimOrder } from "@/components/order/ClaimOrder";
+import { ReferralShare } from "@/components/order/ReferralShare";
 
 /** Tone → status-label colour — same mapping as route-12's OrderRow, so a
  *  customer landing here straight from checkout and later revisiting via
@@ -147,6 +148,12 @@ export default async function ConfirmedPage({
               for a customer who signed in during checkout — the order is
               already theirs. */}
           <ClaimOrder orderId={orderId} />
+          {/* The acquisition loop closes here: the customer who just paid is
+              handed their own /r/<code> link on day one, which is the cheapest
+              new-customer channel this product has. Below ClaimOrder on
+              purpose — a guest has to own the order before there is a code to
+              give them, and ReferralShare renders nothing until they do. */}
+          <ReferralShare />
           <ThankYouRecommendations />
         </div>
       </section>
