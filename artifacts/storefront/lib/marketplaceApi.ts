@@ -1,6 +1,7 @@
 import { apiGet, API_BASE, ApiError, type FetchImpl } from "./apiClient";
 import { createRazorpayOrder, verifyPayment } from "./api";
 import type { RazorpayAdapter } from "./moneyPath";
+import { verifyWithRetry, type PaidFacts } from "./verifyRetry";
 
 /**
  * Marketplace (Wave F) client. Browse is public; buying is a real money-path.
@@ -105,7 +106,22 @@ export type DeliveryMode = "ship" | "bundle_with_meal";
 export async function payForMarketplace(
   items: { itemId: number; qty: number }[],
   razorpay: RazorpayAdapter,
-  opts: { deliveryMode?: DeliveryMode; bundleWithOrderId?: number | null } = {},
+  opts: {
+    deliveryMode?: DeliveryMode;
+    bundleWithOrderId?: number | null;
+    /** Fired with the server order the instant it exists — BEFORE any payment
+     *  step — so the caller can RESUME payment on it after a dismissed modal
+     *  or failed verify via {@link finishMarketplacePayment}, instead of
+     *  re-running checkout. A re-run mints a fresh idempotency key, which is
+     *  a second order, a second stock decrement and a second charge — the
+     *  exact double-buy the meal paths already defend against. */
+    onCreated?: (order: MarketplaceOrder) => void;
+    /** Fired the instant the modal resolves — money is CAPTURED, verify is
+     *  starting. Keep the facts (e.g. in a ref): if verifyWithRetry exhausts
+     *  its bounded retries, the caller re-asks the idempotent verify endpoint
+     *  alone via retryVerifyPayment — never re-runs checkout or the modal. */
+    onCaptured?: (facts: PaidFacts) => void;
+  } = {},
   fetchImpl?: FetchImpl,
 ): Promise<MarketplaceOrder> {
   const { order } = await checkout(
@@ -117,17 +133,32 @@ export async function payForMarketplace(
     },
     fetchImpl,
   );
+  opts.onCreated?.(order);
+  return finishMarketplacePayment(order, razorpay, { onCaptured: opts.onCaptured }, fetchImpl);
+}
+
+/**
+ * The payment leg for an ALREADY-created marketplace order: shared Razorpay
+ * order → modal → verify (with the same bounded retry the meal paths use).
+ * Used directly to resume payment after a dismissed modal so no duplicate
+ * order/stock-reservation/charge is ever created.
+ */
+export async function finishMarketplacePayment(
+  order: MarketplaceOrder,
+  razorpay: RazorpayAdapter,
+  opts: { onCaptured?: (facts: PaidFacts) => void } = {},
+  fetchImpl?: FetchImpl,
+): Promise<MarketplaceOrder> {
   const rzp = await createRazorpayOrder({ orderId: order.externalOrderId }, fetchImpl);
   const paid = await razorpay.open(rzp);
-  await verifyPayment(
-    {
-      orderId: order.externalOrderId,
-      razorpayPaymentId: paid.razorpayPaymentId,
-      razorpayOrderId: paid.razorpayOrderId,
-      razorpaySignature: paid.razorpaySignature,
-    },
-    fetchImpl,
-  );
+  const facts: PaidFacts = {
+    orderId: order.externalOrderId,
+    razorpayPaymentId: paid.razorpayPaymentId,
+    razorpayOrderId: paid.razorpayOrderId,
+    razorpaySignature: paid.razorpaySignature,
+  };
+  opts.onCaptured?.(facts);
+  await verifyWithRetry((f) => verifyPayment(f, fetchImpl), facts);
   return order;
 }
 
