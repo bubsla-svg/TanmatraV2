@@ -231,6 +231,19 @@ jobs:
         if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
         run: node --test --import tsx ./src/routes/qr.pure.test.ts
+
+      # The premise the printed-code funnel rests on: the URL we encode must
+      # stay in QR ALPHANUMERIC mode. That mode is uppercase-only, and it is
+      # what keeps the symbol low-density enough to scan from across a room
+      # (measured: 25×25 modules uppercase vs 29×29 lowercase for this URL
+      # shape). A well-meant tidy-up to lowercase looks harmless in a diff and
+      # silently shrinks the scan range of every future print run — on artwork
+      # that, once printed, cannot be redeployed. Asserted against the real
+      # encoder, so it cannot drift into being a comment nobody checks.
+      - name: QR print encoding (scripts)
+        if: ${{ !cancelled() }}
+        working-directory: scripts
+        run: node --test --import tsx ./src/lib/qrPrint.test.ts
       # Inbound Petpooja authentication. These three files existed and passed
       # locally while running in no workflow at all — they were on the
       # test-reach baseline — which is precisely why two fail-open branches in

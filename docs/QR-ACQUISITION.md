@@ -56,6 +56,40 @@ Re-adding an existing code repoints it and un-retires it. Codes are **retired,
 never deleted** — a retired row keeps its scan history, which is the only way to
 tell "that poster stopped working" from "that poster was never counted".
 
+## Getting the artwork
+
+```bash
+pnpm --filter @workspace/scripts run qr-placements -- --qr box --distance 4
+# → qr/box.svg   (vector — the same file is a 3 cm sticker and a 40 cm standee)
+# → qr/box.png   (1024 px, for decks and WhatsApp)
+```
+
+Flags: `--distance <m>` (prints the minimum width for that scan range),
+`--ecc L|M|Q|H` (default M), `--out <dir>` (default `qr/`), `--origin <url>`
+for a staging host.
+
+No database needed — a missing placement row is a warning, not a refusal.
+Making artwork is a design-desk task, and requiring production credentials to
+draw a square is how a lowercase or typo'd URL ends up on 5,000 printed boxes
+via some random online generator instead.
+
+Three things decide whether a print run works:
+
+- **Width.** A symbol scans from roughly **10× its own width**. 4 m across a
+  gym → print it at least **40 cm** wide. The tool computes this; it rounds up,
+  because a code slightly too large still scans and one slightly too small
+  fails invisibly until the posters are on the wall.
+- **The quiet zone.** The 4-module white margin is required by the QR spec, not
+  decoration. Butting the code against dark artwork to save space is the single
+  most common way a print run is wasted. The generated SVG already includes it —
+  do not let a designer crop it off.
+- **The text underneath.** Print `tanmatra.food` as readable text below every
+  code. Trust cue, and the fallback when the scan fails.
+
+Verified end to end: the generated PNG decodes (jsQR) to
+`HTTPS://TANMATRA.FOOD/Q/BOX`, which as a request path returns
+`302 → /start?src=box` with `tnm_src` set.
+
 **No code ever 404s.** Unknown, retired, mistyped, or resolved while the
 api-server was unreachable — all of them land on `/start`, which sells the same
 offer. Marketing links are covered by Law 10 too.
