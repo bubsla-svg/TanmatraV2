@@ -87,8 +87,14 @@ export default async function StartPage({
 
         <QrStart pricePaise={TRIAL_PRICE_PAISE} />
 
+        {/* "registered", not "licensed": the certificate on file is an FSSAI
+            *Registration* (petty-FBO tier), and a Registration and a Licence
+            are distinct instruments — declaring a Licence against a
+            Registration number is a false declaration under §61 of the FSS
+            Act. Same wording as TrialStart's trust line and the footer;
+            lib/fssaiClaims.test.ts fails the build on any other spelling. */}
         <p className="text-center text-2xs text-ink-faint">
-          FSSAI-licensed, RD-reviewed kitchen · secure UPI checkout
+          FSSAI-registered, RD-reviewed kitchen · secure UPI checkout
         </p>
 
         {/* Law 3, in the only direction that exists here. This page is where a
