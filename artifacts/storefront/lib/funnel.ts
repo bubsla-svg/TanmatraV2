@@ -88,7 +88,18 @@ export function emitFunnel(
   props: Record<string, string | number | boolean> = {},
 ): void {
   if (typeof window === "undefined") return; // client-only
-  const payload = JSON.stringify({ event, props, ts: Date.now() });
+  // Shape matches the api-server sink's schema (routes/events.ts: `name`,
+  // `props`, `path`, `ts`). This posted `{ event, … }` for its first weeks —
+  // a key the sink's zod schema does not know — so every beacon that reached
+  // the server was validated away and silently dropped (the sink answers 204
+  // to everything by design). The payload key IS the contract; a rename on
+  // either side must move both.
+  const payload = JSON.stringify({
+    name: event,
+    props,
+    path: window.location?.pathname ?? undefined,
+    ts: Date.now(),
+  });
   try {
     const base = process.env.NEXT_PUBLIC_ANALYTICS_BEACON;
     if (base && "sendBeacon" in navigator) {
