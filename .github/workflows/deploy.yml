@@ -1149,6 +1149,10 @@ jobs:
                 # same-origin /api/* rewrite). Left unset, lib/funnel.ts drops
                 # every payment_opened/payment_failed beacon client-side — the
                 # revenue-path audit's "launching blind" finding (2026-08-29).
+                # Every value line needs its own `--build-arg` flag line — a bare
+                # value becomes a second positional PATH and docker build dies
+                # with "requires exactly 1 argument" (deploy run 33240388526).
+                - --build-arg
                 - NEXT_PUBLIC_ANALYTICS_BEACON=/api/events
                 # Canonical origin for robots/sitemap/canonical/OG — the production
                 # domain that fronts this service post-cutover (docs/DOMAIN-CUTOVER.md).
