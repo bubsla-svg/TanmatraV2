@@ -26,11 +26,11 @@ export const DayCard = memo(function DayCard({ day, dayIndex, editable, onSwap, 
   const handleRegen = useCallback(() => onRegen?.(dayIndex), [onRegen, dayIndex]);
 
   return (
-    <div className="rounded-3xl border border-line bg-surface p-5">
+    <div className="rounded-2xl border border-line bg-surface p-5">
       <div className="flex items-center justify-between gap-2">
-        <p className="font-mono text-xs font-semibold uppercase tracking-widest text-ink">{formatPlanDay(day.date)}</p>
+        <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">{formatPlanDay(day.date)}</p>
         {editable && onRegen && (
-          <button type="button" onClick={handleRegen} className="rounded-full border border-line px-3 py-1 text-3xs font-semibold uppercase tracking-widest text-ink-muted hover:border-line-strong hover:text-ink active:scale-[0.98]">Regen</button>
+          <button type="button" onClick={handleRegen} className="-my-2 inline-flex min-h-11 items-center rounded-full border border-line px-4 text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted transition-colors hover:border-line-strong hover:text-ink active:scale-[0.98]">Regen</button>
         )}
       </div>
       <ul className="mt-4 flex flex-col gap-4">
@@ -39,12 +39,12 @@ export const DayCard = memo(function DayCard({ day, dayIndex, editable, onSwap, 
           return (
             <li key={slot} className="flex items-center gap-4">
               {entry ? (
-                <DishImage src={entry.image} name={entry.name} className="h-16 w-16 shrink-0 rounded-2xl" />
+                <DishImage src={entry.image} name={entry.name} className="h-16 w-16 shrink-0 rounded-xl" />
               ) : (
-                <div aria-hidden className="h-16 w-16 shrink-0 rounded-2xl border border-dashed border-line bg-surface-raised" />
+                <div aria-hidden className="h-16 w-16 shrink-0 rounded-xl border border-dashed border-line bg-surface-raised" />
               )}
               <div className="min-w-0 flex-1">
-                <p className="text-3xs font-semibold uppercase tracking-widest text-ink-faint">{SLOT_LABEL[slot]}</p>
+                <p className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">{SLOT_LABEL[slot]}</p>
                 {entry ? <SlotLine entry={entry} /> : <p className="mt-0.5 text-sm italic text-ink-muted">No dish picked</p>}
               </div>
               {editable && (
@@ -52,7 +52,7 @@ export const DayCard = memo(function DayCard({ day, dayIndex, editable, onSwap, 
                   type="button"
                   onClick={() => onSwap(dayIndex, slot)}
                   aria-label={`Swap ${SLOT_LABEL[slot]}`}
-                  className="shrink-0 rounded-full border border-line px-3.5 py-1.5 text-3xs font-semibold uppercase tracking-widest text-ink-muted hover:border-line-strong hover:text-ink active:scale-[0.98]"
+                  className="inline-flex min-h-11 shrink-0 items-center rounded-full border border-line px-4 text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted transition-colors hover:border-line-strong hover:text-ink active:scale-[0.98]"
                 >
                   Swap
                 </button>
@@ -68,8 +68,8 @@ export const DayCard = memo(function DayCard({ day, dayIndex, editable, onSwap, 
 function SlotLine({ entry }: { entry: MealPlanSlotEntry }) {
   return (
     <>
-      <p className="mt-0.5 truncate text-sm font-medium text-ink">{entry.name}</p>
-      <p className="tabular mt-1 text-2xs text-ink-muted">
+      <p className="mt-0.5 truncate font-display text-lg font-semibold leading-tight text-primary">{entry.name}</p>
+      <p className="font-data mt-1 text-xs text-ink-muted">
         {entry.calories} kcal · {entry.protein}g · {formatPaise(entry.pricePaise)}
       </p>
     </>

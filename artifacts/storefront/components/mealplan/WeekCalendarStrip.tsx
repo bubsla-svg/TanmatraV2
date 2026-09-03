@@ -13,30 +13,31 @@ export function WeekCalendarStrip({ calendar, onCycle }: {
 }) {
   return (
     <div>
-      <Rail snap="none" className="gap-2 pb-1">
+      <Rail as="ul" snap="none" bleed="gutter" className="gap-2 pb-1">
         {DAYS.map((d, i) => {
           const kind = calendar[i] ?? "normal";
           const on = kind !== "normal";
           return (
-            <button
-              key={d}
-              type="button"
-              onClick={() => onCycle(i)}
-              className={`flex h-20 w-12 shrink-0 flex-col items-center justify-center gap-1.5 rounded-full active:scale-[0.98] ${
-                on
-                  ? "bg-gold text-[var(--gold-ink)]"
-                  : "border border-line text-ink-muted hover:border-line-strong hover:text-ink"
-              }`}
-            >
-              <span className="block font-mono text-sm font-semibold tracking-wide">{d}</span>
-              <span className={`block font-mono text-3xs uppercase tracking-widest ${on ? "" : "text-ink-faint"}`}>
-                {LABEL[kind]}
-              </span>
-            </button>
+            <li key={d} className="shrink-0">
+              <button
+                type="button"
+                onClick={() => onCycle(i)}
+                className={`flex h-20 w-14 flex-col items-center justify-center gap-1.5 rounded-full border transition-colors active:scale-[0.98] ${
+                  on
+                    ? "border-gold bg-primary/10 text-primary"
+                    : "border-transparent bg-secondary text-ink-muted hover:text-ink"
+                }`}
+              >
+                <span className="font-data block text-sm font-bold tracking-wide">{d}</span>
+                <span className={`block text-[10px] font-bold uppercase tracking-[.16em] ${on ? "" : "text-ink-faint"}`}>
+                  {LABEL[kind]}
+                </span>
+              </button>
+            </li>
           );
         })}
       </Rail>
-      <p className="mt-2 text-2xs text-ink-faint">Tap a day to mark gym / travel / WFH — applied next time you regenerate.</p>
+      <p className="mt-2 text-xs leading-relaxed text-ink-faint">Tap a day to mark gym / travel / WFH — applied next time you regenerate.</p>
     </div>
   );
 }

@@ -19,20 +19,22 @@ export default async function RdDirectoryPage() {
       data-ui-generation="stitch-74"
       data-screen-id="11.5"
       data-screen-state="default"
-      className="mx-auto max-w-5xl px-4 py-10"
+      className="mx-auto max-w-[1240px] px-5 py-12 sm:px-8 sm:py-16"
     >
-      <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">Registered dietitians</p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Our dietitians</h1>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-muted">
-        Every Tanmatra program is designed and signed off by a registered dietitian. Meet the team —
-        each offers a free 15-minute intro consult.
-      </p>
+      <div className="max-w-2xl">
+        <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Registered dietitians</p>
+        <h1 className="mt-3 font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">Our dietitians</h1>
+        <p className="mt-4 text-base leading-7 text-ink-muted">
+          Every Tanmatra program is designed and signed off by a registered dietitian. Meet the team —
+          each offers a free 15-minute intro consult.
+        </p>
+      </div>
       {rds.length === 0 ? (
-        <p className="mt-10 text-sm text-ink-muted">
+        <p className="mt-10 text-base leading-7 text-ink-muted">
           Our directory is briefly unavailable — please check back shortly.
         </p>
       ) : (
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {rds.map((rd) => (
             <RdCard key={rd.slug} rd={rd} />
           ))}

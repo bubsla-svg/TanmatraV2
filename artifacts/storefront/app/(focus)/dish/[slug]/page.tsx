@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { VStack } from "@astryxdesign/core/Layout";
-import { Text, Heading } from "@astryxdesign/core/Text";
-import { Divider } from "@astryxdesign/core/Divider";
-import { Collapsible, CollapsibleGroup } from "@astryxdesign/core/Collapsible";
+import { Text } from "@astryxdesign/core/Text";
+import { Disclosure } from "@/components/primitives/Disclosure";
 import { fetchMenu, findDish } from "@/lib/catalog";
 import { DishImage } from "@/components/menu/DishImage";
 import { formatGrams, formatKcal, formatPaise } from "@/lib/format";
@@ -170,54 +169,52 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
             <Macro label="Carbs" value={formatGrams(dish.macros.carbs, dish.macrosEstimated)} />
           </div>
 
-          {/* `density` is not decoration: without it the group resolves to
-              `paddingBlock: 0` and each trigger's box is the capsize-trimmed
-              text alone — 380×17, under the 24px WCAG 2.2 SC 2.5.8 floor on
-              the two controls this page is built around. `balanced` is the
-              library's own answer (spacing-2 either side → 33px); overriding
-              the button's padding from outside would fight the component. */}
-          {/* `spacious`, not `balanced` (T-06): balanced gave the two triggers
-              this page is built around a 33px row; spacious clears the 44px
-              floor, with the chevron inside the hit area. */}
-          <CollapsibleGroup type="multiple" defaultValue={["nutrition"]} density="spacious">
-            <Divider />
-            <Collapsible value="nutrition" trigger={<Heading level={3}>Nutrition</Heading>}>
-              <VStack gap={2}>
-                {/* Genuinely every macro — this section used to be labelled
-                    "Full macronutrient breakdown" while listing only the two
-                    the summary row above omits. */}
-                <NutritionRow label="Energy" value={formatKcal(dish.macros.calories, dish.macrosEstimated)} />
-                <NutritionRow label="Protein" value={formatGrams(dish.macros.protein, dish.macrosEstimated)} />
-                <NutritionRow label="Carbohydrate" value={formatGrams(dish.macros.carbs, dish.macrosEstimated)} />
-                <NutritionRow label="Total fat" value={formatGrams(dish.macros.fat, dish.macrosEstimated)} />
-                <NutritionRow label="Fibre" value={formatGrams(dish.macros.fiber, dish.macrosEstimated)} />
-                {dish.sugarPerServing && <NutritionRow label="Sugar" value={dish.sugarPerServing} />}
-              </VStack>
-            </Collapsible>
-
-            <Divider />
-            <Collapsible
-              value="ingredients"
-              defaultIsOpen={false}
-              trigger={<Heading level={3}>Ingredients</Heading>}
-            >
-              <VStack gap={1}>
-                {dish.ingredients.length === 0 ? (
-                  <Text type="body" color="secondary">
-                    No ingredients listed.
-                  </Text>
-                ) : (
-                  dish.ingredients.map((entry) => (
-                    <div key={entry} className="flex items-center gap-3 border-b border-line pb-3 text-sm text-ink-muted">
-                      <span aria-hidden className="shrink-0 text-accent">✓</span>
-                      {entry}
-                    </div>
-                  ))
-                )}
-              </VStack>
-            </Collapsible>
-            <Divider />
-          </CollapsibleGroup>
+          {/* PR-11e (brief CUJ 3 §3): the shared Disclosure — one row open at a
+              time, Nutrition first; the three-up strip above is the summary row
+              that never collapses. Ingredients stay complete when open (never
+              clamped), one tap away — the same two labels the quick view uses. */}
+          <Disclosure
+            defaultOpen={0}
+            items={[
+              {
+                key: "nutrition",
+                summary: <span className="font-display text-lg font-semibold leading-tight text-primary">Nutrition</span>,
+                body: (
+                  <VStack gap={2}>
+                    {/* Genuinely every macro — this section used to be labelled
+                        "Full macronutrient breakdown" while listing only the two
+                        the summary row above omits. */}
+                    <NutritionRow label="Energy" value={formatKcal(dish.macros.calories, dish.macrosEstimated)} />
+                    <NutritionRow label="Protein" value={formatGrams(dish.macros.protein, dish.macrosEstimated)} />
+                    <NutritionRow label="Carbohydrate" value={formatGrams(dish.macros.carbs, dish.macrosEstimated)} />
+                    <NutritionRow label="Total fat" value={formatGrams(dish.macros.fat, dish.macrosEstimated)} />
+                    <NutritionRow label="Fibre" value={formatGrams(dish.macros.fiber, dish.macrosEstimated)} />
+                    {dish.sugarPerServing && <NutritionRow label="Sugar" value={dish.sugarPerServing} />}
+                  </VStack>
+                ),
+              },
+              {
+                key: "ingredients",
+                summary: <span className="font-display text-lg font-semibold leading-tight text-primary">Ingredients</span>,
+                body: (
+                  <VStack gap={1}>
+                    {dish.ingredients.length === 0 ? (
+                      <Text type="body" color="secondary">
+                        No ingredients listed.
+                      </Text>
+                    ) : (
+                      dish.ingredients.map((entry) => (
+                        <div key={entry} className="flex items-center gap-3 border-b border-line pb-3 text-sm text-ink-muted">
+                          <span aria-hidden className="shrink-0 text-accent">✓</span>
+                          {entry}
+                        </div>
+                      ))
+                    )}
+                  </VStack>
+                ),
+              },
+            ]}
+          />
 
           {/* T-17: pantry rail above the allergen block — cross-sell before
               the decision, not only after Add inside the cart sheet. */}
@@ -265,12 +262,8 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
 function NutritionRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between">
-      <Text type="body" color="secondary">
-        {label}
-      </Text>
-      <Text type="body" hasTabularNumbers>
-        {value}
-      </Text>
+      <span className="text-sm text-ink-muted">{label}</span>
+      <span className="font-data text-sm font-bold text-primary">{value}</span>
     </div>
   );
 }

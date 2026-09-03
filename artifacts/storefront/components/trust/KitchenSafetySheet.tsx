@@ -36,7 +36,7 @@ export function KitchenSafetyChip({
   const chipCls =
     variant === "line"
       ? "inline-flex min-h-11 w-full items-center justify-center gap-1.5 text-xs font-medium text-ink-muted underline-offset-4 hover:underline"
-      : "inline-flex min-h-11 items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 text-xs font-semibold text-ink transition-colors hover:border-line-strong";
+      : "inline-flex min-h-11 items-center gap-1.5 rounded-full bg-secondary px-3.5 text-xs font-semibold text-ink transition-colors hover:bg-surface-raised";
 
   return (
     <>
@@ -60,7 +60,7 @@ export function KitchenSafetyChip({
         <DrawerContent data-stitch="dark" data-testid="kitchen-safety-sheet">
           <div className="flex min-h-0 flex-col overflow-y-auto overscroll-contain px-4 pb-6 pt-3">
             <div className="flex items-center justify-between gap-3">
-              <DrawerTitle className="text-lg font-semibold text-ink">Kitchen &amp; safety</DrawerTitle>
+              <DrawerTitle className="font-display text-2xl font-semibold leading-tight text-primary">Kitchen &amp; safety</DrawerTitle>
               <DrawerClose aria-label="Close" className="-mr-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink active:scale-95">
                 <span aria-hidden className="text-xl leading-none">✕</span>
               </DrawerClose>
@@ -71,21 +71,21 @@ export function KitchenSafetyChip({
 
             <dl className="mt-5 flex flex-col divide-y divide-line">
               <div className="flex flex-col gap-1 py-3">
-                <dt className="text-xs font-semibold uppercase tracking-wide text-ink-faint">FSSAI registration</dt>
-                <dd className="tabular text-base font-semibold text-ink">Reg. No. {SITE.fssai}</dd>
+                <dt className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">FSSAI registration</dt>
+                <dd className="font-data text-base font-bold text-primary">Reg. No. {SITE.fssai}</dd>
                 <dd className="text-sm text-ink-muted">
                   A registered food business under the Food Safety and Standards Act. Look the number up on FoSCoS,
                   the food-business registration portal.
                 </dd>
               </div>
               <div className="flex flex-col gap-1 py-3">
-                <dt className="text-xs font-semibold uppercase tracking-wide text-ink-faint">ISO 22000 kitchen</dt>
+                <dt className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">ISO 22000 kitchen</dt>
                 <dd className="text-sm text-ink-muted">
                   Meals are cooked fresh after you order in an ISO 22000 certified kitchen at {SITE.address}.
                 </dd>
               </div>
               <div className="flex flex-col gap-1 py-3">
-                <dt className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Dietitian review</dt>
+                <dt className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Dietitian review</dt>
                 <dd className="text-sm text-ink-muted">
                   Registered dietitians design the plans and review the menu&rsquo;s macros and allergen disclosures.{" "}
                   <Link href="/rd" className="font-medium text-gold-text underline-offset-4 hover:underline">
@@ -94,7 +94,7 @@ export function KitchenSafetyChip({
                 </dd>
               </div>
               <div className="flex flex-col gap-1 py-3">
-                <dt className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Allergens</dt>
+                <dt className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Allergens</dt>
                 <dd className="text-sm text-ink-muted">
                   Every dish lists what it contains. A list marked &ldquo;under review&rdquo; is never shown as allergen-free.{" "}
                   <Link href="/legal/disclaimer" className="font-medium text-gold-text underline-offset-4 hover:underline">

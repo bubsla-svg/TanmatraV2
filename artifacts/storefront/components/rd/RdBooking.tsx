@@ -70,18 +70,18 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
 
   if (!rd.bookable) {
     return (
-      <div className="rounded-2xl border border-line bg-surface p-6">
-        <p className="text-sm font-semibold text-ink">Not currently accepting bookings</p>
-        <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{rd.name} isn&rsquo;t taking new consults right now — check back soon.</p>
+      <div className="rounded-2xl border border-line bg-surface p-5">
+        <p className="font-display text-lg font-semibold leading-tight text-primary">Not currently accepting bookings</p>
+        <p className="mt-2 text-sm leading-6 text-ink-muted">{rd.name} isn&rsquo;t taking new consults right now — check back soon.</p>
       </div>
     );
   }
 
   if (needsAuth) {
     return (
-      <div className="rounded-2xl border border-line bg-surface p-6">
-        <p className="text-sm font-semibold text-ink">Sign in to book your consult</p>
-        <p className="mb-4 mt-1.5 text-sm text-ink-muted">We hold your slot the moment you&rsquo;re verified.</p>
+      <div className="rounded-2xl border border-line bg-surface p-5">
+        <p className="font-display text-lg font-semibold leading-tight text-primary">Sign in to book your consult</p>
+        <p className="mb-4 mt-2 text-sm leading-6 text-ink-muted">We hold your slot the moment you&rsquo;re verified.</p>
         <PhoneAuth startExpanded onVerified={() => { setNeedsAuth(false); void run(); }} />
       </div>
     );
@@ -89,16 +89,16 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
 
   if (booked && booked.paymentStatus !== "pending") {
     return (
-      <div className="rounded-2xl border border-[color-mix(in_srgb,var(--sage)_35%,transparent)] bg-sage-soft p-6">
-        <p className="text-sm font-semibold text-ink">You&rsquo;re booked with {rd.name}.</p>
-        <p className="tabular mt-1.5 text-sm text-ink-muted">{fmt(booked.startAt)} · {booked.paymentStatus === "free" ? "Free intro" : `Paid ${formatPaise(booked.pricePaise)}`}</p>
+      <div className="rounded-2xl border border-line bg-sage-soft p-5">
+        <p className="font-display text-lg font-semibold leading-tight text-ink">You&rsquo;re booked with {rd.name}.</p>
+        <p className="font-data mt-2 text-sm text-ink-muted">{fmt(booked.startAt)} · {booked.paymentStatus === "free" ? "Free intro" : `Paid ${formatPaise(booked.pricePaise)}`}</p>
       </div>
     );
   }
 
   return (
-    <div data-ui-generation="stitch-74" data-screen-id="11.6" data-screen-state="booking-active" className="rounded-2xl border border-line bg-surface p-6">
-      <p className="text-sm font-semibold text-ink">Book a consult</p>
+    <div data-ui-generation="stitch-74" data-screen-id="11.6" data-screen-state="booking-active" className="rounded-2xl border border-line bg-surface p-5">
+      <p className="font-display text-lg font-semibold leading-tight text-primary">Book a consult</p>
       <div className="mt-4 flex flex-wrap gap-2">
         {KINDS.map((k) => {
           const on = k.kind === kind;
@@ -106,7 +106,7 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
           return (
             <button key={k.kind} type="button" aria-pressed={on} disabled={!!pending}
               onClick={() => { setKind(k.kind); setBooked(null); }}
-              className={`rounded-full px-4 py-2.5 text-xs font-semibold transition-colors disabled:opacity-40 ${on ? "bg-gold text-[var(--gold-ink)]" : "border border-line text-ink-muted hover:border-line-strong hover:brightness-110"}`}>
+              className={`inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-xs font-bold transition-colors disabled:opacity-40 ${on ? "border-gold bg-primary/10 text-primary" : "border-line text-ink-muted hover:border-line-strong hover:text-primary"}`}>
               {k.label} · {p === 0 ? "Free" : formatPaise(p)}
             </button>
           );
@@ -115,17 +115,17 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
 
       {!pending && (
         <div className="mt-5">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Available times (IST)</h3>
-          <div className="mt-2">
-            {slots === undefined ? <p className="text-xs text-ink-muted">Loading slots…</p>
-              : slots.length === 0 ? <p className="text-xs text-ink-muted">No open slots in the next two weeks — check back soon.</p>
+          <h3 className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Available times (IST)</h3>
+          <div className="mt-3">
+            {slots === undefined ? <p className="text-sm text-ink-muted">Loading slots…</p>
+              : slots.length === 0 ? <p className="text-sm text-ink-muted">No open slots in the next two weeks — check back soon.</p>
               : (
                 <div className="flex max-h-44 flex-wrap gap-2 overflow-y-auto">
                   {slots.slice(0, 24).map((s) => {
                     const on = sel?.startAt === s.startAt;
                     return (
                       <button key={s.startAt} type="button" aria-pressed={on} onClick={() => setSel(s)}
-                        className={`tabular rounded-xl border px-2.5 py-1.5 text-2xs transition-colors ${on ? "border-[var(--gold)] bg-[color-mix(in_srgb,var(--gold)_12%,transparent)] text-ink" : "border-line text-ink-muted hover:border-line-strong hover:brightness-110"}`}>
+                        className={`font-data inline-flex min-h-10 items-center rounded-xl border px-3 py-1.5 text-2xs transition-colors ${on ? "border-gold bg-primary/10 text-primary" : "border-line text-ink-muted hover:border-line-strong hover:text-primary"}`}>
                         {fmt(s.startAt)}
                       </button>
                     );
@@ -136,7 +136,7 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
         </div>
       )}
       {pending && (
-        <p className="tabular mt-5 rounded-xl bg-surface-raised px-4 py-3 text-xs text-ink-muted">
+        <p className="font-data mt-5 rounded-xl bg-secondary px-4 py-3 text-xs text-ink-muted">
           Slot held: {fmt(pending.startAt)} — complete your payment to confirm.
         </p>
       )}
@@ -145,7 +145,7 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
 
       <Button type="button" onClick={() => void run()} disabled={busy || (!pending && !sel)}
         aria-busy={busy} aria-live="polite"
-        shape="xl" size="fluid" className="mt-5 w-full px-5 py-3 font-semibold disabled:opacity-40">
+        shape="pill" size="fluid" className="mt-5 min-h-12 w-full px-5 text-sm font-bold disabled:opacity-40">
         {busy ? "Working…" : pending ? `Pay ${formatPaise(price)}` : price === 0 ? "Book free intro" : `Book & pay ${formatPaise(price)}`}
       </Button>
     </div>

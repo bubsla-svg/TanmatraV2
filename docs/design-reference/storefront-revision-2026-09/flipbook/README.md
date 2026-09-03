@@ -122,3 +122,49 @@ Noticed while capturing, not changed (product shape is frozen): on the plan leg 
 address never seeds `PlanDetails` — the serviceability gate's PIN seed mounts the step first
 and the once-only prefill has already fired when `/api/addresses` lands. The manual-address
 frames above are how every returning customer currently gets through.
+
+## PR-11e — CUJ 3+6: goal-based shelves, dish-sheet disclosures, meal planner, trust surfaces
+
+`11e/reference/06-about.png` — the delivered revision's `/about` at 393×852, the one reference
+screen this PR has (the revision's six routes hold no shelf, planner or dietitian page).
+`11e/after/` and `11e/after-light/` are the mandated seven frames on the 11e tree (the "before"
+is `11d/after*`). `11e/before*` → `11e/after*` also carry the fifteen extra frames below — the
+surfaces this PR actually restyles, all reachable without an API (fallback catalog; the planner
+and the dietitian booking show their sign-in / no-data states honestly):
+
+| Frame | Surface |
+|---|---|
+| `r01` | `/metabolic` — the goal explorer (CUJ 3 §1) |
+| `r02`, `r03` | `/performance`, `/clinical` — `ProtocolView` + `ProtocolDishRail` |
+| `r04` | `/care` — need-state and condition rails on `CardSection` |
+| `r05` | `/meal-planner` — the sign-in island (the planner itself needs a session) |
+| `r06` | `/about` — the reference's composition on the page's own copy |
+| `r07`, `r08`, `r09` | `/team`, `/rd`, `/rd/[slug]` — the authority pages and `RdBooking` |
+| `r10`, `r10b` | dish quick view, top and scrolled to its end (`DishSpec` → `Disclosure`) |
+| `r11` | `/menu` filter sheet |
+| `r12`, `r13` | dish page scrolled to the Nutrition / Ingredients disclosure and to Allergens |
+| `r14` | the kitchen-safety sheet (CUJ 6 §2-3) |
+
+### Divergence ledger (reference `/about` → what production renders, and why)
+
+| Reference | Production (11e) | Rule |
+|---|---|---|
+| Hero eyebrow "The Tanmatra method" + italic accent line in the h1 | the page's existing h1 and paragraph inside the dark band; no eyebrow, no italic line | no invented copy |
+| "Our point of view" left column with a display h2 | the page's "Our Mission" as the accent eyebrow, its statement in the display face on the right | the page has no second heading string |
+| Step cards: number **and** an icon disc | the number inside the disc | production has no icon per step |
+| Quote band + "Meet the menu" | the page's closing band with its one gold CTA ("Start your plan") | keep the existing action |
+| `text-accent` eyebrows on the dark `bg-primary` band | none placed on the band (`Section07ProofKitchen` already uses `text-primary-foreground/80` there) | 37 % amber on the green band measures ≈1.5:1, and in dark mode both resolve to the same hex |
+
+### Choices without a reference screen (what changed → why)
+
+| Before 11e | Production (11e) | Rule |
+|---|---|---|
+| Dish page: Astryx `CollapsibleGroup` (both rows openable, `spacious` = 41 px triggers) | the shared `Disclosure` (one row open at a time, Nutrition first, 48 px triggers) | brief CUJ 3 §3; `lib/tapTargets.test.ts` now pins the primitive's floor |
+| Dish quick view: `DishSpec` as a flat stack (chips, fibre/sugar cards, ingredient chips) | the same content as two `Disclosure` rows, "Nutrition" and "Ingredients", under the always-visible kcal / P / C / F grid | brief CUJ 3 §3-4 (one summary row visible); the two labels are the dish page's own |
+| Allergens as an accordion (brief CUJ 3 §3 names them) | not collapsed anywhere — restyled in place, chip and copy intact | never behind a tap: an unreviewed list must never read as "no allergens" (`DishAllergens`, `DishDrawer` §6 notes) |
+| "Why this meal" as an accordion | `DishRationale` stays a short card (one sentence, optional expansion), accent eyebrow | one sentence is already the summary row; it renders only with a session |
+| Solid gold on selected day segments (planner strip, metabolic goal toggle, booking chips, filter chips as `bg-gold/10 text-gold-text`) | the 11c selection tint (`border-gold bg-primary/10 text-primary`) | one solid action colour per viewport |
+| Gold text as a highlighter (figures, links, GI chip, "View profile →") | data face in the primary ink; text links in the primary ink or neutral underline | gold is the action colour, not a highlighter |
+| Planner: `style={{ …var(--warning) }}` inline colours on the macro-warning note | `border-[var(--warning)]` / `bg-[var(--warning)]` utilities (the form `LocationPickerFlow` already uses) | no inline colours; same token |
+| `rounded-3xl` / `rounded-xl` / `rounded-card` cards across the cluster | `rounded-2xl` throughout | the 11c card radius |
+| `/performance`, `/clinical`: hero CTA and closing consult CTA both solid gold | unchanged — they sit in different viewports | the rule is per viewport |

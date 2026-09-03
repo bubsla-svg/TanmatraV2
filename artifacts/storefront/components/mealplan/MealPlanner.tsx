@@ -28,7 +28,7 @@ export function MealPlanner() {
   if (mp.phase === "needsAuth") {
     return (
       <div className="flex flex-col gap-4">
-        <p className="text-sm text-ink-muted">Sign in to plan and edit your week.</p>
+        <p className="text-sm leading-relaxed text-ink-muted">Sign in to plan and edit your week.</p>
         <PhoneAuth startExpanded onVerified={() => void mp.reload()} />
       </div>
     );
@@ -39,11 +39,11 @@ export function MealPlanner() {
         <p className="sr-only">Loading your planner…</p>
         <div aria-hidden className="flex gap-2 overflow-hidden">
           {Array.from({ length: 7 }).map((_, i) => (
-            <div key={i} className="h-20 w-12 shrink-0 animate-pulse rounded-full bg-surface-raised" />
+            <div key={i} className="h-20 w-14 shrink-0 animate-pulse rounded-full bg-surface-raised" />
           ))}
         </div>
-        <div aria-hidden className="h-44 animate-pulse rounded-3xl bg-surface-raised" />
-        <div aria-hidden className="h-72 animate-pulse rounded-3xl bg-surface-raised" />
+        <div aria-hidden className="h-44 animate-pulse rounded-2xl bg-surface-raised" />
+        <div aria-hidden className="h-72 animate-pulse rounded-2xl bg-surface-raised" />
       </div>
     );
   }
@@ -57,18 +57,18 @@ export function MealPlanner() {
 
       <div className="flex flex-col gap-1">
         <WeekCalendarStrip calendar={mp.weekCalendar} onCycle={mp.cycleDay} />
-        <button type="button" onClick={() => setShowSettings(true)} className="-m-2 self-end p-2 text-xs font-semibold uppercase tracking-widest text-ink-muted hover:text-ink">
+        <button type="button" onClick={() => setShowSettings(true)} className="-my-2 -mr-2 inline-flex min-h-11 items-center self-end px-2 text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted transition-colors hover:text-ink">
           Settings
         </button>
       </div>
 
       {!plan ? (
-        <div className="rounded-3xl border border-line bg-surface p-8 text-center">
-          <p className="text-sm font-semibold text-ink">No plan yet</p>
-          <p className="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-ink-muted">
+        <div className="rounded-2xl border border-line bg-surface p-6 text-center">
+          <p className="font-display text-xl font-semibold leading-tight text-primary">No plan yet</p>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-muted">
             Generate a 7-day plan tuned to your goals, diet, allergens and budget.
           </p>
-          <Link href="/menu" className="-m-2 mt-3 inline-block p-2 text-sm font-medium text-gold-text underline-offset-4 hover:underline">
+          <Link href="/menu" className="mt-3 inline-flex min-h-11 items-center px-2 text-sm font-medium text-ink underline underline-offset-4 hover:text-ink-muted">
             Or browse the à la carte menu
           </Link>
         </div>
@@ -84,13 +84,11 @@ export function MealPlanner() {
             <p
               role="status"
               aria-live="polite"
-              className="flex items-start gap-2 rounded-2xl border bg-surface px-4 py-3 text-sm leading-relaxed text-ink"
-              style={{ borderColor: "var(--warning)" }}
+              className="flex items-start gap-2 rounded-2xl border border-[var(--warning)] bg-surface px-4 py-3 text-sm leading-relaxed text-ink"
             >
               <span
                 aria-hidden
-                className="mt-[0.4rem] h-2 w-2 shrink-0 rounded-[var(--radius-full)]"
-                style={{ backgroundColor: "var(--warning)" }}
+                className="mt-[0.4rem] h-2 w-2 shrink-0 rounded-full bg-[var(--warning)]"
               />
               {mp.macroWarning}
             </p>
@@ -101,9 +99,9 @@ export function MealPlanner() {
             ))}
           </div>
           {plan.status !== "draft" && (
-            <p className="text-center text-sm text-ink-muted">
+            <p className="text-center text-sm leading-relaxed text-ink-muted">
               This plan is <span className="font-medium text-ink">{plan.status}</span>.{" "}
-              <Link href="/account/subscriptions" className="font-medium text-gold-text hover:underline">Manage your subscription</Link>.
+              <Link href="/account/subscriptions" className="font-medium text-ink underline underline-offset-4 hover:text-ink-muted">Manage your subscription</Link>.
             </p>
           )}
         </>
@@ -118,7 +116,7 @@ export function MealPlanner() {
               type="button"
               onClick={() => void mp.discard()}
               disabled={mp.busy}
-              className="-m-2 p-2 text-xs font-semibold uppercase tracking-widest text-ink-muted hover:text-ink disabled:opacity-60"
+              className="-ml-2 inline-flex min-h-11 items-center px-2 text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted transition-colors hover:text-ink disabled:opacity-60"
             >
               Discard
             </button>

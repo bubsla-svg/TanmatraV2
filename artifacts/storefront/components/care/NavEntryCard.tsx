@@ -8,9 +8,9 @@ export function NavEntryCard({ label, href }: { label: string; href: string }) {
   return (
     <Link
       href={href}
-      className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface p-5 transition-colors hover:border-line-strong"
+      className="flex min-h-[72px] items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-5 transition-colors hover:border-line-strong active:scale-[0.98]"
     >
-      <span className="text-sm font-semibold text-ink">{label}</span>
+      <span className="font-display text-lg font-semibold leading-tight text-primary">{label}</span>
       <ArrowRight size={18} className="shrink-0 text-ink-muted" aria-hidden />
     </Link>
   );

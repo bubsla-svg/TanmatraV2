@@ -34,17 +34,17 @@ export function GoalCard({
 }) {
   const mealsHref = menuHrefForPlan(planId);
   return (
-    <div className="flex flex-col rounded-card border border-line bg-surface transition-colors hover:border-line-strong">
+    <div className="flex flex-col rounded-2xl border border-line bg-surface transition-colors hover:border-line-strong">
       <Link
         href={`/plan/${planId}`}
         onClick={() => emitFunnel("cuj_router_answer", { planId, answer: promise, source })}
         className="flex min-h-[72px] items-center justify-between gap-3 p-5 text-left active:scale-[0.98]"
       >
         <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-base font-medium text-ink">{promise}</span>
+          <span className="font-display text-lg font-semibold leading-tight text-primary">{promise}</span>
           <span className="text-xs text-ink-muted">{planName} · configure plan</span>
         </span>
-        <span aria-hidden className="shrink-0 text-gold-text">
+        <span aria-hidden className="shrink-0 text-primary">
           &rarr;
         </span>
       </Link>

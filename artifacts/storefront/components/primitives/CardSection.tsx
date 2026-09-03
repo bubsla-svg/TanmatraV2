@@ -44,10 +44,10 @@ export const CardSection: React.FC<CardSectionProps> = ({
   return (
     <div className={`w-full py-4 ${className}`}>
       {(title || subtitle) && (
-        <div className="mb-4 flex items-end justify-between px-1">
+        <div className="mb-4 flex items-end justify-between">
           <div>
-            {title && <h3 className="text-xl font-bold tracking-tight text-ink">{title}</h3>}
-            {subtitle && <p className="text-xs text-ink-muted mt-1">{subtitle}</p>}
+            {title && <h3 className="font-display text-xl font-semibold leading-tight text-primary">{title}</h3>}
+            {subtitle && <p className="mt-1 text-sm leading-relaxed text-ink-muted">{subtitle}</p>}
           </div>
         </div>
       )}
