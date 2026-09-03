@@ -22,7 +22,7 @@ export function Section07ProofKitchen() {
   ];
 
   return (
-    <section className="mx-auto max-w-6xl px-4 sm:px-6">
+    <section className="bg-primary text-primary-foreground">
       {/* No ambient kitchen photo here, deliberately. This section's whole
           claim is that OUR kitchen is auditable — FSSAI, ISO 22000, daily swab
           checks — and it was illustrated with a random stock kitchen at 10%
@@ -30,31 +30,28 @@ export function Section07ProofKitchen() {
           Nothing beats a real frame from the Noida kitchen; until that shoot
           happens, no image is the honest state. It also cost every visitor a
           1920x1080 download to render almost nothing. */}
-      <div className="relative overflow-hidden rounded-2xl border border-line bg-surface p-6 sm:p-10 shadow-sm">
-
-        <div className="flex flex-col gap-2 border-b border-line pb-6 sm:flex-row sm:items-baseline sm:justify-between">
-          <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
-              Our kitchen
-            </span>
-            <h3 className="text-2xl font-bold text-ink">Where your lunch is actually cooked</h3>
-          </div>
-          <span className="rounded-md border border-line bg-surface-subtle px-3 py-1 text-xs font-bold text-ink">
+      <div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-16 sm:px-8 sm:py-20 md:grid-cols-[.85fr_1.15fr] md:items-center">
+        <div className="animate-rise-in">
+          <span className="text-[11px] font-bold uppercase tracking-[.2em] text-primary-foreground/80">
+            Our kitchen
+          </span>
+          <h3 className="mt-4 max-w-md font-display text-4xl leading-[.98] sm:text-5xl">Where your lunch is actually cooked</h3>
+          <span className="mt-6 inline-block rounded-full border border-primary-foreground/20 px-3 py-1 text-xs font-bold text-primary-foreground">
             Noida Sectors Active
           </span>
         </div>
 
-        <div className="mt-8 grid gap-6 md:grid-cols-3">
+        <div className="grid gap-7 sm:grid-cols-3 animate-rise-in stagger-1">
           {safetyProtocols.map((proto, idx) => (
-            <div key={idx} className="flex flex-col justify-between rounded-xl border border-line bg-surface-subtle p-5">
+            <div key={idx} className="flex flex-col justify-between border-l border-primary-foreground/20 pl-5">
               <div>
-                <span className="inline-block rounded-full border border-line bg-surface px-2.5 py-0.5 text-3xs font-bold text-ink">
+                <span className="font-data text-xs text-primary-foreground/80">
                   Standard 0{idx + 1}
                 </span>
-                <h4 className="mt-3 text-base font-bold text-ink">{proto.title}</h4>
-                <p className="mt-2 text-xs leading-relaxed text-ink-muted">{proto.desc}</p>
+                <h4 className="mt-4 font-display text-xl">{proto.title}</h4>
+                <p className="mt-2 text-sm leading-5 text-primary-foreground/65">{proto.desc}</p>
               </div>
-              <p className="mt-4 text-2xs font-semibold uppercase tracking-wider text-ink-faint">
+              <p className="mt-4 text-[10px] font-bold uppercase tracking-[.14em] text-primary-foreground/65">
                 Verified Compliance
               </p>
             </div>

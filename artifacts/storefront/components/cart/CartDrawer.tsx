@@ -99,7 +99,7 @@ export function CartDrawer({
     );
   } else {
     footer = (
-      <p role="status" className="rounded-2xl border border-line bg-surface-raised px-4 py-3 text-center text-xs text-ink-muted">
+      <p role="status" className="rounded-2xl bg-secondary px-4 py-3 text-center text-xs text-ink-muted">
         Checkout goes live with the payment slice — your cart is saved.
       </p>
     );
@@ -114,7 +114,7 @@ export function CartDrawer({
       <DrawerContent aria-describedby={undefined} data-stitch="dark" data-ui-generation="stitch-74" data-screen-id="5.6" data-screen-state="cart-drawer-open">
         <div className="flex min-h-0 flex-col px-4 pb-6 pt-3">
           <div className="flex items-center justify-between gap-3">
-            <DrawerTitle className="text-lg font-semibold text-ink">Your cart</DrawerTitle>
+            <DrawerTitle className="font-display text-3xl font-semibold leading-none text-primary">Your cart</DrawerTitle>
             {/* T-01: an explicit ≥44px Close — the sheet used to offer only a
                 drag handle and the back gesture. Backdrop tap and Escape still
                 dismiss (Vaul owns those); this adds the thumb-reachable one. */}
@@ -138,7 +138,7 @@ export function CartDrawer({
                       being bought — "Grilled Paneer Tikka with Quinoa…" and
                       "Grilled Paneer Tikka with Millet…" clipped to the same
                       string — and vertical space in a drawer is free. */}
-                  <p className="line-clamp-2 text-sm font-medium text-ink">{l.name}</p>
+                  <p className="line-clamp-2 font-display text-lg font-semibold leading-tight text-primary">{l.name}</p>
                   {l.customizations && l.customizations.length > 0 && (
                     <p className="line-clamp-2 text-xs text-ink-muted">{l.customizations.join(", ")}</p>
                   )}
@@ -168,7 +168,7 @@ export function CartDrawer({
                     onDecrease={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) - 1, l.customizations))}
                     onIncrease={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) + 1, l.customizations))}
                   />
-                  <span className="tabular w-16 text-right text-sm font-semibold text-ink">
+                  <span className="font-data w-16 text-right text-sm font-bold text-primary">
                     {formatPaise(l.pricePaise * l.qty)}
                   </span>
                 </div>
@@ -218,7 +218,7 @@ export function CartDrawer({
                 the server quote's; the progress-bar width is the only derived
                 value and it states no amount. */}
             {quote && quote.deliveryFeePaise > 0 && quote.amountToFreeDeliveryPaise > 0 && (
-              <div className="mb-3 rounded-xl border border-line bg-surface-raised px-3 py-2.5">
+              <div className="mb-3 rounded-xl bg-secondary px-3 py-2.5">
                 <div className="flex items-center justify-between gap-3 text-xs">
                   <span className="text-ink-muted">
                     Delivery <span className="tabular font-semibold text-ink">{formatPaise(quote.deliveryFeePaise)}</span>
@@ -244,13 +244,13 @@ export function CartDrawer({
               </div>
             )}
             {quote && quote.deliveryFeePaise === 0 && cart.lines.length > 0 && (
-              <p className="mb-3 rounded-xl border border-line bg-surface-raised px-3 py-2.5 text-center text-xs font-medium text-sage-text">
+              <p className="mb-3 rounded-xl bg-sage-soft px-3 py-2.5 text-center text-xs font-medium text-sage-text">
                 Free delivery unlocked
               </p>
             )}
             <div className="mb-3 flex items-center justify-between gap-3 text-sm">
-              <span className="text-xs uppercase tracking-wider text-ink-muted">Subtotal (before delivery &amp; GST)</span>
-              <span className="tabular text-base font-semibold text-ink">{formatPaise(subtotalPaise(cart))}</span>
+              <span className="text-[11px] font-bold uppercase tracking-[.18em] text-ink-muted">Subtotal (before delivery &amp; GST)</span>
+              <span className="font-data text-lg font-bold text-primary">{formatPaise(subtotalPaise(cart))}</span>
             </div>
             {footer}
           </div>

@@ -13,22 +13,22 @@ export async function Section04bMarketplace() {
   if (inStock.length === 0) return null;
 
   return (
-    <section className="mx-auto w-full max-w-5xl px-4 sm:px-6">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <section className="mx-auto w-full max-w-[1240px] px-5 sm:px-8">
+      <div className="mb-9 flex flex-wrap items-end justify-between gap-4 animate-rise-in">
         <div className="max-w-2xl">
-          <h2 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+          <h2 className="font-display text-4xl font-semibold leading-none text-primary sm:text-5xl">
             In the pantry
           </h2>
           {/* Was "Dietitian-Approved Pantry" over a paragraph about "experts".
               Same shelf, described the way you would describe it out loud. */}
-          <p className="mt-2 text-base leading-relaxed text-ink-muted">
+          <p className="mt-5 max-w-md text-base leading-7 text-ink-muted">
             Good oils, sauces without the sugar, and snacks worth keeping at your
             desk. Add them to a delivery or order on their own.
           </p>
         </div>
         <Link
           href="/marketplace"
-          className="touch-target-min text-xs font-bold uppercase tracking-widest text-primary hover:opacity-80"
+          className="touch-target-min shrink-0 text-sm font-bold text-primary hover:opacity-80"
         >
           Shop all
         </Link>
