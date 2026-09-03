@@ -307,3 +307,43 @@ since the trigger's shape changed. The genuinely un-restyled **feature and
 marketing pages** (b2b, challenges, coach, legal, `custom-build`, and the
 `/account/{history,symptoms,wellness}` clinical dashboards) are a separate,
 larger body of work — a follow-up, not this shell PR.
+
+## PR-11 remainder (1/3) — discovery & funnel surfaces
+
+With the shell finished (11h), this is the first slice of the feature-page remainder:
+the community **challenges** feature, the **care condition** landing page shell, and the
+**location picker** the header trigger opens. All were built before the restyle and carry no
+reference screen, so they follow the 11c–11h grammar — `rounded-2xl` cards, display-face
+headings, `.font-data` figures, signal-coloured status chips, the field grammar, and one gold
+action per viewport.
+
+`remainder-1/after*` vs `remainder-1/before*` (both themes). Challenges are server-fetched, so — as with 11d/11f
+— they are served against the scratchpad mock (three fixture challenges + one detail; the
+challenge `image` is null so the branded fallback block shows) with `/challenges` purged from
+the prerender cache so it regenerates against it. **Every challenge, RD name, member count and
+date on these frames is fixture data.** `/care/hypertension` is static (no mock); the location
+picker opens from the header "Set location" trigger.
+
+| Frame | Surface |
+|---|---|
+| `s01`, `s01b` | `/care/[condition]` — the condition landing shell (top, and scrolled) |
+| `s02` | `/challenges` — the community list (`ChallengeCard` grid) |
+| `s03`, `s03b` | `/challenges/[slug]` — the challenge room header (`ChallengeRoom`, signed-out state), top and end |
+| `s04` | `/challenges/tracker` — the joined-challenges tracker (`ChallengeTrackerView`) |
+| `s05`, `s05b` | the location picker (`LocationPickerFlow` / `LocationPickerMap`) opened from the header |
+
+### Choices without a reference screen (what changed → why)
+
+| Before | Production | Rule |
+|---|---|---|
+| Challenge cards `rounded-3xl` with `shadow-sm`; goal-tag chips as `bg-surface-raised` `text-3xs` | `rounded-2xl` cards; chips as `bg-secondary` small labels | the 11c card radius; fill, not hairline+shadow |
+| Challenge title as bold sans; counts/dates as plain sans | display-face title; counts and dates in `.font-data` | one card language; figures are data |
+| Status badges and CTAs sharing the gold fill | "LIVE NOW"/"FEATURED" keep their sage signal fill; only the primary Join CTA is gold | gold is the action colour; status is signal |
+| Care page shell + entry cards on `rounded-3xl` and arbitrary `[var(--…)]` colours | `rounded-2xl`, registered tokens, display headings (its 11e-done child rails untouched) | the token layer and card radius, without re-touching done work |
+| Location picker sheet `rounded-3xl … shadow-2xl`; map controls and the summary card in arbitrary colour utilities; the manual field with a `line-strong` ring | sheet `rounded-2xl shadow-[var(--shadow-raised)]`; registered tokens; the field grammar | the 11c sheet/field grammar; lint-visible colours |
+| `text-gold-text` on the tracker's retry link and inline actions | `text-primary` text-actions | gold text as a highlighter becomes the primary ink |
+
+Unchanged on purpose: every rendered string, `useQuery` key, challenge/care data path, `aria`,
+`href`, handler and form field — presentation only. Deferred to later remainder slices: the
+clinical dashboards (`/account/{history,symptoms,wellness}`), b2b + legal + utility pages, then
+11i analytics.
