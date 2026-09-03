@@ -75,10 +75,10 @@ export default async function MetabolicPage() {
       <section className="mx-auto max-w-screen-xl px-4 py-10">
         <div className="grid items-start gap-8 lg:grid-cols-2">
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wider text-gold-text">
+            <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">
               {METABOLIC_HERO.eyebrow}
             </p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+            <h1 className="mt-3 font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary sm:text-4xl">
               {METABOLIC_HERO.title}{" "}
               <span className="text-ink-muted">{METABOLIC_HERO.accent}</span>
             </h1>
@@ -91,20 +91,20 @@ export default async function MetabolicPage() {
           <MetabolicExplorer dishes={preview} />
         </div>
 
-        <h2 className="mt-14 text-xl font-semibold tracking-tight text-ink">
+        <h2 className="mt-14 font-display text-2xl font-semibold leading-tight text-primary">
           Why people switch
         </h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {PAIN_CARDS.map((card) => (
             <div key={card.title} className="rounded-2xl border border-line bg-surface p-5">
-              <LandingIcon name={card.icon} className="h-5 w-5 text-gold-text" />
-              <h3 className="mt-3 text-sm font-semibold text-ink">{card.title}</h3>
+              <LandingIcon name={card.icon} className="h-5 w-5 text-accent" />
+              <h3 className="mt-3 font-display text-lg font-semibold leading-tight text-primary">{card.title}</h3>
               <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{card.body}</p>
             </div>
           ))}
         </div>
 
-        <h2 className="mt-14 text-xl font-semibold tracking-tight text-ink">
+        <h2 className="mt-14 font-display text-2xl font-semibold leading-tight text-primary">
           Programs built for these goals
         </h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -113,7 +113,7 @@ export default async function MetabolicPage() {
           ))}
         </div>
 
-        <h2 className="mt-14 text-xl font-semibold tracking-tight text-ink">
+        <h2 className="mt-14 font-display text-2xl font-semibold leading-tight text-primary">
           Before you start
         </h2>
         <div className="mt-4 max-w-3xl">

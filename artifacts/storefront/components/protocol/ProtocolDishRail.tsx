@@ -55,24 +55,24 @@ export function ProtocolDishRail({
     <section className="py-[var(--space-section)]">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">{label}</p>
+          <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">{label}</p>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-muted">{sub}</p>
         </div>
-        <Link href="/menu" className="shrink-0 text-sm font-semibold text-gold-text hover:underline">
+        <Link href="/menu" className="inline-flex min-h-11 shrink-0 items-center text-sm font-bold text-primary hover:underline">
           Full menu &rarr;
         </Link>
       </div>
       {picks.length === 0 ? (
-        <p className="mt-8 rounded-2xl border border-dashed border-line bg-surface p-8 text-center text-sm text-ink-muted">
+        <p className="mt-6 rounded-2xl bg-secondary px-4 py-6 text-center text-sm leading-relaxed text-ink-muted">
           No qualifying dishes are live right now — check back soon.
         </p>
       ) : (
-        <Rail className="mt-8 gap-4 pb-2">
+        <Rail className="mt-6 gap-4 pb-2">
           {picks.map((d) => (
             <Link
               key={d.slug}
               href={`/dish/${d.slug}`}
-              className="group w-44 shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition-shadow hover:shadow-md cv-auto sm:w-52"
+              className="group w-44 shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-surface transition-colors hover:border-line-strong cv-auto sm:w-52"
             >
               <div className="relative aspect-square w-full overflow-hidden bg-surface-raised">
                 <DishImage
@@ -82,19 +82,19 @@ export function ProtocolDishRail({
                   imgClassName="transition-transform duration-300 ease-out group-hover:scale-105"
                 />
                 <div className="absolute left-2.5 top-2.5 flex flex-col items-start gap-1.5">
-                  <span className="tabular rounded-full border border-line bg-surface/90 px-2.5 py-1 text-3xs font-semibold text-ink backdrop-blur-sm">
+                  <span className="font-data rounded-full border border-line bg-surface/90 px-2.5 py-1 text-2xs font-bold text-primary backdrop-blur-sm">
                     {badge(d, filter)}
                   </span>
                   {d.rdVerified && (
-                    <span className="rounded-full bg-sage-soft px-2.5 py-1 text-3xs font-semibold text-sage-text backdrop-blur-sm">
+                    <span className="rounded-full bg-sage-soft px-2.5 py-1 text-2xs font-bold text-sage-text backdrop-blur-sm">
                       RD-verified
                     </span>
                   )}
                 </div>
               </div>
-              <div className="p-3">
-                <p className="truncate text-xs font-semibold text-ink">{d.name}</p>
-                <p className="tabular mt-1 text-3xs text-ink-muted">{Math.round(d.calories)} kcal</p>
+              <div className="p-4">
+                <p className="line-clamp-2 font-display text-base font-semibold leading-tight text-primary">{d.name}</p>
+                <p className="font-data mt-1 text-xs font-bold text-primary">{Math.round(d.calories)} kcal</p>
               </div>
             </Link>
           ))}

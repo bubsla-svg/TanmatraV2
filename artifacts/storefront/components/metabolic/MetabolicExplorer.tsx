@@ -34,7 +34,7 @@ function pick(dishes: MetabolicDish[], goal: MetabolicGoal): MetabolicDish[] {
 }
 
 const chipCls =
-  "tabular rounded-full border border-line bg-bg px-2.5 py-1 text-3xs text-ink-muted";
+  "font-data rounded-full bg-secondary px-2.5 py-1 text-2xs font-bold text-primary";
 
 /**
  * Macro chips are labelled in full ("42g protein", not "42P"). The compressed
@@ -56,11 +56,11 @@ export function MetabolicExplorer({ dishes }: { dishes: MetabolicDish[] }) {
     // grid track refused to shrink below the rail's full unscrolled width,
     // pushing the whole page to a measured 1632px in a 360px viewport.
     <div className="min-w-0">
-      <div className="flex flex-col gap-4 rounded-3xl border border-line bg-surface p-4">
+      <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
         <div
           role="group"
           aria-label="Choose your goal"
-          className="inline-flex w-max items-center gap-1 rounded-full bg-bg p-1"
+          className="flex flex-wrap gap-2"
         >
           {GOALS.map((g) => {
             const on = g.id === goalId;
@@ -70,8 +70,8 @@ export function MetabolicExplorer({ dishes }: { dishes: MetabolicDish[] }) {
                 type="button"
                 aria-pressed={on}
                 onClick={() => setGoalId(g.id)}
-                className={`inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-xs font-semibold transition-colors ${
-                  on ? "bg-gold text-[var(--gold-ink)]" : "text-ink-muted hover:text-ink"
+                className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition-colors active:scale-[0.98] ${
+                  on ? "border-gold bg-primary/10 text-primary" : "border-transparent bg-secondary text-ink-muted"
                 }`}
               >
                 <LandingIcon name={g.icon} className="h-4 w-4" />
@@ -83,7 +83,7 @@ export function MetabolicExplorer({ dishes }: { dishes: MetabolicDish[] }) {
         <p className="max-w-xl text-sm leading-relaxed text-ink-muted">{goal.weekOneSub}</p>
         <p className="text-sm">
           <span className="text-ink-faint">Recommended program: </span>
-          <Link href={`/plan/${goal.planId}`} className="font-semibold text-gold-text hover:underline">
+          <Link href={`/plan/${goal.planId}`} className="font-semibold text-primary hover:underline">
             {plan.name} &rarr;
           </Link>
         </p>
@@ -95,12 +95,12 @@ export function MetabolicExplorer({ dishes }: { dishes: MetabolicDish[] }) {
             <Link
               key={d.slug}
               href={`/dish/${d.slug}`}
-              className="w-64 shrink-0 snap-center overflow-hidden rounded-3xl border border-line bg-surface transition-colors hover:border-line-strong"
+              className="w-64 shrink-0 snap-center overflow-hidden rounded-2xl border border-line bg-surface transition-colors hover:border-line-strong"
             >
               <div className="relative h-40 bg-surface-raised">
                 <DishImage src={d.image} name={d.name} className="h-full w-full" />
                 <span
-                  className={`absolute right-3 top-3 rounded-full border border-line px-2 py-0.5 text-3xs font-bold uppercase tracking-wider backdrop-blur-md ${
+                  className={`absolute right-3 top-3 rounded-full border border-line px-2 py-0.5 text-[10px] font-bold uppercase tracking-[.16em] backdrop-blur-md ${
                     d.isVeg ? "bg-sage-soft text-sage-text" : "bg-bg/80 text-[var(--danger)]"
                   }`}
                 >
@@ -108,11 +108,11 @@ export function MetabolicExplorer({ dishes }: { dishes: MetabolicDish[] }) {
                 </span>
               </div>
               <div className="flex flex-col gap-3 p-5">
-                <h3 className="truncate text-base font-semibold leading-tight text-ink">{d.name}</h3>
+                <h3 className="line-clamp-2 font-display text-lg font-semibold leading-tight text-primary">{d.name}</h3>
                 <div className="flex flex-wrap gap-2">
                   <span className={chipCls}>{Math.round(d.protein)}g protein</span>
                   <span className={chipCls}>{Math.round(d.fiber)}g fibre</span>
-                  <span className="tabular rounded-full border border-[var(--gold)]/30 bg-[color-mix(in_srgb,var(--gold)_10%,transparent)] px-2.5 py-1 text-3xs text-gold-text">
+                  <span className={chipCls}>
                     GI {d.gi}
                   </span>
                   <span className={chipCls}>{Math.round(d.calories)} kcal</span>
