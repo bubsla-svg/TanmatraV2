@@ -40,7 +40,7 @@ export function LoyaltyProgressPanel() {
     return (
       <div className="flex flex-col gap-3" aria-hidden>
         <Skeleton className="h-4 w-28" />
-        <Skeleton className="h-24 w-full rounded-xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
       </div>
     );
   }
@@ -52,7 +52,7 @@ export function LoyaltyProgressPanel() {
     return (
       <p className="text-xs text-ink-faint">
         Couldn&rsquo;t load your plan rewards.{" "}
-        <button type="button" onClick={() => void refetch()} className="font-medium text-gold-text hover:underline">
+        <button type="button" onClick={() => void refetch()} className="font-semibold text-primary underline-offset-4 hover:underline">
           Try again
         </button>
       </p>
@@ -63,15 +63,15 @@ export function LoyaltyProgressPanel() {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-xs font-semibold uppercase tracking-wider text-ink-faint">Plan rewards</p>
+      <p className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Plan rewards</p>
       <ul className="flex flex-col gap-3">
         {rows.map(({ sub, progress: p }) => (
-          <li key={p.subscriptionId} className="rounded-card border border-line bg-surface p-5">
-            <p className="text-base font-semibold text-ink">
+          <li key={p.subscriptionId} className="rounded-2xl border border-line bg-surface p-5">
+            <p className="font-display text-lg font-semibold leading-tight text-primary">
               {sub.cadence} · {sub.mealsPerDelivery} meals / delivery
             </p>
-            <p className="tabular mt-1.5 text-sm text-ink-muted">{p.deliveredCount} delivered</p>
-            <p className="mt-1 text-sm text-ink-muted">
+            <p className="font-data mt-1.5 text-sm text-ink-muted">{p.deliveredCount} delivered</p>
+            <p className="font-data mt-1 text-sm text-ink-muted">
               {p.deliveriesUntilFree} more for a free delivery ({formatPaise(sub.pricePerDeliveryPaise)})
             </p>
             {p.premiumUnlocked ? (

@@ -24,8 +24,8 @@ export default function TrialLoading() {
 
         <div aria-hidden className="flex flex-col gap-5">
           <div className="flex justify-center gap-2">
-            <Skeleton className="h-9 w-20 rounded-full" />
-            <Skeleton className="h-9 w-24 rounded-full" />
+            <Skeleton className="h-11 w-20 rounded-full" />
+            <Skeleton className="h-11 w-24 rounded-full" />
           </div>
           <div className="flex gap-3">
             <Skeleton className="aspect-square flex-1 rounded-2xl" />
@@ -35,13 +35,13 @@ export default function TrialLoading() {
           <Skeleton className="h-12 w-full rounded-full" />
         </div>
 
-        <div aria-hidden className="rounded-3xl border border-line bg-surface p-5">
+        <div aria-hidden className="rounded-2xl border border-line bg-surface p-5">
           <Skeleton className="h-4 w-52" />
           <Skeleton className="mt-2 h-4 w-full" />
           <Skeleton className="mt-1 h-4 w-2/3" />
         </div>
 
-        <div aria-hidden className="rounded-3xl border border-line bg-surface p-5">
+        <div aria-hidden className="rounded-2xl border border-line bg-surface p-5">
           <Skeleton className="h-4 w-48" />
           <div className="mt-4 flex flex-col gap-4">
             <Skeleton className="h-4 w-full" />

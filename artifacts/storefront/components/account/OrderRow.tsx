@@ -26,7 +26,7 @@ export function OrderRow({ order }: { order: OrderSummary }) {
 
   return (
     <li
-      className={`rounded-card border border-line bg-surface p-4 transition-transform active:scale-[0.98] ${
+      className={`rounded-2xl border border-line bg-surface p-4 transition-transform active:scale-[0.98] ${
         tone === "failed" ? "opacity-60" : ""
       }`}
     >
@@ -37,18 +37,18 @@ export function OrderRow({ order }: { order: OrderSummary }) {
           )}
           {statusLabel(order.status)}
         </span>
-        <span className="tabular text-sm font-semibold text-ink">
+        <span className="font-data text-sm font-bold text-primary">
           {formatPaise(order.totalPaise)}
         </span>
       </div>
 
-      <p className="tabular mt-2 text-xs text-ink-faint">
+      <p className="font-data mt-2 text-xs text-ink-faint">
         #{order.externalOrderId} · {date}
         {order.addressLabel && <span className="text-ink-muted"> · {order.addressLabel}</span>}
       </p>
 
       {tone === "failed" ? (
-        <p className="mt-4 text-3xs font-bold uppercase tracking-widest text-ink-faint">
+        <p className="mt-4 text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">
           Incomplete transaction
         </p>
       ) : (
@@ -56,7 +56,7 @@ export function OrderRow({ order }: { order: OrderSummary }) {
           {trackable && (
             <Link
               href={`/track/${encodeURIComponent(order.externalOrderId)}`}
-              className="group inline-flex items-center gap-1 text-sm font-semibold text-gold-text hover:opacity-80"
+              className="group -my-2 inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-primary underline-offset-4 hover:underline"
             >
               Track
               <span aria-hidden className="transition-transform group-hover:translate-x-1">

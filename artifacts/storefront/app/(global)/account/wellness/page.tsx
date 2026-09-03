@@ -18,8 +18,8 @@ export default function WellnessTrackerPage() {
       data-screen-state="default"
       className="mx-auto max-w-5xl px-4 py-10"
     >
-      <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">Tanmatra Studio</p>
-      <h1 className="mt-1 mb-6 text-2xl font-bold tracking-tight text-ink">Nutrition & Health Studio</h1>
+      <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Tanmatra Studio</p>
+      <h1 className="mt-2 mb-6 font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">Nutrition & Health Studio</h1>
       <WellnessHub />
     </section>
   );

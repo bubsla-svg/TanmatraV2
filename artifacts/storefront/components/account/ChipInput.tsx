@@ -7,8 +7,8 @@ import { useState } from "react";
 /** route-11 brief distinguishes the two chip kinds: allergens carry a clinical
  *  signal tint, plain taste lists stay neutral. */
 const TONE_CHIP = {
-  signal: "bg-sage-soft text-sage-text",
-  neutral: "bg-surface-raised text-ink",
+  signal: "border-transparent bg-sage-soft text-sage-text",
+  neutral: "border-gold bg-primary/10 text-primary",
 } as const;
 
 export function ChipInput({
@@ -36,20 +36,20 @@ export function ChipInput({
 
   return (
     <label className="flex flex-col gap-3 text-sm font-medium text-ink">
-      <span className="text-xs font-bold uppercase tracking-wider text-gold-text">{label}</span>
+      <span className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">{label}</span>
       {values.length > 0 && (
         <ul className="flex flex-wrap gap-2">
           {values.map((v) => (
             <li
               key={v}
-              className={`flex items-center gap-2 rounded-full px-4 py-2 text-2xs font-medium uppercase tracking-wider ${TONE_CHIP[tone]}`}
+              className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium ${TONE_CHIP[tone]}`}
             >
               {v}
               <button
                 type="button"
                 aria-label={`Remove ${v}`}
                 onClick={() => onChange(values.filter((x) => x !== v))}
-                className="leading-none text-ink-muted hover:text-ink"
+                className="-mr-1 inline-flex size-6 items-center justify-center rounded-full leading-none text-ink-muted hover:text-ink"
               >
                 &times;
               </button>
@@ -68,7 +68,7 @@ export function ChipInput({
         }}
         onBlur={add}
         placeholder={placeholder}
-        className="rounded-lg border border-line bg-surface px-2 py-1.5 text-sm font-normal text-ink"
+        className="w-full min-h-[50px] rounded-2xl border border-line bg-bg px-4 py-3 text-base font-normal text-ink outline-none placeholder:text-ink-faint focus-visible:border-primary"
       />
     </label>
   );

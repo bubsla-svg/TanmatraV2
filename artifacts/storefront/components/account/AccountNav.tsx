@@ -23,15 +23,15 @@ export function AccountNav({ active }: { active: Tab }) {
     <Link
       href={href}
       aria-current={active === key ? "page" : undefined}
-      className={`-mb-px border-b-2 px-1 pb-2 text-sm font-medium ${
-        active === key ? "border-gold text-ink" : "border-transparent text-ink-muted hover:text-ink"
+      className={`inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-full border px-4 text-sm font-medium transition-colors ${
+        active === key ? "border-gold bg-primary/10 text-primary" : "border-transparent bg-secondary text-ink-muted hover:text-ink"
       }`}
     >
       {label}
     </Link>
   );
   return (
-    <Rail as="nav" snap="none" aria-label="Account" className="mb-6 gap-5 border-b border-line">
+    <Rail as="nav" snap="none" aria-label="Account" className="mb-6 gap-2 py-1">
       {link("/account/subscriptions", "subscriptions", "Plans")}
       {link("/account/orders", "orders", "Orders")}
       {link("/account/appointments", "appointments", "Consults")}
