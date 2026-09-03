@@ -70,7 +70,7 @@ export function MenuFilterSheet({
         data-testid="menu-filter-sheet"
       >
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-4 pt-3">
-          <DrawerTitle className="text-lg font-semibold tracking-tight text-ink">
+          <DrawerTitle className="font-display text-2xl font-semibold leading-tight text-primary">
             Filter meals
           </DrawerTitle>
           <DrawerDescription className="mt-1 text-xs text-ink-muted">
@@ -139,9 +139,9 @@ function ChipGroup<K extends FilterGroupKey>({
   return (
     <details open={defaultOpen} className="group">
       <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 py-2 [&::-webkit-details-marker]:hidden">
-        <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
+        <span className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">
           {label}
-          {picked > 0 && <span className="tabular ml-2 rounded-full bg-gold/10 px-1.5 py-0.5 text-2xs text-gold-text">{picked}</span>}
+          {picked > 0 && <span className="font-data ml-2 rounded-full bg-primary/10 px-1.5 py-0.5 text-2xs text-primary">{picked}</span>}
         </span>
         <span aria-hidden className="text-ink-faint transition-transform group-open:rotate-180">▾</span>
       </summary>
@@ -156,8 +156,8 @@ function ChipGroup<K extends FilterGroupKey>({
               onClick={() => onToggle(toggleFilter(draft, group, opt.key))}
               className={`min-h-[44px] rounded-full border px-4 text-xs font-semibold transition-transform active:scale-95 ${
                 active
-                  ? "border-gold bg-gold/10 text-gold-text"
-                  : "border-line bg-surface text-ink-muted hover:text-ink"
+                  ? "border-gold bg-primary/10 text-primary"
+                  : "border-transparent bg-secondary text-ink-muted hover:text-ink"
               }`}
             >
               {active && <span aria-hidden>✓ </span>}
@@ -181,7 +181,7 @@ function BoundsGroup({ draft, onChange }: { draft: MenuFilterState; onChange: (n
       <label className="flex flex-col gap-1.5 text-xs font-medium text-ink-muted">
         <span className="flex justify-between">
           <span>Protein, at least</span>
-          <span className="tabular font-semibold text-ink">{draft.proteinMin == null ? "Any" : `${protein} g`}</span>
+          <span className="font-data font-bold text-primary">{draft.proteinMin == null ? "Any" : `${protein} g`}</span>
         </span>
         <input
           type="range"
@@ -198,7 +198,7 @@ function BoundsGroup({ draft, onChange }: { draft: MenuFilterState; onChange: (n
       <label className="flex flex-col gap-1.5 text-xs font-medium text-ink-muted">
         <span className="flex justify-between">
           <span>Calories, at most</span>
-          <span className="tabular font-semibold text-ink">{draft.kcalMax == null ? "Any" : `${kcal} kcal`}</span>
+          <span className="font-data font-bold text-primary">{draft.kcalMax == null ? "Any" : `${kcal} kcal`}</span>
         </span>
         <input
           type="range"

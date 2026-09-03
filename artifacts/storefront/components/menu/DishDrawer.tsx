@@ -59,7 +59,7 @@ export function DishDrawer({ dish }: { dish: DishData }) {
             PDP route. Previously the Add-to-cart button was the last thing
             IN this scrolling div, ~200px below the fold on a typical phone. */}
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-4 pt-3">
-          <div className="overflow-hidden rounded-xl border border-line bg-surface-raised">
+          <div className="overflow-hidden rounded-2xl border border-line bg-surface-raised">
             <DishImage src={dish.image} name={dish.name} className="aspect-[16/9] w-full" />
           </div>
 
@@ -80,7 +80,7 @@ export function DishDrawer({ dish }: { dish: DishData }) {
 
           <dl className="mt-4 grid grid-cols-4 gap-2">
             {macros.map(([label, value]) => (
-              <div key={label} className="rounded-xl bg-secondary p-2.5 text-center">
+              <div key={label} className="rounded-2xl bg-secondary p-2.5 text-center">
                 <dd className="font-display text-lg font-semibold text-primary">{value}</dd>
                 <dt className="mt-0.5 text-[10px] font-bold uppercase tracking-[.14em] text-ink-muted">{label}</dt>
               </div>
