@@ -118,7 +118,7 @@ test("a fast double-tap on Continue to payment sends exactly one POST /api/order
   // between, is what an impatient real tap (or a naive multi-tap script)
   // actually produces, and it's the only version that can tell a working
   // guard apart from a decorative one.
-  await page.locator("button", { hasText: /continue to payment/i }).evaluate((el) => {
+  await page.locator("button", { hasText: /continue to payment|^pay ₹/i }).evaluate((el) => {
     (el as HTMLButtonElement).click();
     (el as HTMLButtonElement).click();
   });
