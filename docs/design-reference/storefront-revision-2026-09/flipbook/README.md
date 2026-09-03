@@ -168,3 +168,46 @@ and the dietitian booking show their sign-in / no-data states honestly):
 | Planner: `style={{ …var(--warning) }}` inline colours on the macro-warning note | `border-[var(--warning)]` / `bg-[var(--warning)]` utilities (the form `LocationPickerFlow` already uses) | no inline colours; same token |
 | `rounded-3xl` / `rounded-xl` / `rounded-card` cards across the cluster | `rounded-2xl` throughout | the 11c card radius |
 | `/performance`, `/clinical`: hero CTA and closing consult CTA both solid gold | unchanged — they sit in different viewports | the rule is per viewport |
+
+## PR-11f — CUJ 4: cross-sell, pantry and marketplace
+
+No reference screen: the delivered revision has no marketplace, bundle or cart upsell, so
+these follow the 11c card grammar (`DishCard`) and the 11c cart-drawer ledger. `11f/after/`
+and `11f/after-light/` are the mandated seven frames on the 11f tree (the "before" is
+`11e/after*`); `11f/before*` → `11f/after*` also carry the ten frames below.
+
+**Mock-fed, like 11d's checkout.** Without an API the marketplace catalogue is empty — the
+server-side `fetchMarketplaceItemsServer` fails closed to `[]`, and `/marketplace` is
+prerendered at build time with that empty list — so the ten frames come from the same build
+served against the scratchpad mock (four fixture items, `image: null` so the branded
+fallback tile shows; `/marketplace` and `/meal-deals` purged from the prerender cache so they
+regenerate against it) with the browser's own `GET /api/marketplace/items` stubbed through
+`page.route()` for the cart upsell rail and the pantry rail. **Every item, supplier, price and
+badge on these frames is fixture data.** The mock never enters the repo; the honest no-API
+state ("Marketplace catalog is currently empty.") is what CI and a bare clone render.
+
+| Frame | Surface |
+|---|---|
+| `m01`, `m02` | `/marketplace` — title block and the card grid (index page cards) |
+| `m03`, `m03b` | `/marketplace/[slug]` — top, and the buy card at the end |
+| `m04`, `m04b` | `/meal-deals` — `BundleCard`s, top and end |
+| `m05`, `m05b` | cart drawer with `CartUpsellRail` (one meal in the cart), top and scrolled |
+| `m06` | `MiniCartBar` on `/menu` after the drawer closes |
+| `m07` | dish page scrolled to `PantryRail` ("Goes with this") |
+
+### Choices without a reference screen (what changed → why)
+
+| Before 11f | Production (11f) | Rule |
+|---|---|---|
+| Prices and totals in gold text (`font-clinical-data text-gold-text`, `tabular … text-gold-text`) | data face (`.font-data`) in the primary ink — cards, buy card, bundle totals, upsell rows, pantry rail, mini-cart subtotal | amounts are data; gold is the action colour |
+| Item names as 14 px bold sans | display face (Fraunces) — the `DishCard` item-name grammar | one card language across dishes, pantry goods and bundles |
+| Badges as `bg-sage-soft/90` with a `border-[var(--sage)]/20` hairline and backdrop blur | plain `bg-sage-soft text-sage-text` chips; category chip as a secondary fill | status keeps its signal colour (README); no arbitrary colour utilities |
+| `rounded-3xl` bundle cards with `shadow-sm`; `rounded-lg`/`rounded-md` rows and buttons; `border border-line` on every inner tile | `rounded-2xl` cards, secondary-fill tiles without hairlines, pill secondary buttons | the 11c card radius; fill, not hairline, for a perceivable boundary |
+| Upsell rail as a raised hairline box with a gold-text title | a secondary-fill panel with a neutral small label; its "+ Add" stays a pill outline | inside the cart drawer, add-on CTAs are secondary, never the primary accent (brief CUJ 4 §2) |
+| Bundle affordance "See what's inside" as a `rounded-lg` gold-outline bar | the same outline as a pill | one shape for outline actions (the card Add) |
+| Marketplace buy card `rounded-3xl … shadow-2xl` | `rounded-2xl … shadow-[var(--shadow-raised)]` — the dish page's buy card | one raised-card treatment |
+| "Marketplace" / "Meal Bundles" page titles as bold sans | the display h1 | the 11d focus-title grammar |
+
+Unchanged on purpose: `MarketplaceAddToCart`, `MarketplaceBuyNow`, `EveningAddOffer` (Breeze
+fallback, 11h) and the money path behind "Buy now" (`lib/marketplaceApi.ts` checkout →
+shared Razorpay order + verify) — presentation only, no handler, id, testid or copy moved.
