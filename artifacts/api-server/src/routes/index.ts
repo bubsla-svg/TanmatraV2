@@ -54,6 +54,8 @@ import paymentsRouter from "./payments";
 import refundsRouter from "./refunds";
 import vitalsRouter from "./vitals";
 import eventsRouter from "./events";
+import qrRouter from "./qr";
+import referralOfferRouter from "./referralOffer";
 import complianceRouter from "./compliance";
 import petpoojaRouter from "./petpooja";
 import { petpoojaWebhooksMounted } from "../lib/petpoojaClient";
@@ -131,6 +133,8 @@ router.use(paymentsRouter);
 router.use(refundsRouter);
 router.use(vitalsRouter);
 router.use(eventsRouter);
+router.use(qrRouter);
+router.use(referralOfferRouter);
 router.use(complianceRouter);
 // Petpooja's inbound webhook surface is mounted only when the integration is
 // actually configured. Decommissioning means UNMOUNTING (PETPOOJA_WEBHOOKS_ENABLED=false

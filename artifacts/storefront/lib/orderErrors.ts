@@ -81,6 +81,12 @@ export function humanizeOrderError(e: unknown): string {
     if (e.code === "unserviceable_pincode") {
       return "We don't deliver to this PIN code yet — we currently serve Noida sectors only. Change the PIN to continue.";
     }
+    if (e.code === "slot_full") {
+      return "That delivery window just filled up — pick another window above and continue.";
+    }
+    if (e.code === "slot_expired" || e.code === "slot_not_found") {
+      return "That delivery window has closed — pick another window above and continue.";
+    }
     if (e.code === "premium_required") {
       return "One of these dishes is premium-members-only. Remove it below to continue as a guest.";
     }
@@ -122,5 +128,5 @@ export function humanizeOrderError(e: unknown): string {
 export function isRetryableQuoteError(e: unknown): boolean {
   if (!(e instanceof ApiError)) return true;
   if (e.status >= 500 || e.status === 429) return true;
-  return !["safety_block", "dish_unavailable", "premium_required", "invalid_customization", "alc_checkout_disabled"].includes(e.code);
+  return !["safety_block", "dish_unavailable", "premium_required", "invalid_customization", "alc_checkout_disabled", "slot_full", "slot_expired", "slot_not_found"].includes(e.code);
 }

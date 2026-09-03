@@ -97,11 +97,16 @@ liveCheckout("cart → live à-la-carte checkout renders the guest details form"
   await expect(page.getByRole("heading", { name: "Checkout" })).toBeVisible();
   // The DPDP consent the server hard-requires (400 consent_required) is present.
   await expect(page.getByText(/process my dietary and health details/i)).toBeVisible();
-  // The pay CTA exists and is amount-free — the server owns the total — and it
-  // stays disabled until the form is valid: never a dead button into a void.
-  const pay = page.getByRole("button", { name: "Continue to payment" });
+  // The pay CTA exists; once the server quote lands it carries the SERVER's
+  // amount ("Pay ₹…") — never a client sum. T-09: with the form empty it is
+  // NOT a dead disabled button — a tap takes the customer to the first field
+  // that needs them, with the inline error under it.
+  const pay = page.getByRole("button", { name: /^(Continue to payment|Pay ₹)/ });
   await expect(pay).toBeVisible();
-  await expect(pay).toBeDisabled();
+  await expect(pay).toBeEnabled();
+  await pay.click();
+  await expect(page.locator("#alc-phone")).toBeFocused();
+  await expect(page.getByRole("alert").filter({ hasText: /10-digit mobile number/ })).toBeVisible();
 });
 
 test("every menu card is orderable — Add CTA on all cards, zero dead ends", async ({ page }) => {

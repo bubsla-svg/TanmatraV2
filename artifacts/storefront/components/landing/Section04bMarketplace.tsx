@@ -28,7 +28,7 @@ export async function Section04bMarketplace() {
         </div>
         <Link
           href="/marketplace"
-          className="text-xs font-bold uppercase tracking-widest text-primary hover:opacity-80"
+          className="touch-target-min text-xs font-bold uppercase tracking-widest text-primary hover:opacity-80"
         >
           Shop all
         </Link>

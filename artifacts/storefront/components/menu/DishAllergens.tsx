@@ -1,5 +1,6 @@
 import type { DishData } from "@workspace/menu-catalog";
 import { allergenView } from "@/lib/allergenCopy";
+import { KitchenSafetyChip } from "@/components/trust/KitchenSafetySheet";
 
 /**
  * Allergen disclosure block for BOTH PDP surfaces. Unlike a bare
@@ -47,6 +48,12 @@ export function DishAllergens({ dish }: { dish: DishData }) {
       ) : (
         <p className="mt-2 text-xs text-ink-faint">{view.note}</p>
       )}
+
+      {/* T-20: the kitchen's credentials, tappable, in the block a customer
+          with allergies reads most carefully — not a 12px line under a bar. */}
+      <div className="mt-3">
+        <KitchenSafetyChip />
+      </div>
     </section>
   );
 }

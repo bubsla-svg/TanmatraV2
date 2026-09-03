@@ -59,11 +59,14 @@ export function Section10FaqAccordion() {
         {faqItems.map((item, idx) => {
           const isOpen = openIdx === idx;
           return (
-            <div key={idx} className="py-4">
+            <div key={idx} className="py-2">
+              {/* min-h-11 (T-22): the row measured 24px — the text's own
+                  line-height was the whole hit area. */}
               <button
                 type="button"
+                aria-expanded={isOpen}
                 onClick={() => toggle(idx, item.question)}
-                className="flex w-full items-center justify-between text-left text-base font-semibold text-ink outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm transition-opacity hover:opacity-90"
+                className="flex min-h-11 w-full items-center justify-between py-2 text-left text-base font-semibold text-ink outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm transition-opacity hover:opacity-90"
               >
                 <span>{item.question}</span>
                 <span className="ml-4 shrink-0 text-xs font-bold text-ink-faint">

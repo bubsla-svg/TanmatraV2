@@ -1,7 +1,7 @@
 "use client";
 // Client: owns an IntersectionObserver over the section anchors and the
 // active-chip state that observer drives. Neither can exist server-side.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /**
  * The menu's navigation spine (TNM-MENU-01 M-5 §3.2).
@@ -48,16 +48,16 @@ export interface SectionAnchor {
 export function SectionChipBar({
   anchors,
   onJump,
+  leading,
 }: {
   anchors: SectionAnchor[];
-  /**
-   * Fired at the start of a chip jump with the total ms the jump owns the
-   * viewport (smooth-scroll flight + settle). The menu uses it to PIN the
-   * condensed cluster state for that window — see useCondensedOnScroll.pin:
-   * a jump's travel direction is not browsing intent, and letting it toggle
-   * the cluster's height mid-flight un-anchors the landing.
-   */
+  /** Fired at the start of a chip jump with the total ms the jump owns the
+   *  viewport (smooth-scroll flight + settle). */
   onJump?: (ownedMs: number) => void;
+  /** Controls that ride in the SAME rail before the section chips (T-13):
+   *  the diet chips, the Filters trigger and the goal chips. One row of
+   *  chrome instead of two. */
+  leading?: ReactNode;
 }) {
   const [active, setActive] = useState(anchors[0]?.id ?? "");
   const activeRef = useRef(active);
@@ -137,7 +137,9 @@ export function SectionChipBar({
     }, settleMs);
   }
 
-  if (anchors.length < 2) return null; // one section needs no navigation
+  // One section needs no navigation — but the leading controls still do.
+  const showAnchors = anchors.length >= 2;
+  if (!showAnchors && !leading) return null;
 
   return (
     <div
@@ -145,30 +147,33 @@ export function SectionChipBar({
       role="group"
       aria-label="Jump to section"
       data-testid="menu-section-chipbar"
-      className="no-scrollbar -mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1"
+      className="no-scrollbar -mx-4 flex items-center gap-1.5 overflow-x-auto px-4"
     >
-      {anchors.map((a) => {
-        const on = active === a.id;
-        return (
-          <button
-            key={a.id}
-            type="button"
-            data-anchor={a.id}
-            aria-current={on ? "location" : undefined}
-            onClick={() => jump(a.id)}
-            // Selection state, never a rival action colour — the same
-            // border+tint+marker idiom the diet chips use, because the
-            // mini-cart bar is this screen's one gold action (DS-0).
-            className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition-transform active:scale-95 ${
-              on
-                ? "border-gold bg-gold/10 text-gold-text"
-                : "border-line bg-surface text-ink-muted hover:text-ink"
-            }`}
-          >
-            {a.label}
-          </button>
-        );
-      })}
+      {leading}
+      {showAnchors &&
+        anchors.map((a) => {
+          const on = active === a.id;
+          return (
+            <button
+              key={a.id}
+              type="button"
+              data-anchor={a.id}
+              aria-current={on ? "location" : undefined}
+              onClick={() => jump(a.id)}
+              // Selection state, never a rival action colour — the same
+              // border+tint+marker idiom the diet chips use, because the
+              // mini-cart bar is this screen's one gold action (DS-0).
+              // min-h-11 (T-06): the visual chip stays slim inside a 44px box.
+              className={`inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-full border px-3.5 text-xs font-semibold transition-transform active:scale-95 ${
+                on
+                  ? "border-gold bg-gold/10 text-gold-text"
+                  : "border-line bg-surface text-ink-muted hover:text-ink"
+              }`}
+            >
+              {a.label}
+            </button>
+          );
+        })}
     </div>
   );
 }

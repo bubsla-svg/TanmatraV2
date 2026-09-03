@@ -28,7 +28,7 @@ import {
 } from "@/lib/api";
 import { DPDP_POLICY_VERSION } from "@/lib/consent";
 import { PhoneAuth } from "./PhoneAuth";
-import { AlacarteDetails, type AlacarteAddress } from "./AlacarteDetails";
+import { AlacarteDetails, type AlacarteAddress, type AlacarteExtras } from "./AlacarteDetails";
 import { UnresolvedPaymentPanel } from "./UnresolvedPaymentPanel";
 
 export type QuoteUiState = "loading" | "active" | "expired" | "error";
@@ -198,7 +198,7 @@ export function AlacarteCheckout() {
       .catch(() => {});
   }
 
-  async function handlePay(address: AlacarteAddress, allergenAck?: boolean) {
+  async function handlePay(address: AlacarteAddress, allergenAck: boolean | undefined, extras: AlacarteExtras = {}) {
     if (dishLines.length === 0) return; // defense-in-depth; the button is also gated
     setError(null);
     setBusy(true);
@@ -239,6 +239,10 @@ export function AlacarteCheckout() {
           // treats a missing key and `false` identically), and omitting keeps
           // the wire payload honest about "not asked" vs "asked, declined".
           ...(allergenAck ? { allergenAck: true } : {}),
+          // T-08 / T-11: a window id the server offered, and a note for the
+          // rider. Both optional; neither is a price.
+          ...(extras.deliverySlotId ? { deliverySlotId: extras.deliverySlotId } : {}),
+          ...(extras.deliveryInstructions ? { deliveryInstructions: extras.deliveryInstructions } : {}),
         };
         result = await runAlacarteCheckout({
           order,
@@ -306,6 +310,32 @@ export function AlacarteCheckout() {
 
   if (unresolved) {
     return <UnresolvedPaymentPanel checking={checkingStatus} onCheckStatus={() => void handleCheckStatus()} />;
+  }
+
+  // T-19: until the stored cart is read, paint a skeleton shaped like the real
+  // screen rather than the details over an EMPTY cart swapped 1.7s later (a
+  // measured 0.046 layout shift under the thumb). Heights mirror the layout.
+  if (!hydrated) {
+    return (
+      <div aria-busy="true" aria-label="Loading your cart" data-screen-state="checkout-loading" className="flex flex-col gap-5">
+        <div className="h-12 animate-pulse rounded-2xl bg-surface-raised" />
+        <div className="flex flex-col gap-3 rounded-3xl border border-line bg-surface p-5">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="flex flex-col gap-2 py-3">
+              <div className="h-4 w-3/4 animate-pulse rounded bg-surface-raised" />
+              <div className="flex items-center justify-between">
+                <div className="h-3 w-24 animate-pulse rounded bg-surface-raised" />
+                <div className="h-12 w-28 animate-pulse rounded-full bg-surface-raised" />
+              </div>
+            </div>
+          ))}
+          <div className="mt-2 h-10 animate-pulse rounded bg-surface-raised" />
+        </div>
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="h-[52px] animate-pulse rounded-2xl bg-surface-raised" />
+        ))}
+      </div>
+    );
   }
 
   if (hydrated && itemCount(cart) === 0) {

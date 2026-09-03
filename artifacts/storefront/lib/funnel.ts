@@ -6,6 +6,8 @@
  * api-server's analytics beacon when configured, and no-ops on the server.
  */
 
+import { currentAttribution } from "./acquisition";
+
 export type FunnelEvent =
   | "cuj_router_answer"
   | "cuj_plan_viewed"
@@ -62,7 +64,23 @@ export type FunnelEvent =
   // ignored, or that almost nobody reaches the confirmation screen as a guest
   // in the first place — opposite problems that look identical without both.
   | "order_claim_offered"
-  | "order_claimed";
+  | "order_claimed"
+  // ── Printed-code acquisition (QR funnel) ──────────────────────────────────
+  // A scan is counted SERVER-side (the `qr_scans` table, written by the
+  // /q/[src] redirect) because a visitor who bounces off the landing never
+  // runs any of this. These are the steps that follow it, and each one is here
+  // because the placement scoreboard is a RATIO: without the pincode step you
+  // cannot tell a poster in an unserved sector from a poster nobody looked at,
+  // and those two failures have opposite fixes (move the poster vs. change the
+  // creative).
+  | "qr_landing_view"
+  | "qr_pincode_serviceable"
+  | "qr_pincode_unserviceable"
+  // The "phone" step of scan → pincode → phone → paid. Nothing emitted when an
+  // OTP was accepted, so the single largest drop-off in the funnel — people who
+  // reach the sign-in wall and leave — was invisible between begin_checkout and
+  // the payment events.
+  | "identity_verified";
 
 /**
  * A stable, groupable cause for `payment_failed`.
@@ -94,9 +112,17 @@ export function emitFunnel(
   // the server was validated away and silently dropped (the sink answers 204
   // to everything by design). The payload key IS the contract; a rename on
   // either side must move both.
+  // Attribution is stamped HERE rather than at each call site, and that is the
+  // difference between a scoreboard and a pile of counts. Every one of the ~30
+  // events above would otherwise have to remember to pass `src`, and the ones
+  // that forgot would silently drop out of the placement funnel while still
+  // looking correct in isolation. `sessionId` is the join key back to the
+  // `qr_scans` row the redirect wrote before any of this code existed.
+  const { src, sessionId } = currentAttribution();
   const payload = JSON.stringify({
     name: event,
-    props,
+    props: src ? { ...props, src } : props,
+    ...(sessionId ? { sessionId } : {}),
     path: window.location?.pathname ?? undefined,
     ts: Date.now(),
   });

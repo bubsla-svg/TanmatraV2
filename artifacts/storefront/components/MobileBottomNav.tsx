@@ -176,7 +176,7 @@ export function MobileBottomNav() {
                   >
                     {indicator}
                     {tab.icon}
-                    <span className="text-3xs tracking-tight">{tab.label}</span>
+                    <span className="text-2xs tracking-tight">{tab.label}</span>
                   </button>
                 </li>
               );
@@ -195,7 +195,7 @@ export function MobileBottomNav() {
                 >
                   {indicator}
                   {tab.icon}
-                  <span className="text-3xs tracking-tight">{tab.label}</span>
+                  <span className="text-2xs tracking-tight">{tab.label}</span>
                 </Link>
               </li>
             );

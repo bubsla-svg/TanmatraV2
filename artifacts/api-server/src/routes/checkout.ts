@@ -1,6 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, ordersTable, usersTable, subscriptionDeliveriesTable } from "@workspace/db";
+import { db, ordersTable, usersTable, subscriptionDeliveriesTable, deliverySlotsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { isDeliverySlotBookable } from "../lib/deliverySlotBooking";
+import { reserveSlot } from "./fulfillment";
 import { z } from "zod/v4";
 import { makeBatchDishResolver } from "../lib/menuResolver";
 import { calculateCartTotals } from "../lib/cartMath";
@@ -89,7 +91,25 @@ const placeOrderSchema = z.object({
   // Set true to acknowledge allergen risk when a guest declares no dietary info
   // but the cart contains allergen/contraindication-flagged dishes.
   allergenAck: z.boolean().optional(),
+  // A window from GET /delivery/slots (T-08). Optional: an order without one
+  // keeps the legacy "next open window" behaviour; with one, the seat is
+  // reserved atomically alongside the order and the window is what the
+  // status route reports. Never a time — an id the server resolves.
+  deliverySlotId: z.number().int().positive().optional(),
+  // Free text for the rider (a name, a landmark). Bounded; never parsed.
+  deliveryInstructions: z.string().trim().max(200).optional(),
 });
+
+/** "12:30–13:30" in the kitchen's zone, for the status route's window field. */
+function windowLabel(startsAt: Date, endsAt: Date): string {
+  const fmt = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return `${fmt.format(startsAt)}–${fmt.format(endsAt)}`;
+}
 
 /** The stable delivery ETA the order path has always promised (the status
  *  route counts its SLA window down from this). The quote shows the same
@@ -297,7 +317,8 @@ router.post("/orders", async (req: Request, res: Response) => {
     return;
   }
 
-  const { externalOrderId, items, phone, address, consent, guestPrefs, allergenAck } = parsed.data;
+  const { externalOrderId, items, phone, address, consent, guestPrefs, allergenAck, deliverySlotId, deliveryInstructions } =
+    parsed.data;
 
   // DPDP consent gate: block order placement without an explicit acknowledgement.
   // This is the enforcement point the buyflow was missing (guest checkout could
@@ -404,6 +425,37 @@ router.post("/orders", async (req: Request, res: Response) => {
   );
   const totalPaise = totals.total;
 
+  // A chosen window must still be open BEFORE the row is written, so a closed
+  // or full one is refused with a code the picker can act on rather than
+  // surfacing as a failed reservation after an order already exists.
+  let slot: { id: number; startsAt: Date; endsAt: Date } | null = null;
+  if (deliverySlotId != null) {
+    const [found] = await db
+      .select({
+        id: deliverySlotsTable.id,
+        startsAt: deliverySlotsTable.startsAt,
+        endsAt: deliverySlotsTable.endsAt,
+        reservedCount: deliverySlotsTable.reservedCount,
+        capacity: deliverySlotsTable.capacity,
+      })
+      .from(deliverySlotsTable)
+      .where(eq(deliverySlotsTable.id, deliverySlotId))
+      .limit(1);
+    if (!found) {
+      res.status(422).json({ error: "delivery window not found", code: "slot_not_found" });
+      return;
+    }
+    if (!isDeliverySlotBookable(found, new Date())) {
+      const full = found.reservedCount >= found.capacity;
+      res.status(409).json({
+        error: full ? "that delivery window is full" : "that delivery window has closed",
+        code: full ? "slot_full" : "slot_expired",
+      });
+      return;
+    }
+    slot = { id: found.id, startsAt: found.startsAt, endsAt: found.endsAt };
+  }
+
   let row: { id: number };
   try {
     const inserted = await db
@@ -423,6 +475,9 @@ router.post("/orders", async (req: Request, res: Response) => {
         phone,
         items: validatedItems,
         fulfillmentType: "delivery",
+        deliverySlotId: slot?.id ?? null,
+        scheduledFor: slot?.startsAt ?? null,
+        deliveryInstructions: deliveryInstructions && deliveryInstructions.length > 0 ? deliveryInstructions : null,
       })
       .returning({ id: ordersTable.id });
     row = inserted[0]!;
@@ -439,7 +494,20 @@ router.post("/orders", async (req: Request, res: Response) => {
     return;
   }
 
-  req.log.info({ externalOrderId, serverOrderId: row.id, totalPaise }, "guest order placed");
+  // Reserve the seat now that a real order id exists (reserveSlot's own
+  // invariant). The pre-check above makes a refusal here rare — a race with
+  // another buyer for the last seat — and the just-inserted unpaid row is
+  // removed rather than left pointing at a window it never held.
+  if (slot) {
+    const held = await reserveSlot({ slotId: slot.id, userId: authUserId, orderId: row.id });
+    if (!held) {
+      await db.delete(ordersTable).where(eq(ordersTable.id, row.id));
+      res.status(409).json({ error: "that delivery window is full", code: "slot_full" });
+      return;
+    }
+  }
+
+  req.log.info({ externalOrderId, serverOrderId: row.id, totalPaise, deliverySlotId: slot?.id ?? null }, "guest order placed");
 
   // Record the DPDP consent as an audit trail (policy version, IP, UA,
   // timestamp). Authenticated users also get the consent stamped on their
@@ -477,6 +545,9 @@ router.post("/orders", async (req: Request, res: Response) => {
     status: "placed",
     etaMinutes: ORDER_ETA_MINUTES,
     totalPaise,
+    ...(slot
+      ? { scheduledFor: slot.startsAt.toISOString(), deliveryWindow: windowLabel(slot.startsAt, slot.endsAt) }
+      : {}),
   });
 });
 
@@ -509,18 +580,36 @@ router.get("/orders/:externalOrderId/status", async (req: Request, res: Response
       createdAt: ordersTable.createdAt,
       deliveryScheduledFor: subscriptionDeliveriesTable.scheduledFor,
       deliveryWindow: subscriptionDeliveriesTable.deliveryWindow,
+      slotStartsAt: deliverySlotsTable.startsAt,
+      slotEndsAt: deliverySlotsTable.endsAt,
     })
     .from(ordersTable)
     .leftJoin(
       subscriptionDeliveriesTable,
       eq(subscriptionDeliveriesTable.orderId, ordersTable.id),
     )
+    .leftJoin(deliverySlotsTable, eq(deliverySlotsTable.id, ordersTable.deliverySlotId))
     .where(eq(ordersTable.externalOrderId, externalOrderId))
     .limit(1);
 
   const row = rows[0];
   if (!row) {
     res.status(404).json({ error: "order not found" });
+    return;
+  }
+
+  // An à-la-carte order that chose a window (T-08) is scheduled, not a
+  // countdown — report the window it booked, same shape as a subscription
+  // delivery so the tracking screen has one contract to read.
+  if (row.slotStartsAt != null && row.slotEndsAt != null && row.deliveryScheduledFor == null) {
+    res.json({
+      orderId: externalOrderId,
+      status: row.status,
+      timing: "scheduled",
+      etaMinutes: null,
+      scheduledFor: row.slotStartsAt.toISOString(),
+      deliveryWindow: windowLabel(row.slotStartsAt, row.slotEndsAt),
+    });
     return;
   }
 

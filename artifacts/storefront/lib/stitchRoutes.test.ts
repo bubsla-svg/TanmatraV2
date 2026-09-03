@@ -26,11 +26,17 @@ test("an explicit stored choice always wins over the canvas", () => {
 });
 
 test("non-Stitch routes are never forced regardless of choice", () => {
-  // /account and /legal joined the canvas in the 2026-08-13 seam tranche —
-  // /about and /marketplace are the still-light fixtures now.
-  assert.equal(stitchCanvasForced("/about", null), false);
-  assert.equal(stitchCanvasForced("/about", "light"), false);
-  assert.equal(stitchCanvasForced("/marketplace", null), false);
+  // /about and /marketplace joined the canvas in the 2026-09-03 thumb-audit
+  // tranche (T-02) — /recipes and /team are the still-light fixtures now.
+  assert.equal(stitchCanvasForced("/recipes", null), false);
+  assert.equal(stitchCanvasForced("/recipes", "light"), false);
+  assert.equal(stitchCanvasForced("/team", null), false);
+});
+
+test("the buying path is one colour: shelf, product page and about are dark (T-02)", () => {
+  for (const route of ["/marketplace", "/marketplace/", "/marketplace/almond-mix", "/about"]) {
+    assert.equal(isStitchRoute(route), true, `${route} should be a Stitch route`);
+  }
 });
 
 test("exact routes render on the dark canvas", () => {
@@ -52,7 +58,7 @@ test("/plan/ does not swallow /plans", () => {
 });
 
 test("unrelated routes stay on the light canvas", () => {
-  for (const route of ["/about", "/recipes", "/marketplace", "/team", "/community"]) {
+  for (const route of ["/recipes", "/team", "/community", "/qa"]) {
     assert.equal(isStitchRoute(route), false, `${route} should not be a Stitch route`);
   }
 });

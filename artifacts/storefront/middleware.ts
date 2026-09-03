@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { REF_COOKIE_NAME, REF_COOKIE_MAX_AGE_SEC, extractRefFromQuery } from "./lib/refCookie";
 import { PLAN_CATALOG, planIsSelfServiceLaunchable, type PlanId } from "@workspace/subscription-rules";
 import { checkMenuSource } from "./lib/catalog";
+import { canonicalScanPath } from "./lib/qrPlacement";
 
 function withRefCookie(response: NextResponse, ref: string | null): NextResponse {
   if (ref) {
@@ -69,6 +70,22 @@ function rendersMenuData(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl;
   const ref = extractRefFromQuery(url.searchParams);
+
+  // Printed QR codes encode the ALL-UPPERCASE form
+  // (HTTPS://TANMATRA.FOOD/Q/BOX) because uppercase is what QR alphanumeric
+  // mode can pack — a materially lower-density symbol that scans smaller and
+  // from across a room. URL paths are case-SENSITIVE per RFC 3986, so `/Q/BOX`
+  // reaches no route at all: Next matches the literal segment `q`, and the
+  // uppercase form 404s. Folding it here, as an internal REWRITE rather than a
+  // redirect, keeps the scan at exactly one hop — the poster's 302 to the
+  // landing — instead of paying a second round trip in front of a person
+  // standing in a gym with their phone out.
+  const canonical = canonicalScanPath(url.pathname);
+  if (canonical) {
+    const rewritten = url.clone();
+    rewritten.pathname = canonical;
+    return withRefCookie(NextResponse.rewrite(rewritten), ref);
+  }
 
   const planRedirect = checkoutPlanRedirect(request);
   if (planRedirect) return withRefCookie(planRedirect, ref);

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Card } from "@astryxdesign/core/Card";
 import { Field } from "@astryxdesign/core/Field";
 import { Button } from "@/components/ui/button";
+import { emitFunnel } from "@/lib/funnel";
 import { firebaseConfigured, friendlyFirebaseError } from "@/lib/firebase";
 import { sendPhoneOtp, toE164, type PhoneVerification } from "@/lib/phoneAuth";
 import { getAuthUser, verifyOtp, ApiError, type AuthUser } from "@/lib/api";
@@ -184,6 +185,14 @@ export function PhoneAuth({
     try {
       const idToken = await verification.current.confirm(code);
       const res = await verifyOtp({ idToken });
+      // The "phone" step of scan → pincode → phone → paid, and the only place
+      // in the app where an OTP is actually accepted. Emitted HERE rather than
+      // in each host surface so no sign-in path can be added later that
+      // silently drops out of the funnel. Deliberately after the session
+      // exchange and not on the mount-time session probe above: re-opening a
+      // page while already signed in is not a new verification, and counting
+      // it would inflate the step it is meant to measure.
+      emitFunnel("identity_verified", { method: "otp" });
       onVerifiedRef.current(res.user);
       setStage("collapsed");
       setSignedIn(true);
@@ -209,7 +218,7 @@ export function PhoneAuth({
       <button
         type="button"
         onClick={() => setStage("phone")}
-        className="-m-2 self-start p-2 text-sm font-medium text-gold-text underline-offset-4 hover:underline"
+        className="inline-flex min-h-11 items-center self-start text-sm font-medium text-gold-text underline-offset-4 hover:underline"
       >
         Have an account? Sign in for faster checkout
       </button>

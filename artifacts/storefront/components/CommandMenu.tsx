@@ -115,12 +115,20 @@ export function CommandMenu({ dishes = [] }: { dishes?: DishSearchEntry[] }) {
           className="fixed left-1/2 top-20 z-[var(--z-modal)] w-[92vw] max-w-lg -translate-x-1/2 animate-dialog-in overflow-hidden rounded-xl border border-line bg-surface shadow-lg"
         >
           <Dialog.Title className="sr-only">Search pages and dishes</Dialog.Title>
+          {/* T-18: 16px text — at 14px iOS Safari zooms the page on focus.
+              type=search + enterkeyhint give the mobile keyboard the right
+              return key; autocorrect off so "aglio" stays "aglio". */}
           <input
             autoFocus
+            type="search"
+            enterKeyHint="search"
+            autoCorrect="off"
+            autoCapitalize="none"
+            spellCheck={false}
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search pages and dishes…"
-            className="w-full border-b border-line bg-transparent px-4 py-3 text-sm text-ink outline-none placeholder:text-ink-faint"
+            className="w-full min-h-12 border-b border-line bg-transparent px-4 py-3 text-base text-ink outline-none placeholder:text-ink-faint"
           />
           <ul className="max-h-[50vh] overflow-y-auto py-2">
             {results.length === 0 && (
@@ -131,7 +139,7 @@ export function CommandMenu({ dishes = [] }: { dishes?: DishSearchEntry[] }) {
                 <button
                   type="button"
                   onClick={() => go(e.href)}
-                  className="flex w-full items-center justify-between gap-4 px-4 py-2 text-left hover:bg-bg"
+                  className="flex min-h-11 w-full items-center justify-between gap-4 px-4 py-2 text-left hover:bg-bg"
                 >
                   <span className="text-sm text-ink">{e.label}</span>
                   <span className="text-2xs text-ink-faint">{e.group}</span>

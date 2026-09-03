@@ -126,13 +126,25 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
   };
 
   if (verdict === "serviceable") {
+    // T-05: ONE line, and the WHOLE pill is the tap target. The old
+    // "Delivering in 201301 ✓ · Change" wrapped to three lines inside the
+    // header's 9rem cap and grew the sticky bar from 63 to 83px for the rest
+    // of the session, with "Change" a 43×16 link. The pin glyph carries
+    // "delivering"; the code carries the where; the tick carries the verdict.
     return (
-      <div className={`${placement === 'menu' ? '' : 'mb-6'} inline-flex items-center gap-2 rounded-full border border-[var(--line-strong)] bg-[var(--surface-subtle)] px-4 py-2 text-xs font-medium text-[var(--ink)] shadow-sm`}>
-        <span className="text-[var(--success)] font-semibold">Delivering in {pincode} ✓</span>
-        <button type="button" onClick={handleReset} className="ml-2 underline text-[var(--ink-muted)] hover:text-[var(--ink)]">
-          Change
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={handleReset}
+        aria-label={`Delivering in ${pincode}. Change location`}
+        className={`${placement === 'menu' ? MENU_FIT : 'mb-6'} inline-flex min-h-11 max-w-[45vw] items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--line-strong)] bg-[var(--surface-subtle)] px-3 text-xs font-semibold text-[var(--ink)] shadow-sm transition-colors hover:border-[var(--gold)]`}
+      >
+        <svg aria-hidden className="h-4 w-4 shrink-0 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span className="tabular truncate">{pincode}</span>
+        <span aria-hidden className="text-[var(--success)]">✓</span>
+      </button>
     );
   }
 

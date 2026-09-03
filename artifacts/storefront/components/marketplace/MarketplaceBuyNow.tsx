@@ -126,6 +126,9 @@ export function MarketplaceBuyNow({ item }: { item: MarketplaceItem }) {
     );
   }
 
+  // T-17: a TEXT secondary, not a rival pill. "Add to cart" (MarketplaceAddToCart,
+  // gold) is the PDP's one action — pantry rides along with the meal order;
+  // this is the alternative for someone buying the pantry item alone.
   return (
     <div className="flex flex-col items-end gap-1.5">
       {error && (
@@ -139,9 +142,9 @@ export function MarketplaceBuyNow({ item }: { item: MarketplaceItem }) {
         disabled={busy}
         aria-busy={busy}
         aria-live="polite"
-        className="min-h-11 rounded-full border border-line-strong bg-surface px-6 py-2 text-sm font-bold tracking-tight text-ink transition-transform hover:bg-surface-raised active:scale-[0.98] disabled:opacity-60"
+        className="inline-flex min-h-11 items-center px-2 text-xs font-semibold text-ink-muted underline-offset-4 transition-colors hover:text-ink hover:underline disabled:opacity-60"
       >
-        {busy ? "Opening payment…" : "Buy now"}
+        {busy ? "Opening payment…" : "Buy on its own"}
       </button>
     </div>
   );

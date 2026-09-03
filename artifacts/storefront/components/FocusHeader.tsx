@@ -45,7 +45,7 @@ export function FocusHeader({
         <button
           type="button"
           onClick={goBack}
-          className="-ml-2 inline-flex min-h-9 items-center gap-1 rounded-full px-2 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
+          className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-full px-2 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
         >
           <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
             <path d="M12.5 4.5 7 10l5.5 5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />

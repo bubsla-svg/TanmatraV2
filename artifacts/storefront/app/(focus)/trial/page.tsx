@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import type { DishData } from "@workspace/menu-catalog";
 import { computePlanQuote } from "@workspace/subscription-rules";
-import { fetchMenu, findDish } from "@/lib/catalog";
-import { buildSharedMacroKeys, macroTrust } from "@/lib/dishTrust";
+import { fetchMenu } from "@/lib/catalog";
+import { buildSharedMacroKeys } from "@/lib/dishTrust";
 import { formatPaise } from "@/lib/format";
-import { TRIAL_TRIO, TRIAL_PRICE_PAISE, TRIAL_COPY } from "@/lib/trial";
-import { TrialStart, type TrioDish } from "@/components/trial/TrialStart";
+import { TRIAL_PRICE_PAISE, TRIAL_COPY } from "@/lib/trial";
+import { resolveTrio, type TrialTrack, type TrioDish } from "@/lib/trialTrio";
+import { TrialStart } from "@/components/trial/TrialStart";
 import { FocusHeader } from "@/components/FocusHeader";
 
 export const metadata: Metadata = {
@@ -13,37 +13,6 @@ export const metadata: Metadata = {
   description:
     "Three lunches for ₹399 — every rupee credited back the moment you start a plan.",
 };
-
-type TrialTrack = "veg" | "nonveg";
-
-/** Resolve a track's fixed slug trio against the live menu (name, image and the
- *  dish's own macros for the preview). Missing slugs are dropped, not faked —
- *  the price stays the spine's regardless. */
-function resolveTrio(
-  track: TrialTrack,
-  dishes: DishData[],
-  sharedMacroKeys: ReadonlySet<string>,
-): TrioDish[] {
-  return TRIAL_TRIO[track]
-    .map((slug) => findDish(slug, dishes))
-    .filter((d): d is DishData => Boolean(d))
-    .map((d) => ({
-      slug: d.slug,
-      name: d.name,
-      image: d.image,
-      // Law 8, judged by macroTrust over the catalog actually loaded — not by
-      // macrosProvisional alone. F-1 (#50) showed the duplication lives in the
-      // DB payload, where a copied tuple may carry no flag at all; the shared-
-      // key half of the check is what catches those, and it only works when the
-      // set is built from the payload in hand.
-      ...(macroTrust(d, sharedMacroKeys) === "unverified"
-        ? {}
-        : {
-            macros: { calories: d.macros.calories, protein: d.macros.protein },
-            macrosEstimated: d.macrosEstimated === true,
-          }),
-    }));
-}
 
 /**
  * The 3-Day Taste Test surface (02b). Server-rendered: the offer promise + the

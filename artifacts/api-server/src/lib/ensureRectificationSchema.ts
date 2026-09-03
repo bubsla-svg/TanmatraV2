@@ -123,6 +123,32 @@ CREATE TABLE IF NOT EXISTS public.funnel_daily (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_funnel_daily_day_name ON public.funnel_daily (day, name);
+
+-- Printed-code acquisition (QR funnel). Mirrors lib/db/src/schema/qrPlacements.ts.
+-- qr_scans is the DENOMINATOR of the placement scoreboard: a scan that bounces
+-- off the landing leaves no other trace anywhere, so without this table
+-- scans-to-paid cannot be computed for any placement at all.
+CREATE TABLE IF NOT EXISTS public.qr_placements (
+  id serial PRIMARY KEY,
+  code varchar(64) NOT NULL,
+  label varchar(128) NOT NULL,
+  destination varchar(256) NOT NULL,
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  retired_at timestamptz
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_qr_placements_code ON public.qr_placements (code);
+
+CREATE TABLE IF NOT EXISTS public.qr_scans (
+  id serial PRIMARY KEY,
+  code varchar(64) NOT NULL,
+  known boolean NOT NULL,
+  ref varchar(64),
+  session_id varchar(64),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_qr_scans_code_time ON public.qr_scans (code, created_at);
+CREATE INDEX IF NOT EXISTS idx_qr_scans_session ON public.qr_scans (session_id);
 `;
 
 export async function ensureRectificationSchema(): Promise<void> {

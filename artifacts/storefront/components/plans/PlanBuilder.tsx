@@ -9,6 +9,7 @@ import { planDisplay, planQuoteView } from "@/lib/plans";
 import { planAllowsAddOn, addOnView } from "@/lib/addons";
 import { emitFunnel } from "@/lib/funnel";
 import { PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
+import { planValueAnchor } from "@/lib/planValueAnchor";
 import { Button } from "@/components/ui/button";
 import { OrderBump } from "./OrderBump";
 import type { PlanId, DietTrack, PlanCycle } from "@workspace/subscription-rules";
@@ -147,7 +148,7 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
                 // tint + marker (SquircleOptionCard's established pattern),
                 // never a solid --gold fill. "Continue to checkout" below stays
                 // the one gold action on this screen.
-                className={`rounded-lg border-2 px-4 py-2 text-sm font-medium transition-colors ${
+                className={`inline-flex min-h-11 items-center rounded-lg border-2 px-4 text-sm font-medium transition-colors ${
                   track === t.track
                     ? "border-gold bg-gold/10 text-gold-text"
                     : "border-transparent text-ink-muted"
@@ -176,7 +177,7 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
                   aria-pressed={cycle === q.cycle}
                   onClick={() => setCycle(q.cycle)}
                   // D-08: same selection treatment as the track pills above.
-                  className={`flex items-center gap-1.5 rounded-lg border-2 px-4 py-2 text-sm font-medium transition-colors ${
+                  className={`flex min-h-11 items-center gap-1.5 rounded-lg border-2 px-4 text-sm font-medium transition-colors ${
                     cycle === q.cycle
                       ? "border-gold bg-gold/10 text-gold-text"
                       : "border-transparent text-ink-muted"
@@ -198,13 +199,30 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
           (app/plan/[planId]/page.tsx wraps it in bg-[var(--bg)]), so it would be
           a second invisible fill. --surface is the one step up from the canvas,
           the same fill the cycle-total row below uses. */}
-      {currentQuote.pricePerMealPaise != null && trackConfig.poolMedianPaise != null && (
-        <div className="flex items-center gap-2 rounded-lg bg-surface px-4 py-2 text-sm font-medium text-ink-muted">
-          <span className="text-ink">₹{Math.round(currentQuote.pricePerMealPaise / 100)}/meal</span> on plan
-          <span>·</span>
-          <span>₹{Math.round(trackConfig.poolMedianPaise / 100)} avg à la carte</span>
-        </div>
-      )}
+      {/* T-21: "₹199/meal on plan · ₹199 avg à la carte" told the customer the
+          plan saved nothing — and for many tracks it was true. The comparison
+          now prints only when the saving is real (lib/planValueAnchor, ≥ 5%);
+          otherwise the line says what the plan is FOR. Both figures are the
+          spine's; nothing is computed here beyond the difference. */}
+      {(() => {
+        const anchor = planValueAnchor({
+          perMealPaise: currentQuote.pricePerMealPaise,
+          alacarteMedianPaise: trackConfig.poolMedianPaise,
+        });
+        return anchor.kind === "saving" ? (
+          <div className="flex flex-wrap items-center gap-x-2 rounded-lg bg-surface px-4 py-2.5 text-sm font-medium text-ink-muted">
+            <span className="tabular text-ink">{formatPaise(anchor.perMealPaise)}/meal</span> on plan
+            <span aria-hidden>·</span>
+            <span className="tabular text-sage-text">
+              save {formatPaise(anchor.savingPaise)} a meal ({anchor.savingPct}%) vs à la carte
+            </span>
+          </div>
+        ) : (
+          <div className="rounded-lg bg-surface px-4 py-2.5 text-sm font-medium text-ink-muted">
+            {currentQuote.mealsPerCycle} lunches sorted · skip or pause any delivery up to 24 h before · no lock-in
+          </div>
+        );
+      })()}
 
       <div className="flex items-baseline justify-between rounded-xl bg-surface px-4 py-3 shadow-[var(--shadow-card)]">
         <span className="text-sm text-ink-muted capitalize">{cycle} total</span>

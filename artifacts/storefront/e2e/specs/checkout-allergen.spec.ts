@@ -73,7 +73,7 @@ deployedLive(
     await page.getByLabel("PIN code").fill("201301");
     await page.locator("label", { hasText: "DPDP Act 2023" }).locator('input[type="checkbox"]').check();
 
-    const pay = page.getByRole("button", { name: /continue to payment/i });
+    const pay = page.getByRole("button", { name: /continue to payment|^pay ₹/i });
     await expect(pay).toBeEnabled(); // clickable regardless of ack — see AlacarteDetails' click-time gate
 
     // Unchecked submit: caught client-side, not by a round trip to the

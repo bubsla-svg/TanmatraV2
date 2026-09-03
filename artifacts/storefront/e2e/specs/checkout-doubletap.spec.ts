@@ -102,7 +102,7 @@ test("a fast double-tap on Continue to payment sends exactly one POST /api/order
   await page.getByLabel("PIN code").fill("201301");
   await page.locator("label", { hasText: "DPDP Act 2023" }).locator('input[type="checkbox"]').check();
 
-  const pay = page.getByRole("button", { name: /continue to payment/i });
+  const pay = page.getByRole("button", { name: /continue to payment|^pay ₹/i });
   await expect(pay).toBeEnabled();
   const startBox = await pay.boundingBox();
 
@@ -118,7 +118,7 @@ test("a fast double-tap on Continue to payment sends exactly one POST /api/order
   // between, is what an impatient real tap (or a naive multi-tap script)
   // actually produces, and it's the only version that can tell a working
   // guard apart from a decorative one.
-  await page.locator("button", { hasText: /continue to payment/i }).evaluate((el) => {
+  await page.locator("button", { hasText: /continue to payment|^pay ₹/i }).evaluate((el) => {
     (el as HTMLButtonElement).click();
     (el as HTMLButtonElement).click();
   });

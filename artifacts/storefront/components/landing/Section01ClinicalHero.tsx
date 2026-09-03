@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { emitLpEvent } from "@/lib/lpEvents";
 import type { HeroContent } from "@/lib/heroContent";
 import type { HeroCampaign } from "@/lib/heroCampaign";
+import { KitchenSafetyChip } from "@/components/trust/KitchenSafetySheet";
 
 // deriveHeroContent used to live here. app/page.tsx is a Server Component and
 // calls it, which a "use client" module cannot serve — it 500'd the homepage in
@@ -166,7 +167,14 @@ export function Section01ClinicalHero({
               page for a visitor to test against Google, and it sat next to the
               three certifications that ARE real, borrowing their credibility.
               Bring it back when reviews are a number we can read. */}
-          <div className="mt-9 flex flex-wrap justify-center items-center gap-x-3 gap-y-1.5 border-t border-line pt-5 text-xs font-medium text-ink-muted">
+          {/* T-20: the credentials are TAPPABLE now — one chip in the first
+              viewport opens the Kitchen & safety sheet (registration number,
+              ISO 22000 kitchen, RD review, allergen policy). The three claims
+              below stay as the one-line read. */}
+          <div className="mt-7 flex justify-center">
+            <KitchenSafetyChip />
+          </div>
+          <div className="mt-4 flex flex-wrap justify-center items-center gap-x-3 gap-y-1.5 border-t border-line pt-5 text-xs font-medium text-ink-muted">
             <TrustItem>Cooked after you order</TrustItem>
             <TrustItem>FSSAI-registered kitchen</TrustItem>
             <TrustItem>Checked by our dietitians</TrustItem>
@@ -201,7 +209,8 @@ export function Section01ClinicalHero({
                   good. What earns the space is the invitation. */}
               <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between gap-3 rounded-2xl border border-line bg-[var(--glass)] p-4 backdrop-blur-md shadow-xl max-w-sm mx-auto">
                 <p className="text-sm font-semibold text-ink">Today&apos;s menu is up.</p>
-                <Button asChild variant="outline" shape="pill" size="fluid" className="shrink-0 border-line-strong bg-transparent px-3.5 py-1.5 text-xs font-bold hover:bg-surface">
+                {/* min-h-11 (T-22): this chip measured 50×38. */}
+                <Button asChild variant="outline" shape="pill" size="fluid" className="min-h-11 shrink-0 border-line-strong bg-transparent px-4 text-xs font-bold hover:bg-surface">
                   <Link href="/menu">Order</Link>
                 </Button>
               </div>

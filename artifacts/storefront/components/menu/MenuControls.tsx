@@ -1,144 +1,95 @@
 "use client";
-// Client: controlled diet inputs plus the condensed-state focus guard.
-import { useState } from "react";
-import Link from "next/link";
+// Client: controlled diet chips, goal toggles and the filter-sheet trigger.
 import { DIET_CHIP_OPTIONS, type DietFilterChip } from "@/lib/dietFilter";
+import { GOAL_OPTIONS, type GoalFilter } from "@/lib/menuFilters";
 
 /**
- * The /menu control row — diet chips, the filter trigger, and the ranked
- * note — as ONE collapsing block (owner feedback 2026-08-16: these rows were
- * most of the "~40% of the screen before a single product" complaint).
+ * The leading items of /menu's ONE control strip (T-13, T-14).
  *
- * It is ONE row now, not two. The dish-name search box that used to own the
- * first row was removed on owner instruction: the Header's ⌘K command menu
- * already searches the same catalog from every route, so an inline duplicate
- * cost a full row of the first viewport to offer a narrower version of a
- * control that was already on screen. Deleting it is what lets the filter
- * trigger sit beside the diet chips instead of above them.
+ * There used to be two rows — diet chips + an icon-only filter trigger on one,
+ * the section chips on another — pinned together under the header: 238px of
+ * chrome before the first dish. Everything now rides in the SAME horizontal
+ * rail as the section chips (SectionChipBar's `leading` slot), one 48px row:
  *
- * `scrolledDown` is the parent's scroll-direction signal. The focus guard
- * lives HERE because it belongs to these controls: while a chip or the
- * filter trigger holds keyboard focus the block refuses to collapse, so
- * tabbing never pulls the focused control out from under the user. grid-rows
- * 1fr→0fr animates the collapse without measuring anything; `inert` takes
- * the hidden controls out of the tab order and the accessibility tree, not
- * just the paint.
+ *   All · Veg · Non-veg · [Filters (2)] · Fat loss · High protein · … │ Bowls · Wraps …
+ *
+ * The filter trigger says "Filters" now, not just a sliders glyph, and the
+ * five goal chips — the product's thesis — are reachable without opening the
+ * sheet. Selection is border + tint + ✓, never a solid gold fill (D-08): the
+ * mini-cart bar is this screen's one gold action.
  */
 export function MenuControls({
   chip,
   onChipChange,
   activeFilterCount,
   onOpenFilter,
-  showRankedNote,
-  scrolledDown,
+  goals,
+  onToggleGoal,
 }: {
   chip: DietFilterChip;
   onChipChange: (chip: DietFilterChip) => void;
   activeFilterCount: number;
   onOpenFilter: () => void;
-  showRankedNote: boolean;
-  scrolledDown: boolean;
+  goals: readonly GoalFilter[];
+  onToggleGoal: (goal: GoalFilter) => void;
 }) {
-  const [controlsFocused, setControlsFocused] = useState(false);
-  const condensed = scrolledDown && !controlsFocused;
+  const chipCls = (active: boolean) =>
+    `inline-flex min-h-11 shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-3.5 text-xs font-semibold transition-transform active:scale-95 ${
+      active ? "border-gold bg-gold/10 text-gold-text" : "border-line bg-surface text-ink-muted hover:text-ink"
+    }`;
 
   return (
-    <div
-      inert={condensed}
-      onFocus={() => setControlsFocused(true)}
-      onBlur={() => setControlsFocused(false)}
-      className={`grid transition-[grid-template-rows,opacity] duration-200 motion-reduce:transition-none ${
-        condensed ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
-      }`}
-    >
-      <div className="min-h-0 overflow-hidden">
-        {/* One row, wrapping: chips first (the cheap, one-tap narrowing),
-            then the sheet trigger, then the ranked note pushed to the end.
-            `flex-wrap` rather than a fixed grid because the note's width is
-            copy-dependent — on a narrow phone it drops to its own line
-            instead of squeezing the chips it is describing. */}
-        <div className="flex flex-wrap items-center gap-2 pb-2">
-          <div role="group" aria-label="Filter dishes by diet" className="flex items-center gap-1.5">
-            {DIET_CHIP_OPTIONS.map((opt) => {
-              const active = chip === opt.key;
-              return (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => onChipChange(opt.key)}
-                  aria-pressed={active}
-                  // D-08: selection state, not a rival action colour —
-                  // border + tint + marker, never a solid --gold fill.
-                  // min-h-11 (44px), raised from 36px — and it costs NOTHING
-                  // vertically. This row is `flex items-center` and already
-                  // contains the 44px filter trigger, so the row was
-                  // max(36, 44) = 44 tall either way; the chips were simply
-                  // sitting short inside a box that height already. The /menu
-                  // density work is untouched, which is measured after the
-                  // change rather than assumed.
-                  //
-                  // `gap-1` carries the space after the ✓, NOT a trailing
-                  // space inside the span: this is a flex container, and flex
-                  // items get their leading and trailing whitespace trimmed,
-                  // which silently rendered "✓All".
-                  className={`inline-flex min-h-11 items-center gap-1 rounded-full border px-4 text-xs font-semibold transition-transform active:scale-95 ${
-                    active
-                      ? "border-gold bg-gold/10 text-gold-text"
-                      : "border-line bg-surface text-ink-muted hover:text-ink"
-                  }`}
-                >
-                  {active && <span aria-hidden>✓</span>}
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
-          {/* Icon + count badge; the testid is the contract the specs use.
-              Frosted, not gold — opening a sheet is a control, not the
-              screen's action. */}
-          <button
-            type="button"
-            onClick={onOpenFilter}
-            data-testid="menu-filter-trigger"
-            aria-label={activeFilterCount > 0 ? `Filter (${activeFilterCount} active)` : "Filter"}
-            className="relative flex min-h-11 min-w-11 items-center justify-center rounded-full border border-line bg-surface-raised text-ink transition-transform active:scale-95"
-          >
-            <svg
-              aria-hidden
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="4" y1="6" x2="20" y2="6" />
-              <circle cx="9" cy="6" r="2" fill="var(--surface-raised)" />
-              <line x1="4" y1="12" x2="20" y2="12" />
-              <circle cx="15" cy="12" r="2" fill="var(--surface-raised)" />
-              <line x1="4" y1="18" x2="20" y2="18" />
-              <circle cx="7" cy="18" r="2" fill="var(--surface-raised)" />
-            </svg>
-            {activeFilterCount > 0 && (
-              <span
-                aria-hidden
-                className="tabular absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-3xs font-bold text-[var(--gold-ink)]"
-              >
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
-          {showRankedNote && (
-            <p className="ml-auto text-2xs text-ink-muted">
-              Sorted for your preferences.{" "}
-              <Link href="/account/preferences" className="font-medium text-gold-text hover:underline">
-                Edit
-              </Link>
-            </p>
-          )}
-        </div>
+    <>
+      <div role="group" aria-label="Filter dishes by diet" className="flex shrink-0 items-center gap-1.5">
+        {DIET_CHIP_OPTIONS.map((opt) => {
+          const active = chip === opt.key;
+          return (
+            <button key={opt.key} type="button" onClick={() => onChipChange(opt.key)} aria-pressed={active} className={chipCls(active)}>
+              {/* `gap-1` carries the space after the ✓ — flex trims a
+                  trailing space inside the span, which rendered "✓All". */}
+              {active && <span aria-hidden>✓</span>}
+              {opt.label}
+            </button>
+          );
+        })}
       </div>
-    </div>
+
+      <button
+        type="button"
+        onClick={onOpenFilter}
+        data-testid="menu-filter-trigger"
+        aria-label={activeFilterCount > 0 ? `Filters (${activeFilterCount} active)` : "Filters"}
+        className="inline-flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-surface-raised px-3.5 text-xs font-semibold text-ink transition-transform active:scale-95"
+      >
+        <svg aria-hidden className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="4" y1="6" x2="20" y2="6" />
+          <circle cx="9" cy="6" r="2" fill="var(--surface-raised)" />
+          <line x1="4" y1="12" x2="20" y2="12" />
+          <circle cx="15" cy="12" r="2" fill="var(--surface-raised)" />
+          <line x1="4" y1="18" x2="20" y2="18" />
+          <circle cx="7" cy="18" r="2" fill="var(--surface-raised)" />
+        </svg>
+        Filters
+        {activeFilterCount > 0 && (
+          <span aria-hidden className="tabular flex h-5 min-w-5 items-center justify-center rounded-full bg-gold px-1.5 text-2xs font-bold text-[var(--gold-ink)]">
+            {activeFilterCount}
+          </span>
+        )}
+      </button>
+
+      <div role="group" aria-label="Goal" className="flex shrink-0 items-center gap-1.5">
+        {GOAL_OPTIONS.map((opt) => {
+          const active = goals.includes(opt.key);
+          return (
+            <button key={opt.key} type="button" onClick={() => onToggleGoal(opt.key)} aria-pressed={active} className={chipCls(active)}>
+              {active && <span aria-hidden>✓</span>}
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <span aria-hidden className="mx-0.5 h-6 w-px shrink-0 self-center bg-line" />
+    </>
   );
 }

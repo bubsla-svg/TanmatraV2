@@ -66,6 +66,28 @@ function focusRoutes(): { label: string; file: string }[] {
 const BACK = /<FocusHeader|router\.back\(\)|Back to |aria-label="Back"|>\s*Back\s*</;
 
 /**
+ * ENTRY routes: focus pages a visit can START on, where "back" is not merely
+ * unhelpful but wrong.
+ *
+ * /start is the destination of every printed QR. A scanner arrives via the
+ * `/q/<src>` redirect, so `router.back()` targets that redirect — which
+ * immediately 302s forward again. A FocusHeader here would render a back
+ * button that either does nothing or bounces, and `window.history.length > 1`
+ * is TRUE after a redirect, so FocusHeader's own deep-link fallback does not
+ * save it.
+ *
+ * The rule is not waived for these routes, it is inverted: an entry route must
+ * carry a FORWARD exit (a link into a browsable route) so a visitor who is not
+ * ready to buy still reaches the rest of the product rather than sitting on a
+ * chrome-less page with one field. Law 3's requirement is a way OUT; on a page
+ * with no history, forward is the only direction that exists.
+ */
+const ENTRY_ROUTES = new Set(["start"]);
+
+/** A link into another app route — the exit an entry route must carry. */
+const FORWARD_EXIT = /<Link[^>]*href="\/[a-z]/;
+
+/**
  * Component files a page pulls from @/components, resolved best-effort.
  *
  * FocusHeader itself is excluded: it DEFINES the affordance (its body calls
@@ -91,6 +113,7 @@ test("the focus route group is non-empty (the enumeration actually works)", () =
 test("every focus route offers a way back", () => {
   const offenders: string[] = [];
   for (const { label, file } of focusRoutes()) {
+    if (ENTRY_ROUTES.has(label)) continue; // held to the forward-exit rule below
     const src = fs.readFileSync(file, "utf8");
     const inPage = BACK.test(src);
     const inChild = localImports(src).some((f) => BACK.test(fs.readFileSync(f, "utf8")));
@@ -101,6 +124,29 @@ test("every focus route offers a way back", () => {
     [],
     `focus routes with no way out (FocusLayout renders no chrome, so these are dead ends): ${offenders.join(", ")}`,
   );
+});
+
+test("every entry route carries a forward exit instead", () => {
+  // Same law, opposite direction — see ENTRY_ROUTES. A visitor who scanned a
+  // poster and is not ready to buy must still be able to reach the product.
+  const offenders: string[] = [];
+  for (const { label, file } of focusRoutes()) {
+    if (!ENTRY_ROUTES.has(label)) continue;
+    const src = fs.readFileSync(file, "utf8");
+    const inPage = FORWARD_EXIT.test(src);
+    const inChild = localImports(src).some((f) => FORWARD_EXIT.test(fs.readFileSync(f, "utf8")));
+    if (!inPage && !inChild) offenders.push(label);
+  }
+  assert.deepEqual(offenders, [], `entry routes with no forward exit: ${offenders.join(", ")}`);
+});
+
+test("the entry-route list names only routes that exist", () => {
+  // A renamed or deleted route would otherwise leave a stale exemption behind,
+  // silently excusing nothing while looking like it excuses something.
+  const labels = new Set(focusRoutes().map((r) => r.label));
+  for (const entry of ENTRY_ROUTES) {
+    assert.ok(labels.has(entry), `ENTRY_ROUTES names "${entry}", which is not a focus route`);
+  }
 });
 
 test("FocusLayout still renders no global chrome", () => {

@@ -22,7 +22,7 @@ export function MarketplaceFallbackCta() {
   return (
     <Link
       href="/marketplace"
-      className="mt-1 inline-flex items-center gap-1.5 rounded-xl border border-line px-3.5 py-2 text-xs font-semibold text-ink transition-colors hover:border-line-strong hover:bg-surface-raised"
+      className="mt-1 inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-line px-3.5 text-xs font-semibold text-ink transition-colors hover:border-line-strong hover:bg-surface-raised"
     >
       Shop the marketplace
       <span aria-hidden="true">&rarr;</span>

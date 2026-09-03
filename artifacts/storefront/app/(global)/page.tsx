@@ -4,9 +4,10 @@ import { Section01ClinicalHero } from "@/components/landing/Section01ClinicalHer
 import { deriveHeroContent } from "@/lib/heroContent";
 import { Section04bMarketplace } from "@/components/landing/Section04bMarketplace";
 import { Section04ProtocolsGrid } from "@/components/landing/Section04ProtocolsGrid";
+import { PLAN_CATALOG } from "@workspace/subscription-rules";
 import { fetchMenu } from "@/lib/catalog";
 import { buildSharedMacroKeys } from "@/lib/dishTrust";
-import { formatPaise } from "@/lib/format";
+import { pickHomeRail } from "@/lib/homeRail";
 import { pickPlanCardDishes } from "@/lib/planCardDish";
 import { activeCampaign } from "@/lib/heroCampaign";
 import { SectionTrialPush } from "@/components/landing/SectionTrialPush";
@@ -50,10 +51,13 @@ export default async function HomePage() {
   const heroData = deriveHeroContent(refCookie);
   
   const { dishes } = await fetchMenu();
-  const featuredDishes = dishes.slice(0, 5);
   // F-1: built from the whole catalog, not the 5-item rail — a duplicate pair
   // split across the rail boundary is still a duplicate.
   const sharedMacroKeys = buildSharedMacroKeys(dishes);
+  // T-23: the rail led with an alphabetical ₹50 smoothie marked "Macros being
+  // verified". It leads with trusted mains now, priced at least the plan's
+  // per-meal figure (the spine's number, never typed here) — see lib/homeRail.
+  const featuredDishes = pickHomeRail(dishes, sharedMacroKeys, 5, PLAN_CATALOG.desk_fuel.pricePerMealPaise ?? 0);
   // The real dish behind each plan card, off the catalog we just loaded — the
   // grid is a client component and cannot read it itself. Order matters: each
   // plan claims its dish before the next one picks, so no two cards repeat.

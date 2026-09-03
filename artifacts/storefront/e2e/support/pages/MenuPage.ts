@@ -134,7 +134,21 @@ export class MenuPage {
     await this.filterTrigger.click();
     const sheet = this.page.getByTestId("menu-filter-sheet");
     await expect(sheet).toBeVisible();
-    await sheet
+    // T-14: the sheet's groups are accordions and only Goal opens by default.
+    // A chip inside a collapsed group is not clickable, so open the group's
+    // <details> first — via its <summary>, the way a thumb would. The section
+    // is found by its SUMMARY text, not by the inner role=group: a closed
+    // <details> hides its content from the accessibility tree, so a role
+    // query would never match a collapsed group and the open check would
+    // wait on nothing until the test timed out.
+    const section = sheet
+      .locator("details")
+      .filter({ has: this.page.locator("summary", { hasText: group }) });
+    await expect(section).toHaveCount(1);
+    if ((await section.getAttribute("open")) === null) {
+      await section.locator("summary").click();
+    }
+    await section
       .getByRole("group", { name: group })
       .getByRole("button", { name: new RegExp(`^(?:✓\\s*)?${escaped}$`) })
       .click();

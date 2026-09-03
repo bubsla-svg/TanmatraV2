@@ -14,6 +14,7 @@ import { PdpBuyLedger } from "@/components/menu/PdpBuyLedger";
 import { FallbackMenuBanner } from "@/components/menu/FallbackMenuBanner";
 import { DishAllergens } from "@/components/menu/DishAllergens";
 import { DishPlanToggle } from "@/components/menu/DishPlanToggle";
+import { PantryRail } from "@/components/menu/PantryRail";
 import { ViewDishBeacon } from "@/components/menu/ViewDishBeacon";
 import { dishPlanOffer } from "@/lib/dishPlanOffer";
 
@@ -180,7 +181,10 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
               the two controls this page is built around. `balanced` is the
               library's own answer (spacing-2 either side → 33px); overriding
               the button's padding from outside would fight the component. */}
-          <CollapsibleGroup type="multiple" defaultValue={["nutrition"]} density="balanced">
+          {/* `spacious`, not `balanced` (T-06): balanced gave the two triggers
+              this page is built around a 33px row; spacious clears the 44px
+              floor, with the chevron inside the hit area. */}
+          <CollapsibleGroup type="multiple" defaultValue={["nutrition"]} density="spacious">
             <Divider />
             <Collapsible value="nutrition" trigger={<Heading level={3}>Nutrition</Heading>}>
               <VStack gap={2}>
@@ -218,6 +222,10 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
             </Collapsible>
             <Divider />
           </CollapsibleGroup>
+
+          {/* T-17: pantry rail above the allergen block — cross-sell before
+              the decision, not only after Add inside the cart sheet. */}
+          <PantryRail />
 
           {/* Never collapsed (§6): the reviewed / auto-detected / under-review
               states must stay visible — an unreviewed list must never read as

@@ -12,7 +12,7 @@ import { fetchQuote, type QuoteSnapshot } from "@/lib/quoteApi";
 import { useCart } from "@/components/cart/CartProvider";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
+import { Drawer, DrawerClose, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 import { CartUpsellRail } from "./CartUpsellRail";
 import type { MarketplaceItem } from "@/lib/marketplaceApi";
@@ -112,7 +112,18 @@ export function CartDrawer({
           hairline border-line — opaque, not the mock's /95+blur). */}
       <DrawerContent aria-describedby={undefined} data-stitch="dark" data-ui-generation="stitch-74" data-screen-id="5.6" data-screen-state="cart-drawer-open">
         <div className="flex min-h-0 flex-col px-4 pb-6 pt-3">
-          <DrawerTitle className="text-lg font-semibold text-ink">Your cart</DrawerTitle>
+          <div className="flex items-center justify-between gap-3">
+            <DrawerTitle className="text-lg font-semibold text-ink">Your cart</DrawerTitle>
+            {/* T-01: an explicit ≥44px Close — the sheet used to offer only a
+                drag handle and the back gesture. Backdrop tap and Escape still
+                dismiss (Vaul owns those); this adds the thumb-reachable one. */}
+            <DrawerClose
+              aria-label="Close cart"
+              className="-mr-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink transition-transform active:scale-95"
+            >
+              <span aria-hidden className="text-xl leading-none">✕</span>
+            </DrawerClose>
+          </div>
           <ul className="mt-3 flex-1 divide-y divide-line overflow-y-auto overscroll-contain">
             {cart.lines.map((l) => (
               <li key={`${l.kind}-${l.dishId}-${(l.customizations ?? []).join("|")}`} className="flex items-start justify-between gap-3 py-3">

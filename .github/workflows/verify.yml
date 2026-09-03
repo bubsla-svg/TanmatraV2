@@ -214,6 +214,36 @@ jobs:
         if: ${{ !cancelled() }}
         working-directory: artifacts/api-server
         run: node --test --import tsx "../storefront/lib/**/*.test.ts"
+
+      # Printed-code acquisition. `normalizeQrCode` is what makes an
+      # all-uppercase QR (HTTPS://TANMATRA.FOOD/Q/BOX — alphanumeric mode, so
+      # the symbol scans from across a room) resolve against a lowercase
+      # placement row at all, and `isSafeDestination` is the open-redirect
+      # guard in front of an operator-editable destination column. A break in
+      # either is invisible in a diff and expensive in the wild: the first
+      # silently sends every scan to the generic landing, the second sends them
+      # off-origin.
+      #
+      # Its own step, and DB-free on purpose — both functions are pure string
+      # guards, so they belong in the fast pre-merge job rather than behind the
+      # Postgres-backed suites.
+      - name: QR placement guards (api-server)
+        if: ${{ !cancelled() }}
+        working-directory: artifacts/api-server
+        run: node --test --import tsx ./src/routes/qr.pure.test.ts
+
+      # The premise the printed-code funnel rests on: the URL we encode must
+      # stay in QR ALPHANUMERIC mode. That mode is uppercase-only, and it is
+      # what keeps the symbol low-density enough to scan from across a room
+      # (measured: 25×25 modules uppercase vs 29×29 lowercase for this URL
+      # shape). A well-meant tidy-up to lowercase looks harmless in a diff and
+      # silently shrinks the scan range of every future print run — on artwork
+      # that, once printed, cannot be redeployed. Asserted against the real
+      # encoder, so it cannot drift into being a comment nobody checks.
+      - name: QR print encoding (scripts)
+        if: ${{ !cancelled() }}
+        working-directory: scripts
+        run: node --test --import tsx ./src/lib/qrPrint.test.ts
       # Inbound Petpooja authentication. These three files existed and passed
       # locally while running in no workflow at all — they were on the
       # test-reach baseline — which is precisely why two fail-open branches in
@@ -814,6 +844,7 @@ jobs:
           ./src/routes/loyalty.checkout.test.ts
           ./src/routes/checkout.premiumGate.test.ts
           ./src/routes/checkout.quote.test.ts
+          ./src/routes/checkout.slot.test.ts
           ./src/routes/dishRationales.test.ts
           ./src/routes/coachAgent.test.ts
           ./src/routes/rdAdvisory.appointmentOrder.test.ts
