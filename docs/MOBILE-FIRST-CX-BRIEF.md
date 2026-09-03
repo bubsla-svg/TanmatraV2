@@ -169,20 +169,20 @@ Do not run simultaneous changes to payment orchestration, pricing logic, fulfill
 - Repository: `https://github.com/bubsla-svg/TanmatraV2.git` (`main`). pnpm workspace, Node 22, `pnpm@9.15.5`.
 - Implementation target: `artifacts/storefront/` — Next.js 16 App Router, Tailwind v4, Astryx tokens. `pnpm --filter @workspace/storefront run dev`.
 - API server: `artifacts/api-server/` (Express). `pnpm --filter @workspace/api-server run dev`.
-- Design reference: the delivered storefront revision (Replit build). Export its source and stylesheet into `docs/design-reference/storefront-revision-2026-09/` in the repo so the reference is versioned beside the code it governs.
+- Design reference: the delivered storefront revision (Replit build), exported into `docs/design-reference/storefront-revision-2026-09/` — read its `README.md` first: provenance, the token table, the contrast audit, and the list of reference traits the brief overrides. **[v3.1]**
 
 ### Delivered reference implementation → production counterpart
 
-Use the delivered revision as the visual and composition reference; implement in the production counterpart. The revision is owner-supplied and is **not in this repo yet** — its source and stylesheet are exported into `docs/design-reference/storefront-revision-2026-09/` as the first step of the tokens PR, and until that export lands the 2026-09-03 screen recording is the reference. Never copy behavior from the reference — its data and flows are mock. **[v3.1]**
+Use the delivered revision as the visual and composition reference; implement in the production counterpart. The revision is exported under `docs/design-reference/storefront-revision-2026-09/src/` (six hand-written files; its shadcn `ui/*` are stock and not copied). It is a standalone Vite app with six routes and mock data — never copy behavior from it. **[v3.1]**
 
 | Delivered revision (reference) | Production counterpart in `artifacts/storefront` |
 |---|---|
-| Shell (header, bottom tab bar, layout chrome) | `components/HeaderShell.tsx`, `components/Header.tsx`, `components/FocusHeader.tsx`, `components/MobileBottomNav.tsx`, `app/layout.tsx` |
-| Dish card | `components/DishCard.tsx`, `components/menu/*`, `components/ui/SafeImage.tsx` |
-| Cart / bag state hook | `lib/cartStore.ts`, `components/cart/CartProvider.tsx` (behavior stays; no new store) |
-| Mock catalog | `lib/catalog.ts` (server-backed; the reference catalog is mock) |
-| Page compositions | `app/(global)/*`, `app/(focus)/*` |
-| Stylesheet | `lib/themes/tanmatra.css` (`light-dark()` tokens), `lib/tokens/src/tokens.css`, `app/globals.css` — consume one token layer per `docs/ASTRYX-ADOPTION-RUNBOOK.md` and `tasks/PR-03-tokens-and-a11y.md`; do not add a fifth |
+| `docs/design-reference/storefront-revision-2026-09/src/components/storefront-shell.tsx` | `components/HeaderShell.tsx`, `components/Header.tsx`, `components/FocusHeader.tsx`, `components/MobileBottomNav.tsx`, `app/layout.tsx` |
+| `docs/design-reference/storefront-revision-2026-09/src/components/dish-card.tsx` | `components/DishCard.tsx`, `components/menu/*`, `components/ui/SafeImage.tsx` |
+| `docs/design-reference/storefront-revision-2026-09/src/hooks/use-storefront.tsx` | `lib/cartStore.ts`, `components/cart/CartProvider.tsx` (behavior stays; no new store) |
+| `docs/design-reference/storefront-revision-2026-09/src/lib/catalog.ts` | `lib/catalog.ts` (server-backed; the reference catalog is mock) |
+| `docs/design-reference/storefront-revision-2026-09/src/pages/storefront-pages.tsx` (+ `src/App.tsx` routes) | `app/(global)/*`, `app/(focus)/*` |
+| `docs/design-reference/storefront-revision-2026-09/src/index.css` | `lib/themes/tanmatra.css` (`light-dark()` tokens), `lib/tokens/src/tokens.css`, `app/globals.css` — consume one token layer per `docs/ASTRYX-ADOPTION-RUNBOOK.md` and `tasks/PR-03-tokens-and-a11y.md`; do not add a fifth |
 
 Payment and auth are **live** in the storefront, not preserved references:
 
@@ -1045,7 +1045,7 @@ For every customer-facing screen:
 
 ## Foundations (first, before any component work)
 
-0. **Tokens PR:** export the delivered revision's stylesheet; extract surface, ink, accent, secondary surface, type scale (serif display + sans body, max two families through the existing `next/font` pipeline — no new dependency, `pnpm-lock.yaml` untouched), radii, spacing rhythm, elevation. Write them into `lib/themes/tanmatra.css` `light-dark()` tokens; remap `tokens.css`, `tanmatraBridge.css` and the shadcn aliases to them rather than duplicating. Contrast gate: every text/surface pair ≥ 4.5:1 body, 3:1 large; the accent-on-surface primary button ≥ 4.5:1 (the current gold fails at 2.01:1 — the new accent must not repeat that). Theme toggle keeps working. Flipbook shows the whole app in the new palette, unrestyled — ugly but correct — before any component PR.
+0. **Tokens PR:** the stylesheet is exported and its tokens are already tabulated in `docs/design-reference/storefront-revision-2026-09/README.md` (surface `38 42% 94%`, ink `164 25% 17%`, primary `164 33% 27%`, amber accent `31 61% 53%`, sage chips, radius 1rem, `--shadow-soft`/`--shadow-lift`, `rise-in` stagger motion). Write them into `lib/themes/tanmatra.css` `light-dark()` tokens; remap `tokens.css`, `tanmatraBridge.css` and the shadcn aliases to them rather than duplicating. Type: Fraunces display + DM Sans body through the existing `next/font` pipeline in `app/layout.tsx`, the revision's Space Mono `.font-data` role mapped onto the mono face `layout.tsx` already loads — max two new families, no new dependency, `pnpm-lock.yaml` untouched. Contrast gate (computed in the README): the **green primary is the button token and passes at 6.82:1**; the amber accent fails at 2.54:1 with cream text and as text on cream, so at `53%` lightness it is decorative only (underline, icon, focus ring) and any amber text or filled control uses `31 61% 37%` or darker; `--muted-foreground` moves to `164 10% 41%` to clear 4.5:1 on dish descriptions. Every text/surface pair ≥ 4.5:1 body, 3:1 large. Theme toggle keeps working (`theme-toggle.spec.ts`, storage key unchanged). Flipbook shows the whole app in the new palette, unrestyled — ugly but correct — before any component PR. **[v3.1]**
 
 ## Strategic upgrades: after quick wins pass
 
@@ -1241,7 +1241,7 @@ Use a real mobile browser context with:
 1. Read `CLAUDE.md`, the ten-laws table above, `docs/NATIVE-FEEL-STOREFRONT-PLAN.md` §1, `docs/QR-ACQUISITION.md` non-goals, `docs/MONEY-PATH-VERIFICATION.md`, `tasks/00-INDEX.md`. Build the repo graph (`python3 .kg/kg_extract.py . .kg/graph.json`) and run `python3 .kg/kg.py code docs/MOBILE-FIRST-CX-BRIEF.md` — every path this brief names must resolve; report drift before editing.
 2. Inventory current customer routes (`find artifacts/storefront/app -name page.tsx` plus `route.ts` handlers) and mark admin/internal routes out of scope.
 3. Confirm the storefront runs (`pnpm --filter @workspace/storefront run dev`) and capture the 393px "before" flipbook for `/`, `/menu`, `/dish/[slug]`, `/plans`, the cart drawer, `/checkout`, `/start`.
-4. Obtain the delivered revision's 393px renders of the same screens with real photos and macros on cards; export its stylesheet into `docs/design-reference/storefront-revision-2026-09/`.
+4. Render the delivered revision at 393px for `/`, `/menu`, `/dish/:slug`, `/plans`, `/about` (run `docs/design-reference/storefront-revision-2026-09/src/` with its `package.reference.json`, or capture from the 2026-09-03 recording); these five are the only screens with a pixel-match target — everything else is graded on tokens and the ten-laws table and logged in the divergence ledger. **[v3.1]**
 5. Tokens PR (Foundations 0). Flipbook. Contrast gate. Merge before any component work.
 6. Primitives PRs, one each, no behavior change: `Rail`, `Disclosure`, `QuantityStepper`, `StickyAction` base, sheet consolidation onto Vaul. Migrate call sites in the same PR; flipbook proves zero state loss.
 7. Complete CUJ 1 and CUJ 2 (home, menu, dish sheet and PDP, cart drawer) — restyle against the delivered revision.
