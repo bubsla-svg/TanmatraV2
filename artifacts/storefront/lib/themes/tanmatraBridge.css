@@ -35,45 +35,55 @@
  */
 :root[data-astryx-theme="tanmatra"] {
   /* Surfaces — Stone light / Stitch dark (canvas, surface, container) */
-  --bg: light-dark(#f3f3f5, #0a0a0a);
-  --surface: light-dark(#ffffff, #171717);
-  --surface-raised: light-dark(#ffffff, #201f1f);
+  --bg: light-dark(#f6f1e9, #172622);
+  --surface: light-dark(#fbf8f4, #20322d);
+  --surface-raised: light-dark(#e7e0d4, #364a45);
 
   /* Ink — Stone light / Stitch dark */
-  --ink: light-dark(#28282a, #f5f5f4);
-  --ink-muted: light-dark(#5e5e5e, #a3a3a3);
-  --ink-faint: light-dark(#6a6a6f, #838388);
+  --ink: light-dark(#213630, #f6f1e9);
+  --ink-muted: light-dark(#5d726c, #c5bdaf);
+  --ink-faint: light-dark(#5e6e6a, #b7b0a4);
 
   /* Borders. Stitch's dark rule is "zero flat borders" — hairlines are white at
      6% / 16% so an edge reads as the surface underneath catching light, not as
      a drawn line. Translucency is the point, hence rgba() not hex. */
-  --line: light-dark(#d8d8db, rgba(255, 255, 255, 0.06));
-  --line-strong: light-dark(#84848b, rgba(255, 255, 255, 0.16));
+  --line: light-dark(#ddd3c6, #364a45);
+  --line-strong: light-dark(#968369, #5c7a72);
 
   /* Gold / Accent — deliberately NOT Stone's neutral accent. Gold is the only
      action colour (DS-0's surviving caveat), and these are the values
      tanmatra.css already serves to Astryx's own components, so all three files
      now agree. AA as both fill and text in both modes (dark: 9.42:1 as text on
      the canvas, 8.84:1 label-on-fill). Stitch specified the same pair. */
-  --gold: light-dark(#7F6921, #D4AF37);
-  --gold-text: light-dark(#7F6921, #D4AF37);
-  --gold-ink: light-dark(#ffffff, #111318);
+  --gold: light-dark(#2e5c4f, #d08a3e);
+  --gold-text: light-dark(#2e5c4f, #d08a3e);
+  --gold-ink: light-dark(#f6f1e9, #172622);
 
   /* Signals — never interactive. Dark arms are Stitch's. */
-  --sage: light-dark(#4e6357, #7d9e7e);
-  --sage-text: light-dark(#4e6357, #7d9e7e);
-  --sage-ink: light-dark(#ffffff, #171719);
+  --sage: light-dark(#556845, #b9c9a6);
+  --sage-text: light-dark(#556845, #b9c9a6);
+  --sage-ink: light-dark(#313f27, #e9efe1);
   /* Sage at chip/badge strength. @workspace/tokens derives this with
      color-mix() off --sage, but it derives it ON :root — so before this tuple
      existed the Stitch scope had to re-pin it to get its 16%. The light arm
      below is exactly what that color-mix composites to today (#4e6357 at 12%),
      so the light routes do not move; the dark arm is Stitch's 16%. */
-  --sage-soft: light-dark(rgba(78, 99, 87, 0.12), rgba(125, 158, 126, 0.16));
+  --sage-soft: light-dark(#d2ddc6, #49593b);
 
   --blue: light-dark(#506072, #99adc6);
-  --success: light-dark(#4e6357, #7d9e7e);
-  --warning: light-dark(#79693f, #b6892f);
-  --danger: light-dark(#775751, #c97b6c);
+  --success: light-dark(#556845, #b9c9a6);
+  --warning: light-dark(#986025, #d08a3e);
+  --danger: light-dark(#b94131, #d97c70);
+  /* PR-11a — the revision's amber accent. At 53% lightness it is 2.5:1 under
+     cream, so --amber is DECORATIVE ONLY (underline, icon fill, focus ring);
+     any amber that carries text or a filled control uses --amber-deep
+     (31 61% 37%, 4.6:1) with --amber-ink on it. Dark arms share the 53%
+     amber, which passes there (5.5:1). The focus ring is the README's
+     164 33% 31% in light and the amber in dark. */
+  --amber: light-dark(#d08a3e, #d08a3e);
+  --amber-deep: light-dark(#986025, #d08a3e);
+  --amber-ink: light-dark(#f6f1e9, #172622);
+  --focus-ring: light-dark(#35695b, #d08a3e);
 
   /* Translucent chrome for the sticky bars that float over content — the buy
      bars, the mini-cart, the planner footer (all `bg-[var(--glass)]` +
@@ -81,7 +91,7 @@
      now, declared solely inside [data-stitch="dark"], so those same shared
      components painted a fully TRANSPARENT bar on every light route: blurred
      content showing through a bar with no fill, text floating on the page. */
-  --glass: light-dark(rgba(255, 255, 255, 0.72), rgba(23, 23, 23, 0.72));
+  --glass: light-dark(rgba(246, 241, 233, 0.72), rgba(23, 38, 34, 0.72));
 
   /* Scrim for modal/drawer overlays — the sheet of dark between the page and a
      dialog. Dark in BOTH arms on purpose: a scrim is not a surface, it is an

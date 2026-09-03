@@ -37,17 +37,22 @@
 
 :root {
   /* ── Locked brand accents (identical in both themes) ───────────────────── */
-  --gold: #d4af37;
-  --gold-ink: #1a1c1e; /* text on a gold fill */
-  --gold-text: #8a6d1f; /* gold AS foreground text/links — AA (4.9:1 on white); raw --gold is 2.1:1 and fails */
-  --blue: #6ba3c8;
-  --sage: #7d9e7e;
-  --sage-ink: #14170f; /* text on a sage fill — AA on #7d9e7e in both themes */
-  --sage-text: #4f6b50; /* sage AS foreground text — AA (5.9:1 on white); raw --sage is 3.0:1 and fails */
+  /* PR-11a (docs/MOBILE-FIRST-CX-BRIEF.md "Foundations 0"): the delivered
+     revision's palette. Source of truth is artifacts/storefront/lib/themes/
+     tanmatraTheme.ts (tanmatraBridge.css mirrors it, test-pinned); these are
+     the same arms so the no-bridge path renders the same. The names are
+     historical — `--gold` is the ACTION token, not a hue. */
+  --gold: #2e5c4f; /* the ACTION token — the revision's green primary (164 33% 27%) */
+  --gold-ink: #f6f1e9; /* text on the action fill — 6.8:1 */
+  --gold-text: #2e5c4f; /* the action colour AS text — 6.8:1 on cream */
+  --blue: #506072;
+  --sage: #556845; /* sage-deep: the sage stop that passes as text (5.4:1) */
+  --sage-ink: #313f27; /* text on a sage-soft chip — 8.0:1 */
+  --sage-text: #556845;
   /* Sage at signal strength for chip/badge fills. Derived from --sage via
      color-mix (NOT a new base colour) and left semi-transparent so it
      composites over whatever surface it lands on. */
-  --sage-soft: color-mix(in srgb, var(--sage) 12%, transparent);
+  --sage-soft: #d2ddc6; /* the revision's chip sage (88 25% 82%), opaque */
 
   /* Recessed surface for panels and chips sitting INSIDE a --surface card, so
      they read as inset wells rather than more raised cards. Aliases the page
@@ -57,23 +62,28 @@
   --surface-subtle: var(--bg);
 
   /* Semantic status (shared) */
-  --success: #7d9e7e;
-  --warning: #d8b45e;
-  --danger: #c2603f;
+  --success: #556845;
+  --warning: #986025; /* amber at text weight (31 61% 37%) */
+  --danger: #b94131;
+  --amber: #d08a3e; /* decorative only — 2.5:1 under cream */
+  --amber-deep: #986025; /* amber that carries text or a fill (4.6:1) */
+  --amber-ink: #f6f1e9;
+  --focus-ring: #35695b;
 
   /* ── Light neutrals (default) ──────────────────────────────────────────── */
-  --bg: #fbfaf7; /* bone */
-  --surface: #ffffff;
-  --surface-raised: #ffffff;
-  --ink: #1a1c1e; /* primary text */
-  --ink-muted: #5c6367; /* secondary text */
-  --ink-faint: #6b7378; /* tertiary text — darkened to AA (4.8:1 on white; was #8b9398 = 3.1:1, fail) */
-  --line: #e7e3da; /* hairline border */
-  --line-strong: #d8d3c7;
+  --bg: #f6f1e9; /* warm cream */
+  --surface: #fbf8f4;
+  --surface-raised: #e7e0d4;
+  --ink: #213630; /* primary text */
+  --ink-muted: #5d726c; /* secondary text — 4.6:1 on --bg (README fix: 43% → 41%) */
+  --ink-faint: #5e6e6a; /* tertiary text — 4.8:1 on --bg */
+  --line: #ddd3c6; /* hairline border, decorative */
+  --line-strong: #968369; /* 3.2:1 — perceivable boundary */
 
   /* ── Type scale (fluid, clamp-based) ───────────────────────────────────── */
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     Helvetica, Arial, sans-serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
   --font-mono: ui-monospace, "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
 
   /* Micro tier. The scale used to bottom out at --text-xs/12px, so every label,
@@ -110,12 +120,12 @@
      you a smaller one. 234 uses of rounded-2xl and 92 of rounded-3xl were
      sitting on that. Defining them here continues the progression and puts
      the names back in size order. */
-  --radius-sm: 6px;
-  --radius-md: 10px;
+  --radius-sm: 12px;
+  --radius-md: 14px;
   --radius-lg: 16px;
-  --radius-xl: 22px;
-  --radius-2xl: 28px;
-  --radius-3xl: 34px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-3xl: 32px;
   --radius-full: 999px;
 
   /* SEMANTIC, not another step: the corner of "a card" — the repeated
@@ -131,11 +141,11 @@
      step and a smaller one — a nested corner must be tighter than its parent
      or the inner block looks like it is bulging out of it — and so do controls
      (inputs, chips, pills), which are not cards. */
-  --radius-card: var(--radius-2xl);
+  --radius-card: var(--radius-lg); /* the revision's card: rounded-2xl = 1rem */
 
   /* ── Shadows (light) ───────────────────────────────────────────────────── */
-  --shadow-card: 0 1px 2px rgba(26, 28, 30, 0.06), 0 4px 12px rgba(26, 28, 30, 0.05);
-  --shadow-raised: 0 6px 24px rgba(26, 28, 30, 0.1);
+  --shadow-card: 0 18px 50px rgba(39, 55, 45, 0.08); /* the revision's --shadow-soft */
+  --shadow-raised: 0 18px 34px rgba(39, 55, 45, 0.14); /* the revision's --shadow-lift */
 
   /* ── Motion ────────────────────────────────────────────────────────────── */
   --duration-fast: 150ms;
@@ -149,20 +159,30 @@
 }
 
 :root[data-theme="dark"] {
-  --bg: #0e0f11;
-  --surface: #17191c;
-  --surface-raised: #1e2125;
-  --ink: #e9ecee; /* bone */
-  --ink-muted: #8b9398;
-  --ink-faint: #7f878c; /* lightened to AA on dark surfaces (was #5c6367 = 3.1:1) */
-  --line: #262a2e;
-  --line-strong: #333940;
-  /* On dark surfaces the raw brand accents already pass as text (gold 8.4:1,
-     sage 5.9:1), so the text variants point back at them. */
-  --gold-text: #d4af37;
-  --sage-text: #7d9e7e;
+  --bg: #172622; /* deep green */
+  --surface: #20322d;
+  --surface-raised: #364a45;
+  --ink: #f6f1e9; /* cream */
+  --ink-muted: #c5bdaf;
+  --ink-faint: #b7b0a4;
+  --line: #364a45;
+  --line-strong: #5c7a72;
+  /* Dark arms of the theme tuples (tanmatraTheme.ts): the action colour is
+     the revision's amber in dark; sage is its dark sage-deep. */
+  --gold-text: #d08a3e;
+  --sage-text: #b9c9a6;
   /* Slightly stronger mix so the tint stays legible against dark surfaces. */
-  --sage-soft: color-mix(in srgb, var(--sage) 18%, transparent);
+  --sage-soft: #49593b;
+  --gold: #d08a3e;
+  --gold-ink: #172622;
+  --sage: #b9c9a6;
+  --sage-ink: #e9efe1;
+  --success: #b9c9a6;
+  --warning: #d08a3e;
+  --danger: #d97c70;
+  --amber-deep: #d08a3e;
+  --amber-ink: #172622;
+  --focus-ring: #d08a3e;
 
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-raised: 0 8px 28px rgba(0, 0, 0, 0.5);
