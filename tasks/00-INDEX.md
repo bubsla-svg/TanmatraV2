@@ -30,3 +30,5 @@ and report any drift. Then restate the plan as a checklist and wait for my go.
 ```
 
 Keep the "restate and wait" step for every brief on the money path. For low-blast-radius briefs you can let it run straight through.
+
+PR-11 has its own opener at the bottom of `tasks/PR-11-mobile-first-restyle.md` (branch, read order, frozen paths, before-editing checks, DoD).
