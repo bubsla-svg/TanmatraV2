@@ -15,6 +15,7 @@ Sequence follows Wiring Guide §5: money integrity and dead-route cleanup before
 | 08 | `PR-08-plans-screen.md` | — | 3 | 07 | Medium |
 | 09 | `PR-09-checkout-stepper.md` | — | 4 | 01, 03 | **Max** (money) |
 | 10 | `PR-10-coach-anon.md` | W3 | 4 | — | Medium (safety) |
+| 11 | `PR-11-mobile-first-restyle.md` | UX | 5 | 03, 06 | Medium per PR (series; presentation only, see `docs/MOBILE-FIRST-CX-BRIEF.md`) |
 
 **Critical path:** 01 → 07 → 09. Everything else can slip without blocking revenue integrity.
 
@@ -29,3 +30,5 @@ and report any drift. Then restate the plan as a checklist and wait for my go.
 ```
 
 Keep the "restate and wait" step for every brief on the money path. For low-blast-radius briefs you can let it run straight through.
+
+PR-11 has its own opener at the bottom of `tasks/PR-11-mobile-first-restyle.md` (branch, read order, frozen paths, before-editing checks, DoD).
