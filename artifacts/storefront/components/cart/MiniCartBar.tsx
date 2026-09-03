@@ -95,7 +95,7 @@ export function MiniCartBar() {
             <span className="font-semibold">{count}</span>{" "}
             {count === 1 ? "item" : "items"}{" "}
             <span aria-hidden className="text-ink-faint">·</span>{" "}
-            <span className="tabular font-semibold">{formatPaise(subtotalPaise(cart))}</span>
+            <span className="font-data font-bold text-primary">{formatPaise(subtotalPaise(cart))}</span>
           </p>
           <Button
             type="button"

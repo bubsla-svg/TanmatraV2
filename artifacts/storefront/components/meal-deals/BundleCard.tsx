@@ -69,25 +69,25 @@ export function BundleCard({ bundle }: { bundle: MealBundle }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full text-left rounded-3xl border border-line bg-surface p-5 flex flex-col gap-4 shadow-sm transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
+        className="w-full text-left rounded-2xl border border-line bg-surface p-5 flex flex-col gap-4 transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
       >
         <div className="flex justify-between items-start">
           <div>
-            <span className="inline-block px-2 py-1 rounded-full bg-surface-raised border border-line font-bold text-3xs text-primary uppercase tracking-widest mb-2">
+            <span className="mb-2 inline-block rounded-full bg-secondary px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.16em] text-primary">
               {bundle.badge}
             </span>
-            <h2 className="font-bold text-xl text-ink mb-1">{bundle.title}</h2>
+            <h2 className="mb-1 font-display text-2xl font-semibold leading-tight text-primary">{bundle.title}</h2>
             <p className="text-sm text-ink-muted">{bundle.desc}</p>
           </div>
           <div className="text-right flex-shrink-0 ml-4">
-            <div className="font-clinical-data text-lg text-gold-text">{formatPaise(bundle.totalPaise)}</div>
-            <div className="font-bold text-3xs text-ink-muted uppercase mt-1">{bundle.mealCount} Meals</div>
+            <div className="font-data text-lg font-bold text-primary">{formatPaise(bundle.totalPaise)}</div>
+            <div className="mt-1 text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">{bundle.mealCount} Meals</div>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2 mt-2">
           {bundle.dishes.slice(0, 4).map((dish) => (
-            <div key={dish.id} className="flex items-center gap-2 rounded-xl bg-surface-raised p-2 border border-line">
+            <div key={dish.id} className="flex items-center gap-2 rounded-xl bg-secondary p-2">
               <div className="relative w-10 h-10 rounded-md overflow-hidden bg-surface flex-shrink-0">
                 <SafeImage src={dish.image ?? ""} alt={dish.name} className="h-full w-full" />
               </div>
@@ -95,21 +95,21 @@ export function BundleCard({ bundle }: { bundle: MealBundle }) {
             </div>
           ))}
           {bundle.dishes.length > 4 && (
-            <div className="flex items-center justify-center rounded-xl bg-surface-raised border border-line p-2 text-xs text-ink-muted font-semibold">
+            <div className="flex items-center justify-center rounded-xl bg-secondary p-2 text-xs text-ink-muted font-semibold">
               +{bundle.dishes.length - 4} more
             </div>
           )}
         </div>
 
         {/* Affordance, not a nested control — the CARD is the button. */}
-        <span className="w-full mt-2 rounded-lg border border-gold bg-surface px-4 py-3 text-center text-sm font-bold text-gold-text">
+        <span className="w-full mt-2 rounded-full border border-gold bg-surface px-4 py-3 text-center text-sm font-bold text-gold-text">
           {added ? "In your cart — tap to view again" : "See what's inside"}
         </span>
       </button>
 
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerContent>
-          <DrawerTitle className="text-lg font-semibold text-ink">{bundle.title}</DrawerTitle>
+          <DrawerTitle className="font-display text-2xl font-semibold leading-tight text-primary">{bundle.title}</DrawerTitle>
           <DrawerDescription className="text-sm text-ink-muted">
             {bundle.mealCount} dishes, each at its own menu price — the combo total is simply their sum.
           </DrawerDescription>
@@ -118,20 +118,20 @@ export function BundleCard({ bundle }: { bundle: MealBundle }) {
               <Link
                 key={dish.id}
                 href={`/dish/${encodeURIComponent(dish.slug)}`}
-                className="flex items-center gap-3 rounded-xl border border-line bg-surface-raised p-2 transition-transform active:scale-[0.98]"
+                className="flex items-center gap-3 rounded-xl bg-secondary p-2 transition-transform active:scale-[0.98]"
               >
                 <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-surface">
                   <SafeImage src={dish.image ?? ""} alt={dish.name} className="h-full w-full" />
                 </div>
-                <span className="min-w-0 flex-1 text-sm font-semibold text-ink line-clamp-2">{dish.name}</span>
-                <span className="tabular text-sm font-semibold text-ink">{formatPaise(dish.price)}</span>
+                <span className="min-w-0 flex-1 line-clamp-2 font-display text-lg font-semibold leading-tight text-primary">{dish.name}</span>
+                <span className="font-data text-sm font-bold text-primary">{formatPaise(dish.price)}</span>
               </Link>
             ))}
           </div>
           <div className="border-t border-line pt-3 flex items-center justify-between gap-3">
             <div className="flex flex-col">
-              <span className="text-3xs font-bold uppercase tracking-widest text-ink-muted">Combo total</span>
-              <span className="tabular text-lg font-bold text-ink">{formatPaise(bundle.totalPaise)}</span>
+              <span className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Combo total</span>
+              <span className="font-data text-xl font-bold leading-none text-primary">{formatPaise(bundle.totalPaise)}</span>
             </div>
             <Button type="button" onClick={addCombo} shape="pill" className="px-6 py-3 font-semibold">
               Add Combo

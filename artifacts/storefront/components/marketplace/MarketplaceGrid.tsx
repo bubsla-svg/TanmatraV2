@@ -65,15 +65,15 @@ export function MarketplaceGrid({
             </div>
             <div className="flex flex-1 flex-col gap-1">
               {item.supplierName && (
-                <span className="text-3xs font-bold uppercase tracking-widest text-ink-muted">
+                <span className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">
                   {item.supplierName}
                 </span>
               )}
-              <h3 className="line-clamp-2 text-sm font-bold leading-tight text-ink">{item.name}</h3>
+              <h3 className="line-clamp-2 font-display text-lg font-semibold leading-tight text-primary">{item.name}</h3>
               {item.weightLabel && (
-                <span className="text-3xs text-ink-muted">{item.weightLabel}</span>
+                <span className="font-data text-2xs text-ink-muted">{item.weightLabel}</span>
               )}
-              <span className="tabular mt-auto pt-3 text-sm font-semibold text-ink">
+              <span className="font-data mt-auto pt-3 text-sm font-bold text-primary">
                 {formatPaise(item.pricePaise)}
               </span>
             </div>
