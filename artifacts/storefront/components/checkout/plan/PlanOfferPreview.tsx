@@ -32,14 +32,14 @@ export function PlanOfferPreview({ offer }: { offer: PlanOffer }) {
   const cadence = CADENCE_LABEL[offer.cadence] ?? offer.cadence;
   return (
     <section
-      className="flex flex-col gap-4 rounded-3xl border border-line bg-surface p-5"
+      className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5"
       aria-label="What this plan includes"
     >
       <div className="flex items-baseline justify-between gap-3">
-        <span className="text-sm font-semibold text-ink">
-          {offer.mealsPerCycle} lunches <span className="font-normal text-ink-muted">· {cadence}</span>
+        <span className="text-sm text-ink-muted">
+          <span className="font-display text-lg font-semibold leading-tight text-primary">{offer.mealsPerCycle} lunches</span> · {cadence}
         </span>
-        <span className="tabular text-lg font-semibold text-ink">
+        <span className="font-data text-lg font-bold text-primary">
           {formatPaise(offer.cycleTotalPaise)}
         </span>
       </div>
@@ -50,7 +50,7 @@ export function PlanOfferPreview({ offer }: { offer: PlanOffer }) {
 
       {offer.dishes.length > 0 && (
         <div className="flex flex-col gap-2 border-t border-line pt-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-faint">
+          <h3 className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">
             {offer.cadence === "one_off" ? "Your three lunches" : "Dishes in this rotation"}
           </h3>
           <ul className="flex flex-col divide-y divide-line" data-testid="plan-offer-dishes">

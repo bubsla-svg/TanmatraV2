@@ -11,9 +11,10 @@ import { memberDietForTrack } from "@/lib/planCheckout";
 import { LocationPickerFlow } from "@/components/address/LocationPickerFlow";
 import { PaymentMethodsRow } from "@/components/checkout/PaymentMethodsRow";
 import { KitchenSafetyChip } from "@/components/trust/KitchenSafetySheet";
+import { StickyAction } from "@/components/primitives/StickyAction";
 
 const inputCls =
-  "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus-visible:border-line-strong";
+  "w-full min-h-[50px] rounded-2xl border border-line bg-surface px-4 py-3 text-base text-ink outline-none placeholder:text-ink-faint focus-visible:border-primary";
 const TRACK_LABEL: Record<DietTrack, string> = { veg: "Vegetarian", egg: "Egg", nonveg: "Non-veg" };
 
 export interface PlanDetailsValue {
@@ -117,12 +118,12 @@ export function PlanDetails({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-ink">What do you eat?</span>
+        <span className="font-display text-xl font-semibold leading-tight text-primary">What do you eat?</span>
         <div className="flex flex-wrap gap-2">
           {servedTracks.map((t) => (
             <button
               key={t} type="button" onClick={() => onTrackChange(t)} aria-pressed={t === track}
-              className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium transition-colors active:scale-[0.98] ${t === track ? "border-gold bg-surface-raised text-gold-text" : "border-line bg-surface text-ink-muted"}`}
+              className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium transition-colors active:scale-[0.98] ${t === track ? "border-gold bg-primary/10 text-primary" : "border-transparent bg-secondary text-ink-muted"}`}
             >
               {TRACK_LABEL[t]}
             </button>
@@ -133,7 +134,7 @@ export function PlanDetails({
       <MemberIntake value={member} onChange={setMember} minimal={minimalIntake} />
 
       <div className="flex flex-col gap-3">
-        <span className="text-sm font-medium text-ink">Where should we deliver?</span>
+        <span className="font-display text-xl font-semibold leading-tight text-primary">Where should we deliver?</span>
         {!manualMode ? (
           <button
             type="button"
@@ -181,7 +182,7 @@ export function PlanDetails({
       )}
 
       {/* T-10: a 48px row where the whole label toggles and the box is 24px. */}
-      <label className="flex min-h-12 w-full cursor-pointer items-start gap-3 rounded-2xl border border-line p-3 text-sm text-ink-muted">
+      <label className="flex min-h-12 w-full cursor-pointer items-start gap-3 rounded-2xl border border-line bg-surface p-3 text-sm text-ink-muted">
         <input
           type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)}
           className="mt-0.5 size-6 shrink-0 cursor-pointer accent-[var(--gold)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]"
@@ -189,17 +190,17 @@ export function PlanDetails({
         <span>{DPDP_CONSENT_COPY}</span>
       </label>
 
-      <div className="flex flex-col gap-2 rounded-card border border-line bg-surface p-5">
-        {addOnLine && <p className="tabular text-xs font-medium text-ink-muted">{addOnLine}</p>}
+      <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-5">
+        {addOnLine && <p className="font-data text-xs font-medium text-ink-muted">{addOnLine}</p>}
         {!!creditAppliedPaise && (
           <p className="flex items-baseline justify-between gap-3 border-y border-line py-2 text-xs font-medium text-sage-text">
             <span>Credit applied:</span>
-            <span className="tabular">−{formatPaise(creditAppliedPaise)}</span>
+            <span className="font-data">−{formatPaise(creditAppliedPaise)}</span>
           </p>
         )}
         <div className="flex items-baseline justify-between gap-3">
           <span className="text-sm text-ink-muted">{billedLabel} (incl. GST)</span>
-          <span className="tabular text-xl font-semibold text-gold-text">
+          <span className="font-data text-2xl font-bold text-primary">
             {quoteLoading || quoteTotalPaise === null ? "…" : formatPaise(quoteTotalPaise)}
           </span>
         </div>
@@ -238,13 +239,13 @@ export function PlanDetails({
           Anchored bottom-0, not the bottom-16 tab-bar band: /checkout is a
           (focus)-shell route (app/(focus)/) — the global tab bar never renders
           here. T-12: accepted methods above the CTA, amount on the button. */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
+      <StickyAction className="bottom-0 z-30">
         <div className="mx-auto max-w-md px-4 py-3">
           <PaymentMethodsRow className="mb-1.5" />
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 flex-col">
-              <span className="text-3xs font-bold uppercase tracking-widest text-ink-muted">{billedLabel}</span>
-              <span className="tabular text-lg font-bold text-ink">
+              <span className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">{billedLabel}</span>
+              <span className="font-data text-xl font-bold leading-none text-primary">
                 {quoteLoading || quoteTotalPaise === null ? "…" : formatPaise(quoteTotalPaise)}
               </span>
             </div>
@@ -252,7 +253,7 @@ export function PlanDetails({
               type="button" disabled={!valid || busy}
               onClick={() => onSubmit({ member: draftToMember(submittedMember), address: { line1: line1.trim(), city: city.trim(), pincode: pincode.replace(/\D/g, "") } })}
               aria-busy={verifying || busy} aria-live="polite"
-              shape="pill" size="fluid" className="px-8 py-3.5 text-center font-semibold disabled:opacity-40 shadow-lg shadow-gold/20 transition-transform duration-300 hover:scale-[1.02] hover:shadow-gold/40 active:scale-95"
+              shape="pill" size="fluid" className="min-h-12 px-8 py-3.5 text-center font-semibold disabled:opacity-40"
             >
               {/* Once the modal resolves, money is already captured — "Opening
                   payment…" would read as a hung or failed button on a charge
@@ -267,7 +268,7 @@ export function PlanDetails({
             </Button>
           </div>
         </div>
-      </div>
+      </StickyAction>
     </div>
   );
 }

@@ -15,7 +15,7 @@ export function PaymentMethodsRow({ className = "" }: { className?: string }) {
       {METHODS.map((m) => (
         <li
           key={m}
-          className="inline-flex h-6 items-center rounded-md border border-line bg-surface px-2 text-2xs font-bold uppercase tracking-wide text-ink-muted"
+          className="inline-flex h-6 items-center rounded-full bg-secondary px-2.5 text-[10px] font-bold uppercase tracking-[.12em] text-ink-muted"
         >
           {m}
         </li>

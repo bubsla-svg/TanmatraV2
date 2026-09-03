@@ -27,22 +27,22 @@ export function ThankYouRecommendations() {
 
   return (
     <div className="mt-8 border-t border-line pt-6">
-      <span className="text-xs font-bold uppercase tracking-wider text-gold-text">
+      <span className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">
         Next Steps for Your Journey
       </span>
-      <h2 className="mt-1 text-lg font-bold text-ink">Maxing Out Your Results</h2>
+      <h2 className="mt-1 font-display text-2xl font-semibold leading-tight text-primary">Maxing Out Your Results</h2>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         {recommendations.map((rec) => (
           <div
             key={rec.title}
-            className="flex flex-col justify-between rounded-xl border border-line bg-surface p-4 shadow-sm"
+            className="flex flex-col justify-between rounded-2xl border border-line bg-surface p-4"
           >
             <div>
               <span className="rounded-full bg-sage-soft px-2 py-0.5 text-3xs font-bold text-sage-text">
                 {rec.badge}
               </span>
-              <h3 className="mt-2 text-xs font-bold text-ink">{rec.title}</h3>
+              <h3 className="mt-2 font-display text-base font-semibold leading-tight text-primary">{rec.title}</h3>
               <p className="mt-1 text-2xs leading-relaxed text-ink-muted">
                 {rec.description}
               </p>

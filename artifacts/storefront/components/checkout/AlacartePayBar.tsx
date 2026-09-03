@@ -43,8 +43,8 @@ export function AlacartePayBar({
         <PaymentMethodsRow />
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 flex-col">
-            <span className="text-2xs font-bold uppercase tracking-widest text-ink-muted">Payable now</span>
-            <span className="tabular text-lg font-bold text-ink">
+            <span className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Payable now</span>
+            <span className="font-data text-xl font-bold leading-none text-primary">
               {amount}
               {amountEstimated && <span className="ml-1 text-xs font-medium text-ink-faint">est.</span>}
             </span>

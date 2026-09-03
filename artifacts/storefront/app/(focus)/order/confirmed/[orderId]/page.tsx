@@ -40,7 +40,7 @@ export default async function ConfirmedPage({
     return (
       <div className="min-h-dvh">
         <section className="mx-auto max-w-md px-4 py-10 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">
+          <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">
             {result.kind === "not_found"
               ? "We can't find that order"
               : "We can't reach the kitchen right now"}
@@ -77,11 +77,11 @@ export default async function ConfirmedPage({
             screen. This is a confirmation, not a celebration: no confetti,
             no oversized checkmark, just the status the server actually sent. */}
         <div className="flex flex-col items-center text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-text">
+          <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">
             Order confirmed
           </p>
           <h1
-            className={`mt-3 flex items-center justify-center gap-2.5 text-3xl font-semibold tracking-tight ${TONE_TEXT[tone]}`}
+            className={`mt-3 flex items-center justify-center gap-2.5 font-display text-4xl font-semibold leading-[1] tracking-[-.03em] ${TONE_TEXT[tone]}`}
           >
             {tone === "live" && (
               <span
@@ -91,20 +91,20 @@ export default async function ConfirmedPage({
             )}
             {statusLabel(status)}
           </h1>
-          <p className="tabular mt-3 text-xs uppercase tracking-widest text-ink-faint">
+          <p className="font-data mt-3 text-xs uppercase tracking-[.16em] text-ink-faint">
             #{orderId}
           </p>
           {trackable && timing === "on_demand" && (
             <p className="mt-2 text-sm text-ink-muted">
               Estimated arrival in{" "}
-              <span className="tabular font-semibold text-ink">{etaMinutes} min</span>
+              <span className="font-data font-bold text-primary">{etaMinutes} min</span>
             </p>
           )}
           {trackable && timing === "scheduled" && (
             <p className="mt-2 text-sm text-ink-muted">
               Scheduled for{" "}
-              <span className="font-semibold text-ink">{scheduledLabel}</span>
-              {deliveryWindow && <span className="tabular"> · {deliveryWindow}</span>}
+              <span className="font-semibold text-primary">{scheduledLabel}</span>
+              {deliveryWindow && <span className="font-data"> · {deliveryWindow}</span>}
             </p>
           )}
           {/* Law 9: each of these states ends with what happens next. "pending"

@@ -57,12 +57,12 @@ export function PlanPerks({ orderId }: { orderId: string }) {
   return (
     <div className="mt-6 flex flex-col gap-3">
       {creditApplied !== null && (
-        <p className="rounded-xl bg-sage-soft px-4 py-3 text-sm leading-relaxed text-sage-text">
+        <p className="rounded-2xl bg-sage-soft px-4 py-3 text-sm leading-relaxed text-sage-text">
           {formatPaise(creditApplied)} in credits were applied to this order.
         </p>
       )}
       {creditback !== null && (
-        <p className="rounded-xl bg-sage-soft px-4 py-3 text-sm leading-relaxed text-sage-text">
+        <p className="rounded-2xl bg-sage-soft px-4 py-3 text-sm leading-relaxed text-sage-text">
           Your {formatPaise(creditback)} comes back as credit — start any plan within 7 days
           and it comes off that first bill.
         </p>
@@ -71,7 +71,7 @@ export function PlanPerks({ orderId }: { orderId: string }) {
         <PostCheckoutAddOns subscriptionId={eveningAddSubId} />
       )}
       {perks.autopayDisclaimer && (
-        <p className="rounded-xl border border-line bg-surface px-4 py-3 text-xs leading-relaxed text-ink-muted">
+        <p className="rounded-2xl border border-line bg-surface px-4 py-3 text-xs leading-relaxed text-ink-muted">
           {perks.autopayDisclaimer}
         </p>
       )}

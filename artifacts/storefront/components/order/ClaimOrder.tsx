@@ -109,7 +109,7 @@ export function ClaimOrder({ orderId }: { orderId: string }) {
 
   if (state.kind === "saved") {
     return (
-      <p className="mt-6 rounded-xl bg-sage-soft px-4 py-3 text-sm leading-relaxed text-sage-text">
+      <p className="mt-6 rounded-2xl bg-sage-soft px-4 py-3 text-sm leading-relaxed text-sage-text">
         {CLAIM_SUCCESS_COPY}{" "}
         <Link href="/account/orders" className="font-medium underline underline-offset-4">
           View your orders
@@ -120,7 +120,7 @@ export function ClaimOrder({ orderId }: { orderId: string }) {
 
   if (state.kind === "refused" || state.kind === "unavailable") {
     return (
-      <p role="status" className="mt-6 rounded-xl border border-line px-4 py-3 text-sm leading-relaxed text-ink-muted">
+      <p role="status" className="mt-6 rounded-2xl border border-line px-4 py-3 text-sm leading-relaxed text-ink-muted">
         {state.kind === "refused"
           ? state.copy
           : "We couldn't save this order to an account just now. Your order is unaffected — try again in a moment."}
@@ -129,7 +129,7 @@ export function ClaimOrder({ orderId }: { orderId: string }) {
   }
 
   return (
-    <div className="mt-6 rounded-xl border border-line bg-surface px-4 py-4">
+    <div className="mt-6 rounded-2xl border border-line bg-surface px-4 py-4">
       <p className="text-sm leading-relaxed text-ink-muted">{CLAIM_OFFER_COPY}</p>
       <div className="mt-3">
         <PhoneAuth startExpanded onVerified={() => void attach(false)} />

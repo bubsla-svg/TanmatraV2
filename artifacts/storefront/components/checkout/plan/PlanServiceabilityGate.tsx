@@ -84,11 +84,11 @@ export function PlanServiceabilityGate({
 
   return (
     <section
-      className="flex flex-col gap-4 rounded-3xl border border-line bg-surface p-5"
+      className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5"
       aria-label="Delivery availability"
     >
       <div className="flex flex-col gap-1.5">
-        <h2 className="text-sm font-semibold text-ink">First — do we deliver to you?</h2>
+        <h2 className="font-display text-xl font-semibold leading-tight text-primary">First — do we deliver to you?</h2>
         <p className="text-sm leading-relaxed text-ink-muted">
           We&rsquo;ll check your PIN code before asking for anything else.
         </p>
@@ -106,7 +106,7 @@ export function PlanServiceabilityGate({
           }}
           placeholder="201301"
           aria-invalid={pincode.length > 0 && !pinValid}
-          className="min-w-0 flex-1 rounded-2xl border border-line bg-transparent px-4 py-3 text-base text-ink outline-none placeholder:text-ink-faint focus-visible:border-line-strong"
+          className="min-w-0 min-h-[50px] flex-1 rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none placeholder:text-ink-faint focus-visible:border-primary"
         />
         <Button
           shape="pill"
