@@ -62,8 +62,8 @@ export function MenuGrid({
 
   if (visibleCount === 0) {
     return (
-      <div role="list" className="rounded-2xl border border-dashed border-line px-6 py-12 text-center">
-        <p className="text-sm text-ink-muted">{emptyMessage}</p>
+      <div role="list" className="flex min-h-[340px] flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface px-5 py-12 text-center">
+        <p className="max-w-sm text-sm text-ink-muted">{emptyMessage}</p>
         {onClearFilter ? (
           <button
             type="button"
@@ -86,7 +86,7 @@ export function MenuGrid({
   );
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-12">
       {sections.map((section) => {
         // Section 13 never gets the personalization boost — see the file
         // header. Every other section applies `order` normally.
@@ -100,24 +100,29 @@ export function MenuGrid({
           : section.items.length;
         return (
           <section key={section.order} id={sectionAnchorId(section.order)} aria-label={section.name} className="scroll-anchor-offset">
-            <h2 data-testid="menu-section-heading" className="mb-3 text-lg font-semibold tracking-tight text-ink">
+            {/* PR-11c: the revision's section header — display face, the
+                count in the data face beside it. */}
+            <h2 data-testid="menu-section-heading" className="mb-4 font-display text-2xl font-semibold leading-none text-primary">
               {section.name}{" "}
-              <span data-testid="menu-section-count" className="tabular font-normal text-ink-faint">
+              <span data-testid="menu-section-count" className="font-data text-sm font-normal text-ink-faint">
                 · {shown}
               </span>
             </h2>
-            <div className="flex flex-col gap-3" role="list">
+            {/* The revision's card grid: one column on a phone, two from sm,
+                three from lg. `order` still applies (grid honours it). */}
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" role="list">
               {section.items.map(({ dishId, node }) => (
                 <div
                   key={dishId}
                   role="listitem"
-                  // N3.1: content-visibility:auto skips layout+paint for rows
-                  // the viewport hasn't reached yet — the 116-dish grid
-                  // otherwise builds full layout for every card up front.
-                  // See globals.css's .cv-auto-row for why this is a
-                  // SEPARATE utility from .cv-auto (horizontal rails) rather
-                  // than a reuse.
-                  className="cv-auto-row"
+                  // PR-11c: no `cv-auto-row` on the revision's card. The
+                  // utility (N3.1) reserved 192px per row for the old list
+                  // shape; the card is ~3× that, so the reservation would
+                  // mis-size every unrendered row and shift the document as
+                  // rows materialise — the CLS it was meant to prevent — and
+                  // Chromium's lazy render then leaves most of the grid
+                  // unlaid-out for seconds after load. `.cv-auto` stays on
+                  // the horizontal rails, where item sizes are fixed.
                   style={order && boosted ? { order: order.get(dishId) } : undefined}
                   hidden={visibleIds ? !visibleIds.has(dishId) : false}
                 >

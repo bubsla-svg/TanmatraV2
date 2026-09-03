@@ -169,8 +169,8 @@ export function SectionChipBar({
               // min-h-11 (T-06): the visual chip stays slim inside a 44px box.
               className={`inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-full border px-3.5 text-xs font-semibold transition-transform active:scale-95 ${
                 on
-                  ? "border-gold bg-gold/10 text-gold-text"
-                  : "border-line bg-surface text-ink-muted hover:text-ink"
+                  ? "border-gold bg-primary/10 text-primary"
+                  : "border-transparent bg-secondary text-ink-muted hover:text-ink"
               }`}
             >
               {a.label}

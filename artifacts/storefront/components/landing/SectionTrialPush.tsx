@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPaise } from "@/lib/format";
 import { TRIAL_PRICE_PAISE, TRIAL_COPY } from "@/lib/trial";
@@ -26,51 +27,60 @@ export function SectionTrialPush() {
   const price = formatPaise(TRIAL_PRICE_PAISE);
 
   return (
-    <section className="mx-auto w-full max-w-5xl px-4 sm:px-6">
-      <div className="overflow-hidden rounded-card border-2 border-gold/40 bg-surface-raised p-6 shadow-md sm:p-10">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-xl">
-            <span className="text-xs font-bold uppercase tracking-wider text-gold-text">
+    <section className="mx-auto w-full max-w-[1240px] px-5 sm:px-8">
+      {/* The reference's "gentler way to commit" panel: the copy and its two
+          promises on the left, the two doors on the right. */}
+      <div className="rounded-[2rem] bg-secondary p-8 sm:p-12">
+        <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-12">
+          <div className="animate-rise-in">
+            <div aria-hidden className="mb-8 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-primary-foreground">
+              <Sparkles size={20} />
+            </div>
+            <span className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">
               Start here
             </span>
-            <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+            <h2 className="mt-4 max-w-md font-display text-4xl font-semibold leading-[1] text-primary sm:text-5xl">
               Try three lunches for {price}.
             </h2>
-            <p className="mt-3 text-base leading-relaxed text-ink-muted">
+            <p className="mt-5 max-w-sm text-base leading-7 text-ink-muted">
               Three weekday lunches, cooked fresh and delivered hot. Decide
               afterwards whether you want them every day.
             </p>
+          </div>
 
-            {/* Verbatim from lib/trial.ts — see the note above on paraphrase. */}
-            <ul className="mt-6 flex flex-col gap-2.5 text-sm text-ink">
-              <li className="flex gap-2.5">
-                <span aria-hidden className="text-gold-text">✓</span>
+          <div className="flex flex-col gap-8 animate-rise-in stagger-1">
+            {/* Verbatim from lib/trial.ts — see the note above on paraphrase.
+                The ✓ is the reference's accent glyph on each companion row. */}
+            <ul className="flex flex-col gap-7 text-base leading-6 text-ink">
+              <li className="flex gap-4 border-b border-line pb-7">
+                <span aria-hidden className="font-display text-3xl leading-none text-accent">✓</span>
                 {TRIAL_COPY.creditLine}
               </li>
-              <li className="flex gap-2.5">
-                <span aria-hidden className="text-gold-text">✓</span>
+              <li className="flex gap-4 border-b border-line pb-7">
+                <span aria-hidden className="font-display text-3xl leading-none text-accent">✓</span>
                 {TRIAL_COPY.noAutoConvert}
               </li>
             </ul>
-          </div>
 
-          <div className="flex shrink-0 flex-col gap-3 lg:w-64">
-            <Button asChild shape="xl" size="fluid" className="px-8 py-4 text-base font-bold shadow-lg shadow-gold/20">
-              <Link href="/trial">Start with 3 lunches</Link>
-            </Button>
-            {/* The only other door, and it is quiet on purpose: someone who
-                already knows they want a month should not have to read the
-                trial pitch twice, but they are not who this band is for. */}
-            <Link
-              href="/plans"
-              /* 328×20 before: a full-width text link with no vertical box of
-                 its own. `w-full` because touch-target-min is inline-flex and
-                 would otherwise shrink this to its text, undoing the centred
-                 full-column look it has in this card. */
-              className="touch-target-min w-full text-center text-sm font-semibold text-ink-muted underline-offset-4 hover:text-ink hover:underline"
-            >
-              Or see monthly plans
-            </Link>
+            <div className="flex flex-col gap-3 sm:max-w-xs">
+              <Button asChild shape="pill" size="fluid" className="min-h-12 px-8 text-sm font-bold">
+                <Link href="/trial">Start with 3 lunches</Link>
+              </Button>
+              {/* The only other door, and it is quiet on purpose: someone who
+                  already knows they want a month should not have to read the
+                  trial pitch twice, but they are not who this band is for. */}
+              <Link
+                href="/plans"
+                /* 328×20 before: a full-width text link with no vertical box of
+                   its own. `w-full` because touch-target-min is inline-flex and
+                   would otherwise shrink this to its text, undoing the centred
+                   full-column look it has in this card. */
+                className="touch-target-min w-full items-center justify-center gap-2 text-sm font-bold text-primary hover:opacity-80"
+              >
+                Or see monthly plans
+                <ArrowRight aria-hidden size={16} />
+              </Link>
+            </div>
           </div>
         </div>
       </div>

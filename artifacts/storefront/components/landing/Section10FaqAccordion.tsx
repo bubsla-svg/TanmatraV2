@@ -32,15 +32,15 @@ export function Section10FaqAccordion() {
   ];
 
   return (
-    <section id="faq" className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-      <div className="text-center">
-        <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
+    <section id="faq" className="mx-auto max-w-4xl px-5 py-16 sm:px-8 sm:py-24">
+      <div className="animate-rise-in">
+        <span className="text-[11px] font-bold uppercase tracking-[.2em] text-accent">
           Helpful Answers
         </span>
-        <h2 className="mt-2 text-2xl font-bold text-ink sm:text-4xl">
+        <h2 className="mt-3 font-display text-4xl font-semibold leading-none text-primary sm:text-5xl">
           Frequently Asked Questions
         </h2>
-        <p className="mt-2 text-sm text-ink-muted">
+        <p className="mt-5 max-w-md text-base leading-7 text-ink-muted">
           Find answers to common questions about our meals, delivery, and plans.
         </p>
       </div>
