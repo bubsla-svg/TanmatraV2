@@ -1,4 +1,5 @@
 import React from "react";
+import { Rail } from "./Rail";
 
 /**
  * A titled section of cards with a choice of layout. Was `HorizontalSnapRail`,
@@ -67,13 +68,13 @@ export const CardSection: React.FC<CardSectionProps> = ({
           ))}
         </div>
       ) : (
-        <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 no-scrollbar scroll-smooth">
+        <Rail className="gap-4 pb-4 scroll-smooth">
           {React.Children.map(children, (child) => (
             <div className="snap-start shrink-0 min-w-[280px] max-w-[320px]">
               {child}
             </div>
           ))}
-        </div>
+        </Rail>
       )}
     </div>
   );

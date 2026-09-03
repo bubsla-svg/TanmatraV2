@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ProtocolKey } from "@/content/landing/protocol";
 import { DishImage } from "@/components/menu/DishImage";
+import { Rail } from "@/components/primitives/Rail";
 
 /** Slim projection of a catalog dish for the protocol rail. */
 export interface ProtocolDish {
@@ -66,7 +67,7 @@ export function ProtocolDishRail({
           No qualifying dishes are live right now — check back soon.
         </p>
       ) : (
-        <div className="mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2">
+        <Rail className="mt-8 gap-4 pb-2">
           {picks.map((d) => (
             <Link
               key={d.slug}
@@ -97,7 +98,7 @@ export function ProtocolDishRail({
               </div>
             </Link>
           ))}
-        </div>
+        </Rail>
       )}
     </section>
   );

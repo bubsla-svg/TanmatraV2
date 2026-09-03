@@ -1,4 +1,4 @@
-# PR-11a flipbook — 393×852
+# PR-11 flipbooks — 393×852
 
 Evidence for the tokens sub-PR (`docs/MOBILE-FIRST-CX-BRIEF.md` "Foundations 0").
 Same seven states before and after, captured at the brief's 393px source-of-truth
@@ -27,3 +27,12 @@ so "after" is the whole app in the delivered revision's palette and type, unrest
 
 Regenerate: `scratch/flipbook.mjs` pattern = `e2e/specs/stitch-runtime/*-flipbook.spec.ts`
 (goto → role-first readiness → deterministic shot). Re-baseline `layout-vrt` separately.
+
+## PR-11b — primitives
+
+`Rail`, `Disclosure`, `QuantityStepper`, `StickyAction` and their migrated call sites.
+The "before" for 11b is the merged 11a tree, i.e. `after/` and `after-light/` above —
+no separate copy. `11b/after/` and `11b/after-light/` are the same seven states on the
+11b tree. What to compare: the dish-card and PDP steppers, the cart-drawer rows, the
+checkout order-summary rows, the pay bar, the mini-cart pill, the section chip bar and
+the pantry rail. Every state present before is present after; only the skin moved.

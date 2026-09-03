@@ -2,6 +2,7 @@
 // Client: owns an IntersectionObserver over the section anchors and the
 // active-chip state that observer drives. Neither can exist server-side.
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Rail } from "@/components/primitives/Rail";
 
 /**
  * The menu's navigation spine (TNM-MENU-01 M-5 §3.2).
@@ -142,12 +143,14 @@ export function SectionChipBar({
   if (!showAnchors && !leading) return null;
 
   return (
-    <div
+    <Rail
       ref={railRef}
+      snap="none"
+      bleed="4"
       role="group"
       aria-label="Jump to section"
       data-testid="menu-section-chipbar"
-      className="no-scrollbar -mx-4 flex items-center gap-1.5 overflow-x-auto px-4"
+      className="items-center gap-1.5"
     >
       {leading}
       {showAnchors &&
@@ -174,7 +177,7 @@ export function SectionChipBar({
             </button>
           );
         })}
-    </div>
+    </Rail>
   );
 }
 

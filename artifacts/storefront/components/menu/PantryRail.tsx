@@ -3,6 +3,7 @@ import { SafeImage } from "@/components/ui/SafeImage";
 import { MarketplaceAddToCart } from "@/components/cart/MarketplaceAddToCart";
 import { formatPaise } from "@/lib/format";
 import { fetchMarketplaceItemsServer } from "@/lib/marketplaceApi";
+import { Rail } from "@/components/primitives/Rail";
 
 /** Three or four cards — a glance, not a shelf. */
 const RAIL_LIMIT = 4;
@@ -27,7 +28,7 @@ export async function PantryRail() {
           Pantry
         </Link>
       </div>
-      <ul className="no-scrollbar -mx-gutter flex snap-x snap-mandatory gap-3 overflow-x-auto px-gutter pb-1">
+      <Rail as="ul" bleed="gutter" className="gap-3 pb-1">
         {items.map((item) => (
           <li key={item.id} className="flex w-40 flex-none snap-start flex-col gap-2 rounded-2xl border border-line bg-surface p-2.5">
             <Link href={`/marketplace/${item.slug}`} className="flex flex-col gap-2">
@@ -38,7 +39,7 @@ export async function PantryRail() {
             <MarketplaceAddToCart item={item} variant="card" />
           </li>
         ))}
-      </ul>
+      </Rail>
     </section>
   );
 }

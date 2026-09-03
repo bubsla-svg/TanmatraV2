@@ -3,6 +3,7 @@
 import { useCart } from "@/components/cart/CartProvider";
 import { addLine, qtyOf, setQty } from "@/lib/cartStore";
 import type { MarketplaceItem } from "@/lib/marketplaceApi";
+import { QuantityStepper } from "@/components/primitives/QuantityStepper";
 
 export function MarketplaceAddToCart({
   item,
@@ -50,32 +51,15 @@ export function MarketplaceAddToCart({
   }
 
   return (
-    <div
-      className={
-        variant === "card"
-          ? "flex h-11 w-full items-center justify-between rounded-lg border border-gold bg-surface"
-          : "flex items-center rounded-full border border-line-strong bg-surface h-[44px]"
-      }
-      role="group"
-      aria-label={`${item.name} quantity`}
-    >
-      <button
-        type="button"
-        aria-label="Decrease quantity"
-        onClick={(e) => { e.preventDefault(); setCart(setQty(cart, item.id, "marketplace", qty - 1)); }}
-        className={`h-full w-12 flex items-center justify-center text-lg font-semibold transition-transform active:scale-[0.98] ${variant === "card" ? "text-gold-text" : "text-ink"}`}
-      >
-        −
-      </button>
-      <span aria-live="polite" className="tabular min-w-[24px] text-center text-sm font-semibold text-ink">{qty}</span>
-      <button
-        type="button"
-        aria-label="Increase quantity"
-        onClick={(e) => { e.preventDefault(); setCart(setQty(cart, item.id, "marketplace", qty + 1)); }}
-        className={`h-full w-12 flex items-center justify-center text-lg font-semibold transition-transform active:scale-[0.98] ${variant === "card" ? "text-gold-text" : "text-ink"}`}
-      >
-        +
-      </button>
-    </div>
+    // PR-11b: the shared QuantityStepper — the card keeps the dish card's
+    // accent grammar and stretches to the card; the PDP face stays neutral.
+    <QuantityStepper
+      value={qty}
+      label={`${item.name} quantity`}
+      tone={variant === "card" ? "accent" : "neutral"}
+      fluid={variant === "card"}
+      onDecrease={(e) => { e.preventDefault(); setCart(setQty(cart, item.id, "marketplace", qty - 1)); }}
+      onIncrease={(e) => { e.preventDefault(); setCart(setQty(cart, item.id, "marketplace", qty + 1)); }}
+    />
   );
 }

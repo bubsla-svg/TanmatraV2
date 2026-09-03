@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Rail } from "@/components/primitives/Rail";
 
 type Tab =
   | "subscriptions"
@@ -30,7 +31,7 @@ export function AccountNav({ active }: { active: Tab }) {
     </Link>
   );
   return (
-    <nav aria-label="Account" className="mb-6 flex gap-5 overflow-x-auto border-b border-line">
+    <Rail as="nav" snap="none" aria-label="Account" className="mb-6 gap-5 border-b border-line">
       {link("/account/subscriptions", "subscriptions", "Plans")}
       {link("/account/orders", "orders", "Orders")}
       {link("/account/appointments", "appointments", "Consults")}
@@ -42,6 +43,6 @@ export function AccountNav({ active }: { active: Tab }) {
       {link("/account/loyalty", "loyalty", "Rewards")}
       {link("/account/symptoms", "symptoms", "Symptoms")}
       {link("/account/history", "history", "History")}
-    </nav>
+    </Rail>
   );
 }

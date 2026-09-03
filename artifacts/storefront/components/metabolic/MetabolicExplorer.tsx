@@ -9,6 +9,7 @@ import { LandingIcon } from "@/components/landing/LandingIcon";
 import { planDisplay } from "@/lib/plans";
 import { GOALS, type GoalId, type MetabolicGoal } from "@/content/landing/metabolic";
 import { DishImage } from "@/components/menu/DishImage";
+import { Rail } from "@/components/primitives/Rail";
 
 /** Slim projection of a catalog dish — only what the preview needs. */
 export interface MetabolicDish {
@@ -89,7 +90,7 @@ export function MetabolicExplorer({ dishes }: { dishes: MetabolicDish[] }) {
       </div>
 
       {preview.length > 0 && (
-        <div className="mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2">
+        <Rail snap="center" className="mt-4 gap-4 pb-2">
           {preview.map((d) => (
             <Link
               key={d.slug}
@@ -119,7 +120,7 @@ export function MetabolicExplorer({ dishes }: { dishes: MetabolicDish[] }) {
               </div>
             </Link>
           ))}
-        </div>
+        </Rail>
       )}
     </div>
   );

@@ -6,6 +6,7 @@
 import "@/lib/themes/stitch.css";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { addLine, qtyOf, setQty, subtotalPaise } from "@/lib/cartStore";
+import { QuantityStepper } from "@/components/primitives/QuantityStepper";
 import { formatMacroLine, formatPaise } from "@/lib/format";
 import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
 import { fetchQuote, type QuoteSnapshot } from "@/lib/quoteApi";
@@ -159,11 +160,14 @@ export function CartDrawer({
                   )}
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center rounded-full border border-line bg-surface-raised" role="group" aria-label={`${l.name} quantity`}>
-                    <button type="button" aria-label="Decrease" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) - 1, l.customizations))} className="min-h-10 min-w-10 rounded-full text-ink transition-transform active:scale-[0.98]">−</button>
-                    <span aria-live="polite" className="tabular min-w-6 text-center text-sm font-semibold text-ink">{l.qty}</span>
-                    <button type="button" aria-label="Increase" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) + 1, l.customizations))} className="min-h-10 min-w-10 rounded-full text-ink transition-transform active:scale-[0.98]">+</button>
-                  </div>
+                  <QuantityStepper
+                    value={l.qty}
+                    label={`${l.name} quantity`}
+                    decreaseLabel="Decrease"
+                    increaseLabel="Increase"
+                    onDecrease={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) - 1, l.customizations))}
+                    onIncrease={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) + 1, l.customizations))}
+                  />
                   <span className="tabular w-16 text-right text-sm font-semibold text-ink">
                     {formatPaise(l.pricePaise * l.qty)}
                   </span>
