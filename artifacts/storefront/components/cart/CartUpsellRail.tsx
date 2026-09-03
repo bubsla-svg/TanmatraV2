@@ -45,20 +45,20 @@ export function CartUpsellRail({
   if (candidates.length === 0) return null;
 
   return (
-    <div className="mt-4 rounded-xl border border-line bg-surface-raised p-3">
-      <p className="text-xs font-bold uppercase tracking-wider text-gold-text">
+    <div className="mt-4 rounded-2xl bg-secondary p-3">
+      <p className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">
         Recommended Add-ons
       </p>
       <div className="mt-2 flex flex-col gap-2">
         {candidates.map((item) => (
           <div
             key={item.id}
-            className="flex items-center justify-between gap-2 rounded-lg border border-line bg-surface p-2.5"
+            className="flex items-center justify-between gap-2 rounded-xl bg-surface p-2.5"
           >
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-semibold text-ink">{item.name}</p>
+              <p className="truncate font-display text-base font-semibold leading-tight text-primary">{item.name}</p>
               <p className="truncate text-3xs text-ink-muted">{item.description}</p>
-              <p className="tabular text-xs font-medium text-gold-text">
+              <p className="font-data text-xs font-bold text-primary">
                 {formatPaise(item.pricePaise)}
               </p>
             </div>
@@ -67,7 +67,7 @@ export function CartUpsellRail({
             <button
               type="button"
               onClick={() => onAdd(item)}
-              className="min-h-11 shrink-0 rounded-md border border-line-strong bg-surface px-3 py-1.5 text-xs font-bold text-ink transition-transform active:scale-95 hover:bg-surface-raised"
+              className="min-h-11 shrink-0 rounded-full border border-line-strong bg-surface px-3.5 py-1.5 text-xs font-bold text-ink transition-transform active:scale-95 hover:bg-surface-raised"
             >
               + Add
             </button>

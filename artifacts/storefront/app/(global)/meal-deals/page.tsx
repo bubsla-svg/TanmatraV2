@@ -14,7 +14,7 @@ export default async function MealDealsPage() {
   return (
     <div data-ui-generation="stitch-74" data-screen-id="5.9" data-screen-state="default" className="min-h-dvh flex flex-col bg-bg pb-24">
       <div className="sticky top-0 z-20 bg-bg/95 backdrop-blur-md pt-4 pb-4 px-gutter border-b border-line">
-        <h1 className="font-bold text-3xl text-ink">Meal Bundles</h1>
+        <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">Meal Bundles</h1>
         <p className="text-sm text-ink-muted">Curated combinations for your goals</p>
       </div>
 
