@@ -7,6 +7,7 @@
 // see lib/themes/stitch.css.
 import "@/lib/themes/stitch.css";
 import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { itemCount, subtotalPaise } from "@/lib/cartStore";
 import { formatPaise } from "@/lib/format";
@@ -18,6 +19,8 @@ import { useScrollHide } from "@/lib/useScrollHide";
 // static import here would ship all of that in the baseline JS for every
 // route, since MiniCartBar is mounted globally in app/layout.tsx — most
 // visits never open the drawer. Loaded on demand instead.
+const CART_BAR_HIDDEN_ROUTES = ["/plans", "/plan", "/trial", "/account"];
+
 const CartDrawer = dynamic(
   () => import("@/components/cart/CartDrawer").then((m) => m.CartDrawer),
   { ssr: false },
@@ -51,8 +54,15 @@ export function MiniCartBar() {
   // itself never hides — it is the money path — it just refuses to reserve
   // two bars' worth of bottom edge when only one is on screen.
   const navRetreated = useScrollHide(cartOpen);
+  const pathname = usePathname();
 
   if (!hydrated || count === 0) return null;
+  // T-24: on plan-selection, trial and account pages this pill competed with
+  // the page's own pinned CTA ("Select plan", "Send code") for the same
+  // bottom band — two money bars stacked. The cart is untouched and comes
+  // back the moment the customer leaves for a browsing surface. /menu,
+  // /dish and /marketplace keep it: that is where quantities get decided.
+  if (CART_BAR_HIDDEN_ROUTES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return null;
 
   // Band anchor: `bottom-16` clears the global tab bar, which always renders
   // in the (global) shell this bar mounts in. (Focus routes take the bottom

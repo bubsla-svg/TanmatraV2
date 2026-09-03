@@ -26,6 +26,7 @@ import {
   activeFilterLabels,
   countActiveFilters,
   filterDishes,
+  toggleFilter,
   type MenuFilterState,
 } from "@/lib/menuFilters";
 import { mergeMenuUrlState, parseMenuUrlState } from "@/lib/menuUrlState";
@@ -34,7 +35,7 @@ import { MenuControls } from "@/components/menu/MenuControls";
 import { SectionChipBar, useStickyAnchorOffset } from "@/components/menu/SectionChipBar";
 import { groupBySection, sectionAnchorId } from "@/lib/menuSections";
 import { useScrollRestore } from "@/lib/useScrollRestore";
-import { useCondensedOnScroll } from "@/lib/useCondensedOnScroll";
+import Link from "next/link";
 
 // N2.3: URL sync is debounced, not immediate. Chip/filter changes are
 // discrete clicks, so a 400ms delay before the address bar updates is
@@ -180,14 +181,6 @@ export function PersonalizedMenu({
   const stickyRef = useRef<HTMLDivElement>(null);
   useStickyAnchorOffset(stickyRef);
 
-  // Owner feedback (2026-08-16): the control cluster consumed ~40% of the
-  // viewport before the first card. While the reader scrolls DOWN the list,
-  // MenuControls (search + filter trigger + diet chips) collapses and only
-  // the section chip bar stays pinned; any upward scroll brings it back.
-  // The keyboard-focus guard lives inside MenuControls with the rows it
-  // protects.
-  const { condensed: scrolledDown, pin: pinCondensed } = useCondensedOnScroll();
-
   // §3.9 / Law 3. Disabled while a dish drawer is open (`?dish=`): that is a
   // same-route overlay whose own close already restores position, and
   // writing a position while it is open would capture the scroll of the
@@ -196,47 +189,54 @@ export function PersonalizedMenu({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* §3.2: the diet/filter row and the section chip bar are ONE sticky
-          cluster. They stick together because the chip bar alone would
-          detach from the controls it belongs with, and because
-          useStickyAnchorOffset measures this element to place jumped-to
-          section anchors just below it — which is also why condensing needs
-          no offset wiring: the ResizeObserver sees the collapse and shrinks
-          --menu-anchor-offset with it.
+      {/* §3.2 / T-13: ONE sticky strip. The diet chips, the Filters trigger,
+          the goal chips and the section chips ride in the same horizontal
+          rail — one 48px row instead of two stacked ones, so the pinned
+          chrome on /menu is the header plus this and nothing else, and the
+          first dish's photo is in the first viewport. There is no collapse-
+          on-scroll any more because there is nothing left to collapse.
+          useStickyAnchorOffset measures this element to land jumped-to
+          sections just below it.
 
-          `min-h-16 justify-center` is load-bearing for the condensed state:
-          the global Header is sticky, 63px tall and at the SAME z (--z-chrome
-          = 10 = the header's z-10), so this cluster paints over it purely by
-          document order when both pin. Condensed content alone is ~50px —
-          shorter than the header — which would leave a clipped sliver of
-          header text peeking out underneath. 64px covers it exactly. */}
+          `min-h-16 justify-center`: the global Header is sticky, 63px, at the
+          SAME z (--z-chrome), so this strip paints over it by document order
+          when both pin; 64px covers it exactly with no sliver peeking out. */}
       <div
         ref={stickyRef}
-        className="sticky top-0 z-[var(--z-chrome)] -mx-4 flex min-h-16 flex-col justify-center gap-2 bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-4 py-2 backdrop-blur"
+        className="sticky top-0 z-[var(--z-chrome)] -mx-4 flex min-h-16 flex-col justify-center gap-1.5 bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-4 py-2 backdrop-blur"
       >
-      <MenuControls
-        chip={chip}
-        onChipChange={handleChipChange}
-        activeFilterCount={activeLabels.length}
-        onOpenFilter={() => setFilterOpen(true)}
-        showRankedNote={ranked !== null}
-        scrolledDown={scrolledDown}
-      />
+        {/* Section anchors are derived from the SAME rows/visibleIds MenuGrid
+            draws, so a section whose dishes are all filtered out loses its
+            chip at the moment it loses its heading (Law 9). */}
+        <SectionChipBar
+          anchors={sectionAnchors}
+          leading={
+            <MenuControls
+              chip={chip}
+              onChipChange={handleChipChange}
+              activeFilterCount={activeLabels.length}
+              onOpenFilter={() => setFilterOpen(true)}
+              goals={filters.goal}
+              onToggleGoal={(goal) => setFilters((f) => toggleFilter(f, "goal", goal))}
+            />
+          }
+        />
 
-      {/* Rendered from the SAME rows/visibleIds MenuGrid draws, so a section
-          whose dishes are all filtered out loses its chip at the same moment
-          it loses its heading — a chip that jumps to nothing is a dead end
-          (Law 9). Survives condensing: mid-list, this rail IS the cluster. */}
-      <SectionChipBar anchors={sectionAnchors} onJump={pinCondensed} />
-
-      {/* Outside the collapsing block on purpose: while condensed, this line
-          is the only remaining evidence that the list is narrowed — hiding
-          it would leave a filtered list with no visible cause. */}
-      {activeLabels.length > 0 && (
-        <p className="text-xs text-ink-muted" data-testid="menu-active-filters">
-          Filtering by {activeLabels.join(" · ")}
-        </p>
-      )}
+        {(activeLabels.length > 0 || ranked !== null) && (
+          <p className="flex flex-wrap items-center gap-x-2 text-xs text-ink-muted">
+            {activeLabels.length > 0 && (
+              <span data-testid="menu-active-filters">Filtering by {activeLabels.join(" · ")}</span>
+            )}
+            {ranked !== null && (
+              <span>
+                Sorted for your preferences.{" "}
+                <Link href="/account/preferences" className="font-medium text-gold-text hover:underline">
+                  Edit
+                </Link>
+              </span>
+            )}
+          </p>
+        )}
       </div>
 
       {noMatch ? (

@@ -23,7 +23,12 @@ import { buildSharedMacroKeys, macroTrust } from "./dishTrust";
 export interface PlanOfferDish {
   slug: string;
   name: string;
-  macros: { calories: number; protein: number };
+  /** Catalog photo for the 40px thumbnail (T-16). Optional so a host that
+   *  has none renders the row without a frame rather than a broken image. */
+  image?: string;
+  /** Absent when the catalog has nothing trustworthy to say — the row then
+   *  carries a name only, never a filled-in number (Law 8). */
+  macros?: { calories: number; protein: number };
   /** The dish's own flag — the UI prefixes an estimate with "≈". */
   macrosEstimated: boolean;
 }
@@ -84,6 +89,7 @@ export function planOfferDishes(
     dishes: rotation.slice(0, limit).map((d) => ({
       slug: d.slug,
       name: d.name,
+      image: d.image,
       macros: { calories: d.macros.calories, protein: d.macros.protein },
       // Absent means reviewed in the catalog's convention, so the hedge is
       // opt-in — same reading as planCardDish.

@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import { reverseGeocode, searchLocation, DEFAULT_MAP_CENTER, type GeoPlace } from "@/lib/geoClient";
 import { gradeGpsAccuracy, type GpsConfidence } from "@/lib/geolocation";
+import { checkServiceability } from "@/lib/serviceabilityApi";
 import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 import { LocationSummaryCard } from "./LocationSummaryCard";
 
@@ -32,8 +33,52 @@ export function LocationPickerFlow({
   // null until a GPS fix has actually been taken — an un-attempted fix is not
   // the same as a precise one, and must not render a reassuring absence.
   const [gpsConfidence, setGpsConfidence] = useState<GpsConfidence | null>(null);
+  // T-03: whether the kitchen delivers to the PIN under the pin. Null until
+  // a PIN resolves (or while the check is in flight) — an unknown must never
+  // read as "yes".
+  const [serviceable, setServiceable] = useState<boolean | null>(null);
+  const autoLocatedRef = useRef(false);
 
   useEffect(() => setMounted(true), []);
+
+  // T-03: a granted geolocation is HONOURED on open. The map used to seed a
+  // fixed Noida pin regardless, walking a Delhi visitor into an address form
+  // for a place they are not. `permissions.query` is read-only — no prompt
+  // is raised here; a visitor who has not granted still taps the button.
+  useEffect(() => {
+    if (autoLocatedRef.current || typeof navigator === "undefined" || !navigator.permissions?.query) return;
+    autoLocatedRef.current = true;
+    navigator.permissions
+      .query({ name: "geolocation" })
+      .then((status) => {
+        if (status.state === "granted") handleUseCurrentLocation();
+      })
+      .catch(() => {});
+    // handleUseCurrentLocation is stable for the life of the sheet.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // The verdict follows the resolved PIN, from the same public check the
+  // header's bar uses — so "not yet" is said here, before any address field.
+  useEffect(() => {
+    const pin = place?.pincode?.trim() ?? "";
+    if (!/^\d{6}$/.test(pin)) {
+      setServiceable(null);
+      return;
+    }
+    let live = true;
+    setServiceable(null);
+    checkServiceability(pin)
+      .then((s) => {
+        if (live) setServiceable(s.verdict === "serviceable");
+      })
+      .catch(() => {
+        if (live) setServiceable(null);
+      });
+    return () => {
+      live = false;
+    };
+  }, [place?.pincode]);
 
   // Mounted only while "open" (every caller conditionally renders this flow)
   // — the back gesture closes the picker instead of leaving the host page.
@@ -124,9 +169,24 @@ export function LocationPickerFlow({
       </div>
 
       <div className="relative z-10 px-4 pt-3 bg-surface pb-2">
-        <div className="flex items-center gap-3 rounded-2xl border border-line bg-bg px-3.5 py-2.5 shadow-sm">
-          <svg className="h-5 w-5 text-ink-muted" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
-          <input ref={searchInputRef} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search for a new area, locality..." className="w-full bg-transparent text-sm font-medium text-ink outline-none placeholder:text-ink-muted" />
+        {/* T-03: a labelled 50px search field at 16px (no iOS zoom), with a
+            search return key — it was 14px text in a 20px box, unlabelled. */}
+        <label htmlFor="location-search" className="sr-only">Search area, locality or PIN code</label>
+        <div className="flex min-h-[50px] items-center gap-3 rounded-2xl border border-line bg-bg px-3.5 shadow-sm focus-within:border-line-strong">
+          <svg aria-hidden className="h-5 w-5 shrink-0 text-ink-muted" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+          <input
+            ref={searchInputRef}
+            id="location-search"
+            type="search"
+            enterKeyHint="search"
+            autoCorrect="off"
+            autoCapitalize="words"
+            spellCheck={false}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Area, locality or PIN code"
+            className="min-h-[48px] w-full bg-transparent text-base font-medium text-ink outline-none placeholder:text-ink-muted"
+          />
         </div>
         {suggestions.length > 0 && (
           <ul className="absolute left-4 right-4 top-14 z-50 max-h-60 overflow-y-auto rounded-2xl border border-line bg-surface p-1.5 shadow-2xl">
@@ -159,7 +219,7 @@ export function LocationPickerFlow({
         </div>
       </div>
 
-      <LocationSummaryCard place={place} loading={loading} onChangeTap={() => searchInputRef.current?.focus()} onConfirm={() => place && onSelectLocation({ ...place, lat: coords.lat, lng: coords.lng })} onManualFallback={onManualFallback} />
+      <LocationSummaryCard place={place} loading={loading} serviceable={serviceable} onChangeTap={() => searchInputRef.current?.focus()} onConfirm={() => place && onSelectLocation({ ...place, lat: coords.lat, lng: coords.lng })} onManualFallback={onManualFallback} />
     </div>,
     document.body,
   );

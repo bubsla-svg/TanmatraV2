@@ -61,6 +61,10 @@ export interface MenuFilterState {
   dietary: DietaryFilter[];
   allergen: AllergenFilter[];
   macro: MacroFilter[];
+  /** Numeric bounds (T-14): "≥ 30 g protein", "≤ 500 kcal". Null = unset.
+   *  AND with everything else, like the macro chips they sit beside. */
+  proteinMin: number | null;
+  kcalMax: number | null;
 }
 
 export const EMPTY_FILTERS: MenuFilterState = {
@@ -68,7 +72,35 @@ export const EMPTY_FILTERS: MenuFilterState = {
   dietary: [],
   allergen: [],
   macro: [],
+  proteinMin: null,
+  kcalMax: null,
 };
+
+/** The native range inputs' geometry — one place, so the sheet, the URL
+ *  parser and the tests agree on what a legal bound is. */
+export const PROTEIN_MIN_RANGE = { min: 0, max: 60, step: 5 } as const;
+export const KCAL_MAX_RANGE = { min: 200, max: 900, step: 50 } as const;
+
+export type BoundKey = "proteinMin" | "kcalMax";
+
+/** Clamp a raw number onto a range's grid; anything unusable becomes null. */
+export function normaliseBound(key: BoundKey, raw: unknown): number | null {
+  const n = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isFinite(n)) return null;
+  const r = key === "proteinMin" ? PROTEIN_MIN_RANGE : KCAL_MAX_RANGE;
+  const snapped = Math.round(n / r.step) * r.step;
+  if (snapped < r.min || snapped > r.max) return null;
+  // The range's own floor/ceiling means "no bound" — a slider parked at its
+  // rest position must not count as an active filter.
+  if (key === "proteinMin" && snapped === r.min) return null;
+  if (key === "kcalMax" && snapped === r.max) return null;
+  return snapped;
+}
+
+/** Immutable bound update (house rule) — returns a new state. */
+export function setBound(filters: MenuFilterState, key: BoundKey, raw: unknown): MenuFilterState {
+  return { ...filters, [key]: normaliseBound(key, raw) };
+}
 
 export interface FilterOption<K> {
   key: K;
@@ -189,6 +221,8 @@ export function dishMatchesFilters(dish: DishForFilter, filters: MenuFilterState
   // AND — every exclusion must hold.
   if (!filters.allergen.every((a) => matchesAllergen(dish, a))) return false;
   if (!filters.macro.every((m) => matchesMacro(dish, m))) return false;
+  if (filters.proteinMin != null && dish.macros.protein < filters.proteinMin) return false;
+  if (filters.kcalMax != null && dish.macros.calories > filters.kcalMax) return false;
   return true;
 }
 
@@ -202,7 +236,12 @@ export function filterDishes<T extends DishForFilter>(
 
 export function countActiveFilters(filters: MenuFilterState): number {
   return (
-    filters.goal.length + filters.dietary.length + filters.allergen.length + filters.macro.length
+    filters.goal.length +
+    filters.dietary.length +
+    filters.allergen.length +
+    filters.macro.length +
+    (filters.proteinMin != null ? 1 : 0) +
+    (filters.kcalMax != null ? 1 : 0)
   );
 }
 
@@ -210,7 +249,8 @@ export function isFilterActive(filters: MenuFilterState): boolean {
   return countActiveFilters(filters) > 0;
 }
 
-export type FilterGroupKey = keyof MenuFilterState;
+/** The chip groups — the array-valued keys `toggleFilter` operates on. */
+export type FilterGroupKey = "goal" | "dietary" | "allergen" | "macro";
 
 /** Immutable toggle — returns a new state, never mutates (house rule). */
 export function toggleFilter<K extends FilterGroupKey>(
@@ -233,5 +273,7 @@ export function activeFilterLabels(filters: MenuFilterState): string[] {
   for (const o of DIETARY_OPTIONS) if (filters.dietary.includes(o.key)) out.push(o.label);
   for (const o of ALLERGEN_OPTIONS) if (filters.allergen.includes(o.key)) out.push(o.label);
   for (const o of MACRO_OPTIONS) if (filters.macro.includes(o.key)) out.push(o.label);
+  if (filters.proteinMin != null) out.push(`${filters.proteinMin}g+ protein`);
+  if (filters.kcalMax != null) out.push(`Under ${filters.kcalMax} kcal`);
   return out;
 }

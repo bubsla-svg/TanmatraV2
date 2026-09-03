@@ -24,7 +24,10 @@ export function AllergenAckControl({
   inputRef: RefObject<HTMLInputElement | null>;
 }) {
   return (
-    <label className="flex items-start gap-3 rounded-2xl border border-line bg-surface-raised p-3 text-sm text-ink-muted">
+    // T-10: a mandatory safety control, not legalese — the whole row is the
+    // tap target (min 48px), the box itself is 24px (was a 16px native
+    // square), and the focus ring is visible in both themes.
+    <label className="flex min-h-12 w-full cursor-pointer items-start gap-3 rounded-2xl border border-line bg-surface-raised p-3 text-sm text-ink-muted">
       <input
         ref={inputRef}
         type="checkbox"
@@ -33,7 +36,7 @@ export function AllergenAckControl({
         onChange={(e) => onCheckedChange(e.target.checked)}
         aria-invalid={touched && !checked}
         aria-describedby={touched && !checked ? "allergen-ack-error" : undefined}
-        className="mt-1 size-4 shrink-0"
+        className="mt-0.5 size-6 shrink-0 cursor-pointer accent-[var(--gold)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]"
       />
       <span>
         <span className="font-medium text-ink">

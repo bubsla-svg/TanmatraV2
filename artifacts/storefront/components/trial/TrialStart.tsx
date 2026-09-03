@@ -12,6 +12,7 @@ import { formatMacroLine, formatPaise } from "@/lib/format";
 import { PLAN_DELIVERY_DAYS_SENTENCE, PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
 import { TRIAL_COPY } from "@/lib/trial";
 import type { TrialTrack, TrioDish } from "@/lib/trialTrio";
+import { KitchenSafetyChip } from "@/components/trust/KitchenSafetySheet";
 
 // The shape lives in lib/trialTrio.ts, where the resolver that BUILDS it also
 // lives — /trial and the QR landing both render this trio, and a second local
@@ -66,7 +67,7 @@ export function TrialStart({
               type="button"
               aria-pressed={track === t.id}
               onClick={() => setTrack(t.id)}
-              className={`rounded-full px-6 py-2 text-sm font-medium transition-colors active:scale-[0.98] ${
+              className={`inline-flex min-h-11 items-center rounded-full px-6 text-sm font-medium transition-colors active:scale-[0.98] ${
                 track === t.id
                   ? "bg-gold text-[var(--gold-ink)]"
                   : "text-ink-muted hover:text-ink"
@@ -119,13 +120,23 @@ export function TrialStart({
         Delivered {PLAN_DELIVERY_DAYS_SENTENCE}, {PLAN_DELIVERY_WINDOW_LABEL}.
       </p>
 
+      {/* T-07: the reassurance lines used to live INSIDE the fixed bar, which
+          made it 141px on top of a 65px tab bar — a quarter of the viewport
+          pinned. They read here, in flow, directly above where the bar sits;
+          the bar keeps only the one money CTA. The trust claim is the same
+          tappable sheet the checkout pay bars use (T-20). */}
+      <div className="flex flex-col items-center gap-2">
+        <p className="text-center text-xs text-ink-muted">{TRIAL_COPY.noAutoConvert}</p>
+        <KitchenSafetyChip />
+      </div>
+
       {/* Glass sticky footer (checkout vocabulary, BATCH-4-BRIEFS.md) — the ONE
           money-bearing CTA on this screen, since starting the trial IS the
           commitment moment, same treatment as CheckoutPay's Pay button.
           Always rendered: /trial lives under app/(focus)/, and FocusLayout
-          mounts no MiniCartBar to hand the bottom edge to (unlike the global
-          shell DishBuyBar shares it with) — so there is nothing else that
-          could ever occupy `bottom-16`, cart state or not. */}
+          mounts no MiniCartBar to hand the bottom edge to — so nothing else
+          could ever occupy `bottom-16`, cart state or not. CTA only: with the
+          tab bar this is ≤ 140px of pinned chrome. */}
       <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
         <div className="mx-auto max-w-md px-4 py-3">
           <Button
@@ -133,17 +144,10 @@ export function TrialStart({
             onClick={start}
             shape="pill"
             size="fluid"
-            className="w-full px-8 py-4 text-center text-base font-semibold"
+            className="w-full min-h-12 px-8 py-3.5 text-center text-base font-semibold"
           >
             Start the taste test · {formatPaise(pricePaise)}
           </Button>
-          <p className="mt-2 text-center text-xs text-ink-muted">{TRIAL_COPY.noAutoConvert}</p>
-          {/* Kitchen-level trust, at the money moment (N5.10's counterpart on
-              the trial surface). Same house copy as the checkout pay bars —
-              licence-backed kitchen claims only, never per-dish RD badges (F5). */}
-          <p className="mt-1 text-center text-2xs text-ink-faint">
-            FSSAI-registered, RD-reviewed kitchen · secure UPI checkout
-          </p>
         </div>
       </div>
     </section>

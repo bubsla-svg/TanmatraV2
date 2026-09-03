@@ -44,8 +44,10 @@ test("macros are the dishes' own, not restated", () => {
   for (const d of dishes) {
     const source = DISHES.find((x) => x.slug === d.slug);
     assert.ok(source);
+    assert.ok(d.macros, "a rotation sample always carries its dish's macros");
     assert.equal(d.macros.calories, source.macros.calories);
     assert.equal(d.macros.protein, source.macros.protein);
+    assert.equal(d.image, source.image, "the 40px thumbnail is the dish's own photo");
   }
 });
 

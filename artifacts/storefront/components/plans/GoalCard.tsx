@@ -3,25 +3,22 @@
 // money path's first decision. Everything else about the card is static.
 import Link from "next/link";
 import { emitFunnel } from "@/lib/funnel";
+import { menuHrefForPlan } from "@/lib/planGoalFilter";
 
 /**
  * One "what's lunch for?" answer, shared by BOTH surfaces that ask the
- * question — /plans (GoalRouter) and /care (NeedStateRail). They read the same
- * `routerPlans()` and route to the same builder, but used to render it two
- * different ways: a `<button>` at 34px radius with a gold arrow and no
- * subtitle on /plans, an `<a>` at 22px radius with a subtitle and no arrow on
- * /care. Same words, same destination, two components — so a fix to one
- * silently skipped the other.
+ * question — /plans (GoalRouter) and /care (NeedStateRail). Same `routerPlans()`,
+ * same builder destination, ONE component, so a fix here reaches both.
  *
- * The merged card keeps the better half of each:
- *  - a real `<Link>`, not button + router.push — middle-click, open-in-new-tab
- *    and prefetch all work again, and the destination is visible on hover;
- *  - the plan name as a subtitle (/care's), so the answer says what it routes
- *    to rather than just restating the question;
- *  - the gold arrow (/plans'), the affordance that says this navigates;
- *  - the funnel event, which ONLY /plans emitted — /care's identical taps were
- *    invisible to the scoreboard. `source` distinguishes them, so the two entry
- *    surfaces can finally be compared instead of silently pooled.
+ * Two doors now, not one (T-15): the plan builder ("Configure plan") and the
+ * menu already narrowed to the goal's dishes ("See meals"). Either surface
+ * used to lead only to plan configuration, which is why Care and Plans read
+ * as the same page. The links are SIBLINGS — a link inside a link is invalid
+ * HTML — inside one card frame.
+ *
+ * Kept from the merge: a real `<Link>` (middle-click, prefetch, visible
+ * destination), the plan name as subtitle, the gold arrow, and the funnel
+ * event with `source` so the two entry surfaces can be compared.
  */
 export function GoalCard({
   planId,
@@ -35,19 +32,32 @@ export function GoalCard({
   /** Which surface asked — "plans" | "care". Lands in the funnel props. */
   source: string;
 }) {
+  const mealsHref = menuHrefForPlan(planId);
   return (
-    <Link
-      href={`/plan/${planId}`}
-      onClick={() => emitFunnel("cuj_router_answer", { planId, answer: promise, source })}
-      className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface p-5 text-left transition-colors hover:border-line-strong active:scale-[0.98]"
-    >
-      <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-base font-medium text-ink">{promise}</span>
-        <span className="text-xs text-ink-muted">{planName}</span>
-      </span>
-      <span aria-hidden className="shrink-0 text-gold-text">
-        &rarr;
-      </span>
-    </Link>
+    <div className="flex flex-col rounded-card border border-line bg-surface transition-colors hover:border-line-strong">
+      <Link
+        href={`/plan/${planId}`}
+        onClick={() => emitFunnel("cuj_router_answer", { planId, answer: promise, source })}
+        className="flex min-h-[72px] items-center justify-between gap-3 p-5 text-left active:scale-[0.98]"
+      >
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-base font-medium text-ink">{promise}</span>
+          <span className="text-xs text-ink-muted">{planName} · configure plan</span>
+        </span>
+        <span aria-hidden className="shrink-0 text-gold-text">
+          &rarr;
+        </span>
+      </Link>
+      {mealsHref && (
+        <Link
+          href={mealsHref}
+          onClick={() => emitFunnel("cuj_router_answer", { planId, answer: promise, source, door: "menu" })}
+          className="flex min-h-11 items-center gap-1.5 border-t border-line px-5 text-xs font-semibold text-ink-muted hover:text-ink"
+        >
+          See matching meals
+          <span aria-hidden>&rarr;</span>
+        </Link>
+      )}
+    </div>
   );
 }

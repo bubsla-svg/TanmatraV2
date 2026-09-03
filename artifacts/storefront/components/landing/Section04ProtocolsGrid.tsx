@@ -7,7 +7,6 @@ import { formatPaise } from "@/lib/format";
 import { emitLpEvent } from "@/lib/lpEvents";
 import type { PlanCardDish, PlanDishMap } from "@/lib/planCardDish";
 import { planDisplay } from "@/lib/planCopy";
-import { TRIAL_PRICE_PAISE } from "@/lib/trial";
 import { computePlanQuote } from "@workspace/subscription-rules";
 import { FlipCard } from "./FlipCard";
 
@@ -57,7 +56,6 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
   const deskFuel = planDisplay("desk_fuel");
   const steady = planDisplay("steady");
   const proteinBuild = planDisplay("protein_build");
-  const trialPrice = formatPaise(TRIAL_PRICE_PAISE);
   const deskFuelMonthly = formatPaise(computePlanQuote("desk_fuel").cycleTotalPaise);
   const steadyMonthly = formatPaise(computePlanQuote("steady").cycleTotalPaise);
   const proteinMonthly = formatPaise(computePlanQuote("protein_build").cycleTotalPaise);
@@ -112,7 +110,7 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
         <div className="group flex flex-col justify-between rounded-2xl border border-line bg-surface p-6 shadow-sm overflow-hidden transition-transform duration-700 ease-out hover:scale-105 hover:shadow-xl hover:border-gold/30">
           <div>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-2xs font-bold uppercase tracking-wider text-ink-faint">
+              <span className="text-xs font-bold uppercase tracking-wider text-ink-faint">
                 Plan 1 · Weight Loss
               </span>
               <span className="tabular text-xs font-bold text-ink-muted">{deskFuelMonthly}/mo</span>
@@ -140,20 +138,16 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
               <li className="flex items-center gap-2">✓ 1-click hybrid delivery routing (Home &amp; Office)</li>
             </ul>
           </div>
+          {/* T-22: ONE door per card. The per-card "Start 3-Day Trial" made the
+              trial pitch four times on one page; the hero and the START HERE
+              band above already carry it. */}
           <div className="mt-8 flex flex-col gap-2">
             <Link
               href="/plan/desk_fuel"
               onClick={() => handlePlanSelect("weight_loss_jumpstart_plan")}
-              className="inline-flex w-full items-center justify-center rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-95"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-95"
             >
               View Subscription Options
-            </Link>
-            <Link
-              href="/trial"
-              onClick={() => handlePlanSelect("weight_loss_jumpstart")}
-              className="inline-flex w-full items-center justify-center rounded-xl border border-line bg-surface py-3.5 text-sm font-bold text-ink transition-colors hover:bg-surface-raised active:scale-95"
-            >
-              Start 3-Day Trial — {trialPrice}
             </Link>
           </div>
         </div>
@@ -162,7 +156,7 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
         <div className="group flex flex-col justify-between rounded-2xl border-2 border-gold-text bg-surface p-6 shadow-md overflow-hidden transition-transform duration-700 ease-out hover:scale-105 hover:shadow-xl hover:border-gold/80">
           <div>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-2xs font-bold uppercase tracking-wider text-gold-text">
+              <span className="text-xs font-bold uppercase tracking-wider text-gold-text">
                 Plan 2 · Recommended Care
               </span>
               <span className="tabular text-xs font-bold text-ink">{steadyMonthly}/mo</span>
@@ -209,16 +203,9 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
             <Link
               href="/plan/steady"
               onClick={() => handlePlanSelect("pcos_hormone_balance_plan")}
-              className="inline-flex w-full items-center justify-center rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-95"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-95"
             >
               View Subscription Options
-            </Link>
-            <Link
-              href="/trial"
-              onClick={() => handlePlanSelect("pcos_hormone_balance")}
-              className="inline-flex w-full items-center justify-center rounded-xl border border-gold bg-surface py-3.5 text-sm font-bold text-gold-text transition-colors hover:bg-surface-raised active:scale-95"
-            >
-              Start 3-Day Trial — {trialPrice}
             </Link>
           </div>
         </div>
@@ -227,7 +214,7 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
         <div className="group flex flex-col justify-between rounded-2xl border border-line bg-surface-raised p-6 shadow-sm overflow-hidden transition-transform duration-700 ease-out hover:scale-105 hover:shadow-xl hover:border-gold/30">
           <div>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-2xs font-bold uppercase tracking-wider text-ink-faint">
+              <span className="text-xs font-bold uppercase tracking-wider text-ink-faint">
                 Plan 3 · Strength &amp; Recovery
               </span>
               <span className="tabular text-xs font-bold text-ink-muted">{proteinMonthly}/mo</span>
@@ -251,19 +238,9 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
             <Link
               href="/plan/protein_build"
               onClick={() => handlePlanSelect("lean_muscle_builder_plan")}
-              className="inline-flex w-full items-center justify-center rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-95"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-95"
             >
               View Subscription Options
-            </Link>
-            {/* Rests on --surface like cards 1 and 2's trial button, not on
-                --surface-raised: this card's own fill IS --surface-raised, so a
-                raised button on a raised card had nowhere left to hover to. */}
-            <Link
-              href="/trial"
-              onClick={() => handlePlanSelect("lean_muscle_builder")}
-              className="inline-flex w-full items-center justify-center rounded-xl border border-line bg-surface py-3.5 text-sm font-bold text-ink transition-colors hover:bg-surface-raised active:scale-95"
-            >
-              Start 3-Day Trial — {trialPrice}
             </Link>
           </div>
         </div>
@@ -273,13 +250,13 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
         <div className="flex flex-col items-center text-center p-4 bg-surface rounded-card border border-line">
           <span className="text-lg font-bold text-ink">Don't go it alone.</span>
           <p className="mt-1 text-xs text-ink-muted max-w-sm">
-            Join an upcoming RD-led <Link href="/challenges" className="font-bold text-gold-text underline">Community Challenge</Link> for real-time accountability and group support.
+            Join an upcoming RD-led <Link href="/challenges" className="touch-target-min font-bold text-gold-text underline">Community Challenge</Link> for real-time accountability and group support.
           </p>
         </div>
         <div className="flex flex-col items-center text-center p-4 bg-surface rounded-card border border-line">
           <span className="text-lg font-bold text-ink">Need something specific?</span>
           <p className="mt-1 text-xs text-ink-muted max-w-sm">
-            Customize your macros, calorie targets, and dietary preferences in our <Link href="/custom-build" className="font-bold text-gold-text underline">Custom Plan Builder</Link>.
+            Customize your macros, calorie targets, and dietary preferences in our <Link href="/custom-build" className="touch-target-min font-bold text-gold-text underline">Custom Plan Builder</Link>.
           </p>
         </div>
       </div>

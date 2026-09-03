@@ -88,6 +88,12 @@ export const STITCH_EXACT_ROUTES: readonly string[] = [
   "/account", // Account hub — reached from the dark tab bar.
   "/legal", // Content surface; its eyebrow/heading system matches /faq.
   "/faq", // Content surface.
+  // ── 2026-09-03 thumb audit (T-02): one session, Menu → Marketplace flipped
+  //    black→white with the toggle untouched — and the pantry cross-sell is the
+  //    page that flipped. The buying path is one colour now: the shelf, its
+  //    product pages (prefix below) and the page that vouches for the kitchen.
+  "/marketplace",
+  "/about",
 ];
 
 /**
@@ -104,6 +110,7 @@ export const STITCH_PREFIX_ROUTES: readonly string[] = [
   "/care/", // /care/[condition].
   "/account/", // /account/{orders,addresses,preferences,…}.
   "/legal/", // /legal/{terms,privacy,…}.
+  "/marketplace/", // /marketplace/[slug] — the pantry PDP (T-02).
 ];
 
 /** Strip query/hash and a trailing slash so "/menu/", "/menu?x=1" and "/menu"

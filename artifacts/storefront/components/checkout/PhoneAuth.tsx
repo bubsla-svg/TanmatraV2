@@ -218,7 +218,7 @@ export function PhoneAuth({
       <button
         type="button"
         onClick={() => setStage("phone")}
-        className="-m-2 self-start p-2 text-sm font-medium text-gold-text underline-offset-4 hover:underline"
+        className="inline-flex min-h-11 items-center self-start text-sm font-medium text-gold-text underline-offset-4 hover:underline"
       >
         Have an account? Sign in for faster checkout
       </button>

@@ -844,6 +844,7 @@ jobs:
           ./src/routes/loyalty.checkout.test.ts
           ./src/routes/checkout.premiumGate.test.ts
           ./src/routes/checkout.quote.test.ts
+          ./src/routes/checkout.slot.test.ts
           ./src/routes/dishRationales.test.ts
           ./src/routes/coachAgent.test.ts
           ./src/routes/rdAdvisory.appointmentOrder.test.ts

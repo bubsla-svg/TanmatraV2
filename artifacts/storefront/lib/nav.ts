@@ -58,11 +58,15 @@ export const NAV_GROUPS: NavGroup[] = [
     href: "/plans",
     links: [
       { label: "Plans", href: "/plans", desc: "Therapeutic subscription plans" },
-      { label: "Free trial", href: "/trial", desc: "Try it for 3 days" },
-      { label: "Custom build hub", href: "/custom-build", desc: "Customize macros & boosts" },
-      { label: "Quick setup wizard", href: "/quick-setup", desc: "3-step clinical personalization" },
-      { label: "Smart recommendations", href: "/meal-recommendations", desc: "AI therapeutic reasoning" },
-      { label: "Value deals & combos", href: "/meal-deals", desc: "Macro density per rupee" },
+      // T-18: customer vocabulary, not internal names. The trial costs ₹399
+      // (TRIAL_CREDIT_PAISE in lib/subscription-rules) — it was listed here
+      // as "Free trial". "hub", "wizard" and "smart" are how the team names
+      // things, not how a customer looks for them.
+      { label: "3-lunch trial · ₹399", href: "/trial", desc: "Three lunches, one payment" },
+      { label: "Build your own plan", href: "/custom-build", desc: "Customize macros & boosts" },
+      { label: "Quick start", href: "/quick-setup", desc: "3-step clinical personalization" },
+      { label: "Recommended for you", href: "/meal-recommendations", desc: "Dishes matched to your goal" },
+      { label: "Combos", href: "/meal-deals", desc: "Macro density per rupee" },
       { label: "Metabolic programs", href: "/metabolic", desc: "Fat-loss & lean-muscle programs", section: "By goal & condition" },
       { label: "PCOS care", href: "/care/pcos", desc: "Hormone-aware, low-GI menu", section: "By goal & condition" },
       { label: "Diabetes care", href: "/care/diabetes", desc: "Sugar-conscious, low-GI menu", section: "By goal & condition" },

@@ -49,7 +49,7 @@ export function OrderBump({
         <button
           type="button"
           onClick={onRemove}
-          className="-m-2 p-2 text-sm text-ink-muted underline-offset-2 hover:underline"
+          className="inline-flex min-h-11 items-center px-2 text-sm text-ink-muted underline-offset-2 hover:underline"
         >
           Remove
         </button>
@@ -104,12 +104,15 @@ export function OrderBump({
 
       <p className="text-xs text-ink-faint">Your plan is complete without it.</p>
 
+      {/* Outlined gold, not a sage fill (T-21): gold is the only action
+          colour, and this is a secondary action beside "Continue to checkout"
+          — the card's sage border is the signal, the button is not. */}
       <button
         type="button"
         onClick={onAccept}
-        className="rounded-xl bg-sage px-4 py-2.5 text-center text-sm font-semibold text-[var(--sage-ink)] transition-transform active:scale-[0.98]"
+        className="min-h-11 rounded-xl border border-gold bg-surface px-4 text-center text-sm font-semibold text-gold-text transition-transform active:scale-[0.98]"
       >
-        Add
+        Add dietitian
       </button>
     </div>
   );

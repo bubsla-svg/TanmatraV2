@@ -13,8 +13,11 @@ import {
   DIETARY_OPTIONS,
   EMPTY_FILTERS,
   GOAL_OPTIONS,
+  KCAL_MAX_RANGE,
   MACRO_OPTIONS,
+  PROTEIN_MIN_RANGE,
   countActiveFilters,
+  setBound,
   toggleFilter,
   type FilterGroupKey,
   type FilterOption,
@@ -22,18 +25,16 @@ import {
 } from "@/lib/menuFilters";
 
 /**
- * Menu filter sheet (Stitch 5.3).
+ * Menu filter sheet (Stitch 5.3), now as ACCORDIONS (T-14): Goal open by
+ * default, the rest collapsed, every header a 48px row — so at most one
+ * group sits above the fold and "Macro intent" is no longer buried. Two
+ * native range inputs give the "≥ 30 g protein under 500 kcal" shopper a
+ * numeric handle; the count on the Apply CTA updates on every `input`.
  *
- * Chip selection is styled exactly like the diet chips in PersonalizedMenu — a
- * border + 10% tint + a ✓ marker, never a solid --gold fill. Two reasons, both
- * binding: DS-0 keeps gold as the single ACTION colour and this screen's one
- * gold action is the Apply CTA in the footer; and WCAG 1.4.1 forbids conveying
- * selection by colour alone, which the marker plus `aria-pressed` satisfies
- * independently of the tint.
- *
- * Draft-then-apply, not live-apply: edits accumulate in local state and only
- * reach the menu on Apply. A live-applied multi-select sheet re-sorts the grid
- * underneath the customer while their thumb is still moving down the chip list.
+ * Chip selection stays border + 10% tint + ✓, never a solid --gold fill:
+ * gold is the single ACTION colour and this screen's one gold action is the
+ * Apply CTA (D-08), and WCAG 1.4.1 forbids conveying selection by colour
+ * alone. Draft-then-apply: edits reach the menu only on Apply.
  */
 export function MenuFilterSheet({
   open,
@@ -77,38 +78,14 @@ export function MenuFilterSheet({
             preparation policy.
           </DrawerDescription>
 
-          <ChipGroup
-            label="Goal"
-            group="goal"
-            options={GOAL_OPTIONS}
-            selected={draft.goal}
-            onToggle={setDraft}
-            draft={draft}
-          />
-          <ChipGroup
-            label="What you eat"
-            group="dietary"
-            options={DIETARY_OPTIONS}
-            selected={draft.dietary}
-            onToggle={setDraft}
-            draft={draft}
-          />
-          <ChipGroup
-            label="Allergens to avoid"
-            group="allergen"
-            options={ALLERGEN_OPTIONS}
-            selected={draft.allergen}
-            onToggle={setDraft}
-            draft={draft}
-          />
-          <ChipGroup
-            label="Macro intent"
-            group="macro"
-            options={MACRO_OPTIONS}
-            selected={draft.macro}
-            onToggle={setDraft}
-            draft={draft}
-          />
+          <div className="mt-3 divide-y divide-line border-y border-line">
+            <ChipGroup label="Goal" group="goal" options={GOAL_OPTIONS} selected={draft.goal} onToggle={setDraft} draft={draft} defaultOpen />
+            <ChipGroup label="What you eat" group="dietary" options={DIETARY_OPTIONS} selected={draft.dietary} onToggle={setDraft} draft={draft} />
+            <ChipGroup label="Allergens to avoid" group="allergen" options={ALLERGEN_OPTIONS} selected={draft.allergen} onToggle={setDraft} draft={draft} />
+            <ChipGroup label="Macro intent" group="macro" options={MACRO_OPTIONS} selected={draft.macro} onToggle={setDraft} draft={draft}>
+              <BoundsGroup draft={draft} onChange={setDraft} />
+            </ChipGroup>
+          </div>
         </div>
 
         {/* Footer is a sibling of the scroll area, not its last child, so the
@@ -146,6 +123,8 @@ function ChipGroup<K extends FilterGroupKey>({
   selected,
   draft,
   onToggle,
+  defaultOpen = false,
+  children,
 }: {
   label: string;
   group: K;
@@ -153,11 +132,20 @@ function ChipGroup<K extends FilterGroupKey>({
   selected: readonly MenuFilterState[K][number][];
   draft: MenuFilterState;
   onToggle: (next: MenuFilterState) => void;
+  defaultOpen?: boolean;
+  children?: React.ReactNode;
 }) {
+  const picked = selected.length;
   return (
-    <section className="mt-5">
-      <h3 className="text-xs font-bold uppercase tracking-wider text-ink-muted">{label}</h3>
-      <div role="group" aria-label={label} className="mt-2 flex flex-wrap gap-2">
+    <details open={defaultOpen} className="group">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 py-2 [&::-webkit-details-marker]:hidden">
+        <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">
+          {label}
+          {picked > 0 && <span className="tabular ml-2 rounded-full bg-gold/10 px-1.5 py-0.5 text-2xs text-gold-text">{picked}</span>}
+        </span>
+        <span aria-hidden className="text-ink-faint transition-transform group-open:rotate-180">▾</span>
+      </summary>
+      <div role="group" aria-label={label} className="flex flex-wrap gap-2 pb-4">
         {options.map((opt) => {
           const active = selected.includes(opt.key);
           return (
@@ -178,6 +166,52 @@ function ChipGroup<K extends FilterGroupKey>({
           );
         })}
       </div>
-    </section>
+      {children}
+    </details>
+  );
+}
+
+/** Native range inputs for the two numbers a protein shopper actually asks
+ *  for. The rest position (0 g / 900 kcal) is "no bound" — see normaliseBound. */
+function BoundsGroup({ draft, onChange }: { draft: MenuFilterState; onChange: (next: MenuFilterState) => void }) {
+  const protein = draft.proteinMin ?? PROTEIN_MIN_RANGE.min;
+  const kcal = draft.kcalMax ?? KCAL_MAX_RANGE.max;
+  return (
+    <div className="flex flex-col gap-4 pb-4">
+      <label className="flex flex-col gap-1.5 text-xs font-medium text-ink-muted">
+        <span className="flex justify-between">
+          <span>Protein, at least</span>
+          <span className="tabular font-semibold text-ink">{draft.proteinMin == null ? "Any" : `${protein} g`}</span>
+        </span>
+        <input
+          type="range"
+          min={PROTEIN_MIN_RANGE.min}
+          max={PROTEIN_MIN_RANGE.max}
+          step={PROTEIN_MIN_RANGE.step}
+          value={protein}
+          onInput={(e) => onChange(setBound(draft, "proteinMin", (e.target as HTMLInputElement).value))}
+          onChange={(e) => onChange(setBound(draft, "proteinMin", e.target.value))}
+          aria-valuetext={draft.proteinMin == null ? "Any" : `${protein} grams`}
+          className="h-11 w-full accent-[var(--gold)]"
+        />
+      </label>
+      <label className="flex flex-col gap-1.5 text-xs font-medium text-ink-muted">
+        <span className="flex justify-between">
+          <span>Calories, at most</span>
+          <span className="tabular font-semibold text-ink">{draft.kcalMax == null ? "Any" : `${kcal} kcal`}</span>
+        </span>
+        <input
+          type="range"
+          min={KCAL_MAX_RANGE.min}
+          max={KCAL_MAX_RANGE.max}
+          step={KCAL_MAX_RANGE.step}
+          value={kcal}
+          onInput={(e) => onChange(setBound(draft, "kcalMax", (e.target as HTMLInputElement).value))}
+          onChange={(e) => onChange(setBound(draft, "kcalMax", e.target.value))}
+          aria-valuetext={draft.kcalMax == null ? "Any" : `${kcal} kilocalories`}
+          className="h-11 w-full accent-[var(--gold)]"
+        />
+      </label>
+    </div>
   );
 }

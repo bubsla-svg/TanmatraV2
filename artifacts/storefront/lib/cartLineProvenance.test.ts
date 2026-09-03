@@ -135,9 +135,11 @@ test("the add-to-cart snapshots capture provenance", () => {
 });
 
 test("the cart and checkout-review surfaces forward provenance", () => {
+  // The checkout's line rows moved into the collapsible order summary (T-09);
+  // the provenance flag travels with them.
   const render = [
     path.join("cart", "CartDrawer.tsx"),
-    path.join("checkout", "AlacarteDetails.tsx"),
+    path.join("checkout", "AlacarteOrderSummary.tsx"),
   ];
   for (const rel of render) {
     const src = fs.readFileSync(path.join(COMPONENTS, rel), "utf8");

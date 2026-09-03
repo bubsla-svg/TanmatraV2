@@ -3,22 +3,24 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { DishData } from "@workspace/menu-catalog";
-import { Card } from "@astryxdesign/core/Card";
 import { Field } from "@astryxdesign/core/Field";
-import { Button } from "@/components/ui/button";
-import { formatMacroLine, formatPaise } from "@/lib/format";
-import { qtyOf, setQty, subtotalPaise, type CartState } from "@/lib/cartStore";
-import { useCart } from "@/components/cart/CartProvider";
+import { formatPaise } from "@/lib/format";
+import { subtotalPaise, type CartState } from "@/lib/cartStore";
 import { DPDP_CONSENT_COPY, DPDP_SCOPE_NOTE } from "@/lib/consent";
 import { apiGet } from "@/lib/apiClient";
 import { flagCartAllergens } from "@/lib/allergenAck";
 import { carriedPincode } from "@/lib/serviceabilityApi";
 import { readAddressDraft, seedAddressFields } from "@/lib/addressSeed";
+import { fetchDeliverySlots } from "@/lib/deliverySlotsApi";
+import { isSlotBookable, slotSummary, type DeliverySlot } from "@/lib/deliverySlots";
 import type { QuoteSnapshot } from "@/lib/quoteApi";
 import type { QuoteUiState } from "./AlacarteCheckout";
 import { ADDRESS_DRAFT_KEY } from "./AlacarteCheckout";
 import { AllergenAckControl } from "./AllergenAckControl";
-import { QuoteBreakdown } from "./QuoteBreakdown";
+import { AlacarteOrderSummary } from "./AlacarteOrderSummary";
+import { AlacartePayBar } from "./AlacartePayBar";
+import { DeliverySlotPicker } from "./DeliverySlotPicker";
+import { KitchenSafetyChip } from "@/components/trust/KitchenSafetySheet";
 
 export interface AlacarteAddress {
   line1: string;
@@ -27,16 +29,22 @@ export interface AlacarteAddress {
   pincode: string;
 }
 
+/** What the details step knows beyond the address — a window id the server
+ *  offered and a note for the rider. Never a price. */
+export interface AlacarteExtras {
+  deliverySlotId?: number;
+  deliveryInstructions?: string;
+}
+
 const inputCls =
-  "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus-visible:border-line-strong";
+  "w-full min-h-[50px] rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus-visible:border-line-strong";
+const errCls = "mt-1 block text-xs font-medium text-[var(--danger)]";
 
 /**
- * À-la-carte details (SF-05). One screen: contact phone (controlled by the
- * parent so a verified sign-in can prefill it), delivery address, and the DPDP
- * consent the server requires. Every total on this screen renders from the
- * server QuoteSnapshot — the same arithmetic POST /orders bills from — so the
- * amount beside the CTA, the breakdown, and the Razorpay charge can never
- * disagree. The CTA itself stays amount-free.
+ * À-la-carte details (SF-05). Form FIRST, order summary as a disclosure above
+ * it (T-09); a "When" step from the server's delivery windows (T-08); every
+ * total renders from the server QuoteSnapshot so the amount beside the CTA,
+ * the breakdown and the Razorpay charge can never disagree.
  */
 export function AlacarteDetails({
   cart,
@@ -59,23 +67,14 @@ export function AlacarteDetails({
   phone: string;
   onPhoneChange: (v: string) => void;
   phoneLocked: boolean;
-  /** SF-04: a saved default address to seed the fields (parent remounts this
-   *  component via `key` when it arrives, so plain useState seeds are correct). */
   initialAddress?: { line1: string; city: string; pincode: string } | null;
   busy: boolean;
-  /** True once Razorpay has captured the money and verify is retrying — the
-   *  CTA copy must say so; "Opening payment…" after the modal already closed
-   *  reads as a stuck/failed button on money the customer already paid. */
   verifying?: boolean;
   error: string | null;
-  /** `allergenAck` is true only when the guest explicitly checked the ack
-   *  control below — see the allergen-flagged-cart branch under `blockedReason`. */
-  onSubmit: (address: AlacarteAddress, allergenAck?: boolean) => void;
-  /** Server QuoteSnapshot + lifecycle (parent owns fetching). */
+  onSubmit: (address: AlacarteAddress, allergenAck: boolean | undefined, extras: AlacarteExtras) => void;
   quote: QuoteSnapshot | null;
   quoteState: QuoteUiState;
   quoteError: string | null;
-  /** See QuoteBreakdown — withholds "Retry pricing" on deterministic refusals. */
   quoteRetryable?: boolean;
   onRefreshQuote: () => void;
   onPincodeChange: (pin: string) => void;
@@ -83,40 +82,32 @@ export function AlacarteDetails({
   const [line1, setLine1] = useState(initialAddress?.line1 ?? "");
   const [city, setCity] = useState(initialAddress?.city ?? "");
   const [pincode, setPincode] = useState(initialAddress?.pincode ?? "");
+  const [riderNote, setRiderNote] = useState("");
   const [consent, setConsent] = useState(false);
-  // A2 / D-19 audit G1: an explicit pre-submit ack for allergen-flagged carts.
-  // `touched` gates the inline error — it only appears after a submit attempt
-  // finds the box unchecked, never on first render (§16.1 error-focus: show
-  // the error at the moment of the failed action, not proactively).
+  const [slot, setSlot] = useState<DeliverySlot | null>(null);
+  // T-09: inline field errors appear only after a real attempt (§16.1 —
+  // show the error at the moment of the failed action, never proactively).
+  const [attempted, setAttempted] = useState(false);
   const [allergenAck, setAllergenAck] = useState(false);
   const [allergenAckTouched, setAllergenAckTouched] = useState(false);
   const allergenAckRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const line1Ref = useRef<HTMLInputElement>(null);
+  const cityRef = useRef<HTMLInputElement>(null);
+  const pinRef = useRef<HTMLInputElement>(null);
+  const slotRef = useRef<HTMLSelectElement | HTMLDivElement>(null);
+  const consentRef = useRef<HTMLInputElement>(null);
   const prefilled = useRef(false);
-  /** Lets the saved-address prefill below tell a carried PIN from a typed one. */
   const carriedPinRef = useRef("");
 
-  // D-22: a synchronous, non-React-state guard against multi-tap. `busy`
-  // (a prop, driven by React state in the parent) already disables the
-  // button — but a fast double-tap can fire twice before React commits that
-  // disabled attribute to the real DOM node, since the state update is
-  // batched and the second click event can land in the same task. A ref
-  // mutation is visible to the very next synchronous call, batching or not,
-  // so this closes the race `disabled={busy}` alone doesn't. It EXTENDS the
-  // existing guard (busy still drives the visible/disabled state) rather
-  // than replacing it — the server's own idempotency-key dedup on
-  // POST /orders (idempotencyMiddleware, mounted in app.ts) is the actual
-  // money-safety backstop either way; this only stops the wasted duplicate
-  // requests the audit observed reaching it.
+  // D-22: a synchronous, non-React-state guard against a fast double-tap
+  // landing twice before React commits `disabled`. The server's idempotency
+  // key is the money backstop; this stops the wasted duplicate request.
   const submitLockRef = useRef(false);
   useEffect(() => {
     if (!busy) submitLockRef.current = false;
   }, [busy]);
 
-  const { setCart } = useCart();
-
-  // Same public menu the rest of the app reads client-side (ReorderButton,
-  // ManageDeliverySheet — shared cache key). Read-only lookup: this never
-  // gates the order, only what the ack control shows before submit.
   const menuQuery = useQuery({
     queryKey: ["menu", "public"],
     queryFn: () => apiGet<{ dishes: DishData[] }>("/menu/public"),
@@ -127,14 +118,28 @@ export function AlacarteDetails({
   );
   const allergenAckRequired = flaggedAllergens.dishes.length > 0;
 
-  // Draft restore and the Law 4 carry-forward, in one mount pass — lib/addressSeed
-  // owns the precedence. The carried PIN is the one already given to the
-  // serviceability bar on the landing page or /menu; re-asking for it cost more
-  // than a retype, since the quote is keyed on the PIN and so the delivery-
-  // inclusive total and the ETA stayed withheld pending an answered question.
-  //
-  // Read here rather than in a useState initializer because both sources are
-  // storage, which the server render cannot see.
+  // T-08: the windows the KITCHEN offers. A failed or empty answer means no
+  // picker and no gate — the server then books the next open window, as it
+  // always has. The client never invents a window.
+  const slotsQuery = useQuery({
+    queryKey: ["delivery", "slots"],
+    queryFn: () => fetchDeliverySlots(),
+    staleTime: 60_000,
+    retry: 1,
+  });
+  const openSlots = useMemo(() => {
+    const now = new Date();
+    return (slotsQuery.data ?? []).filter((s) => isSlotBookable(s, now));
+  }, [slotsQuery.data]);
+  const slotRequired = openSlots.length > 0;
+  // A chosen window that has since closed/filled must not ride into the order.
+  useEffect(() => {
+    if (slot && !openSlots.some((s) => s.id === slot.id)) setSlot(null);
+  }, [openSlots, slot]);
+  useEffect(() => {
+    if (!slot && openSlots[0]) setSlot(openSlots[0]);
+  }, [openSlots, slot]);
+
   useEffect(() => {
     const carried = carriedPincode();
     carriedPinRef.current = carried;
@@ -155,15 +160,8 @@ export function AlacarteDetails({
     } catch {}
   }, [line1, city, pincode]);
 
-  // A saved address may arrive AFTER mount (async sign-in fetch). Seed the
-  // fields once — but only while they're still untouched, so a customer who
-  // started typing before it resolved never has their input clobbered.
-  //
-  // "Untouched" means the customer has entered nothing OF THEIR OWN. A PIN
-  // carried in from the serviceability check does not count: it is not typing,
-  // and a saved address is strictly more specific about where to deliver, so
-  // it wins. Testing `pincode === ""` alone would have let the carry-forward
-  // above silently cancel this prefill for every signed-in customer.
+  // A saved address may arrive after mount (async sign-in). Seed once, only
+  // while the fields are untouched; a carried PIN does not count as typing.
   useEffect(() => {
     if (!initialAddress || prefilled.current) return;
     if (line1 === "" && city === "" && (pincode === "" || pincode === carriedPinRef.current)) {
@@ -178,38 +176,84 @@ export function AlacarteDetails({
   const phoneValid = phone.replace(/\D/g, "").length >= 10;
   const pinDigits = pincode.replace(/\D/g, "");
   const pinValid = pinDigits.length === 6;
+  const line1Valid = line1.trim().length > 2;
+  const cityValid = city.trim().length > 1;
   const hasItems = cart.lines.length > 0;
   const unserviceable = quote?.serviceability != null && quote.serviceability.serviceable === false;
 
-  // PR-09 / sweep rule: a disabled money CTA must say WHY, in order of what
-  // the customer should fix first. Null = payable.
-  const blockedReason = !hasItems
-    ? "Your order is empty"
+  // PR-09 / sweep rule: a blocked money CTA must say WHY, in the order the
+  // customer should fix things. `field` names the control the CTA will take
+  // them to (T-09); null = a state only the server/quote can change.
+  type Blocker = { reason: string; field: React.RefObject<HTMLElement | null> | null };
+  const blocker: Blocker | null = !hasItems
+    ? { reason: "Your order is empty", field: null }
     : !phoneValid
-      ? "Enter your 10-digit mobile number"
-      : line1.trim().length <= 2 || city.trim().length <= 1
-        ? "Complete the delivery address"
-        : !pinValid
-          ? "Enter a 6-digit PIN code"
-          : unserviceable
-            ? "We don't deliver to this PIN code yet"
-            : quoteState === "loading"
-              ? "Pricing your order…"
-              : quoteState === "expired"
-                ? "Prices need a refresh — tap Refresh quote above"
-                : quoteState === "error"
-                  ? "We couldn't price your order — retry above"
-                  : !consent
-                    ? "Accept the order-processing consent to continue"
-                    : null;
-  const valid = blockedReason === null;
+      ? { reason: "Enter your 10-digit mobile number", field: phoneRef }
+      : !line1Valid
+        ? { reason: "Complete the delivery address", field: line1Ref }
+        : !cityValid
+          ? { reason: "Complete the delivery address", field: cityRef }
+          : !pinValid
+            ? { reason: "Enter a 6-digit PIN code", field: pinRef }
+            : slotRequired && !slot
+              ? { reason: "Pick a delivery window", field: slotRef }
+              : unserviceable
+                ? { reason: "We don't deliver to this PIN code yet", field: null }
+                : quoteState === "loading"
+                  ? { reason: "Pricing your order…", field: null }
+                  : quoteState === "expired"
+                    ? { reason: "Prices need a refresh — tap Refresh quote above", field: null }
+                    : quoteState === "error"
+                      ? { reason: "We couldn't price your order — retry above", field: null }
+                      : !consent
+                        ? { reason: "Accept the order-processing consent to continue", field: consentRef }
+                        : null;
+  const valid = blocker === null;
+  // T-09: the CTA stays tappable whenever the fix is a field the customer
+  // can reach — a tap then takes them to it. Only server-side states disable it.
+  const ctaEnabled = valid || blocker.field !== null;
+
+  function goTo(ref: React.RefObject<HTMLElement | null>) {
+    const el = ref.current;
+    if (!el) return;
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    el.focus({ preventScroll: true });
+  }
+
+  function handleContinue() {
+    if (!valid) {
+      setAttempted(true);
+      if (blocker.field) goTo(blocker.field);
+      return;
+    }
+    // Click-time allergen gate — kept OUT of `blocker` so a real attempt
+    // produces the inline error and moves focus (§16.1), not a dead button.
+    if (allergenAckRequired && !allergenAck) {
+      setAllergenAckTouched(true);
+      goTo(allergenAckRef);
+      return;
+    }
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
+    const note = riderNote.trim();
+    onSubmit({ line1: line1.trim(), city: city.trim(), pincode: pinDigits }, allergenAck, {
+      ...(slot ? { deliverySlotId: slot.id } : {}),
+      ...(note ? { deliveryInstructions: note.slice(0, 200) } : {}),
+    });
+  }
+
+  const amountActive = quoteState === "active" && quote;
+  const amountLabel = amountActive ? formatPaise(quote.payableNowPaise) : formatPaise(subtotalPaise(cart));
+  const ctaLabel = verifying
+    ? "Confirming your payment…"
+    : busy
+      ? "Opening payment…"
+      : amountActive
+        ? `Pay ${amountLabel} · UPI / cards`
+        : "Continue to payment";
+  const now = new Date();
 
   return (
-    // Stitch 14.6 payment-processing, à-la-carte leg — parity with
-    // PlanCheckout.tsx:214, which already marks the same state on the plan leg.
-    // `verifying` is set the instant Razorpay captures and cleared only when
-    // verify resolves, so this marks exactly the window in which the pack
-    // requires no active payment control (the CTA is disabled on `busy`).
     <div
       className="flex flex-col gap-4"
       data-ui-generation={verifying ? "stitch-74" : undefined}
@@ -217,103 +261,88 @@ export function AlacarteDetails({
       data-screen-state={verifying ? "payment-processing" : undefined}
       data-testid={verifying ? "checkout-payment-processing" : undefined}
     >
-      {/* Stage-5 Astryx adoption (payment-form donor, chrome only): the order
-          summary is a genuinely discrete unit, so it becomes Card; the address
-          fields get Field shells around the SAME native inputs (every one
-          carries autoComplete/inputMode/readOnly the Astryx TextInput cannot —
-          and alc-* ids + the "Mobile number" label are e2e contracts). Money
-          figures, qty steppers, consent, sticky pay bar: untouched. */}
-      <Card padding={5} className="rounded-3xl">
-        <p className="mb-1 text-xs font-bold uppercase tracking-[0.2em] text-ink-muted">Current order</p>
-        <ul className="divide-y divide-line">
-          {cart.lines.map((l) => (
-            <li key={`${l.kind}-${l.dishId}-${(l.customizations ?? []).join("|")}`} className="py-3">
-              {/* Name on its OWN full-width line, stepper and total below.
-                  Rendered at 390px the previous two-column row left the text
-                  column ~150px wide — narrower than this card's own padding
-                  allows for a dish name — so "Activated Charcoal Smoothie"
-                  clipped even across two lines. The cart drawer gets away with
-                  the side-by-side shape because it only pays px-4; this card
-                  pays the section gutter AND its own padding on top. */}
-              <p className="line-clamp-2 text-sm font-medium text-ink">{l.name}</p>
-              {l.customizations && l.customizations.length > 0 && (
-                <p className="line-clamp-2 text-xs text-ink-muted">{l.customizations.join(", ")}</p>
-              )}
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                <p className="tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
-                {/* D-14: the last look before money shows more than name +
-                    price — same figures the menu card already showed, in the
-                    same spelling (lib/format.ts, N5.7). */}
-                {l.macros && (
-                  <p className="tabular text-xs text-ink-faint">
-                    {formatMacroLine(l.macros, l.macros.estimated, l.macros.provisional)}
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                {/* .touch-target-critical (48px): globals.css reserves the
-                    stricter tier for exactly this control — "Money-path
-                    controls (Pay, quantity steppers)... a mis-tap here costs
-                    an order". */}
-                <div className="flex items-center rounded-full border border-line-strong" role="group" aria-label={`${l.name} quantity`}>
-                  <button type="button" aria-label="Decrease" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) - 1, l.customizations))} className="touch-target-critical text-ink transition-transform active:scale-[0.98]">−</button>
-                  <span aria-live="polite" className="tabular min-w-6 text-center text-sm font-semibold text-ink">{l.qty}</span>
-                  <button type="button" aria-label="Increase" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) + 1, l.customizations))} className="touch-target-critical text-ink transition-transform active:scale-[0.98]">+</button>
-                </div>
-                  <span className="tabular w-16 text-right text-sm font-semibold text-ink">
-                    {formatPaise(l.pricePaise * l.qty)}
-                  </span>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-
-        <QuoteBreakdown quote={quote} quoteState={quoteState} quoteError={quoteError} quoteRetryable={quoteRetryable} onRefreshQuote={onRefreshQuote} />
-      </Card>
+      <AlacarteOrderSummary cart={cart} quote={quote} quoteState={quoteState} quoteError={quoteError} quoteRetryable={quoteRetryable} onRefreshQuote={onRefreshQuote} />
 
       <Field label="Mobile number" inputID="alc-phone">
         <input
-          id="alc-phone" type="tel" inputMode="numeric" autoComplete="tel" value={phone}
-          onChange={(e) => onPhoneChange(e.target.value)} readOnly={phoneLocked} placeholder="98765 43210"
+          ref={phoneRef}
+          id="alc-phone" name="tel" type="tel" inputMode="numeric" autoComplete="tel" enterKeyHint="next" maxLength={14}
+          value={phone} onChange={(e) => onPhoneChange(e.target.value)} readOnly={phoneLocked} placeholder="98765 43210"
+          aria-invalid={attempted && !phoneValid}
           className={phoneLocked ? `${inputCls} opacity-70` : inputCls}
         />
+        {attempted && !phoneValid && <span role="alert" className={errCls}>Enter your 10-digit mobile number.</span>}
       </Field>
+
+      {slotRequired && (
+        <div ref={slotRef as React.RefObject<HTMLDivElement | null>} tabIndex={-1} className="outline-none">
+          <DeliverySlotPicker slots={openSlots} value={slot} onChange={setSlot} now={now} />
+          {attempted && !slot && <span role="alert" className={errCls}>Pick a delivery window.</span>}
+        </div>
+      )}
+
       <Field label="Flat / house · street" inputID="alc-line1">
-        <input id="alc-line1" autoComplete="street-address" value={line1} onChange={(e) => setLine1(e.target.value)} placeholder="Flat 3B, Sector 62" className={inputCls} />
+        <input
+          ref={line1Ref}
+          id="alc-line1" name="street-address" autoComplete="street-address" autoCapitalize="words" autoCorrect="off" spellCheck={false} enterKeyHint="next"
+          value={line1} onChange={(e) => setLine1(e.target.value)} placeholder="Flat 3B, Sector 62"
+          aria-invalid={attempted && !line1Valid} className={inputCls}
+        />
+        {attempted && !line1Valid && <span role="alert" className={errCls}>Add your flat or house and street.</span>}
       </Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label="City" inputID="alc-city">
-          <input id="alc-city" autoComplete="address-level2" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Noida" className={inputCls} />
+          <input
+            ref={cityRef}
+            id="alc-city" name="address-level2" autoComplete="address-level2" autoCapitalize="words" autoCorrect="off" enterKeyHint="next"
+            value={city} onChange={(e) => setCity(e.target.value)} placeholder="Noida"
+            aria-invalid={attempted && !cityValid} className={inputCls}
+          />
+          {attempted && !cityValid && <span role="alert" className={errCls}>Add the city.</span>}
         </Field>
         <Field label="PIN code" inputID="alc-pin">
           <input
-            id="alc-pin" inputMode="numeric" autoComplete="postal-code" value={pincode}
-            onChange={(e) => { setPincode(e.target.value); onPincodeChange(e.target.value); }} placeholder="201301"
-            aria-invalid={pincode.length > 0 && !pinValid} className={inputCls}
+            ref={pinRef}
+            id="alc-pin" name="postal-code" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]*" maxLength={6} enterKeyHint="done"
+            value={pincode} onChange={(e) => { setPincode(e.target.value); onPincodeChange(e.target.value); }} placeholder="201301"
+            aria-invalid={(pincode.length > 0 || attempted) && !pinValid} className={inputCls}
           />
+          {attempted && !pinValid && <span role="alert" className={errCls}>6 digits.</span>}
         </Field>
       </div>
+      <Field label="Name or landmark for the rider (optional)" inputID="alc-rider-note">
+        <input
+          id="alc-rider-note" name="name" autoComplete="name" autoCapitalize="words" enterKeyHint="done" maxLength={200}
+          value={riderNote} onChange={(e) => setRiderNote(e.target.value)} placeholder="Priya · gate 2, blue door"
+          className={inputCls}
+        />
+      </Field>
 
-      {/* Serviceability + timing, from the quote (server-validated — the same
-          pincode list POST /orders enforces, the same ETA it promises). */}
       {pinValid && quote?.serviceability && (
         <p role="status" className={`text-xs font-medium ${unserviceable ? "text-[var(--danger)]" : "text-ink-muted"}`}>
           {unserviceable
             ? `We don't deliver to ${quote.serviceability.pincode} yet — currently serving Noida sectors only.`
-            : `Delivering to ${quote.serviceability.pincode} · estimated ${quote.etaMinutes} min after payment.`}
+            : slot
+              ? `Delivering to ${quote.serviceability.pincode} · ${slotSummary(slot, now)}.`
+              : `Delivering to ${quote.serviceability.pincode} · estimated ${quote.etaMinutes} min after payment.`}
         </p>
       )}
 
-      {/* Consent block — DPDP first (unchanged), the allergen ack beside it
-          when the cart actually needs one. Both sit above the sticky ledger. */}
+      {/* Consent block — T-10: a 48px row where the whole label toggles and
+          the box is 24px. DPDP first; the allergen ack beside it when the
+          cart needs one. */}
       <div className="flex flex-col gap-3">
-        <label className="flex items-start gap-3 text-sm text-ink-muted">
-          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 size-4 shrink-0" />
+        <label className="flex min-h-12 w-full cursor-pointer items-start gap-3 rounded-2xl border border-line p-3 text-sm text-ink-muted">
+          <input
+            ref={consentRef}
+            type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)}
+            aria-invalid={attempted && !consent}
+            className="mt-0.5 size-6 shrink-0 cursor-pointer accent-[var(--gold)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]"
+          />
           <span>
             {DPDP_CONSENT_COPY}
             <span className="mt-1 block text-xs text-ink-faint">{DPDP_SCOPE_NOTE}</span>
+            {attempted && !consent && <span role="alert" className={errCls}>Tick this to continue — we can&rsquo;t cook without it.</span>}
           </span>
         </label>
 
@@ -333,67 +362,24 @@ export function AlacarteDetails({
 
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
 
-      <p className="text-center text-2xs text-ink-faint">
-        UPI · FSSAI registered · RD-reviewed kitchen · you won&rsquo;t be charged until you confirm in the payment step.
-      </p>
-
-      {/* Sticky pay bar. The amount is the quote's payable-now — the figure
-          the server will bill — never a client-side sum. Anchored bottom-0:
-          /checkout lives in the (focus) shell, no global tab bar here. */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
-        <div className="mx-auto flex max-w-md flex-col gap-1 px-4 py-3">
-          {!valid && blockedReason !== null && !busy && (
-            <p role="status" className="text-xs font-medium text-ink-muted">{blockedReason}</p>
-          )}
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 flex-col">
-              <span className="text-3xs font-bold uppercase tracking-widest text-ink-muted">Payable now</span>
-              <span className="tabular text-lg font-bold text-ink">
-                {quoteState === "active" && quote ? formatPaise(quote.payableNowPaise) : formatPaise(subtotalPaise(cart))}
-                {quoteState !== "active" && <span className="ml-1 text-xs font-medium text-ink-faint">est.</span>}
-              </span>
-            </div>
-            <Button
-              type="button" disabled={!valid || busy}
-              aria-busy={verifying || busy} aria-live="polite"
-              onClick={() => {
-                // Client-side catch for the allergen ack — deliberately NOT
-                // folded into `blockedReason`/`valid` above: those disable
-                // the button outright, which would make "attempt to submit"
-                // unobservable. This stays clickable so a genuine attempt
-                // produces the inline error and moves focus to the control
-                // that needs it (§16.1 error-focus), instead of the customer
-                // discovering it only after the server's 422. Checked before
-                // the submit lock below — a blocked-on-ack tap is not a
-                // submit attempt and must not consume the one-shot lock.
-                if (allergenAckRequired && !allergenAck) {
-                  setAllergenAckTouched(true);
-                  allergenAckRef.current?.focus();
-                  return;
-                }
-                // Synchronous first — see submitLockRef's comment above.
-                if (submitLockRef.current) return;
-                submitLockRef.current = true;
-                onSubmit({ line1: line1.trim(), city: city.trim(), pincode: pinDigits }, allergenAck);
-              }}
-              shape="pill" size="fluid"
-              // min-w-64: sized to the longest of the three CTA states
-              // ("Confirming your payment…") so the button never resizes as
-              // the label changes across them — "stable dimensions during
-              // loading" (the run of Continue to payment → Opening payment…
-              // → Confirming your payment… would otherwise shrink then grow
-              // the button, a visible shift right where a customer's thumb
-              // already is).
-              className="min-w-64 px-8 py-3.5 text-center font-semibold disabled:opacity-40"
-            >
-              {/* Once the modal resolves, money is already captured — "Opening
-                  payment…" would read as a hung or failed button on a charge
-                  that already went through. */}
-              {verifying ? "Confirming your payment…" : busy ? "Opening payment…" : "Continue to payment"}
-            </Button>
-          </div>
-        </div>
+      {/* T-20: the kitchen's credentials one tap away at the money moment —
+          replaces an 11px "UPI · FSSAI registered" line nobody could tap. */}
+      <div className="flex flex-col items-center gap-1">
+        <KitchenSafetyChip />
+        <p className="text-center text-xs text-ink-faint">You won&rsquo;t be charged until you confirm in the payment step.</p>
       </div>
+
+      <AlacartePayBar
+        amount={amountLabel}
+        amountEstimated={!amountActive}
+        ctaLabel={ctaLabel}
+        blockedReason={blocker?.reason ?? null}
+        ctaEnabled={ctaEnabled}
+        busy={busy}
+        verifying={verifying}
+        slotLabel={slot ? slotSummary(slot, now) : null}
+        onContinue={handleContinue}
+      />
     </div>
   );
 }

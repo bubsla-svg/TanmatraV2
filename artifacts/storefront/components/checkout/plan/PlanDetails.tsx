@@ -9,6 +9,8 @@ import type { PlanCheckoutAddress } from "@/lib/planCheckout";
 import { MemberIntake, EMPTY_MEMBER, draftToMember, type MemberDraft } from "./MemberIntake";
 import { memberDietForTrack } from "@/lib/planCheckout";
 import { LocationPickerFlow } from "@/components/address/LocationPickerFlow";
+import { PaymentMethodsRow } from "@/components/checkout/PaymentMethodsRow";
+import { KitchenSafetyChip } from "@/components/trust/KitchenSafetySheet";
 
 const inputCls =
   "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus-visible:border-line-strong";
@@ -120,7 +122,7 @@ export function PlanDetails({
           {servedTracks.map((t) => (
             <button
               key={t} type="button" onClick={() => onTrackChange(t)} aria-pressed={t === track}
-              className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors active:scale-[0.98] ${t === track ? "border-gold bg-surface-raised text-gold-text" : "border-line bg-surface text-ink-muted"}`}
+              className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium transition-colors active:scale-[0.98] ${t === track ? "border-gold bg-surface-raised text-gold-text" : "border-line bg-surface text-ink-muted"}`}
             >
               {TRACK_LABEL[t]}
             </button>
@@ -178,8 +180,12 @@ export function PlanDetails({
         />
       )}
 
-      <label className="flex items-start gap-3 text-sm text-ink-muted">
-        <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 size-4 shrink-0" />
+      {/* T-10: a 48px row where the whole label toggles and the box is 24px. */}
+      <label className="flex min-h-12 w-full cursor-pointer items-start gap-3 rounded-2xl border border-line p-3 text-sm text-ink-muted">
+        <input
+          type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)}
+          className="mt-0.5 size-6 shrink-0 cursor-pointer accent-[var(--gold)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]"
+        />
         <span>{DPDP_CONSENT_COPY}</span>
       </label>
 
@@ -221,14 +227,20 @@ export function PlanDetails({
 
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
 
+      {/* T-20: the kitchen's credentials one tap away at the money moment. */}
+      <div className="flex justify-center">
+        <KitchenSafetyChip />
+      </div>
+
       {/* Sticky quote + Continue bar (same glass pattern as the dish buy
           bar). The amount is the SERVER's quote rendered verbatim; the CTA
           keeps its existing disabled-until-quote gating (`valid` above).
           Anchored bottom-0, not the bottom-16 tab-bar band: /checkout is a
           (focus)-shell route (app/(focus)/) — the global tab bar never renders
-          here. */}
+          here. T-12: accepted methods above the CTA, amount on the button. */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
         <div className="mx-auto max-w-md px-4 py-3">
+          <PaymentMethodsRow className="mb-1.5" />
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 flex-col">
               <span className="text-3xs font-bold uppercase tracking-widest text-ink-muted">{billedLabel}</span>
@@ -245,26 +257,14 @@ export function PlanDetails({
               {/* Once the modal resolves, money is already captured — "Opening
                   payment…" would read as a hung or failed button on a charge
                   that already went through. */}
-              {verifying ? "Confirming your payment…" : busy ? "Opening payment…" : "Continue to payment"}
+              {verifying
+                ? "Confirming your payment…"
+                : busy
+                  ? "Opening payment…"
+                  : !quoteLoading && quoteTotalPaise !== null
+                    ? `Pay ${formatPaise(quoteTotalPaise)} · UPI / cards`
+                    : "Continue to payment"}
             </Button>
-          </div>
-          {/* Was a THIRD flex column inside the row above — `mt-3` inside
-              items-center did nothing and the trust line rendered squeezed
-              beside the CTA. It belongs under the row, centred, vouching for
-              the button it sits beneath (N5.10's counterpart: the trust claim
-              lives at the pay action, not on the OTP step's header). */}
-          <div className="mt-2 flex items-center justify-center gap-1.5 text-xs font-medium text-ink-muted">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 text-ink-muted" aria-hidden>
-              <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
-            </svg>
-            {/* Kitchen-level claims only (FSSAI registration, RD-reviewed
-                kitchen) — the same house copy AlacarteDetails vouches its pay
-                bar with. Per-dish "RD verified" badges stay removed (finding
-                F5): the kitchen claim is backed by the registration
-                certificate; the per-dish one is not. "Registered", not
-                "licensed": the certificate is an FSSAI Registration, a
-                distinct instrument — see content/legal/company.ts. */}
-            Secure, encrypted checkout · FSSAI-registered, RD-reviewed kitchen
           </div>
         </div>
       </div>

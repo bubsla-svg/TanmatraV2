@@ -36,7 +36,7 @@ export function NotifyMeForm({ pincode, onReset }: NotifyMeFormProps) {
         <button
           type="button"
           onClick={onReset}
-          className="text-xs font-medium underline text-gold-text hover:text-ink"
+          className="inline-flex min-h-11 items-center text-xs font-medium underline text-gold-text hover:text-ink"
         >
           Check a different pincode &rarr;
         </button>
@@ -79,7 +79,7 @@ export function NotifyMeForm({ pincode, onReset }: NotifyMeFormProps) {
         <button
           type="button"
           onClick={onReset}
-          className="text-2xs underline text-[var(--ink-muted)] hover:text-[var(--ink)]"
+          className="inline-flex min-h-11 items-center text-xs underline text-[var(--ink-muted)] hover:text-[var(--ink)]"
         >
           Check another pincode
         </button>
@@ -90,42 +90,57 @@ export function NotifyMeForm({ pincode, onReset }: NotifyMeFormProps) {
     );
   }
 
+  // T-04: this is the ONLY conversion left for an out-of-zone visitor, and it
+  // used to be the smallest form on the site (39px unlabelled phone, an
+  // 88×16 "Change pincode" link). Now the phone field matches the identity
+  // gate (50px, labelled, 16px text so iOS never zooms, numeric keypad), the
+  // primary is a full-width gold button directly under it, and the secondary
+  // is a 44px outlined button — gold stays the one action colour here.
   return (
-    <form onSubmit={handleSubmit} className="mt-3 space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
+    <form onSubmit={handleSubmit} className="mt-3 space-y-3">
+      <div>
+        <label htmlFor={`notify-phone-${pincode}`} className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[var(--ink-muted)]">
+          Mobile number
+        </label>
         <input
+          id={`notify-phone-${pincode}`}
           type="tel"
-          inputMode="tel"
+          name="tel"
+          inputMode="numeric"
           autoComplete="tel"
+          enterKeyHint="send"
+          maxLength={10}
+          pattern="[0-9]*"
           placeholder="10-digit mobile"
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
           disabled={busy}
-          className="w-48 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--ink)] outline-none focus-visible:border-[var(--line-strong)] disabled:opacity-50"
+          className="w-full min-h-[50px] rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 text-base text-[var(--ink)] outline-none focus-visible:border-[var(--line-strong)] disabled:opacity-50"
         />
-        <Button
-          type="submit"
-          disabled={busy || phone.trim().length < 10}
-          aria-busy={busy}
-          aria-live="polite"
-          size="fluid"
-          className="rounded-lg px-4 py-2 text-xs font-semibold shadow-sm disabled:opacity-40"
-        >
-          {/* Real ellipsis — entities do not resolve inside JS strings (see
-              ServiceabilityBar's Check button). */}
-          {busy ? "Saving…" : "Notify me"}
-        </Button>
-        <button
-          type="button"
-          onClick={onReset}
-          className="ml-auto text-xs underline text-[var(--ink-muted)] hover:text-[var(--ink)]"
-        >
-          Change pincode
-        </button>
       </div>
       {err && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{err}</p>}
-      <p className="text-2xs leading-snug text-[var(--ink-muted)]">
-        We&rsquo;ll use this number only to tell you when Tanmatra delivers in {pincode}.
+      <Button
+        type="submit"
+        disabled={busy || phone.trim().length < 10}
+        aria-busy={busy}
+        aria-live="polite"
+        shape="xl"
+        size="fluid"
+        className="block w-full min-h-12 px-4 py-3 text-center text-sm font-semibold shadow-sm disabled:opacity-40"
+      >
+        {/* Real ellipsis — entities do not resolve inside JS strings (see
+            ServiceabilityBar's Check button). */}
+        {busy ? "Saving…" : "Notify me"}
+      </Button>
+      <button
+        type="button"
+        onClick={onReset}
+        className="flex min-h-11 w-full items-center justify-center rounded-xl border border-[var(--line-strong)] px-4 text-sm font-medium text-[var(--ink)] hover:bg-[var(--surface-subtle)]"
+      >
+        Change pincode
+      </button>
+      <p className="text-xs leading-snug text-[var(--ink-muted)]">
+        We currently deliver across Noida (sectors 1–168). We&rsquo;ll use this number only to tell you when Tanmatra delivers in {pincode}.
       </p>
       <MarketplaceFallbackCta />
     </form>

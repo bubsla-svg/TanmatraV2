@@ -9,7 +9,9 @@ import {
 } from "@workspace/subscription-rules";
 import { planDisplay, planQuoteView } from "@/lib/plans";
 import { fetchMenu } from "@/lib/catalog";
-import { planOfferDishes } from "@/lib/planOffer";
+import { planOfferDishes, type PlanOfferDish } from "@/lib/planOffer";
+import { buildSharedMacroKeys } from "@/lib/dishTrust";
+import { resolveTrio } from "@/lib/trialTrio";
 import { planAllowsAddOn, addOnView } from "@/lib/addons";
 import { planTotalAfterCredit, TRIAL_COPY, TRIAL_CREDITBACK_PAISE } from "@/lib/trial";
 import { planDecisionFacts } from "@/lib/planDecisionFacts";
@@ -126,12 +128,31 @@ export default async function CheckoutPage({ searchParams }: Props) {
     // when one was chosen: showing a chicken dish to someone who arrived on
     // ?track=veg would be a worse answer than showing fewer.
     const { dishes: catalogDishes } = await fetchMenu();
-    const rotation = planOfferDishes(
-      id,
-      requestedTrack ? [requestedTrack] : q.servedTracks,
-      catalogDishes,
-      OFFER_DISH_SAMPLE,
-    );
+    // T-16: the trial is three FIXED dishes, and /trial already showed them —
+    // so the checkout shows the same trio, from the same resolver, for the
+    // same track. A sample of the plan's rotation is the wrong answer for a
+    // product whose whole promise is these three specific lunches.
+    const rotation: { dishes: PlanOfferDish[]; more: number } = isTrial
+      ? {
+          dishes: resolveTrio(
+            requestedTrack === "nonveg" ? "nonveg" : "veg",
+            catalogDishes,
+            buildSharedMacroKeys(catalogDishes),
+          ).map((d) => ({
+            slug: d.slug,
+            name: d.name,
+            image: d.image,
+            ...(d.macros ? { macros: d.macros } : {}),
+            macrosEstimated: d.macrosEstimated === true,
+          })),
+          more: 0,
+        }
+      : planOfferDishes(
+          id,
+          requestedTrack ? [requestedTrack] : q.servedTracks,
+          catalogDishes,
+          OFFER_DISH_SAMPLE,
+        );
     return (
       <div data-ui-generation="stitch-74" data-screen-id="8.1" data-screen-state="quote-active" className="min-h-dvh">
         <section className="mx-auto max-w-md px-4 pt-10 pb-44">

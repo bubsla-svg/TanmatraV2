@@ -16,7 +16,14 @@
  * left in the address bar implying a search that nothing performs.
  */
 import type { DietFilterChip } from "./dietFilter";
-import type { AllergenFilter, DietaryFilter, GoalFilter, MacroFilter, MenuFilterState } from "./menuFilters";
+import {
+  normaliseBound,
+  type AllergenFilter,
+  type DietaryFilter,
+  type GoalFilter,
+  type MacroFilter,
+  type MenuFilterState,
+} from "./menuFilters";
 
 const GOAL_KEYS: readonly GoalFilter[] = [
   "fat_loss",
@@ -58,6 +65,9 @@ export function parseMenuUrlState(params: URLSearchParams): MenuUrlState {
       dietary: parseGroup(params.get("dietary"), DIETARY_KEYS),
       allergen: parseGroup(params.get("allergen"), ALLERGEN_KEYS),
       macro: parseGroup(params.get("macro"), MACRO_KEYS),
+      // Untrusted numbers — snapped to the slider grid or dropped.
+      proteinMin: normaliseBound("proteinMin", params.get("pmin")),
+      kcalMax: normaliseBound("kcalMax", params.get("kmax")),
     },
   };
 }
@@ -74,6 +84,8 @@ export function menuUrlStateToSearch(state: MenuUrlState): string {
   if (state.filters.dietary.length) params.set("dietary", state.filters.dietary.join(","));
   if (state.filters.allergen.length) params.set("allergen", state.filters.allergen.join(","));
   if (state.filters.macro.length) params.set("macro", state.filters.macro.join(","));
+  if (state.filters.proteinMin != null) params.set("pmin", String(state.filters.proteinMin));
+  if (state.filters.kcalMax != null) params.set("kmax", String(state.filters.kcalMax));
   return params.toString();
 }
 
@@ -83,7 +95,7 @@ export function menuUrlStateToSearch(state: MenuUrlState): string {
  *
  *  `q` is in the list but never re-written: it is the retired search param,
  *  kept here purely so a link that still carries it gets it cleared. */
-const MANAGED_PARAM_KEYS = ["diet", "goal", "dietary", "allergen", "macro", "q"] as const;
+const MANAGED_PARAM_KEYS = ["diet", "goal", "dietary", "allergen", "macro", "pmin", "kmax", "q"] as const;
 
 /**
  * Merges committed menu state into an ALREADY-EXISTING search params object,
