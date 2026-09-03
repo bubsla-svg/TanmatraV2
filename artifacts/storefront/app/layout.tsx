@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { JetBrains_Mono } from "next/font/google";
-import localFont from "next/font/local";
+import { DM_Sans, Fraunces, JetBrains_Mono } from "next/font/google";
 // FIRST, always. A bare @layer statement that fixes the cascade-layer order;
 // layer rank is set at first declaration, so this has to be declared before any
 // sheet that opens a layer. Without it Tailwind's Preflight (declared last, via
@@ -42,22 +41,27 @@ import {
   STITCH_PREFIX_ROUTES,
 } from "@/lib/stitchRoutes";
 
-// TNM-UIF-01 §10.2: Satoshi (UI) + JetBrains Mono (macro/numeric data).
-// Both self-hosted via next/font — Satoshi used to load render-blocking from
-// Fontshare's CDN (`@import url('https://api.fontshare.com/...')`, formerly
-// globals.css:1); measured at ~12.8s to fail closed when that CDN is slow or
-// unreachable, blocking the `load` event on every route. Same four static
-// weights the CDN request asked for (`f[]=satoshi@900,700,500,400`, normal
-// style only — no italic was ever requested). Licensed for self-hosted web
-// use under Fontshare's Free Font EULA — see app/fonts/satoshi/LICENSE.txt.
-const satoshi = localFont({
-  src: [
-    { path: "./fonts/satoshi/Satoshi-Regular.woff2", weight: "400", style: "normal" },
-    { path: "./fonts/satoshi/Satoshi-Medium.woff2", weight: "500", style: "normal" },
-    { path: "./fonts/satoshi/Satoshi-Bold.woff2", weight: "700", style: "normal" },
-    { path: "./fonts/satoshi/Satoshi-Black.woff2", weight: "900", style: "normal" },
-  ],
-  variable: "--font-satoshi",
+// PR-11a (docs/MOBILE-FIRST-CX-BRIEF.md "Foundations 0"): the delivered
+// revision's type — Fraunces (display) + DM Sans (body), self-hosted through
+// the same next/font pipeline JetBrains Mono already used, so nothing loads
+// render-blocking from a third-party CDN (Satoshi, which these replace, was
+// moved off Fontshare for exactly that reason). The revision's Space Mono role
+// (`.font-data`, prices and macros) is mapped onto JetBrains Mono — two new
+// families, no new dependency. globals.css reads the three variables below.
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  // Variable font: one file covers the 500–700 display weights, and `axes`
+  // keeps the optical-size axis the revision's type ramp leans on (opsz 9..144).
+  weight: "variable",
+  axes: ["opsz"],
+  variable: "--font-fraunces",
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-dm-sans",
   display: "swap",
 });
 
@@ -209,7 +213,7 @@ export default function RootLayout({
       // document is in scope and the tokens inherit everywhere.
       data-astryx-theme="tanmatra"
       suppressHydrationWarning
-      className={`${satoshi.variable} ${jetbrainsMono.variable}`}
+      className={`${fraunces.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}
     >
       <body
         // Paints the canvas itself so there is no unpainted gap between the
