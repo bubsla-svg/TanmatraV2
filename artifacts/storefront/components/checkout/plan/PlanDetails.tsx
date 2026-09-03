@@ -8,6 +8,7 @@ import { DPDP_CONSENT_COPY } from "@/lib/consent";
 import type { PlanCheckoutAddress } from "@/lib/planCheckout";
 import { MemberIntake, EMPTY_MEMBER, draftToMember, type MemberDraft } from "./MemberIntake";
 import { memberDietForTrack } from "@/lib/planCheckout";
+import { seedPlanAddress } from "@/lib/planAddressSeed";
 import { LocationPickerFlow } from "@/components/address/LocationPickerFlow";
 import { PaymentMethodsRow } from "@/components/checkout/PaymentMethodsRow";
 import { KitchenSafetyChip } from "@/components/trust/KitchenSafetySheet";
@@ -96,16 +97,26 @@ export function PlanDetails({
   const prefilled = useRef(false);
   const touched = useRef(false);
 
-  // Seed the address once from a saved default (arrives async after sign-in),
-  // but never once the user has touched a field — no clobber of typed input,
-  // even the type-then-clear case a value-based guard would miss.
+  // Seed the address from what arrives on `initialAddress`, in two moments: the
+  // serviceability gate's PIN seed is there from the first render, and the
+  // saved default address lands a moment later (after sign-in resolves and
+  // /api/addresses answers). The seed used to consume the once-only prefill,
+  // so the saved address was ignored and every returning customer typed it
+  // again. lib/planAddressSeed ranks the sources: the customer's typing wins
+  // over everything (`touched` — including type-then-clear), a complete address
+  // seeds the form once, a bare seed fills only still-empty fields.
   useEffect(() => {
-    if (!initialAddress || prefilled.current || touched.current) return;
-    prefilled.current = true;
-    setLine1(initialAddress.line1);
-    setCity(initialAddress.city);
-    setPincode(initialAddress.pincode);
-  }, [initialAddress]);
+    if (!initialAddress) return;
+    const { next, prefilled: done } = seedPlanAddress(
+      { line1, city, pincode },
+      initialAddress,
+      { touched: touched.current, prefilled: prefilled.current },
+    );
+    prefilled.current = done;
+    if (next.line1 !== line1) setLine1(next.line1);
+    if (next.city !== city) setCity(next.city);
+    if (next.pincode !== pincode) setPincode(next.pincode);
+  }, [initialAddress, line1, city, pincode]);
 
   const pinValid = pincode.replace(/\D/g, "").length === 6;
   // Gate on a landed quote too: the CTA must never submit while a track change
