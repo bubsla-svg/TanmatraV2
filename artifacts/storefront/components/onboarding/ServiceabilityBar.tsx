@@ -136,22 +136,22 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
         type="button"
         onClick={handleReset}
         aria-label={`Delivering in ${pincode}. Change location`}
-        className={`${placement === 'menu' ? MENU_FIT : 'mb-6'} inline-flex min-h-11 max-w-[45vw] items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--line-strong)] bg-[var(--surface-subtle)] px-3 text-xs font-semibold text-[var(--ink)] shadow-sm transition-colors hover:border-[var(--gold)]`}
+        className={`${placement === 'menu' ? MENU_FIT : 'mb-6'} inline-flex min-h-11 max-w-[45vw] items-center gap-1.5 whitespace-nowrap rounded-full border border-line-strong bg-secondary px-3 text-xs font-semibold text-ink transition-colors hover:border-gold`}
       >
-        <svg aria-hidden className="h-4 w-4 shrink-0 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg aria-hidden className="h-4 w-4 shrink-0 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z" />
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
         <span className="tabular truncate">{pincode}</span>
-        <span aria-hidden className="text-[var(--success)]">✓</span>
+        <span aria-hidden className="text-sage-text">✓</span>
       </button>
     );
   }
 
   if (verdict === "unserviceable") {
     return (
-      <div className={`${placement === 'menu' ? '' : 'mb-6'} rounded-2xl border border-[var(--danger)]/30 bg-[var(--surface)] p-5 text-left shadow-sm max-w-lg`}>
-        <p className="text-sm font-semibold text-[var(--ink)]">
+      <div className={`${placement === 'menu' ? '' : 'mb-6'} rounded-2xl border border-line bg-surface p-5 text-left max-w-lg`}>
+        <p className="text-sm font-semibold text-ink">
           {/* `{" "}` is load-bearing, not formatting noise. Written as
               `{pincode} yet`, the space between the expression and the
               following text is dropped by the JSX transform, and the shipped
@@ -185,16 +185,16 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
             value={inputVal}
             onChange={(e) => setInputVal(e.target.value)}
             disabled={busy}
-            className="w-44 min-w-0 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--ink)] outline-none focus-visible:border-[var(--line-strong)] disabled:opacity-50"
+            className="w-44 min-w-0 min-h-[50px] rounded-2xl border border-line bg-surface px-4 py-2.5 text-sm text-ink outline-none focus-visible:border-primary disabled:opacity-50"
           />
           <Button
             type="submit"
             disabled={busy || inputVal.trim().length !== 6}
             aria-busy={busy}
             aria-live="polite"
-            shape="xl"
+            shape="pill"
             size="fluid"
-            className="px-5 py-2.5 font-semibold shadow-sm disabled:opacity-40"
+            className="px-5 py-2.5 font-semibold disabled:opacity-40"
           >
             {/* A real ellipsis character — an entity inside a JS string is
                 LITERAL text, not markup; entities only resolve in JSX text
@@ -233,9 +233,9 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
           // label + "MAP"), overflowing right through the ⌘K button — the
           // label's own `truncate` never got a chance to apply because the
           // button around it never actually shrank. Measured via Playwright.
-          className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-2.5 sm:px-4 py-3 text-sm text-[var(--ink)] shadow-sm hover:border-[var(--line-strong)] transition-colors text-left disabled:opacity-60"
+          className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-3 rounded-full border border-line bg-surface px-2.5 sm:px-4 py-3 text-sm text-ink hover:border-line-strong transition-colors text-left disabled:opacity-60"
         >
-          <svg className="h-4 w-4 sm:h-5 sm:w-5 text-gold shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="h-4 w-4 sm:h-5 sm:w-5 text-accent shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
@@ -263,7 +263,7 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
               </>
             )}
           </span>
-          {!busy && <span className="hidden sm:inline text-xs font-bold text-gold shrink-0">MAP</span>}
+          {!busy && <span className="hidden sm:inline text-xs font-bold text-accent shrink-0">MAP</span>}
         </button>
       </div>
       {err && <p role="alert" className="text-xs font-medium text-[var(--danger)] w-full">{err}</p>}

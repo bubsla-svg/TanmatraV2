@@ -131,9 +131,9 @@ export function DeliveryAddressBar() {
         // the ONLY thing keeping it from claiming its full ~13rem width and
         // squeezing the wordmark into overflow — see that file's comment for
         // the measured 360px budget this has to fit inside alongside it.
-        className="flex min-w-0 max-w-[9rem] items-center gap-2 rounded-xl border border-line bg-surface px-3 py-2 text-left text-sm text-ink shadow-sm transition-colors hover:border-line-strong sm:max-w-xs"
+        className="flex min-w-0 max-w-[9rem] items-center gap-2 rounded-full border border-line bg-surface px-3 py-2 text-left text-sm text-ink transition-colors hover:border-line-strong sm:max-w-xs"
       >
-        <svg className="h-4 w-4 shrink-0 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className="h-4 w-4 shrink-0 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z" />
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
@@ -151,7 +151,7 @@ export function DeliveryAddressBar() {
             header's ~208px slot. The full explanation lives in the sheet this
             button already opens. */}
         {deliveryKind === "undeliverable" && (
-          <span className="shrink-0 rounded-md bg-[var(--danger)]/10 px-1.5 py-0.5 text-3xs font-bold uppercase tracking-wide text-[var(--danger)]">
+          <span className="shrink-0 text-3xs font-bold uppercase tracking-wide text-[var(--danger)]">
             Not served
           </span>
         )}
@@ -218,7 +218,7 @@ function AddressSwitcherSheet({
         role="dialog"
         aria-modal="true"
         aria-label="Choose a delivery address"
-        className="relative w-full animate-sheet-in rounded-t-3xl border border-line bg-surface p-5 shadow-2xl sm:max-w-md sm:animate-dialog-in sm:rounded-3xl"
+        className="relative w-full animate-sheet-in rounded-t-2xl border border-line bg-surface p-5 shadow-[var(--shadow-raised)] sm:max-w-md sm:animate-dialog-in sm:rounded-2xl"
       >
         <h2 className="text-base font-bold text-ink">Deliver to</h2>
 
@@ -230,7 +230,7 @@ function AddressSwitcherSheet({
         {undeliverablePincode !== null && (
           <div
             role="status"
-            className="mt-3 rounded-2xl border border-[var(--danger)]/30 bg-bg p-3.5"
+            className="mt-3 rounded-2xl bg-secondary p-3.5"
           >
             <p className="text-xs font-semibold leading-snug text-ink">
               We&rsquo;re not in {undeliverablePincode}{" "}
@@ -252,14 +252,14 @@ function AddressSwitcherSheet({
                   aria-current={isActive ? "true" : undefined}
                   className={`w-full rounded-2xl border px-4 py-3 text-left transition-colors ${
                     isActive
-                      ? "border-gold bg-surface-raised"
-                      : "border-line bg-bg hover:border-line-strong"
+                      ? "border-gold bg-primary/10"
+                      : "border-transparent bg-secondary hover:border-line-strong"
                   }`}
                 >
                   <span className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-ink">{a.label}</span>
                     {/* Selection is carried by text, not colour alone. */}
-                    {isActive && <span className="text-xs font-semibold text-gold-text">Current</span>}
+                    {isActive && <span className="text-xs font-semibold text-accent">Current</span>}
                   </span>
                   <span className="mt-0.5 block truncate text-xs text-ink-muted">
                     {[a.line1, a.line2, a.city, a.pincode].filter(Boolean).join(", ")}
@@ -271,7 +271,7 @@ function AddressSwitcherSheet({
         </ul>
         <Link
           href="/account/addresses"
-          className="mt-4 inline-block text-sm font-semibold text-gold-text hover:underline"
+          className="mt-4 inline-block text-sm font-semibold text-primary hover:underline"
         >
           Manage addresses
         </Link>

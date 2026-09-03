@@ -263,3 +263,47 @@ here: the global header location trigger (`ServiceabilityBar` / `DeliveryAddress
 chrome on home/menu/plan, 11h), the clinical dashboards behind `/account/{history,symptoms,
 wellness}` (their page chrome is restyled; the dashboard bodies are 11h), `WellnessHub`,
 `BloodReportOCR`, and `EveningAddOffer` (Breeze fallback, 11h).
+
+## PR-11h — shell chrome: the header location trigger
+
+The mobile shell the brief names (§ "Preserve the delivered shell pattern"; the
+reference-→-production map's shell row) was already on the grammar after 11a–11g
+for `Header`, `HeaderShell`, `FocusHeader`, `MobileBottomNav` and `app/layout.tsx`.
+The one piece still on the old face was the header's **location trigger** —
+`ServiceabilityBar` and `DeliveryAddressBar` — deliberately deferred from 11g
+(§ PR-11g) because it renders in the global `<header>` on every page and owns the
+`layout-vrt` `global-header` baseline. This finishes it.
+
+`11h/after*` carry the mandated seven on the 11h tree plus the four header-state
+frames below; `11h/before*` are the same on the merged 11g tree. The header
+strips (`h01`, `h02`) are cropped to the top 132px so the trigger is legible;
+the serviceable and unserviceable states are driven by seeding the widget's
+`tnm_serviceability_state` and stubbing `/api/serviceability` — the pincode and
+verdict are fixture-driven.
+
+| Frame | Surface |
+|---|---|
+| `01`–`07` | the mandated seven — the header trigger rides `01-home` and `02-menu` |
+| `h01` | header, default `Set location` trigger |
+| `h02` | header, serviceable pill (`201301 ✓`) |
+| `h03` | home, unserviceable state (`We're not in 400001 yet` + notify-me) |
+| `h04` | the location sheet opened from the header trigger |
+
+### Choices without a reference screen (what changed → why)
+
+| Before 11h | Production (11h) | Rule |
+|---|---|---|
+| Triggers on `rounded-xl` with a `shadow-sm` hairline | `rounded-full`, no shadow — the pill shape the serviceable state already used | one pill shape for the location control; boundary from fill/border, not shadow |
+| Arbitrary colour utilities (`bg-[var(--surface-subtle)]`, `border-[var(--line-strong)]`, `text-[var(--ink)]`) | the registered tokens (`bg-secondary`, `border-line-strong`, `text-ink`) | the token layer, not raw `var()` reaches — same values, lint-visible |
+| Pin icon and `MAP` tag in `text-gold`; serviceable tick in `text-[var(--success)]` | icon/tag in `text-accent`, tick in `text-sage-text` | gold stays the action colour; the trigger's marks are accent/signal, not action |
+| Sheet `rounded-t-3xl … shadow-2xl`; saved-address rows `bg-surface-raised` / `bg-bg`; manual pin field with a `line-strong` focus ring | sheet `rounded-t-2xl shadow-[var(--shadow-raised)]`; rows on the tap-to-select tint (`bg-primary/10` / `bg-secondary`); field grammar (`min-h-[50px]`, `focus-visible:border-primary`) | the 11c card/sheet radius, selection tint and field grammar |
+| Unserviceable + undeliverable notices as danger-bordered cards | the plain grammar card / a secondary note | a notice is a note, not an alert box; signal stays in the text |
+
+Unchanged on purpose: every rendered string, pincode logic, the `MENU_FIT`
+width clamp and its measured comment, the localStorage keys, `aria` labels,
+handlers and the one-instance-per-page contract — presentation only. `layout-vrt`'s
+`global-header` baseline is regenerated in its own commit from the CI artifact,
+since the trigger's shape changed. The genuinely un-restyled **feature and
+marketing pages** (b2b, challenges, coach, legal, `custom-build`, and the
+`/account/{history,symptoms,wellness}` clinical dashboards) are a separate,
+larger body of work — a follow-up, not this shell PR.
