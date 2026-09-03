@@ -56,9 +56,9 @@ export function ChallengeTrackerView() {
   }
   if (isError) {
     return (
-      <div className="rounded-2xl border border-line bg-surface p-8 text-center shadow-[var(--shadow-card)]">
+      <div className="rounded-2xl border border-line bg-surface p-8 text-center">
         <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load your challenge progress just now.</p>
-        <button type="button" onClick={() => void refetch()} className="mt-4 rounded-full border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-colors hover:border-line-strong">
+        <button type="button" onClick={() => void refetch()} className="mt-4 rounded-full border border-line px-5 py-2 text-xs font-semibold text-primary transition-colors hover:border-line-strong">
           Try again
         </button>
       </div>
@@ -73,15 +73,15 @@ export function ChallengeTrackerView() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="rounded-2xl border border-line bg-surface p-6 shadow-[var(--shadow-card)] transition-shadow duration-300 hover:shadow-lg md:p-8">
+      <div className="rounded-2xl border border-line bg-surface p-6 md:p-8">
         <div className="mb-6">
-          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gold-text">Your streaks</span>
-          <h2 className="text-xl font-semibold tracking-tight text-ink md:text-2xl">Active challenges</h2>
+          <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[.18em] text-accent">Your streaks</span>
+          <h2 className="font-display text-xl font-semibold leading-tight text-primary md:text-2xl">Active challenges</h2>
         </div>
         {joined.length === 0 ? (
           <p className="text-sm text-ink-muted">
             You haven&rsquo;t joined a challenge yet.{" "}
-            <Link href="/challenges" className="font-medium text-gold-text hover:underline">Browse challenges</Link>.
+            <Link href="/challenges" className="font-medium text-primary hover:underline">Browse challenges</Link>.
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -96,8 +96,8 @@ export function ChallengeTrackerView() {
                 >
                   <div>
                     <div className="flex items-start justify-between gap-2">
-                      <span className="text-base font-semibold text-ink">{c.title}</span>
-                      <span className="tabular shrink-0 rounded-full bg-sage-soft px-2.5 py-0.5 text-xs font-semibold text-sage-text">
+                      <span className="font-display text-base font-semibold leading-tight text-primary">{c.title}</span>
+                      <span className="font-data shrink-0 rounded-full bg-sage-soft px-2.5 py-0.5 text-xs font-semibold text-sage-text">
                         Day {daysDone} / {c.durationDays}
                       </span>
                     </div>
@@ -106,9 +106,9 @@ export function ChallengeTrackerView() {
                   <div>
                     <div className="mb-1.5 flex justify-between text-2xs font-semibold text-ink-muted">
                       <span>Progress</span>
-                      <span className="tabular text-ink">{pct}%</span>
+                      <span className="font-data text-ink">{pct}%</span>
                     </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-surface-raised">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
                       {/* `transform: scaleX` instead of animating `width` — compositor-only. */}
                       <div
                         className="h-full w-full origin-left rounded-full bg-gold transition-transform duration-700 ease-out"
@@ -123,8 +123,8 @@ export function ChallengeTrackerView() {
         )}
       </div>
 
-      <div className="rounded-2xl border border-line bg-surface p-6 shadow-[var(--shadow-card)] md:p-8">
-        <h3 className="mb-5 text-lg font-semibold text-ink">Upcoming dietitian check-ins</h3>
+      <div className="rounded-2xl border border-line bg-surface p-6 md:p-8">
+        <h3 className="mb-5 font-display text-lg font-semibold leading-tight text-primary">Upcoming dietitian check-ins</h3>
         {data.checkIns.length === 0 ? (
           <p className="text-sm text-ink-muted">No check-ins scheduled right now — we&rsquo;ll post one here when your cohort has its next session.</p>
         ) : (
@@ -133,7 +133,7 @@ export function ChallengeTrackerView() {
               <li key={ci.id} className="flex flex-col justify-between gap-3 border-b border-line py-4 first:pt-0 last:border-0 last:pb-0 sm:flex-row sm:items-center">
                 <div>
                   <span className="text-sm font-semibold text-ink">{ci.title}</span>
-                  <div className="tabular mt-1 text-xs text-ink-muted">{fmtCheckIn(ci.scheduledAt)}</div>
+                  <div className="font-data mt-1 text-xs text-ink-muted">{fmtCheckIn(ci.scheduledAt)}</div>
                 </div>
                 <Button asChild shape="pill" size="fluid" className="inline-flex shrink-0 items-center gap-1 self-start px-5 py-2.5 text-xs font-semibold sm:self-auto">
                   <a href={ci.joinUrl} target="_blank" rel="noopener noreferrer">
