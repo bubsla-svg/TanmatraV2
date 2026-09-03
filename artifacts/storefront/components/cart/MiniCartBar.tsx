@@ -13,6 +13,7 @@ import { itemCount, subtotalPaise } from "@/lib/cartStore";
 import { formatPaise } from "@/lib/format";
 import { useCart } from "@/components/cart/CartProvider";
 import { useScrollHide } from "@/lib/useScrollHide";
+import { StickyAction } from "@/components/primitives/StickyAction";
 
 // CartDrawer pulls in the Drawer primitive (Vaul — drag-physics + portal +
 // focus management, see components/ui/drawer.tsx) plus CartUpsellRail. A
@@ -79,9 +80,11 @@ export function MiniCartBar() {
   // md floats the pill off the naked bottom edge, where it does.
   return (
     <>
-      <div
+      <StickyAction
+        chrome="none"
+        safeArea={false}
         data-stitch="dark"
-        className={`pointer-events-none fixed inset-x-0 bottom-16 z-30 px-3 text-ink transition-transform duration-200 motion-reduce:transition-none md:bottom-0 md:px-4 md:pb-[max(env(safe-area-inset-bottom),1rem)] ${
+        className={`pointer-events-none bottom-16 z-30 px-3 text-ink transition-transform duration-200 motion-reduce:transition-none md:bottom-0 md:px-4 md:pb-[max(env(safe-area-inset-bottom),1rem)] ${
           navRetreated
             ? "translate-y-14 pb-[max(env(safe-area-inset-bottom),0.375rem)] md:translate-y-0"
             : "translate-y-0 pb-1.5"
@@ -102,7 +105,7 @@ export function MiniCartBar() {
             View cart
           </Button>
         </div>
-      </div>
+      </StickyAction>
       <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />
     </>
   );

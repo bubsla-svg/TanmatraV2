@@ -2,6 +2,7 @@
 // Per-weekday context (gym/travel/wfh) that tunes the NEXT generate — gym days
 // scale the calorie target up, travel down. Applied on regenerate, not live.
 import type { WeekDayCalendarKind } from "@/lib/mealPlanApi";
+import { Rail } from "@/components/primitives/Rail";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const LABEL: Record<WeekDayCalendarKind, string> = { normal: "Normal", gym: "Gym", travel: "Travel", wfh: "WFH" };
@@ -12,7 +13,7 @@ export function WeekCalendarStrip({ calendar, onCycle }: {
 }) {
   return (
     <div>
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <Rail snap="none" className="gap-2 pb-1">
         {DAYS.map((d, i) => {
           const kind = calendar[i] ?? "normal";
           const on = kind !== "normal";
@@ -34,7 +35,7 @@ export function WeekCalendarStrip({ calendar, onCycle }: {
             </button>
           );
         })}
-      </div>
+      </Rail>
       <p className="mt-2 text-2xs text-ink-faint">Tap a day to mark gym / travel / WFH — applied next time you regenerate.</p>
     </div>
   );

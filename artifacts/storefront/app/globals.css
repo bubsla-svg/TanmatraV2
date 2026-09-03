@@ -320,6 +320,23 @@ textarea:focus-visible,
 .stagger-4 {
   animation-delay: 280ms;
 }
+/* PR-11b: the Rail primitive's continuation cue. `no-scrollbar` removed the
+   only affordance that more items exist, so the trailing 1.5rem fades out and
+   a cut-off item reads as "more this way" rather than as broken. The matching
+   end padding keeps the last item clear of the fade once scrolled to the end. */
+.rail-fade {
+  padding-inline-end: 1.5rem;
+  mask-image: linear-gradient(to right, black calc(100% - 1.5rem), transparent);
+}
+/* Used by the rails since their first version but never declared — the class
+   was inert and every "scrollbar-less" rail still drew one. Declared now that
+   the Rail primitive pairs it with a visible continuation cue. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,
