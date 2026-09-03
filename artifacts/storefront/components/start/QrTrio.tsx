@@ -34,9 +34,9 @@ export function QrTrio({ dishes }: { dishes: TrioDish[] }) {
             />
           </div>
           <div className="flex flex-1 flex-col gap-1 p-2.5 text-center">
-            <p className="text-xs font-semibold leading-snug text-ink">{dish.name}</p>
+            <p className="font-display text-sm font-semibold leading-tight text-primary">{dish.name}</p>
             {dish.macros && (
-              <p className="tabular text-[0.6875rem] leading-tight text-ink-faint">
+              <p className="tabular text-[0.6875rem] leading-tight text-ink-muted">
                 {formatMacroLine(dish.macros, dish.macrosEstimated)}
               </p>
             )}

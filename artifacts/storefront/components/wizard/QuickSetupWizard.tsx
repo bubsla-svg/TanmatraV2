@@ -14,7 +14,6 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { SquircleOptionCard } from "@/components/primitives/OptionCards";
 import { StepDots } from "@/components/checkout/StepDots";
 import { Button } from "@/components/ui/button";
 import { readQuickSetupDraft, stashQuickSetupDraft, clearQuickSetupDraft } from "@/lib/quickSetupDraft";
@@ -42,6 +41,13 @@ const ALLERGIES = [
 ];
 
 const STEP_LABELS: Record<1 | 2 | 3, string> = { 1: "Goal", 2: "Dietary Style", 3: "Allergens" };
+
+/** Tap-to-select row grammar (the same border + tint the checkout track chips
+ *  use): selection is carried by the gold border, never a solid gold fill. */
+const OPTION_ROW =
+  "flex min-h-12 w-full flex-col items-start justify-center rounded-2xl border px-4 py-3 text-left text-sm font-medium transition-colors active:scale-[0.98]";
+const OPTION_SELECTED = "border-gold bg-primary/10 text-primary";
+const OPTION_IDLE = "border-transparent bg-secondary text-ink-muted hover:text-ink";
 
 /** Local goal ids match the wire WellnessGoal verbatim except "maintenance",
  *  whose wire value is "maintain". */
@@ -143,60 +149,66 @@ export function QuickSetupWizard() {
   }
 
   return (
-    <div className="rounded-3xl border border-line bg-surface p-5 flex flex-col gap-6 shadow-sm">
+    <div className="flex flex-col gap-6 rounded-2xl border border-line bg-surface p-5">
       <div className="flex flex-col gap-4 border-b border-line pb-5">
         <StepDots current={step} total={3} />
-        <span className="text-2xs font-semibold uppercase tracking-widest text-ink-muted">
+        <span className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">
           Step {step} of 3 &mdash; {STEP_LABELS[step]}
         </span>
       </div>
 
       {step === 1 && (
         <div data-ui-generation="stitch-74" data-screen-id="6.9.1" data-screen-state="step-1-goal" className="flex flex-col gap-3">
-          <h2 className="text-xl font-semibold leading-snug text-ink">What&rsquo;s your goal?</h2>
+          <h2 className="font-display text-xl font-semibold leading-tight text-primary">What&rsquo;s your goal?</h2>
           {GOALS.map((g) => (
-            <SquircleOptionCard
+            <button
               key={g.id}
-              title={g.label}
-              description={g.desc}
-              isSelected={goal === g.id}
+              type="button"
               onClick={() => setGoal(g.id)}
-            />
+              className={`${OPTION_ROW} ${goal === g.id ? OPTION_SELECTED : OPTION_IDLE}`}
+            >
+              <span className="block font-semibold">{g.label}</span>
+              <span className="mt-0.5 block text-xs font-normal text-ink-muted">{g.desc}</span>
+            </button>
           ))}
         </div>
       )}
 
       {step === 2 && (
         <div data-ui-generation="stitch-74" data-screen-id="6.9.2" data-screen-state="step-2-dietary-style" className="flex flex-col gap-3">
-          <h2 className="text-xl font-semibold leading-snug text-ink">What&rsquo;s your kitchen dietary style?</h2>
+          <h2 className="font-display text-xl font-semibold leading-tight text-primary">What&rsquo;s your kitchen dietary style?</h2>
           {STYLES.map((s) => (
-            <SquircleOptionCard
+            <button
               key={s.id}
-              title={s.label}
-              isSelected={dietaryStyle === s.id}
+              type="button"
               onClick={() => setDietaryStyle(s.id)}
-            />
+              className={`${OPTION_ROW} ${dietaryStyle === s.id ? OPTION_SELECTED : OPTION_IDLE}`}
+            >
+              <span className="block font-semibold">{s.label}</span>
+            </button>
           ))}
         </div>
       )}
 
       {step === 3 && (
         <div data-ui-generation="stitch-74" data-screen-id="6.9.3" data-screen-state="step-3-allergens" className="flex flex-col gap-3">
-          <h2 className="text-xl font-semibold leading-snug text-ink">
+          <h2 className="font-display text-xl font-semibold leading-tight text-primary">
             Select dietary allergens our kitchen must strictly omit
           </h2>
           {ALLERGIES.map((a) => (
-            <SquircleOptionCard
+            <button
               key={a.id}
-              title={a.label}
-              isSelected={allergens.includes(a.id)}
+              type="button"
               onClick={() => toggleAllergen(a.id)}
-            />
+              className={`${OPTION_ROW} ${allergens.includes(a.id) ? OPTION_SELECTED : OPTION_IDLE}`}
+            >
+              <span className="block font-semibold">{a.label}</span>
+            </button>
           ))}
         </div>
       )}
 
-      <div className="flex flex-col gap-3 pt-3 border-t border-line">
+      <div className="flex flex-col gap-3 border-t border-line pt-4">
         <div className="flex items-center gap-3">
           {step > 1 && (
             <Button
@@ -205,7 +217,7 @@ export function QuickSetupWizard() {
               variant="outline"
               shape="pill"
               size="fluid"
-              className="flex-1 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-center"
+              className="min-h-12 flex-1 px-4 py-3 text-center text-sm font-semibold"
             >
               Back
             </Button>
@@ -215,7 +227,7 @@ export function QuickSetupWizard() {
             onClick={handleContinue}
             shape="pill"
             size="fluid"
-            className="flex-[2] px-6 py-3 text-xs font-semibold uppercase tracking-wide shadow-sm text-center"
+            className="min-h-12 flex-[2] px-6 py-3 text-center text-sm font-semibold"
           >
             {step === 3 ? "See my plan" : "Continue →"}
           </Button>
@@ -224,7 +236,7 @@ export function QuickSetupWizard() {
             only as a low-emphasis text link, never the primary exit. */}
         <Link
           href="/menu"
-          className="text-center text-2xs font-medium text-ink-faint hover:text-ink-muted hover:underline"
+          className="text-center text-xs font-medium text-ink-muted underline-offset-4 hover:text-ink hover:underline"
         >
           Skip &mdash; just browse matching dishes
         </Link>

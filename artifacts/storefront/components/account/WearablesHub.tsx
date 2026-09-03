@@ -48,9 +48,9 @@ export function WearablesHub() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="rounded-xl border border-line bg-surface p-4 text-xs leading-relaxed text-ink-muted">
+      <div className="rounded-2xl bg-secondary px-4 py-3 text-xs leading-relaxed text-ink-muted">
         <div className="mb-1.5 flex items-center gap-1.5 font-semibold text-ink">
-          <ShieldAlert size={14} className="text-gold-text" />
+          <ShieldAlert size={14} className="text-primary" />
           Health Privacy & Recommendation Context
         </div>
         Activity and workout metrics help rank meal recommendations for training days. Tanmatra will never change a scheduled meal automatically. Continuous Glucose Monitors (CGM) and medical diagnostic telemetry remain out of scope.
@@ -60,11 +60,11 @@ export function WearablesHub() {
         {providers.map((p) => (
           <div
             key={p.id}
-            className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 transition-all hover:border-gold/30"
+            className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5"
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-subtle text-gold-text">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-primary">
                   {p.id === "apple_health" ? (
                     <Heart size={20} />
                   ) : p.id === "ultrahuman" ? (
@@ -74,12 +74,12 @@ export function WearablesHub() {
                   )}
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-ink">{p.name}</h3>
+                  <h3 className="font-display text-lg font-semibold leading-tight text-primary">{p.name}</h3>
                   <p className="text-xs text-ink-muted">{p.category}</p>
                 </div>
               </div>
               {p.connected && (
-                <span className="flex items-center gap-1 rounded-full bg-sage/10 px-2 py-0.5 text-3xs font-medium text-sage-text">
+                <span className="flex items-center gap-1 rounded-full bg-sage-soft px-2.5 py-0.5 text-xs font-medium text-sage-text">
                   <CheckCircle2 size={12} /> Connected
                 </span>
               )}
@@ -95,8 +95,9 @@ export function WearablesHub() {
               type="button"
               variant={p.connected ? "outline" : "default"}
               size="sm"
+              shape="pill"
               onClick={() => toggleConnect(p.id)}
-              className="mt-1 w-full text-xs font-semibold"
+              className="mt-1 w-full text-sm font-bold"
             >
               {p.connected ? "Disconnect Provider" : "Connect Integration"}
             </Button>

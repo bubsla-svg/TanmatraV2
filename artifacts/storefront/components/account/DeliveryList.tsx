@@ -105,7 +105,7 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
         <button
           type="button"
           onClick={() => void refetch()}
-          className="text-xs font-semibold text-gold-text hover:underline"
+          className="inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline"
         >
           Try again
         </button>
@@ -120,7 +120,7 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
   return (
     <div className="mt-3 flex flex-col gap-2.5 border-t border-line pt-4">
       {detail.mandate && (
-        <p className="inline-flex w-fit items-center gap-1.5 self-start rounded-full bg-sage-soft px-3 py-1 text-xs font-medium text-sage-text">
+        <p className="rounded-2xl bg-sage-soft px-4 py-3 text-xs font-medium leading-relaxed text-sage-text">
           UPI Autopay active — you&rsquo;ll be notified at least {SKIP_SWAP_CUTOFF_HOURS}h before each charge.
         </p>
       )}
@@ -137,11 +137,11 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
             // is not a change the kitchen has to act on.
             const locked = d.status === "upcoming" && !isChangeable(d);
             return (
-            <li key={d.id} className="flex flex-col gap-1 rounded-xl bg-bg px-3 py-2.5 text-sm">
+            <li key={d.id} className="flex flex-col gap-1 rounded-xl bg-secondary p-3 text-sm">
               <div className="flex items-center justify-between gap-2">
-              <span className={d.status === "skipped" ? "text-ink-faint line-through" : "text-ink"}>
+              <span className={d.status === "skipped" ? "font-data text-ink-faint line-through" : "font-data font-bold text-primary"}>
                 {fmtDay(d.scheduledFor)}
-                {d.deliveryWindow ? <span className="text-ink-faint"> · {d.deliveryWindow}</span> : null}
+                {d.deliveryWindow ? <span className="font-normal text-ink-faint"> · {d.deliveryWindow}</span> : null}
               </span>
               <span className="flex shrink-0 items-center gap-3">
                 {d.status === "upcoming" && !locked && (
@@ -149,7 +149,7 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
                     type="button"
                     disabled={busyIds.has(d.id)}
                     onClick={() => setManaging(d)}
-                    className="-m-1 p-1 text-xs font-medium text-gold-text hover:underline disabled:opacity-40"
+                    className="-my-3 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline disabled:opacity-40"
                   >
                     Manage
                   </button>
@@ -158,7 +158,7 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
                   type="button"
                   disabled={busyIds.has(d.id) || locked}
                   onClick={() => act.mutate(d)}
-                  className="-m-1 p-1 text-xs font-medium text-gold-text hover:underline disabled:opacity-40"
+                  className="-my-3 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline disabled:opacity-40"
                 >
                   {d.status === "skipped" ? "Restore" : "Skip"}
                 </button>

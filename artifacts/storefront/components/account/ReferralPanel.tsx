@@ -48,21 +48,21 @@ export function ReferralPanel({ data }: { data: ReferralMe }) {
   return (
     <div className="flex flex-col gap-5 rounded-2xl border border-line bg-surface p-5">
       <div>
-        <p className="text-lg font-semibold text-ink">
+        <p className="font-display text-lg font-semibold leading-tight text-primary">
           Give {formatPaise(data.awards.refereePaise)}, get {formatPaise(data.awards.referrerPaise)}
         </p>
-        <p className="mt-1 text-sm text-ink-muted">
+        <p className="mt-1 text-xs leading-relaxed text-ink-muted">
           Share your code — your friend gets {formatPaise(data.awards.refereePaise)} credit on their first
           order, and you get {formatPaise(data.awards.referrerPaise)} once they place it.
         </p>
       </div>
 
-      <div className="flex items-center justify-between gap-3 rounded-xl border border-line p-3">
-        <span className="text-xl font-semibold tracking-[0.2em] text-ink">{data.code}</span>
+      <div className="flex items-center justify-between gap-3 rounded-xl bg-secondary p-3">
+        <span className="font-data text-xl font-bold tracking-[0.2em] text-primary">{data.code}</span>
         <Button
           type="button"
           onClick={() => void copyCode()}
-          shape="pill" size="fluid" className="shrink-0 px-6 py-2 font-semibold"
+          shape="pill" size="fluid" className="shrink-0 px-5 py-2 text-sm font-semibold"
         >
           {copied ? "Copied" : "Copy"}
         </Button>
@@ -76,7 +76,7 @@ export function ReferralPanel({ data }: { data: ReferralMe }) {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="Enter code"
-              className="flex-1 rounded-lg border border-line bg-surface px-4 py-2 text-sm uppercase"
+              className="min-h-[50px] min-w-0 flex-1 rounded-2xl border border-line bg-bg px-4 py-3 text-base uppercase text-ink outline-none placeholder:text-ink-faint focus-visible:border-primary"
             />
             <button
               type="button"
@@ -84,7 +84,7 @@ export function ReferralPanel({ data }: { data: ReferralMe }) {
               aria-busy={busy}
               aria-live="polite"
               onClick={() => void submit()}
-              className="shrink-0 rounded-lg border border-line px-6 py-2 text-sm font-medium text-gold-text disabled:opacity-40"
+              className="min-h-11 shrink-0 rounded-full border border-line-strong bg-surface px-4 text-sm font-bold text-ink disabled:opacity-40"
             >
               {busy ? "Applying…" : "Apply"}
             </button>
@@ -100,11 +100,11 @@ export function ReferralPanel({ data }: { data: ReferralMe }) {
 
       {data.redemptions.length > 0 && (
         <div className="border-t border-line pt-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-ink-faint">Friends you&rsquo;ve referred</p>
-          <ul className="mt-1">
+          <p className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Friends you&rsquo;ve referred</p>
+          <ul className="mt-1 divide-y divide-line">
             {data.redemptions.map((r) => (
-              <li key={r.id} className="flex items-center justify-between border-b border-line py-3 text-sm last:border-0">
-                <span className="tabular text-ink">Joined {fmtDate(r.createdAt)}</span>
+              <li key={r.id} className="flex items-center justify-between py-3 text-sm">
+                <span className="font-data text-ink">Joined {fmtDate(r.createdAt)}</span>
                 <span className={r.awardedAt ? "font-medium text-sage-text" : "text-ink-faint"}>
                   {r.awardedAt ? `You earned ${formatPaise(r.referrerAwardPaise)}` : "Pending first order"}
                 </span>

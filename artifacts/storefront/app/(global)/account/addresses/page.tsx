@@ -21,8 +21,8 @@ export default function AddressesPage() {
       className="mx-auto max-w-md px-4 py-10"
     >
       <AccountNav active="addresses" />
-      <h1 className="text-lg font-semibold text-ink">Your addresses</h1>
-      <p className="mt-1 mb-5 text-sm text-ink-muted">
+      <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">Your addresses</h1>
+      <p className="mt-2 mb-6 text-sm text-ink-muted">
         Saved addresses speed up checkout — the default is pre-selected on your next order.
       </p>
       <AddressManager />

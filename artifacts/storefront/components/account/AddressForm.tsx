@@ -21,7 +21,7 @@ import type { Address, AddressInput, AddressType } from "@/lib/api";
  * line, and the unserviceable-pincode panel (with its data-ui-generation /
  * data-screen-* attributes) are untouched. */
 const nativeInputCls =
-  "w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none transition-colors focus-visible:border-[var(--gold)] focus-visible:ring-1 focus-visible:ring-[var(--gold)]";
+  "w-full min-h-[50px] rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none placeholder:text-ink-faint focus-visible:border-primary";
 const TYPES: AddressType[] = ["home", "work", "other"];
 
 /**
@@ -100,9 +100,9 @@ export function AddressForm({
 
   if (unserviceablePincode) {
     return (
-      <div data-ui-generation="stitch-74" data-screen-id="14.5" data-screen-state="unserviceable-address" className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+      <div data-ui-generation="stitch-74" data-screen-id="14.5" data-screen-state="unserviceable-address" className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
         <div>
-          <p className="text-sm font-semibold text-ink">
+          <p className="font-display text-lg font-semibold leading-tight text-primary">
             We don&rsquo;t deliver to {unserviceablePincode} yet
           </p>
           <p className="mt-1 text-xs leading-relaxed text-ink-muted">
@@ -116,7 +116,7 @@ export function AddressForm({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+    <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
       <Grid gap={4} columns={{ minWidth: 200 }}>
         <TextInput
           label="Label"
@@ -184,11 +184,11 @@ export function AddressForm({
         <p role="status" className="text-xs font-medium text-ink-muted">{blockedReason}</p>
       )}
       <div className="mt-1 flex items-center gap-3 border-t border-line pt-3">
-        <Button type="button" disabled={!valid || busy} aria-busy={busy} aria-live="polite" onClick={submit} shape="xl" size="fluid" className="px-5 py-3 font-semibold disabled:opacity-40">
+        <Button type="button" disabled={!valid || busy} aria-busy={busy} aria-live="polite" onClick={submit} shape="pill" size="fluid" className="min-h-12 px-6 py-3 font-semibold disabled:opacity-40">
           {busy ? "Saving…" : submitLabel}
         </Button>
         {onCancel && (
-          <button type="button" onClick={onCancel} className="-m-2 p-2 text-sm font-medium text-ink-muted hover:underline">
+          <button type="button" onClick={onCancel} className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-ink-muted underline-offset-4 hover:underline">
             Cancel
           </button>
         )}

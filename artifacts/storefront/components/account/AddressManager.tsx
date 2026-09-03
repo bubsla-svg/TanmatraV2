@@ -119,8 +119,8 @@ export function AddressManager() {
   if (isPending) {
     return (
       <div className="flex flex-col gap-3" aria-hidden>
-        <Skeleton className="h-24 w-full rounded-xl" />
-        <Skeleton className="h-24 w-full rounded-xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
       </div>
     );
   }
@@ -135,7 +135,7 @@ export function AddressManager() {
       );
     }
     return (
-      <div className="rounded-2xl border border-line bg-surface px-6 py-10 text-center">
+      <div className="rounded-2xl border border-line bg-surface p-5 text-center">
         <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load your addresses</p>
         <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-ink-faint">
           Something went wrong on our end — this usually clears up on retry.
@@ -143,7 +143,7 @@ export function AddressManager() {
         <button
           type="button"
           onClick={() => void refetch()}
-          className="mt-4 rounded-lg border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-opacity hover:opacity-80"
+          className="mt-4 min-h-11 rounded-full border border-line-strong bg-surface px-4 text-sm font-bold text-ink"
         >
           Try again
         </button>
@@ -184,7 +184,7 @@ export function AddressManager() {
         <Button
           type="button"
           onClick={() => { setFormError(null); setUnserviceablePincode(null); setPrefill(undefined); setPickingLocation(true); }}
-          shape="xl" size="fluid" className="self-start px-5 py-3 font-semibold"
+          shape="pill" size="fluid" className="min-h-12 self-start px-6 py-3 font-semibold"
         >
           Add an address
         </Button>

@@ -7,6 +7,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { StickyAction } from "@/components/primitives/StickyAction";
 import { emitFunnel } from "@/lib/funnel";
 import { formatMacroLine, formatPaise } from "@/lib/format";
 import { PLAN_DELIVERY_DAYS_SENTENCE, PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
@@ -52,14 +53,14 @@ export function TrialStart({
       <div className="flex flex-col items-center gap-2">
         <p
           id="trial-pref-label"
-          className="text-xs font-semibold uppercase tracking-wide text-ink-faint"
+          className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted"
         >
           Preference
         </p>
         <div
           role="group"
           aria-labelledby="trial-pref-label"
-          className="inline-flex gap-1 rounded-full border border-line bg-surface p-1"
+          className="flex flex-wrap justify-center gap-2"
         >
           {TRACKS.map((t) => (
             <button
@@ -67,10 +68,10 @@ export function TrialStart({
               type="button"
               aria-pressed={track === t.id}
               onClick={() => setTrack(t.id)}
-              className={`inline-flex min-h-11 items-center rounded-full px-6 text-sm font-medium transition-colors active:scale-[0.98] ${
+              className={`inline-flex min-h-11 items-center rounded-full border px-6 text-sm font-medium transition-colors active:scale-[0.98] ${
                 track === t.id
-                  ? "bg-gold text-[var(--gold-ink)]"
-                  : "text-ink-muted hover:text-ink"
+                  ? "border-gold bg-primary/10 text-primary"
+                  : "border-transparent bg-secondary text-ink-muted hover:text-ink"
               }`}
             >
               {t.label}
@@ -102,9 +103,9 @@ export function TrialStart({
               />
             </div>
             <div className="flex flex-1 flex-col gap-1 p-2.5 text-center">
-              <p className="text-xs font-semibold leading-snug text-ink">{dish.name}</p>
+              <p className="font-display text-sm font-semibold leading-tight text-primary">{dish.name}</p>
               {dish.macros && (
-                <p className="tabular text-[0.6875rem] leading-tight text-ink-faint">
+                <p className="tabular text-[0.6875rem] leading-tight text-ink-muted">
                   {formatMacroLine(dish.macros, dish.macrosEstimated)}
                 </p>
               )}
@@ -130,14 +131,15 @@ export function TrialStart({
         <KitchenSafetyChip />
       </div>
 
-      {/* Glass sticky footer (checkout vocabulary, BATCH-4-BRIEFS.md) — the ONE
-          money-bearing CTA on this screen, since starting the trial IS the
-          commitment moment, same treatment as CheckoutPay's Pay button.
-          Always rendered: /trial lives under app/(focus)/, and FocusLayout
-          mounts no MiniCartBar to hand the bottom edge to — so nothing else
-          could ever occupy `bottom-16`, cart state or not. CTA only: with the
-          tab bar this is ≤ 140px of pinned chrome. */}
-      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
+      {/* Sticky footer on the shared StickyAction chrome (the same glass bar
+          the checkout pay bars use) — the ONE money-bearing CTA on this
+          screen, since starting the trial IS the commitment moment, same
+          treatment as CheckoutPay's Pay button. Always rendered: /trial lives
+          under app/(focus)/, and FocusLayout mounts no MiniCartBar and no tab
+          bar to hand the bottom edge to — so the bar anchors at bottom-0, cart
+          state or not. CTA only: ~72px of pinned chrome plus the safe-area
+          inset. */}
+      <StickyAction className="bottom-0 z-30">
         <div className="mx-auto max-w-md px-4 py-3">
           <Button
             type="button"
@@ -149,7 +151,7 @@ export function TrialStart({
             Start the taste test · {formatPaise(pricePaise)}
           </Button>
         </div>
-      </div>
+      </StickyAction>
     </section>
   );
 }

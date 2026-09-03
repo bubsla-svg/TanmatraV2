@@ -44,7 +44,7 @@ const SPICE: { id: SpiceLevel; label: string }[] = [
  * chip group can't receive aria-labelledby without editing ChipInput itself.
  * State shape, PreferencesPatch payload, role="alert" error line, saved sage
  * indicator and the Save pill button are untouched. */
-const CARD = "rounded-3xl border border-line bg-surface p-6 transition-colors hover:bg-surface-raised";
+const CARD = "rounded-2xl border border-line bg-surface p-5";
 
 export function PreferencesForm({
   initial,
@@ -68,7 +68,7 @@ export function PreferencesForm({
   const [cuisines, setCuisines] = useState<string[]>(initial?.cuisines ?? []);
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-5">
       <Grid gap={4} columns={{ minWidth: 260 }}>
         <div className={CARD}>
           <Selector
@@ -104,7 +104,7 @@ export function PreferencesForm({
         </div>
       </Grid>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4">
         <div className={CARD}>
           <ChipInput label="Allergens" tone="signal" values={allergens} placeholder="Add an allergen…" onChange={setAllergens} />
         </div>
@@ -125,7 +125,7 @@ export function PreferencesForm({
           aria-busy={busy}
           aria-live="polite"
           onClick={() => onSubmit({ dietaryStyle, goal, activityLevel, spiceLevel, allergens, dislikedIngredients: disliked, cuisines })}
-          shape="pill" size="fluid" className="w-full py-5 text-xs font-bold uppercase tracking-wider disabled:opacity-40"
+          shape="pill" size="fluid" className="min-h-12 w-full px-8 py-3.5 text-center font-semibold disabled:opacity-40"
         >
           {busy ? "Saving…" : "Save preferences"}
         </Button>

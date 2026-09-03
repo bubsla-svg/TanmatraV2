@@ -22,8 +22,8 @@ export default function ConnectionsPage() {
       className="mx-auto max-w-md px-4 py-10"
     >
       <AccountNav active="connections" />
-      <p className="text-xs font-bold uppercase tracking-[0.2em] text-gold-text">Health Connections</p>
-      <h1 className="mt-2 mb-6 text-3xl font-semibold tracking-tight text-ink">Connected Health Data</h1>
+      <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Health Connections</p>
+      <h1 className="mt-2 mb-6 font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">Connected Health Data</h1>
       <WearablesHub />
     </section>
   );

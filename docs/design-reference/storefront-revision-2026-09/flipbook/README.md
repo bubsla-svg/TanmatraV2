@@ -211,3 +211,55 @@ state ("Marketplace catalog is currently empty.") is what CI and a bare clone re
 Unchanged on purpose: `MarketplaceAddToCart`, `MarketplaceBuyNow`, `EveningAddOffer` (Breeze
 fallback, 11h) and the money path behind "Buy now" (`lib/marketplaceApi.ts` checkout →
 shared Razorpay order + verify) — presentation only, no handler, id, testid or copy moved.
+
+## PR-11g — onboarding and account
+
+No reference screen: the delivered revision ships neither the `/quick-setup` wizard, the
+`/start` QR lane, `/trial`, sign-in, nor any `/account` surface, so these follow the grammar
+established in 11c–11f — the card (`rounded-2xl border border-line bg-surface p-5`), the
+display-face headings, the `.font-data` figures, the tap-to-select row (gold border + faint
+primary tint, never a solid gold fill), the field grammar, and one gold action per viewport.
+`11g/after/` and `11g/after-light/` carry the mandated seven frames (`01`–`07`) on the 11g
+tree plus the seventeen onboarding and account frames below; the mandated "before" is
+`11f/after*`, and `11g/before*` carry the seventeen 11g "before" frames.
+
+**Signed-out is stub-free; signed-in is fixture-fed.** Every `/account` island is
+session-gated and renders an honest inline sign-in state on a 401 — exactly what the
+`cuj-account-*` and `stitch-runtime/account` specs assert. The signed-out frames (`g07`–`g13`)
+need no stub. Three authed frames (`g14`, `g15`, `g15b`) layer 200 stubs over a 401 catch-all,
+using the `stitch-runtime/account` §9.2 fixture verbatim (one active weekly subscription,
+`/api/auth/user` → a member) so the hub's authenticated chrome and the "Your plans" delivery
+list render. **The member, subscription, delivery window and prices on those three frames are
+fixture data;** the honest signed-out state is what CI and a bare clone render.
+
+| Frame | Surface |
+|---|---|
+| `g01`, `g02`, `g03`, `g03b` | `/quick-setup` — step 1 goal, step 2 dietary style, step 3 allergens, step 3 with a selection |
+| `g04` | `/start` — QR lane (`QrStart` / `QrTrio` / `ReferralWelcome`) |
+| `g05` | `/login` — `LoginCard` |
+| `g06` | `/trial` — hero, creditback steps, `TrialStart` sticky CTA |
+| `g07` | `/account` — signed-out (`PhoneAuth`, expanded) |
+| `g08`–`g13` | `/account/{orders,subscriptions,addresses,preferences,loyalty,billing}` — signed-out sign-in states |
+| `g14` | `/account` — authed hub (fixture member): name row, live-order card, section list |
+| `g15`, `g15b` | `/account/subscriptions` — authed "Your plans" card, and the delivery list expanded |
+
+### Choices without a reference screen (what changed → why)
+
+| Before 11g | Production (11g) | Rule |
+|---|---|---|
+| Wizard option rows as `SquircleOptionCard` (a bordered squircle with an `<h4>` and a check-icon), selection a `border-2 border-gold` surface | inline `<button>` rows on the checkout tap-to-select grammar (`border-gold bg-primary/10 text-primary` selected, `border-transparent bg-secondary text-ink-muted` idle) | one selection grammar across the funnel; the primitive stays for `/styleguide` |
+| Segmented and tab controls painted solid gold when active (`/start` veg toggle, `TrialStart` toggle, `AccountNav` underline, loyalty/protocol track chips) | the same tap-to-select tint (gold border + faint primary tint) | gold is the action colour, not a selection fill |
+| Prices, PINs, dates and figures in gold or bold sans (`font-clinical-data text-gold-text`, `tabular … text-ink`) | data face (`.font-data font-bold text-primary`) — trial prices, subscription price and window, order amounts, wallet balance, loyalty figures, referral awards | amounts are data; gold is the action colour |
+| Section titles and item names as 14 px bold sans | display face (Fraunces) — the page-h1 grammar and the card-title grammar | one heading language across onboarding and account |
+| `rounded-3xl`/`rounded-card` cards with `shadow-sm`/`shadow-lg` hovers; native inputs with a `ring` focus | `rounded-2xl` cards without the hairline-and-shadow; the field grammar (`min-h-[50px]`, `focus-visible:border-primary`) | the 11c card radius and field grammar; a perceivable boundary from fill, not shadow |
+| `TrialStart` sticky CTA as a hand-rolled `fixed bottom-16 … bg-[var(--glass)]` bar | the shared `StickyAction` chrome anchored at `bottom-0` (the focus shell mounts no tab bar) | one sticky-CTA primitive (11b); the commitment CTA matches CheckoutPay |
+| `AccountHub` section links as nine bordered cards | one `divide-y divide-line` card of display-title rows | the account content order (`AccountHub` as shipped) in one card, not nine boxes |
+| Row actions (Track, Manage, Skip, Edit, Set default) as gold-text links without a hit floor | text-actions with a 44 px hit area (`-my-2 min-h-11`), preserving the skeleton-mirrored row height | Law 8 targets; the pending skeletons stay CLS-stable |
+
+Unchanged on purpose: every rendered string, question, `data-screen-*` marker, `aria`, `href`,
+`role`, form field, handler and the phone-auth cooldown/stages — presentation only. The
+subscription price line gained a `<span>` wrapper (text identical). Deferred, not touched
+here: the global header location trigger (`ServiceabilityBar` / `DeliveryAddressBar` — shell
+chrome on home/menu/plan, 11h), the clinical dashboards behind `/account/{history,symptoms,
+wellness}` (their page chrome is restyled; the dashboard bodies are 11h), `WellnessHub`,
+`BloodReportOCR`, and `EveningAddOffer` (Breeze fallback, 11h).

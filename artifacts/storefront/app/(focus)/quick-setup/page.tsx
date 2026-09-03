@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 /**
  * Suspense fallback mirroring the wizard card's own geometry (the CLS
  * guardrail in components/ui/skeleton.tsx: reserve the REAL element's
- * dimensions) — container, stepper header, heading line, three squircle
+ * dimensions) — container, stepper header, heading line, three tap-to-select
  * option rows, and the CTA bar, matching QuickSetupWizard's rendered shell.
  * The wizard forces client-side render up to this boundary (it reads
  * useSearchParams), so this is what a customer actually sees first; the
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
  */
 function WizardSkeleton() {
   return (
-    <div className="rounded-3xl border border-line bg-surface p-5 flex flex-col gap-6 shadow-sm">
+    <div className="flex flex-col gap-6 rounded-2xl border border-line bg-surface p-5">
       <p role="status" className="sr-only">
         Loading the dietary setup…
       </p>
@@ -30,12 +30,12 @@ function WizardSkeleton() {
       </div>
       <div aria-hidden className="flex flex-col gap-3">
         <Skeleton className="h-6 w-3/4" />
-        <Skeleton className="h-24 rounded-3xl" />
-        <Skeleton className="h-24 rounded-3xl" />
-        <Skeleton className="h-24 rounded-3xl" />
+        <Skeleton className="h-16 rounded-2xl" />
+        <Skeleton className="h-16 rounded-2xl" />
+        <Skeleton className="h-16 rounded-2xl" />
       </div>
-      <div aria-hidden className="flex flex-col gap-3 pt-3 border-t border-line">
-        <Skeleton className="h-11 rounded-full" />
+      <div aria-hidden className="flex flex-col gap-3 border-t border-line pt-4">
+        <Skeleton className="h-12 rounded-full" />
         <Skeleton className="mx-auto h-3 w-48" />
       </div>
     </div>
@@ -48,10 +48,10 @@ export default function QuickSetupPage() {
       <FocusHeader backLabel="Back" />
       <section className="mx-auto flex max-w-lg flex-col gap-8 px-4 py-12">
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
+          <span className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">
             Precision Personalization
           </span>
-          <h1 className="text-3xl font-semibold tracking-tight text-ink">
+          <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">
             3-Step Dietary Setup
           </h1>
           <p className="text-sm leading-relaxed text-ink-muted">

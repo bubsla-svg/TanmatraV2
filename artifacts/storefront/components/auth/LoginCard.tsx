@@ -83,13 +83,13 @@ export function LoginCard({ next, initialStep }: { next: string; initialStep?: A
   // which of the three states below is showing), state-specific content
   // beneath it.
   return (
-    <div className="flex flex-col gap-6 rounded-3xl border border-line bg-surface p-6 md:p-8">
-      <h1 className="text-2xl font-semibold tracking-tight text-ink">Sign in</h1>
+    <div className="flex flex-col gap-5 rounded-2xl border border-line bg-surface p-5">
+      <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">Sign in</h1>
       {checking ? (
-        <p className="text-sm text-ink-muted">Checking your session…</p>
+        <p className="text-sm leading-relaxed text-ink-muted">Checking your session…</p>
       ) : firebaseConfigured() ? (
         <>
-          <p className="text-sm text-ink-muted">A code by SMS, no passwords.</p>
+          <p className="text-sm leading-relaxed text-ink-muted">A code by SMS, no passwords.</p>
           <PhoneAuth
             startExpanded
             initialStage={otpStageForAuthStep(initialStep)}
@@ -102,7 +102,7 @@ export function LoginCard({ next, initialStep }: { next: string; initialStep?: A
           <p role="alert" className="text-sm font-medium text-[var(--danger)]">
             Sign-in is temporarily unavailable. You can order individual dishes from the menu meanwhile.
           </p>
-          <Button asChild shape="pill" size="fluid" className="self-start px-5 py-3 font-semibold">
+          <Button asChild shape="pill" size="fluid" className="min-h-12 self-start px-5 py-3 font-semibold">
             <Link href="/menu">Browse the menu</Link>
           </Button>
         </>

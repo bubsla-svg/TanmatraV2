@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  */
 function OrderRowSkeleton() {
   return (
-    <li className="rounded-xl border border-line bg-surface p-4">
+    <li className="rounded-2xl border border-line bg-surface p-4">
       <div className="flex items-start justify-between gap-2">
         <Skeleton className="h-5 w-28" />
         <Skeleton className="h-5 w-16" />

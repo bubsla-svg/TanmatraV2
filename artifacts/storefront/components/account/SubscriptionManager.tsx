@@ -138,14 +138,14 @@ export function SubscriptionManager() {
   // state instead of collapsing into the signed-out UI or a dead-end message.
   if (subsQuery.isError) {
     return (
-      <div className="rounded-2xl border border-line bg-surface p-8 text-center shadow-[var(--shadow-card)]">
+      <div className="rounded-2xl border border-line bg-surface p-5 text-center">
         <p className="text-sm font-semibold text-[var(--danger)]">
           {subsQuery.error instanceof ApiError ? subsQuery.error.message : "Couldn't load your plans."}
         </p>
         <button
           type="button"
           onClick={() => void subsQuery.refetch()}
-          className="mt-4 rounded-full border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-colors hover:border-line-strong"
+          className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full border border-line-strong bg-surface px-4 text-sm font-bold text-ink transition-colors hover:bg-surface-raised"
         >
           Try again
         </button>
@@ -167,7 +167,7 @@ export function SubscriptionManager() {
       {subs.length === 0 ? (
         <p className="text-sm text-ink-muted">
           You don&rsquo;t have any plans yet.{" "}
-          <Link href="/plans" className="font-medium text-gold-text hover:underline">Browse plans</Link>.
+          <Link href="/plans" className="font-semibold text-primary underline-offset-4 hover:underline">Browse plans</Link>.
         </p>
       ) : (
         <ul className="flex flex-col gap-4">
