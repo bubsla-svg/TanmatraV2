@@ -39,15 +39,15 @@ export function PlanIdentityGate({
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight text-ink">Start your {planName} plan</h1>
+      <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">Start your {planName} plan</h1>
       {recap && (
         <div className="rounded-2xl border border-line bg-surface p-4">
           <div className="flex items-baseline justify-between gap-3">
-            <span className="text-sm text-ink">
-              {recap.mealsPerCycle} lunches{" "}
-              <span className="text-ink-muted">· {CADENCE_LABEL[recap.cadence] ?? recap.cadence}</span>
+            <span className="text-sm text-ink-muted">
+              <span className="font-display text-lg font-semibold leading-tight text-primary">{recap.mealsPerCycle} lunches</span>{" "}
+              · {CADENCE_LABEL[recap.cadence] ?? recap.cadence}
             </span>
-            <span className="tabular text-base font-semibold text-ink">
+            <span className="font-data text-base font-bold text-primary">
               {formatPaise(recap.cycleTotalPaise)}
             </span>
           </div>
@@ -69,7 +69,7 @@ export function PlanIdentityGate({
           <PhoneAuth startExpanded onVerified={onVerified} />
         </>
       ) : (
-        <div className="flex flex-col gap-4 rounded-3xl border border-line bg-surface p-5">
+        <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
           <p role="alert" className="text-sm font-medium text-[var(--danger)]">
             Plan sign-in is temporarily unavailable. You can order individual dishes from the menu meanwhile.
           </p>

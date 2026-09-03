@@ -289,7 +289,7 @@ export function PlanCheckout({
   if (servicePincode === null) {
     return (
       <div className="flex flex-col gap-5">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">{planName}</h1>
+        <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">{planName}</h1>
         {/* Show first, ask second (Laws 1, 8). Above the PIN field there was the
             plan's name and nothing else, so the first question of the whole
             journey arrived before any of the three facts that decide whether
@@ -310,7 +310,7 @@ export function PlanCheckout({
 
   return (
     <div className="flex flex-col gap-5" data-ui-generation={verifying ? "stitch-74" : undefined} data-screen-id={verifying ? "14.6" : undefined} data-screen-state={verifying ? "payment-processing" : undefined} data-testid={verifying ? "checkout-payment-processing" : undefined}>
-      <h1 className="text-2xl font-semibold tracking-tight text-ink">{planName}</h1>
+      <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">{planName}</h1>
       <PlanDetails
         servedTracks={servedTracks}
         track={track}

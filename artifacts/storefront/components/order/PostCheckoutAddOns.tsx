@@ -53,8 +53,8 @@ export function PostCheckoutAddOns({ subscriptionId }: { subscriptionId: number 
   }
 
   return (
-    <div className="rounded-xl border border-line bg-surface p-4 shadow-sm">
-      <h3 className="text-sm font-bold text-ink">Enhance Your Subscription</h3>
+    <div className="rounded-2xl border border-line bg-surface p-4">
+      <h3 className="font-display text-lg font-semibold leading-tight text-primary">Enhance Your Subscription</h3>
       <p className="mt-1 text-xs text-ink-muted">
         Attach instant dietary boosts to your active plan before the first wave ships.
       </p>
@@ -69,12 +69,12 @@ export function PostCheckoutAddOns({ subscriptionId }: { subscriptionId: number 
           return (
             <div
               key={item.view.id}
-              className="flex items-center justify-between gap-3 rounded-lg border border-line p-3"
+              className="flex items-center justify-between gap-3 rounded-xl border border-line p-3"
             >
               <div className="min-w-0">
                 <p className="text-xs font-bold text-ink">{item.title}</p>
                 <p className="text-2xs text-ink-muted">{item.description}</p>
-                <p className="tabular mt-0.5 text-xs font-semibold text-gold-text">
+                <p className="font-data mt-0.5 text-xs font-bold text-primary">
                   {priceLine(item.view)}
                 </p>
               </div>

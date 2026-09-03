@@ -1,5 +1,6 @@
 import { FocusHeader } from "@/components/FocusHeader";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StickyAction } from "@/components/primitives/StickyAction";
 
 /**
  * Checkout skeleton. All three branches page.tsx can render (à-la-carte,
@@ -42,15 +43,12 @@ export default function CheckoutLoading() {
         </div>
       </section>
 
-      <div
-        aria-hidden
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-[var(--glass)] p-4 pb-[env(safe-area-inset-bottom)] backdrop-blur-md"
-      >
+      <StickyAction aria-hidden className="bottom-0 z-30 p-4">
         <div className="mx-auto flex max-w-md items-center justify-between gap-3">
           <Skeleton className="h-5 w-20" />
-          <Skeleton className="h-12 w-40 rounded-xl" />
+          <Skeleton className="h-12 w-40 rounded-full" />
         </div>
-      </div>
+      </StickyAction>
     </div>
   );
 }

@@ -37,7 +37,7 @@ export interface AlacarteExtras {
 }
 
 const inputCls =
-  "w-full min-h-[50px] rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus-visible:border-line-strong";
+  "w-full min-h-[50px] rounded-2xl border border-line bg-surface px-4 py-3 text-base text-ink outline-none placeholder:text-ink-faint focus-visible:border-primary";
 const errCls = "mt-1 block text-xs font-medium text-[var(--danger)]";
 
 /**
@@ -332,7 +332,7 @@ export function AlacarteDetails({
           the box is 24px. DPDP first; the allergen ack beside it when the
           cart needs one. */}
       <div className="flex flex-col gap-3">
-        <label className="flex min-h-12 w-full cursor-pointer items-start gap-3 rounded-2xl border border-line p-3 text-sm text-ink-muted">
+        <label className="flex min-h-12 w-full cursor-pointer items-start gap-3 rounded-2xl border border-line bg-surface p-3 text-sm text-ink-muted">
           <input
             ref={consentRef}
             type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)}
