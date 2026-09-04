@@ -17,25 +17,25 @@ export function RdCard({ rd }: { rd: RdProfile }) {
       <div className="flex items-center gap-3">
         <span
           aria-hidden="true"
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--gold)_14%,transparent)] text-sm font-semibold text-gold-text"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary font-display text-base font-semibold text-primary"
         >
           {initials(rd.name)}
         </span>
         <div className="min-w-0">
-          <h3 className="truncate text-base font-semibold text-ink">{rd.name}</h3>
-          <p className="truncate text-xs text-ink-muted">{rd.title}</p>
+          <h3 className="truncate font-display text-lg font-semibold leading-tight text-primary">{rd.name}</h3>
+          <p className="mt-1 truncate text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">{rd.title}</p>
         </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
         {rd.specialties.slice(0, 4).map((s) => (
-          <span key={s} className="rounded-full border border-line px-2 py-0.5 text-2xs text-ink-muted">
+          <span key={s} className="rounded-full border border-line px-2.5 py-1 text-2xs text-ink-muted">
             {s}
           </span>
         ))}
       </div>
 
-      <p className="mt-3 text-xs text-ink-faint">
+      <p className="font-data mt-3 text-xs text-ink-muted">
         {rd.yearsExperience} yrs · {rd.languages.join(", ")}
       </p>
 
@@ -51,11 +51,11 @@ export function RdCard({ rd }: { rd: RdProfile }) {
                 </span>
               )}
               {hasFreeIntro(rd.pricing) && from != null && " · "}
-              {from != null && <span className="tabular">from {formatPaise(from)}</span>}
+              {from != null && <span className="font-data">from {formatPaise(from)}</span>}
             </>
           )}
         </div>
-        <Link href={`/rd/${rd.slug}`} className="shrink-0 text-sm font-semibold text-gold-text hover:underline">
+        <Link href={`/rd/${rd.slug}`} className="inline-flex min-h-11 shrink-0 items-center text-sm font-bold text-primary hover:underline">
           View profile &rarr;
         </Link>
       </div>

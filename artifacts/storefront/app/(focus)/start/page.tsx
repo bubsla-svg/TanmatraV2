@@ -63,10 +63,10 @@ export default async function StartPage({
     <div className="min-h-dvh">
       <section className="mx-auto flex max-w-md flex-col gap-6 px-4 pt-8 pb-16">
         <div className="flex flex-col items-center gap-2 text-center">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-text">
+          <span className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">
             This week&rsquo;s taste test
           </span>
-          <h1 className="text-3xl font-semibold tracking-tight text-ink">
+          <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">
             Three lunches for {formatPaise(TRIAL_PRICE_PAISE)}
           </h1>
           <p className="max-w-[300px] text-sm leading-relaxed text-ink-muted">
@@ -104,7 +104,7 @@ export default async function StartPage({
             the rest of the product, not a back button that loops. */}
         <p className="text-center text-xs text-ink-muted">
           Not ready?{" "}
-          <Link href="/menu" className="font-medium underline text-gold-text hover:text-ink">
+          <Link href="/menu" className="font-medium text-primary underline underline-offset-4 hover:text-ink">
             Browse the full menu
           </Link>
         </p>

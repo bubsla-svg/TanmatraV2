@@ -37,7 +37,7 @@ export function OrderHistory() {
       <ul className="flex flex-col gap-3" aria-hidden>
         {[0, 1, 2].map((i) => (
           <li key={i}>
-            <Skeleton className="h-20 w-full rounded-xl" />
+            <Skeleton className="h-20 w-full rounded-2xl" />
           </li>
         ))}
       </ul>
@@ -54,7 +54,7 @@ export function OrderHistory() {
       );
     }
     return (
-      <div className="rounded-2xl border border-line bg-surface px-6 py-10 text-center">
+      <div className="rounded-2xl border border-line bg-surface p-5 text-center">
         <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load your orders</p>
         <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-ink-faint">
           Something went wrong on our end — this usually clears up on retry.
@@ -62,7 +62,7 @@ export function OrderHistory() {
         <button
           type="button"
           onClick={() => void refetch()}
-          className="mt-4 rounded-lg border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-opacity hover:opacity-80"
+          className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full border border-line-strong bg-surface px-4 text-sm font-bold text-ink transition-colors hover:bg-surface-raised"
         >
           Try again
         </button>
@@ -74,7 +74,7 @@ export function OrderHistory() {
     return (
       <p className="text-sm text-ink-muted">
         No orders yet.{" "}
-        <Link href="/menu" className="font-medium text-gold-text hover:underline">Browse the menu</Link>.
+        <Link href="/menu" className="font-semibold text-primary underline-offset-4 hover:underline">Browse the menu</Link>.
       </p>
     );
   }

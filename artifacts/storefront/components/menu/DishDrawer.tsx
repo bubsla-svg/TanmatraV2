@@ -59,20 +59,20 @@ export function DishDrawer({ dish }: { dish: DishData }) {
             PDP route. Previously the Add-to-cart button was the last thing
             IN this scrolling div, ~200px below the fold on a typical phone. */}
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-4 pt-3">
-          <div className="overflow-hidden rounded-xl border border-line bg-surface-raised">
+          <div className="overflow-hidden rounded-2xl border border-line bg-surface-raised">
             <DishImage src={dish.image} name={dish.name} className="aspect-[16/9] w-full" />
           </div>
 
           <div className="mt-4 flex items-start justify-between gap-4">
-            <DrawerTitle className="text-xl font-semibold tracking-tight text-ink">
+            <DrawerTitle className="font-display text-2xl font-semibold leading-tight text-primary">
               {dish.name}
             </DrawerTitle>
-            <span className="tabular shrink-0 text-lg font-semibold text-ink">
+            <span className="font-data shrink-0 text-lg font-bold text-primary">
               {formatPaise(dish.price)}
             </span>
           </div>
 
-          <DrawerDescription className="mt-2 text-sm leading-relaxed text-ink-muted">
+          <DrawerDescription className="mt-2 text-sm leading-6 text-ink-muted">
             {dish.tasteDescription || dish.description}
           </DrawerDescription>
 
@@ -80,9 +80,9 @@ export function DishDrawer({ dish }: { dish: DishData }) {
 
           <dl className="mt-4 grid grid-cols-4 gap-2">
             {macros.map(([label, value]) => (
-              <div key={label} className="rounded-lg border border-line bg-surface p-2.5 text-center">
-                <dd className="tabular text-sm font-semibold text-ink">{value}</dd>
-                <dt className="text-2xs uppercase tracking-wide text-ink-faint">{label}</dt>
+              <div key={label} className="rounded-2xl bg-secondary p-2.5 text-center">
+                <dd className="font-display text-lg font-semibold text-primary">{value}</dd>
+                <dt className="mt-0.5 text-[10px] font-bold uppercase tracking-[.14em] text-ink-muted">{label}</dt>
               </div>
             ))}
           </dl>

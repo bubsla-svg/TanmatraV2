@@ -53,31 +53,31 @@ export const PantryVisionScanner: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Upload/Camera Card */}
-      <div className="bg-surface rounded-3xl p-6 sm:p-8 border border-line shadow-xl space-y-4">
+      <div className="bg-surface rounded-2xl p-6 sm:p-8 border border-line space-y-4">
         <div className="flex items-center gap-3 border-b border-line pb-4">
-          <div className="w-10 h-10 rounded-2xl bg-gold/10 text-[var(--gold-text)] flex items-center justify-center font-bold">
+          <div className="w-10 h-10 rounded-2xl bg-gold/10 text-gold-text flex items-center justify-center font-bold">
             <Camera className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-ink font-heading">Pantry & Refrigerator Vision Scanner</h3>
+            <h3 className="font-display text-lg font-semibold leading-tight text-primary">Pantry & Refrigerator Vision Scanner</h3>
             <p className="text-xs text-ink-muted font-medium">
               Snap a photo of your fridge or pantry to detect existing ingredients and unlock Tanmatra add-on recommendations.
             </p>
           </div>
         </div>
 
-        <label className="border-2 border-dashed border-line-strong hover:border-[var(--gold)] rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all bg-surface-subtle">
-          <Camera className="w-10 h-10 text-[var(--gold-text)] mb-2" />
+        <label className="border-2 border-dashed border-line-strong hover:border-gold rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all bg-surface-subtle">
+          <Camera className="w-10 h-10 text-gold-text mb-2" />
           <span className="text-xs font-bold text-ink">
             {imageFile ? imageFile.name : "Capture or upload fridge photo"}
           </span>
-          <span className="text-3xs text-ink-faint font-medium mt-1">Identifies vegetables, proteins, dairy & recommends complementary meal kits</span>
+          <span className="text-2xs text-ink-faint font-medium mt-1">Identifies vegetables, proteins, dairy & recommends complementary meal kits</span>
           <input type="file" accept="image/*" onChange={handleScan} className="hidden" />
         </label>
 
         {scanning && (
-          <div className="p-4 rounded-2xl bg-gold/10 border border-[var(--gold)]/20 text-[var(--gold-text)] text-xs font-bold flex items-center justify-center gap-3 animate-pulse">
-            <RefreshCw className="w-4 h-4 animate-spin text-[var(--gold-text)]" />
+          <div className="p-4 rounded-2xl bg-gold/10 border border-gold/20 text-gold-text text-xs font-bold flex items-center justify-center gap-3 animate-pulse">
+            <RefreshCw className="w-4 h-4 animate-spin text-gold-text" />
             <span>Gemini Multimodal AI Scanning Refrigerator Ingredients...</span>
           </div>
         )}
@@ -93,15 +93,15 @@ export const PantryVisionScanner: React.FC = () => {
       {result && (
         <div className="space-y-6">
           {/* Detected Ingredients */}
-          <div className="bg-surface rounded-3xl p-6 border border-line shadow-xl space-y-3">
-            <h4 className="text-xs font-black uppercase tracking-wider text-ink-faint flex items-center gap-2">
+          <div className="bg-surface rounded-2xl p-6 border border-line space-y-3">
+            <h4 className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-sage-text" /> Vision AI Detected Ingredients
             </h4>
             <div className="flex flex-wrap gap-2">
               {result.detectedIngredients.map((item, idx) => (
                 <div key={idx} className="px-3 py-1.5 rounded-xl bg-surface-raised text-ink text-xs font-bold flex items-center gap-2 border border-line">
                   <span>{item.name}</span>
-                  <span className="text-3xs text-[var(--gold-text)] font-extrabold">{Math.round(item.confidenceScore * 100)}% Match</span>
+                  <span className="text-2xs font-bold text-gold-text">{Math.round(item.confidenceScore * 100)}% Match</span>
                 </div>
               ))}
             </div>
@@ -109,16 +109,16 @@ export const PantryVisionScanner: React.FC = () => {
 
           {/* Suggested Tanmatra Add-Ons */}
           <div className="space-y-3">
-            <h4 className="text-lg font-black text-ink font-heading flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-[var(--gold-text)]" /> Complementary Tanmatra Add-On Products
+            <h4 className="font-display text-lg font-semibold leading-tight text-primary flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-gold-text" /> Complementary Tanmatra Add-On Products
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {result.suggestedTanmatraAddOns.map((addon) => (
-                <div key={addon.id} className="bg-surface rounded-3xl p-5 border border-line shadow-md space-y-3">
+                <div key={addon.id} className="bg-surface rounded-2xl p-5 border border-line space-y-3">
                   <div className="flex items-center justify-between">
-                    <strong className="text-sm font-black text-ink font-heading">{addon.name}</strong>
-                    <span className="text-xs font-bold text-sage-text">₹{Math.round(addon.pricePaise / 100)}</span>
+                    <strong className="text-sm font-display font-semibold text-primary">{addon.name}</strong>
+                    <span className="text-xs font-data font-bold text-ink">₹{Math.round(addon.pricePaise / 100)}</span>
                   </div>
                   <p className="text-xs text-ink-muted font-medium leading-relaxed">{addon.rationale}</p>
                   <button
@@ -145,15 +145,15 @@ export const PantryVisionScanner: React.FC = () => {
           </div>
 
           {/* Instant Recipe Ideas */}
-          <div className="bg-gradient-to-r from-[var(--gold)]/15 to-[var(--surface)] text-ink rounded-3xl p-6 shadow-xl space-y-4">
-            <h4 className="text-base font-black font-heading flex items-center gap-2">
-              <ChefHat className="w-5 h-5 text-[var(--gold-text)]" /> Instant 15-Minute Recipe Ideas
+          <div className="rounded-2xl border border-gold/20 bg-gold/5 text-ink p-6 space-y-4">
+            <h4 className="font-display text-base font-semibold leading-tight text-primary flex items-center gap-2">
+              <ChefHat className="w-5 h-5 text-gold-text" /> Instant 15-Minute Recipe Ideas
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {result.suggestedRecipes.map((recipe, idx) => (
-                <div key={idx} className="bg-surface-raised p-4 rounded-2xl border border-line backdrop-blur-md space-y-1.5">
-                  <strong className="text-xs font-bold text-[var(--gold-text)] block">{recipe.title} ({recipe.prepTimeMins} mins)</strong>
+                <div key={idx} className="bg-surface-raised p-4 rounded-2xl border border-line space-y-1.5">
+                  <strong className="text-xs font-semibold text-primary block">{recipe.title} ({recipe.prepTimeMins} mins)</strong>
                   <p className="text-xs text-ink-faint leading-relaxed">{recipe.description}</p>
                 </div>
               ))}

@@ -12,10 +12,10 @@ export function AssessmentEntryCard({ condition }: { condition?: string }) {
   return (
     <Link
       href={href}
-      className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface p-5 transition-colors hover:border-line-strong"
+      className="flex min-h-[72px] items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-5 transition-colors hover:border-line-strong active:scale-[0.98]"
     >
-      <span className="text-sm font-semibold text-ink">Find my starting point</span>
-      <ArrowRight size={18} className="shrink-0 text-gold-text" aria-hidden />
+      <span className="font-display text-lg font-semibold leading-tight text-primary">Find my starting point</span>
+      <ArrowRight size={18} className="shrink-0 text-primary" aria-hidden />
     </Link>
   );
 }

@@ -1,5 +1,6 @@
 import type { DishData } from "@workspace/menu-catalog";
 import { MACROS_PENDING_LABEL } from "@/lib/format";
+import { Disclosure } from "@/components/primitives/Disclosure";
 
 const GI_LABEL: Record<DishData["glycaemicIndex"], string> = {
   low: "Low",
@@ -7,23 +8,27 @@ const GI_LABEL: Record<DishData["glycaemicIndex"], string> = {
   high: "High",
 };
 
+const CHIP =
+  "inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-[10px] font-bold uppercase tracking-[.12em] text-ink-muted";
+const ROW = "font-display text-lg font-semibold leading-tight text-primary";
+
 /**
- * Dish specification block for BOTH PDP surfaces (the canonical /dish/[slug]
- * page and the /menu?dish= drawer): diet + glycaemic-index chips, the nutrition
- * facts the headline macro grid omits (fibre, sugar), and the full ingredient
- * declaration. Pure presentational — reads only fields already present on
- * DishData, so it renders identically in an RSC (the page) or inside a client
- * island (the drawer). Estimated macros carry a "≈", matching the grid.
+ * The dish sheet's detail rows (PR-11e — brief CUJ 3 §3-4). The headline
+ * kcal / P / C / F grid above stays the always-visible summary row; the rest
+ * sits in the shared `Disclosure`: "Nutrition" (diet and GI marks, fibre,
+ * sugar) and "Ingredients" (the full declaration — never clamped or
+ * summarised, complete the moment the row opens). Same two labels as the full
+ * page's sections, so the quick view and the page read as one thing.
  */
 export function DishSpec({ dish }: { dish: DishData }) {
   const est = dish.macrosEstimated ? "≈" : "";
-  return (
-    <div className="mt-6 space-y-5">
+  const nutrition = (
+    <div className="flex flex-col gap-3">
       {/* diet + glycaemic-index chips — colour is never the sole signal (the
           shape + label carry it too), so the veg/non-veg mark stays legible
           without colour. */}
       <div className="flex flex-wrap gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-ink-muted">
+        <span className={CHIP}>
           <span
             aria-hidden
             className={`inline-block h-2.5 w-2.5 ${dish.isVeg ? "rounded-full" : "rounded-[2px]"}`}
@@ -31,18 +36,16 @@ export function DishSpec({ dish }: { dish: DishData }) {
           />
           {dish.isVeg ? "Veg" : "Non-veg"}
         </span>
-        <span className="inline-flex items-center rounded-full border border-line bg-surface px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-ink-muted">
-          GI {GI_LABEL[dish.glycaemicIndex]}
-        </span>
+        <span className={CHIP}>GI {GI_LABEL[dish.glycaemicIndex]}</span>
       </div>
 
       {/* nutrition facts beyond the headline kcal/P/C/F grid */}
       <dl className="grid grid-cols-2 gap-2">
-        <div className="rounded-3xl border border-line bg-surface p-4">
-          <dt className="text-2xs uppercase tracking-wide text-ink-muted">Fibre</dt>
-          <dd className="mt-1 font-mono text-sm tabular-nums text-ink">
+        <div className="rounded-2xl border border-line bg-surface p-4">
+          <dt className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Fibre</dt>
+          <dd className="mt-1 font-data text-sm font-bold text-primary">
             {dish.macrosProvisional ? (
-              <span className="font-sans text-xs normal-case text-ink-muted">
+              <span className="font-sans text-xs font-normal normal-case text-ink-muted">
                 {MACROS_PENDING_LABEL}
               </span>
             ) : (
@@ -53,33 +56,40 @@ export function DishSpec({ dish }: { dish: DishData }) {
             )}
           </dd>
         </div>
-        <div className="rounded-3xl border border-line bg-surface p-4">
-          <dt className="text-2xs uppercase tracking-wide text-ink-muted">Sugar</dt>
-          <dd className="mt-1 font-mono text-sm tabular-nums text-ink">
+        <div className="rounded-2xl border border-line bg-surface p-4">
+          <dt className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Sugar</dt>
+          <dd className="mt-1 font-data text-sm font-bold text-primary">
             {dish.sugarPerServing || "—"}
           </dd>
         </div>
       </dl>
+    </div>
+  );
 
-      {/* full ingredient declaration — clinical product, so the list is never
-          clamped or summarised. */}
-      {dish.ingredients.length > 0 && (
-        <div>
-          <h2 className="text-2xs font-semibold uppercase tracking-wide text-ink-muted">
-            Ingredients
-          </h2>
-          <ul className="mt-2 flex flex-wrap gap-1.5">
-            {dish.ingredients.map((ingredient, i) => (
-              <li
-                key={i}
-                className="rounded-full border border-line bg-surface px-3 py-1 text-xs text-ink-muted"
-              >
-                {ingredient}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+  const items = [
+    { key: "nutrition", summary: <span className={ROW}>Nutrition</span>, body: nutrition },
+    ...(dish.ingredients.length > 0
+      ? [
+          {
+            key: "ingredients",
+            summary: <span className={ROW}>Ingredients</span>,
+            body: (
+              <ul className="flex flex-wrap gap-1.5">
+                {dish.ingredients.map((ingredient, i) => (
+                  <li key={i} className="rounded-full bg-secondary px-3 py-1 text-xs text-ink-muted">
+                    {ingredient}
+                  </li>
+                ))}
+              </ul>
+            ),
+          },
+        ]
+      : []),
+  ];
+
+  return (
+    <div className="mt-6">
+      <Disclosure items={items} />
     </div>
   );
 }

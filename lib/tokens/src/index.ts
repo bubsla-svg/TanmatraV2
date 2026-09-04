@@ -11,17 +11,17 @@
 
 /** Locked Clinical accent palette (CLAUDE.md — no new base colours). */
 export const ACCENTS = {
-  gold: "#d4af37",
-  goldInk: "#1a1c1e",
-  blue: "#6ba3c8",
-  sage: "#7d9e7e",
-  sageInk: "#14170f",
+  gold: "#2e5c4f",
+  goldInk: "#f6f1e9",
+  blue: "#506072",
+  sage: "#556845",
+  sageInk: "#313f27",
 } as const;
 
 export const STATUS = {
-  success: "#7d9e7e",
-  warning: "#d8b45e",
-  danger: "#c2603f",
+  success: "#556845",
+  warning: "#986025",
+  danger: "#b94131",
 } as const;
 
 /** Motion tokens — mirror `--duration-*` / `--ease-*` for JS-driven animation. */
@@ -32,10 +32,10 @@ export const MOTION = {
 } as const;
 
 export const RADII = {
-  sm: 6,
-  md: 10,
+  sm: 12,
+  md: 14,
   lg: 16,
-  xl: 22,
+  xl: 20,
   full: 999,
 } as const;
 

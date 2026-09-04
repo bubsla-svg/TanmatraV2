@@ -33,14 +33,14 @@ export function AppointmentsList() {
       );
     }
     return (
-      <div className="rounded-2xl border border-line bg-surface p-8 text-center shadow-[var(--shadow-card)]">
+      <div className="rounded-2xl border border-line bg-surface p-5 text-center">
         <p className="text-sm font-semibold text-[var(--danger)]">
           {error instanceof ApiError ? error.message : "Couldn't load consultations."}
         </p>
         <button
           type="button"
           onClick={() => void refetch()}
-          className="mt-4 rounded-full border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-colors hover:border-line-strong"
+          className="mt-4 min-h-11 rounded-full border border-line-strong bg-surface px-4 text-sm font-bold text-ink"
         >
           Try again
         </button>
@@ -56,7 +56,7 @@ export function AppointmentsList() {
     return (
       <p className="text-sm text-ink-muted">
         No consultations booked yet.{" "}
-        <Link href="/rd" className="font-medium text-gold-text hover:underline">
+        <Link href="/rd" className="font-semibold text-primary underline-offset-4 hover:underline">
           Browse Registered Dietitians
         </Link>
         .
@@ -65,18 +65,18 @@ export function AppointmentsList() {
   }
 
   return (
-    <ul className="flex flex-col gap-2.5">
+    <ul className="flex flex-col gap-3">
       {appts.map((a) => (
-        <li key={a.id} className="flex flex-col gap-1.5 rounded-xl border border-line bg-surface p-4">
+        <li key={a.id} className="flex flex-col gap-1.5 rounded-2xl border border-line bg-surface p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wide text-ink-faint">
+            <span className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">
               {a.kind.replace(/_/g, " ")}
             </span>
             <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-xs font-medium text-sage-text">
               {a.status}
             </span>
           </div>
-          <p className="tabular text-sm font-medium text-ink">
+          <p className="font-data text-sm font-bold text-primary">
             {formatApptTime(a.startAt)} &mdash; {new Date(a.endAt).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}
           </p>
           <div className="mt-1 flex items-center justify-between border-t border-line pt-2.5">
@@ -84,11 +84,11 @@ export function AppointmentsList() {
               Dietitian Specialist: {a.rdSlug.replace("rd-", "").replace(/-/g, " ")}
             </span>
             {a.pricePaise === 0 ? (
-              <span className="inline-flex items-center rounded-full bg-gold px-2.5 py-0.5 text-3xs font-bold uppercase tracking-wide text-[var(--gold-ink)]">
+              <span className="inline-flex items-center rounded-full border border-gold bg-primary/10 px-2.5 py-0.5 text-3xs font-bold uppercase tracking-wide text-primary">
                 Free Intro
               </span>
             ) : (
-              <span className="tabular text-sm font-semibold text-ink">{formatPaise(a.pricePaise)}</span>
+              <span className="font-data text-sm font-bold text-primary">{formatPaise(a.pricePaise)}</span>
             )}
           </div>
         </li>

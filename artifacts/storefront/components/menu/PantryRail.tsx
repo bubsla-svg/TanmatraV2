@@ -3,6 +3,7 @@ import { SafeImage } from "@/components/ui/SafeImage";
 import { MarketplaceAddToCart } from "@/components/cart/MarketplaceAddToCart";
 import { formatPaise } from "@/lib/format";
 import { fetchMarketplaceItemsServer } from "@/lib/marketplaceApi";
+import { Rail } from "@/components/primitives/Rail";
 
 /** Three or four cards — a glance, not a shelf. */
 const RAIL_LIMIT = 4;
@@ -22,23 +23,23 @@ export async function PantryRail() {
   return (
     <section aria-label="Goes with this" className="mt-6">
       <div className="mb-2 flex items-center justify-between gap-3">
-        <h2 className="text-2xs font-semibold uppercase tracking-wide text-ink-faint">Goes with this</h2>
-        <Link href="/marketplace" className="touch-target-min text-xs font-semibold text-gold-text hover:underline">
+        <h2 className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Goes with this</h2>
+        <Link href="/marketplace" className="touch-target-min text-xs font-bold text-primary hover:underline">
           Pantry
         </Link>
       </div>
-      <ul className="no-scrollbar -mx-gutter flex snap-x snap-mandatory gap-3 overflow-x-auto px-gutter pb-1">
+      <Rail as="ul" bleed="gutter" className="gap-3 pb-1">
         {items.map((item) => (
           <li key={item.id} className="flex w-40 flex-none snap-start flex-col gap-2 rounded-2xl border border-line bg-surface p-2.5">
             <Link href={`/marketplace/${item.slug}`} className="flex flex-col gap-2">
               <SafeImage src={item.image ?? ""} alt={item.name} className="aspect-square w-full rounded-xl border border-line" />
-              <span className="line-clamp-2 text-xs font-semibold leading-snug text-ink">{item.name}</span>
-              <span className="tabular text-xs font-medium text-gold-text">{formatPaise(item.pricePaise)}</span>
+              <span className="line-clamp-2 font-display text-base font-semibold leading-tight text-primary">{item.name}</span>
+              <span className="font-data text-xs font-bold text-primary">{formatPaise(item.pricePaise)}</span>
             </Link>
             <MarketplaceAddToCart item={item} variant="card" />
           </li>
         ))}
-      </ul>
+      </Rail>
     </section>
   );
 }

@@ -34,31 +34,31 @@ export default async function MarketplaceItemPage({ params }: { params: Promise<
         <div className="mb-6">
           <div className="flex gap-2 items-center mb-3">
             {/* text-xs, not text-3xs (T-22/T-24: nothing under 12px). */}
-            <span className="px-2 py-1 rounded-full bg-surface-raised border border-line font-bold text-xs text-ink-muted uppercase tracking-widest">
+            <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-bold uppercase tracking-[.12em] text-ink-muted">
               {item.category}
             </span>
             {item.rdVerified && (
-              <span className="px-2 py-1 rounded-full bg-sage-soft/90 border border-[var(--sage)]/20 font-bold text-xs text-sage-text uppercase tracking-widest">
+              <span className="rounded-full bg-sage-soft px-2.5 py-1 text-xs font-bold uppercase tracking-[.12em] text-sage-text">
                 RD Verified
               </span>
             )}
           </div>
 
-          <h1 className="font-bold text-3xl text-ink mb-1">{item.name}</h1>
+          <h1 className="mb-1 font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">{item.name}</h1>
           {item.supplierName && (
-            <p className="font-bold text-xs text-primary uppercase tracking-widest mb-3">{item.supplierName}</p>
+            <p className="mb-3 text-[11px] font-bold uppercase tracking-[.18em] text-accent">{item.supplierName}</p>
           )}
-          <p className="text-ink-muted text-sm leading-relaxed mb-4">{item.longDescription || item.description}</p>
+          <p className="mb-4 text-base leading-7 text-ink-muted">{item.longDescription || item.description}</p>
         </div>
 
         {/* Bottom CTA — T-17: stepper + gold "Add to Order" is the one action;
             "Buy on its own" is a text secondary beneath it. Opaque, not /95:
             the title scrolled visibly through the bar. */}
-        <div className="sticky bottom-4 mt-auto flex w-full flex-col gap-1 rounded-3xl border border-line bg-bg p-4 shadow-2xl">
+        <div className="sticky bottom-4 mt-auto flex w-full flex-col gap-1 rounded-2xl border border-line bg-bg p-4 shadow-[var(--shadow-raised)]">
           <div className="flex items-center justify-between gap-3">
             <div className="flex flex-col">
-              <span className="text-2xs font-bold uppercase tracking-widest text-ink-muted">Price</span>
-              <span className="font-clinical-data text-xl text-gold-text">{formatPaise(item.pricePaise)}</span>
+              <span className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Price</span>
+              <span className="font-data text-2xl font-bold text-primary">{formatPaise(item.pricePaise)}</span>
             </div>
             <MarketplaceAddToCart item={item} />
           </div>

@@ -17,10 +17,10 @@ export default function MealHistoryPage() {
     >
       <AccountNav active="history" />
       <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
+        <span className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">
           Your meals so far
         </span>
-        <h1 className="text-3xl font-semibold tracking-tight text-ink">
+        <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">
           Meal History Dashboard
         </h1>
         <p className="text-sm leading-relaxed text-ink-muted max-w-2xl">

@@ -5,6 +5,7 @@ import { useCart } from "@/components/cart/CartProvider";
 import { cn } from "@/lib/utils";
 import { emitLpEvent } from "@/lib/lpEvents";
 import { LandingIcon } from "./LandingIcon";
+import { StickyAction } from "@/components/primitives/StickyAction";
 
 /**
  * Bottom-offset variants. Written out as whole literal class strings and never
@@ -74,11 +75,10 @@ export function StickyCtaBar({
   };
 
   return (
-    <div
-      className={cn(
-        "fixed inset-x-0 z-40 border-t border-line bg-surface/95 px-4 py-3 backdrop-blur-md md:px-6",
-        cart.lines.length > 0 ? LIFTED : RESTING,
-      )}
+    <StickyAction
+      chrome="surface"
+      safeArea={false}
+      className={cn("z-40 px-4 py-3 md:px-6", cart.lines.length > 0 ? LIFTED : RESTING)}
     >
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
         <div className="hidden flex-1 truncate sm:block">
@@ -92,6 +92,6 @@ export function StickyCtaBar({
           </a>
         </Button>
       </div>
-    </div>
+    </StickyAction>
   );
 }

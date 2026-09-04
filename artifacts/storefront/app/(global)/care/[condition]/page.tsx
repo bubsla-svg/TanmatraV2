@@ -29,10 +29,10 @@ export default async function CareConditionPage({ params }: Props) {
       className="min-h-dvh pb-24"
     >
       <section className="mx-auto max-w-xl px-4 py-12">
-        <Link href="/care" className="text-xs font-semibold text-gold-text hover:underline">
+        <Link href="/care" className="text-xs font-semibold text-primary hover:underline">
           &larr; Back to Care Directory
         </Link>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight text-ink">
+        <h1 className="mt-4 font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">
           {name}{known ? " Protocol" : ""}
         </h1>
         <p className="mt-2 text-sm text-ink-muted">
@@ -47,8 +47,8 @@ export default async function CareConditionPage({ params }: Props) {
         </div>
 
         {known ? (
-          <div className="mt-6 rounded-xl border border-line bg-surface p-6">
-            <h2 className="text-base font-semibold text-ink">Clinical Objectives</h2>
+          <div className="mt-6 rounded-2xl border border-line bg-surface p-6">
+            <h2 className="font-display text-lg font-semibold leading-tight text-primary">Clinical Objectives</h2>
             <ul className="mt-3 flex flex-col gap-2 text-xs leading-relaxed text-ink-muted">
               <li>• Tailored glycemic &amp; sodium thresholds</li>
               <li>• Zero ultra-processed additives or hidden sugars</li>
@@ -57,14 +57,14 @@ export default async function CareConditionPage({ params }: Props) {
 
             <div className="mt-6 flex flex-col gap-3">
               <Link href="/plans">
-                <Button type="button" shape="xl" size="fluid" className="w-full text-sm font-semibold">
+                <Button type="button" shape="pill" size="fluid" className="w-full text-sm font-semibold">
                   Explore Matching Plans
                 </Button>
               </Link>
             </div>
           </div>
         ) : (
-          <div className="mt-6 rounded-xl border border-line bg-surface p-6">
+          <div className="mt-6 rounded-2xl border border-line bg-surface p-6">
             <p className="text-xs leading-relaxed text-ink-muted">
               Every Tanmatra plan is reviewed by a registered dietitian and adapts to your
               dietary preferences and restrictions — explore our plans or browse the Care
@@ -73,12 +73,12 @@ export default async function CareConditionPage({ params }: Props) {
 
             <div className="mt-6 flex flex-col gap-3">
               <Link href="/plans">
-                <Button type="button" shape="xl" size="fluid" className="w-full text-sm font-semibold">
+                <Button type="button" shape="pill" size="fluid" className="w-full text-sm font-semibold">
                   Explore Plans
                 </Button>
               </Link>
               <Link href="/care">
-                <Button type="button" variant="outline" shape="xl" size="fluid" className="w-full text-sm font-semibold">
+                <Button type="button" variant="outline" shape="pill" size="fluid" className="w-full text-sm font-semibold">
                   Browse Care Directory
                 </Button>
               </Link>

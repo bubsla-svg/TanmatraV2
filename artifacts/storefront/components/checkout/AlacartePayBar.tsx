@@ -2,6 +2,7 @@
 // Client: the pay CTA's click handler lives in the parent; this is the bar.
 import { Button } from "@/components/ui/button";
 import { PaymentMethodsRow } from "./PaymentMethodsRow";
+import { StickyAction } from "@/components/primitives/StickyAction";
 
 /**
  * Sticky pay bar for the à-la-carte checkout. Anchored bottom-0: /checkout
@@ -34,7 +35,7 @@ export function AlacartePayBar({
   onContinue: () => void;
 }) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
+    <StickyAction className="bottom-0 z-30">
       <div className="mx-auto flex max-w-md flex-col gap-1.5 px-4 py-3">
         {blockedReason !== null && !busy && (
           <p role="status" className="text-xs font-medium text-ink-muted">{blockedReason}</p>
@@ -42,8 +43,8 @@ export function AlacartePayBar({
         <PaymentMethodsRow />
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 flex-col">
-            <span className="text-2xs font-bold uppercase tracking-widest text-ink-muted">Payable now</span>
-            <span className="tabular text-lg font-bold text-ink">
+            <span className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Payable now</span>
+            <span className="font-data text-xl font-bold leading-none text-primary">
               {amount}
               {amountEstimated && <span className="ml-1 text-xs font-medium text-ink-faint">est.</span>}
             </span>
@@ -69,6 +70,6 @@ export function AlacartePayBar({
           </Button>
         </div>
       </div>
-    </div>
+    </StickyAction>
   );
 }

@@ -53,8 +53,8 @@ import { KitchenSafetyChip } from "@/components/trust/KitchenSafetySheet";
  */
 function TrustItem({ children }: { children: React.ReactNode }) {
   return (
-    <span className="flex items-center gap-x-3">
-      <span aria-hidden className="text-line-strong">·</span>
+    <span className="flex items-center gap-x-3 text-[10px] font-bold uppercase tracking-[.14em] text-ink-muted">
+      <span aria-hidden className="text-accent">·</span>
       {children}
     </span>
   );
@@ -91,48 +91,52 @@ export function Section01ClinicalHero({
         <div className="absolute inset-0 bg-bg/65" />
         <div className="absolute inset-0 bg-gradient-to-b from-bg via-bg/40 to-bg" />
       </div>
-      <div className="relative mx-auto w-full max-w-screen-xl px-4 py-section-py sm:px-6">
-      <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
-        {/* Centered Hero Architecture */}
-        {/* Decorative only, and hidden from AT on the wrapper rather than on
-            SafeImage: SafeImage's props are {src, alt, className, imgClassName,
-            priority} and it spreads nothing, so an `aria-hidden` handed to the
-            component itself is silently dropped on the floor. */}
-        {/* Announcement / offer strip. Sits above the headline because that is
-            where a "this week only" has to be seen before the reader commits to
-            reading anything else. Absent when no campaign is running — the slot
-            is empty by default rather than filled with a sample offer. */}
-        {campaign && (
-          <div className="mb-6 flex w-full max-w-2xl flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-2xl border border-gold/30 bg-gold/10 px-4 py-2.5 text-sm">
-            <span className="font-semibold text-ink">{campaign.message}</span>
-            {campaign.cta && (
-              <Link
-                href={campaign.cta.href}
-                onClick={() => emitLpEvent("hero_campaign_click", { page: "/", label: campaign.id })}
-                /* `touch-target-min` (globals.css) is load-bearing, not
-                   decoration: a bare `text-sm` link is ~20px tall, under the
-                   WCAG 2.2 SC 2.5.8 24px floor, and the frontend-audit gate
-                   measures the live DOM and blocks on it. Same fix the "View
-                   menu" link on the homepage carries. */
-                className="touch-target-min font-bold text-gold-text underline underline-offset-4 hover:opacity-80"
-              >
-                {campaign.cta.label}
-              </Link>
-            )}
+      <div className="relative mx-auto grid w-full max-w-[1240px] items-center gap-10 px-5 py-14 sm:px-8 sm:py-20 lg:grid-cols-[1.02fr_.98fr] lg:gap-20 lg:py-24">
+        <div className="animate-rise-in">
+          {/* Left-aligned reference hero (PR-11c). */}
+          {/* Decorative only, and hidden from AT on the wrapper rather than on
+              SafeImage: SafeImage's props are {src, alt, className, imgClassName,
+              priority} and it spreads nothing, so an `aria-hidden` handed to the
+              component itself is silently dropped on the floor. */}
+          {/* Announcement / offer strip. Sits above the headline because that is
+              where a "this week only" has to be seen before the reader commits to
+              reading anything else. Absent when no campaign is running — the slot
+              is empty by default rather than filled with a sample offer. */}
+          {campaign && (
+            <div className="mb-6 flex w-full max-w-2xl flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-primary/15 bg-primary/10 px-4 py-2.5 text-sm">
+              <span className="font-semibold text-ink">{campaign.message}</span>
+              {campaign.cta && (
+                <Link
+                  href={campaign.cta.href}
+                  onClick={() => emitLpEvent("hero_campaign_click", { page: "/", label: campaign.id })}
+                  /* `touch-target-min` (globals.css) is load-bearing, not
+                     decoration: a bare `text-sm` link is ~20px tall, under the
+                     WCAG 2.2 SC 2.5.8 24px floor, and the frontend-audit gate
+                     measures the live DOM and blocks on it. Same fix the "View
+                     menu" link on the homepage carries. */
+                  className="touch-target-min font-bold text-gold-text underline underline-offset-4 hover:opacity-80"
+                >
+                  {campaign.cta.label}
+                </Link>
+              )}
+            </div>
+          )}
+          {/* The eyebrow rule with no eyebrow text: the reference pairs it with
+              a kicker line, and no existing string fills that slot, so the rule
+              alone introduces the plate chip. */}
+          <div aria-hidden className="mb-7 flex items-center gap-4">
+            <span className="h-px w-8 bg-accent" />
+            <SafeImage
+              src="/brand/hero-plate.jpg"
+              alt=""
+              className="h-14 w-24 rounded-2xl border border-line sm:h-16 sm:w-28"
+            />
           </div>
-        )}
-        <div aria-hidden className="mb-6">
-          <SafeImage
-            src="/brand/hero-plate.jpg"
-            alt=""
-            className="h-14 w-24 rounded-2xl border border-line sm:h-16 sm:w-28"
-          />
-        </div>
-        <h1 className="text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-6xl">
-          {hero.headline}
-        </h1>
+          <h1 className="max-w-2xl font-display text-[clamp(2.6rem,9vw,4.5rem)] font-semibold leading-[.93] tracking-[-.04em] text-primary">
+            {hero.headline}
+          </h1>
 
-          <p className="mt-5 text-base leading-relaxed text-ink-muted sm:text-lg">
+          <p className="mt-8 max-w-md text-base leading-7 text-ink-muted sm:text-lg animate-rise-in stagger-1">
             {hero.blurb}
           </p>
 
@@ -142,8 +146,8 @@ export function Section01ClinicalHero({
               to choose. Today's food is the thing worth clicking; the trial and
               the plans get their own sections further down, where someone who
               has seen the food is ready for them. */}
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-3.5 sm:mt-9">
-            <Button asChild shape="pill" size="fluid" className="px-8 py-3.5 font-bold shadow-lg shadow-gold/20 transition-transform duration-300 hover:scale-105 hover:shadow-gold/40 active:scale-95">
+          <div className="mt-9 flex flex-wrap items-center gap-3 animate-rise-in stagger-2">
+            <Button asChild shape="pill" size="fluid" className="min-h-12 px-6 text-sm font-bold transition-transform duration-300 hover:scale-105 active:scale-95">
               <Link
                 href="/menu"
                 onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "See today's menu" })}
@@ -151,7 +155,7 @@ export function Section01ClinicalHero({
                 See today&apos;s menu
               </Link>
             </Button>
-            <Button asChild variant="outline" shape="pill" size="fluid" className="border-line-strong px-7 py-3.5 font-semibold transition-transform duration-300 hover:bg-surface hover:scale-105 active:scale-95">
+            <Button asChild variant="outline" shape="pill" size="fluid" className="min-h-12 border-primary/20 bg-transparent px-6 text-sm font-bold text-primary transition-colors hover:bg-surface">
               <Link
                 href="/trial"
                 onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "Try 3 lunches" })}
@@ -171,25 +175,27 @@ export function Section01ClinicalHero({
               viewport opens the Kitchen & safety sheet (registration number,
               ISO 22000 kitchen, RD review, allergen policy). The three claims
               below stay as the one-line read. */}
-          <div className="mt-7 flex justify-center">
+          <div className="mt-7 flex animate-rise-in stagger-3">
             <KitchenSafetyChip />
           </div>
-          <div className="mt-4 flex flex-wrap justify-center items-center gap-x-3 gap-y-1.5 border-t border-line pt-5 text-xs font-medium text-ink-muted">
+          {/* The reference's stats row, carrying the three real claims as its
+              labels — no figures, because none exist to put above them. */}
+          <div className="mt-12 flex flex-wrap gap-x-8 gap-y-3 border-t border-primary/15 pt-5 animate-rise-in stagger-4">
             <TrustItem>Cooked after you order</TrustItem>
             <TrustItem>FSSAI-registered kitchen</TrustItem>
             <TrustItem>Checked by our dietitians</TrustItem>
           </div>
         </div>
 
-        {/* Photo area — centered below text */}
-        <GsapScrollImage className="relative mt-12 w-full max-w-2xl mx-auto">
+        {/* Photo column — beside the copy from lg, below it before. */}
+        <GsapScrollImage className="relative mx-auto w-full max-w-[560px] animate-rise-in stagger-2 lg:mt-4">
           {hero.badge && (
-            <span className="absolute left-4 top-4 z-10 rounded-full border border-gold bg-[var(--glass)] px-3 py-1 text-xs font-bold text-gold-text backdrop-blur-md">
+            <span className="absolute left-4 top-4 z-10 rounded-full border border-primary/30 bg-[var(--glass)] px-3 py-1 text-xs font-bold text-gold-text backdrop-blur-md">
               {hero.badge}
             </span>
           )}
-          <div className="overflow-hidden rounded-card border border-line bg-surface-raised shadow-2xl shadow-black/40">
-            <div className="relative aspect-[16/9] w-full">
+          <div className="overflow-hidden rounded-[2rem] border border-primary/10 bg-surface-raised shadow-[var(--shadow-raised)]">
+            <div className="relative aspect-[4/3] w-full lg:aspect-square">
               {/* Food back in the frame: with the shop front now wrapping the
                   whole section as its background, repeating the same photo
                   here would show the building twice and the food never — so
@@ -207,10 +213,10 @@ export function Section01ClinicalHero({
                   the bar measured nothing. It also spoke in macros to someone
                   who is, at this point, simply deciding whether the food looks
                   good. What earns the space is the invitation. */}
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between gap-3 rounded-2xl border border-line bg-[var(--glass)] p-4 backdrop-blur-md shadow-xl max-w-sm mx-auto">
-                <p className="text-sm font-semibold text-ink">Today&apos;s menu is up.</p>
+              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between gap-3 rounded-2xl border border-line bg-[var(--glass)] p-4 backdrop-blur-md shadow-[var(--shadow-card)]">
+                <p className="font-display text-lg font-semibold leading-tight text-primary">Today&apos;s menu is up.</p>
                 {/* min-h-11 (T-22): this chip measured 50×38. */}
-                <Button asChild variant="outline" shape="pill" size="fluid" className="min-h-11 shrink-0 border-line-strong bg-transparent px-4 text-xs font-bold hover:bg-surface">
+                <Button asChild variant="outline" shape="pill" size="fluid" className="min-h-11 shrink-0 border-primary/20 bg-transparent px-4 text-xs font-bold text-primary hover:bg-surface">
                   <Link href="/menu">Order</Link>
                 </Button>
               </div>

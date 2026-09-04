@@ -31,13 +31,13 @@ export function PostFeed({ posts }: { posts: ChallengePost[] }) {
     <ul className="mt-4 flex flex-col gap-4">
       {posts.map((p) => (
         <li key={p.id} className="flex gap-3 rounded-2xl border border-line bg-surface p-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-raised text-xs font-semibold text-ink-muted">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-ink-muted">
             {initials(p.authorName)}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-baseline gap-x-2">
               <span className="text-sm font-semibold text-ink">{p.authorName}</span>
-              <span className="tabular text-xs text-ink-faint">{relTime(p.createdAt)}</span>
+              <span className="font-data text-xs text-ink-faint">{relTime(p.createdAt)}</span>
             </div>
             <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-ink">{p.body}</p>
           </div>

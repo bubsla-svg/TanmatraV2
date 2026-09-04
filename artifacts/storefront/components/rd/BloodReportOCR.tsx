@@ -44,31 +44,31 @@ export const BloodReportOCR: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Upload Box */}
-      <div className="bg-surface rounded-3xl p-6 sm:p-8 border border-line shadow-xl space-y-4">
+      <div className="bg-surface rounded-2xl p-6 sm:p-8 border border-line space-y-4">
         <div className="flex items-center gap-3 border-b border-line pb-4">
-          <div className="w-10 h-10 rounded-2xl bg-gold/10 text-[var(--gold-text)] flex items-center justify-center font-bold">
+          <div className="w-10 h-10 rounded-2xl bg-gold/10 text-gold-text flex items-center justify-center font-bold">
             <Activity className="w-5 h-5 text-[var(--danger)]" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-ink font-heading">Blood Report Biomarker AI OCR</h3>
+            <h3 className="font-display text-lg font-semibold leading-tight text-primary">Blood Report Biomarker AI OCR</h3>
             <p className="text-xs text-ink-muted font-medium">
               Upload lab reports (PDF/Image) before your RD consultation for instant AI biomarker parsing.
             </p>
           </div>
         </div>
 
-        <label className="border-2 border-dashed border-line-strong hover:border-[var(--gold)] rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all bg-surface-subtle">
-          <UploadCloud className="w-10 h-10 text-[var(--gold-text)] mb-2" />
+        <label className="border-2 border-dashed border-line-strong hover:border-gold rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all bg-surface-subtle">
+          <UploadCloud className="w-10 h-10 text-gold-text mb-2" />
           <span className="text-xs font-bold text-ink">
             {file ? file.name : "Click or drag blood report PDF / Image to scan"}
           </span>
-          <span className="text-3xs text-ink-faint font-medium mt-1">Supports CBC, HbA1c, Lipid Profile, Vitamin D, TSH</span>
+          <span className="text-2xs text-ink-faint font-medium mt-1">Supports CBC, HbA1c, Lipid Profile, Vitamin D, TSH</span>
           <input type="file" accept="image/*,.pdf,.txt" onChange={handleFileUpload} className="hidden" />
         </label>
 
         {scanning && (
-          <div className="p-4 rounded-2xl bg-gold/10 border border-[var(--gold)]/20 text-[var(--gold-text)] text-xs font-bold flex items-center justify-center gap-3 animate-pulse">
-            <RefreshCw className="w-4 h-4 animate-spin text-[var(--gold-text)]" />
+          <div className="p-4 rounded-2xl bg-gold/10 border border-gold/20 text-gold-text text-xs font-bold flex items-center justify-center gap-3 animate-pulse">
+            <RefreshCw className="w-4 h-4 animate-spin text-gold-text" />
             <span>AI Multimodal Vision Engine Parsing Biomarkers & Reference Ranges...</span>
           </div>
         )}
@@ -82,11 +82,11 @@ export const BloodReportOCR: React.FC = () => {
 
       {/* Extracted Biomarker Report View */}
       {activeRecord && (
-        <div className="bg-surface rounded-3xl p-6 sm:p-8 border border-line shadow-xl space-y-6">
+        <div className="bg-surface rounded-2xl p-6 sm:p-8 border border-line space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-4">
             <div>
-              <span className="text-3xs font-black uppercase tracking-wider text-ink-faint">Parsed Medical Report</span>
-              <h4 className="text-xl font-black text-ink font-heading">{activeRecord.reportName}</h4>
+              <span className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Parsed Medical Report</span>
+              <h4 className="font-display text-xl font-semibold leading-tight text-primary">{activeRecord.reportName}</h4>
             </div>
 
             {activeRecord.flaggedCount > 0 ? (
@@ -94,7 +94,7 @@ export const BloodReportOCR: React.FC = () => {
                 <AlertTriangle className="w-4 h-4" /> {activeRecord.flaggedCount} Flagged Abnormalities
               </span>
             ) : (
-              <span className="px-3.5 py-1.5 rounded-full bg-sage/10 text-sage-text border border-[var(--sage)]/20 text-xs font-extrabold flex items-center gap-1.5 self-start">
+              <span className="px-3.5 py-1.5 rounded-full bg-sage/10 text-sage-text border border-sage/20 text-xs font-extrabold flex items-center gap-1.5 self-start">
                 <CheckCircle2 className="w-4 h-4" /> All Normal
               </span>
             )}
@@ -102,8 +102,8 @@ export const BloodReportOCR: React.FC = () => {
 
           {/* AI Clinical Summary */}
           <div className="bg-surface-subtle rounded-2xl p-4 border border-line space-y-1.5">
-            <span className="text-xs font-bold text-[var(--gold-text)] flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-[var(--gold-text)]" /> RD Pre-Consult Clinical Summary
+            <span className="text-xs font-bold text-gold-text flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-gold-text" /> RD Pre-Consult Clinical Summary
             </span>
             <p className="text-xs text-ink-muted font-medium leading-relaxed">
               {activeRecord.summary}
@@ -112,7 +112,7 @@ export const BloodReportOCR: React.FC = () => {
 
           {/* Biomarkers Table */}
           <div className="space-y-3">
-            <h5 className="text-xs font-black uppercase text-ink-faint tracking-wider">Extracted Biomarker Metrics</h5>
+            <h5 className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Extracted Biomarker Metrics</h5>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {activeRecord.biomarkers.map((b, idx) => (
                 <div
@@ -126,21 +126,21 @@ export const BloodReportOCR: React.FC = () => {
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-bold text-ink">{b.name}</span>
                     {b.category && (
-                      <span className="text-3xs font-extrabold px-2 py-0.5 rounded-md bg-surface-raised text-ink-muted">
+                      <span className="text-2xs font-extrabold px-2 py-0.5 rounded-md bg-surface-raised text-ink-muted">
                         {b.category}
                       </span>
                     )}
                   </div>
                   <div className="flex items-baseline justify-between">
                     <strong
-                      className={`text-lg font-black ${
-                        b.isAbnormal ? "text-[var(--danger)]" : "text-ink"
+                      className={`text-lg font-data font-bold ${
+                        b.isAbnormal ? "text-[var(--danger)]" : "text-primary"
                       }`}
                     >
                       {b.value} <span className="text-xs font-normal text-ink-muted">{b.unit}</span>
                     </strong>
                     {b.referenceRange && (
-                      <span className="text-3xs font-medium text-ink-faint">Ref: {b.referenceRange}</span>
+                      <span className="text-2xs font-data font-medium text-ink-faint">Ref: {b.referenceRange}</span>
                     )}
                   </div>
                 </div>

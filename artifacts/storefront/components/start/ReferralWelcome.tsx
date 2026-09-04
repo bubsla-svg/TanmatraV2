@@ -23,9 +23,9 @@ export function ReferralWelcome({ offer }: { offer: ReferralOffer | null }) {
   if (!offer?.valid || offer.refereeAwardPaise <= 0) return null;
   const who = offer.referrerFirstName ?? "A friend";
   return (
-    <div className="rounded-2xl border border-gold/40 bg-gold/10 px-4 py-3 text-center">
-      <p className="text-sm font-semibold text-ink">
-        {who} sent you {formatPaise(offer.refereeAwardPaise)}
+    <div className="rounded-2xl bg-primary/10 px-4 py-3 text-center">
+      <p className="font-display text-lg font-semibold leading-tight text-primary">
+        {who} sent you <span className="font-data">{formatPaise(offer.refereeAwardPaise)}</span>
       </p>
       <p className="mt-1 text-xs leading-relaxed text-ink-muted">
         It lands as credit on your account once your first box is delivered — spend it

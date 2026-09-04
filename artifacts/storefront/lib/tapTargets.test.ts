@@ -74,19 +74,18 @@ test('drawer "Open full page" has a box of its own (was 93×20)', () => {
 });
 
 test("the dish page's accordion triggers get real padding (were 380×17)", () => {
-  // These two are not links and cannot take the utility: Astryx's Collapsible
-  // owns its button. It resolves `paddingBlock: 0` unless the GROUP sets a
-  // density, so both triggers were exactly their capsize-trimmed text.
-  // `balanced` is spacing-2 either side → 33px, which clears the SC 2.5.8
-  // floor the audit measured against. It does NOT reach the house 44px, and
-  // the library offers nothing that does (`spacious` is 41px) — overriding the
-  // button's padding from outside would fight the component, so this is the
-  // best its own API gives.
+  // The two detail sections used to sit in Astryx's CollapsibleGroup, whose
+  // triggers resolved to their capsize-trimmed text unless the GROUP set a
+  // density — and even `spacious` stopped at 41px, short of the house 44px.
+  // PR-11e moved them onto the shared Disclosure primitive, which owns its
+  // trigger and gives it the 48px floor by construction. This guard pins both
+  // halves: the page still uses the primitive, and the primitive keeps the floor.
   const src = read("../app/(focus)/dish/[slug]/page.tsx");
-  const group = /<CollapsibleGroup[^>]*>/.exec(src)?.[0] ?? "";
-  assert.ok(group, "the dish page still groups its detail sections");
-  assert.match(group, /density=/, "without a density the triggers collapse to text height again");
-  assert.doesNotMatch(group, /density="?\{?"?compact/, "compact leaves 1px over the AA floor");
+  assert.match(src, /<Disclosure[\s\S]*?defaultOpen=\{0\}/, "the dish page still puts its detail sections on the shared Disclosure");
+  const primitive = read("../components/primitives/Disclosure.tsx");
+  const trigger = /<button[^>]*aria-expanded[\s\S]*?className="([^"]*)"/.exec(primitive)?.[1] ?? "";
+  assert.ok(trigger, "the Disclosure trigger still declares its classes inline");
+  assert.match(trigger, /\bmin-h-12\b/, "the Disclosure trigger lost its 48px floor");
 });
 
 test("there is exactly one tap-target minimum in the codebase", () => {

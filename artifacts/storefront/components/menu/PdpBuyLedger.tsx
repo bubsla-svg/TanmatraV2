@@ -7,6 +7,7 @@ import type { DishData, DishMacros } from "@workspace/menu-catalog";
 import { Button } from "@/components/ui/button";
 import { formatPaise } from "@/lib/format";
 import { addLine, itemCount, qtyOf, setQty, subtotalPaise } from "@/lib/cartStore";
+import { QuantityStepper } from "@/components/primitives/QuantityStepper";
 import { useCart } from "@/components/cart/CartProvider";
 import { AddToCart } from "@/components/cart/AddToCart";
 
@@ -92,15 +93,12 @@ function LocalLedger({ dish }: { dish: Dish }) {
     <>
       <div className="flex items-center gap-3">
         {qty > 0 && (
-          <div className="flex items-center rounded-lg border border-line-strong bg-surface" role="group" aria-label={`${dish.name} quantity`}>
-            <button type="button" aria-label="Decrease quantity" onClick={() => setCart(setQty(cart, dish.id, "dish", qty - 1))} className="min-h-11 min-w-11 px-3 text-lg font-semibold text-ink transition-transform active:scale-[0.98]">
-              −
-            </button>
-            <span aria-live="polite" className="tabular min-w-6 text-center text-sm font-semibold text-ink">{qty}</span>
-            <button type="button" aria-label="Increase quantity" onClick={() => setCart(setQty(cart, dish.id, "dish", qty + 1))} className="min-h-11 min-w-11 px-3 text-lg font-semibold text-ink transition-transform active:scale-[0.98]">
-              +
-            </button>
-          </div>
+          <QuantityStepper
+            value={qty}
+            label={`${dish.name} quantity`}
+            onDecrease={() => setCart(setQty(cart, dish.id, "dish", qty - 1))}
+            onIncrease={() => setCart(setQty(cart, dish.id, "dish", qty + 1))}
+          />
         )}
         {qty === 0 ? (
           <Button

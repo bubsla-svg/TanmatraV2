@@ -66,30 +66,30 @@ export default async function ChallengePage({ params }: Params) {
         &larr; Challenges
       </Link>
       {c.image && (
-        <div className="mt-6 aspect-video w-full overflow-hidden rounded-2xl bg-surface-raised">
+        <div className="mt-6 aspect-video w-full overflow-hidden rounded-2xl bg-secondary">
           <SafeImage src={c.image} className="h-full w-full" />
         </div>
       )}
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <span
-          className={`rounded-full px-3 py-1 text-2xs font-semibold uppercase tracking-wide ${status === "live" ? "bg-gold text-[var(--gold-ink)]" : "bg-surface-raised text-ink-muted"}`}
+          className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.12em] ${status === "live" ? "bg-sage-soft text-sage-text" : "bg-secondary text-ink-muted"}`}
         >
           {STATUS_LABEL[status]}
         </span>
         {c.featured > 0 && (
-          <span className="rounded-full border border-line px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-ink-muted">
+          <span className="rounded-full bg-sage px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.12em] text-sage-foreground">
             Featured
           </span>
         )}
       </div>
-      <h1 className="mt-4 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">{c.title}</h1>
+      <h1 className="mt-4 font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">{c.title}</h1>
       <p className="mt-2 text-lg leading-relaxed text-ink-muted">{c.tagline}</p>
-      <p className="tabular mt-4 text-xs text-ink-faint">
+      <p className="font-data mt-4 text-xs text-ink-faint">
         {c.durationDays} days · {c.memberCount} joined · Led by {c.rdName}
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         {c.goalTags.map((t) => (
-          <span key={t} className="rounded-full border border-line bg-surface-raised px-3 py-1 text-xs text-ink-muted">
+          <span key={t} className="rounded-full bg-secondary px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.12em] text-ink-muted">
             {t}
           </span>
         ))}
@@ -100,7 +100,7 @@ export default async function ChallengePage({ params }: Params) {
       {c.bundleSlug && (
         <Link
           href="/menu"
-          className="mt-6 inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-semibold text-gold-text transition-colors hover:border-line-strong"
+          className="mt-6 inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-semibold text-primary transition-colors hover:border-line-strong"
         >
           Shop the challenge menu <span aria-hidden>&rarr;</span>
         </Link>

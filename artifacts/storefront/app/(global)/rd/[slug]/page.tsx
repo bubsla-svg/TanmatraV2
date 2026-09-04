@@ -53,13 +53,13 @@ export default async function RdProfilePage({ params }: Params) {
   if (!lookup.ok && lookup.reason === "not_found") notFound();
   if (!lookup.ok) {
     return (
-      <section className="mx-auto max-w-2xl px-4 py-10">
-        <Link href="/rd" className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-muted transition-colors hover:text-ink">
+      <section className="mx-auto max-w-2xl px-5 py-12 sm:px-8 sm:py-16">
+        <Link href="/rd" className="inline-flex min-h-11 items-center gap-1.5 text-xs font-bold uppercase tracking-[.16em] text-ink-muted transition-colors hover:text-primary">
           <span aria-hidden="true">&larr;</span> Our dietitians
         </Link>
-        <div className="mt-8 rounded-2xl border border-line bg-surface p-8 text-center">
-          <p className="text-sm font-semibold text-ink">This profile is briefly unavailable</p>
-          <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+        <div className="mt-8 rounded-2xl border border-line bg-surface p-5 text-center">
+          <p className="font-display text-lg font-semibold leading-tight text-primary">This profile is briefly unavailable</p>
+          <p className="mt-2 text-sm leading-6 text-ink-muted">
             We couldn&rsquo;t reach the dietitian directory just now — please check back shortly.
           </p>
         </div>
@@ -69,23 +69,23 @@ export default async function RdProfilePage({ params }: Params) {
   const rd = lookup.rd;
 
   return (
-    <article className="mx-auto max-w-2xl px-4 py-10">
+    <article className="mx-auto max-w-2xl px-5 py-12 sm:px-8 sm:py-16">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd(rd)) }} />
-      <Link href="/rd" className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-muted transition-colors hover:text-ink">
+      <Link href="/rd" className="inline-flex min-h-11 items-center gap-1.5 text-xs font-bold uppercase tracking-[.16em] text-ink-muted transition-colors hover:text-primary">
         <span aria-hidden="true">&larr;</span> Our dietitians
       </Link>
 
-      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-start">
+      <div className="mt-8 flex flex-col gap-5 sm:flex-row sm:items-start">
         <span
           aria-hidden="true"
-          className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--gold)_14%,transparent)] text-2xl font-semibold text-gold-text"
+          className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-secondary font-display text-2xl font-semibold text-primary"
         >
           {initials(rd.name)}
         </span>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">{rd.name}</h1>
-          <p className="mt-1 text-sm font-medium text-gold-text">{rd.title}</p>
-          <p className="tabular mt-1.5 text-xs text-ink-faint">
+          <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">{rd.name}</h1>
+          <p className="mt-2 text-[11px] font-bold uppercase tracking-[.18em] text-accent">{rd.title}</p>
+          <p className="font-data mt-2 text-xs text-ink-muted">
             {rd.yearsExperience} years&rsquo; experience · {rd.languages.join(", ")}
           </p>
           <div className="mt-3 flex flex-wrap gap-1.5">
@@ -98,17 +98,17 @@ export default async function RdProfilePage({ params }: Params) {
         </div>
       </div>
 
-      <p className="mt-6 text-sm leading-relaxed text-ink-muted">{rd.bio}</p>
+      <p className="mt-8 text-base leading-7 text-ink-muted">{rd.bio}</p>
 
-      <h2 className="mt-8 text-base font-semibold text-ink">Specialties</h2>
-      <div className="mt-3 flex flex-wrap gap-2">
+      <h2 className="mt-10 font-display text-2xl font-semibold leading-tight text-primary">Specialties</h2>
+      <div className="mt-4 flex flex-wrap gap-2">
         {rd.specialties.map((s) => (
           <span key={s} className="rounded-full border border-line bg-surface px-4 py-2 text-sm text-ink-muted">{s}</span>
         ))}
       </div>
 
-      <div className="mt-8 rounded-2xl border border-line bg-surface p-6">
-        <h2 className="text-base font-semibold text-ink">Consultations</h2>
+      <div className="mt-10 rounded-2xl border border-line bg-surface p-5">
+        <h2 className="font-display text-lg font-semibold leading-tight text-primary">Consultations</h2>
         <ul className="mt-3 flex flex-col divide-y divide-line">
           {SESSIONS.map(({ key, label }) => {
             const paise = rd.pricing[key];
@@ -118,7 +118,7 @@ export default async function RdProfilePage({ params }: Params) {
                 {paise === 0 ? (
                   <span className="rounded-full bg-sage-soft px-3 py-1 text-xs font-semibold text-sage-text">Free</span>
                 ) : (
-                  <span className="tabular font-semibold text-ink">{formatPaise(paise)}</span>
+                  <span className="font-data font-bold text-primary">{formatPaise(paise)}</span>
                 )}
               </li>
             );
@@ -126,7 +126,7 @@ export default async function RdProfilePage({ params }: Params) {
         </ul>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-5">
         <RdBooking rd={{ slug: rd.slug, name: rd.name, pricing: rd.pricing, bookable: rd.bookable }} />
       </div>
     </article>

@@ -13,11 +13,11 @@ import {
 
 const segmentCls = (on: boolean) =>
   `min-h-11 flex-1 rounded-full px-3 text-sm font-medium transition-colors active:scale-[0.98] disabled:opacity-40 ${
-    on ? "bg-gold text-[var(--gold-ink)]" : "text-ink-muted hover:text-ink"
+    on ? "bg-primary/10 font-semibold text-primary" : "text-ink-muted hover:text-ink"
   }`;
 
 const fieldCls =
-  "w-full min-h-[50px] rounded-2xl border border-line bg-bg px-4 text-base text-ink outline-none focus-visible:border-line-strong";
+  "w-full min-h-[50px] rounded-2xl border border-line bg-surface px-4 text-base text-ink outline-none focus-visible:border-primary";
 
 /**
  * "When" step for the à-la-carte checkout (T-08). Today / Tomorrow / Pick a
@@ -64,7 +64,7 @@ export function DeliverySlotPicker({
 
   return (
     <fieldset className="flex flex-col gap-3">
-      <legend className="text-sm font-medium text-ink">When should it arrive?</legend>
+      <legend className="font-display text-xl font-semibold leading-tight text-primary">When should it arrive?</legend>
       <div role="group" aria-label="Delivery day" className="flex gap-1 rounded-full border border-line bg-surface p-1">
         <button type="button" aria-pressed={dayChoice === "today"} disabled={groups.today.length === 0} onClick={() => pickDay("today")} className={segmentCls(dayChoice === "today")}>
           Today
@@ -84,7 +84,7 @@ export function DeliverySlotPicker({
       )}
 
       {dayChoice === "later" && groups.later.length > 0 && (
-        <label className="flex flex-col gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-muted">
+        <label className="flex flex-col gap-1.5 text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">
           Day
           <input
             type="date"
@@ -103,7 +103,7 @@ export function DeliverySlotPicker({
         </label>
       )}
 
-      <label className="flex flex-col gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-muted">
+      <label className="flex flex-col gap-1.5 text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">
         Window · {dayChoice === "later" && laterDay ? dayLabel(laterDay.date, now) : dayChoice === "today" ? "Today" : "Tomorrow"}
         <select
           value={value && options.some((s) => s.id === value.id) ? String(value.id) : ""}

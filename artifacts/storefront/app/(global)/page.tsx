@@ -14,6 +14,7 @@ import { SectionTrialPush } from "@/components/landing/SectionTrialPush";
 import { DishCard } from "@/components/DishCard";
 import { Section07ProofKitchen } from "@/components/landing/Section07ProofKitchen";
 import { Section10FaqAccordion } from "@/components/landing/Section10FaqAccordion";
+import { Rail } from "@/components/primitives/Rail";
 /**
  * Consumer home. Ordered by the visitor's hunger, not by the revenue model.
  *
@@ -90,29 +91,32 @@ export default async function HomePage() {
             real photography, real prices, one tap to order — so it now sits
             directly under the hero instead of behind a chip rail and two
             pitches. */}
-        <section className="px-gutter">
-          <div className="flex justify-between items-end mb-6">
-            <h2 className="font-bold text-3xl text-ink">On the menu today</h2>
+        <section className="mx-auto w-full max-w-[1240px] px-gutter">
+          <div className="mb-9 flex items-end justify-between gap-4 animate-rise-in">
+            <div className="flex items-center gap-3">
+              <span aria-hidden className="h-px w-8 bg-accent" />
+              <h2 className="font-display text-4xl font-semibold leading-none text-primary sm:text-5xl">On the menu today</h2>
+            </div>
             <Link
               href="/menu"
               /* Was 81×16 — exactly the line-height of an uppercase 12px
                  label, under the WCAG 2.2 SC 2.5.8 floor. `touch-target-min`
                  is the house utility (globals.css) and already carries the
                  inline-flex + centring the min-height needs to act on. */
-              className="touch-target-min font-bold text-xs text-primary uppercase tracking-widest hover:opacity-80"
+              className="touch-target-min shrink-0 text-sm font-bold text-primary hover:opacity-80"
             >
               View menu
             </Link>
           </div>
           {/* A real list, so a screen reader announces "5 items" before the
               rail instead of reading five unlabelled groups in a row. */}
-          <ul className="flex gap-4 overflow-x-auto snap-x no-scrollbar pb-4 -mx-gutter px-gutter">
+          <Rail as="ul" bleed="gutter" className="gap-4 pb-4">
             {featuredDishes.map((dish) => (
               <li key={dish.id} className="flex-none w-[280px] snap-start">
                 <DishCard dish={dish} compact sharedMacroKeys={sharedMacroKeys} />
               </li>
             ))}
-          </ul>
+          </Rail>
         </section>
 
         {/* The cheapest yes on the page, straight after the food. */}

@@ -48,7 +48,7 @@ export function LoyaltyHub() {
       );
     }
     return (
-      <div className="rounded-2xl border border-line bg-surface px-6 py-10 text-center">
+      <div className="rounded-2xl border border-line bg-surface p-5 text-center">
         <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load your rewards</p>
         <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-ink-faint">
           Something went wrong on our end — this usually clears up on retry.
@@ -56,7 +56,7 @@ export function LoyaltyHub() {
         <button
           type="button"
           onClick={() => void refetch()}
-          className="mt-4 rounded-lg border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-opacity hover:opacity-80"
+          className="mt-4 min-h-11 rounded-full border border-line-strong bg-surface px-4 text-sm font-bold text-ink"
         >
           Try again
         </button>

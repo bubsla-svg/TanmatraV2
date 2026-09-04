@@ -51,25 +51,25 @@ export function SubscriptionCard({
   const [showDeliveries, setShowDeliveries] = useState(false);
   const [showChangePlan, setShowChangePlan] = useState(false);
   return (
-    <li className="rounded-card border border-line bg-surface p-5">
+    <li className="rounded-2xl border border-line bg-surface p-5">
       <div className="flex items-start justify-between gap-3">
-        <span className="text-base font-semibold text-ink">
+        <span className="font-display text-lg font-semibold leading-tight text-primary">
           {sub.cadence} · {sub.mealsPerDelivery} meals / delivery
         </span>
         <span
-          className={`shrink-0 rounded-full px-3 py-1 text-2xs font-semibold uppercase tracking-wide ${STATUS_STYLE[sub.status]}`}
+          className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[.16em] ${STATUS_STYLE[sub.status]}`}
         >
           {STATUS_LABEL[sub.status]}
         </span>
       </div>
-      <p className="tabular mt-2 text-sm text-ink">
-        {formatPaise(sub.pricePerDeliveryPaise)}
-        <span className="text-ink-muted"> / delivery · {sub.deliveryWindow}</span>
+      <p className="mt-2 text-sm text-ink-muted">
+        <span className="font-data font-bold text-primary">{formatPaise(sub.pricePerDeliveryPaise)}</span>
+        <span> / delivery · {sub.deliveryWindow}</span>
       </p>
       {sub.status !== "cancelled" && (
         <p className="mt-1 text-xs text-ink-faint">
           {sub.status === "paused" ? "Paused" : "Next delivery"}:{" "}
-          <span className="tabular text-ink-muted">
+          <span className="font-data font-bold text-primary">
             {fmtDate(sub.status === "paused" ? sub.pausedAt : sub.nextDeliveryAt)}
           </span>
         </p>
@@ -79,13 +79,13 @@ export function SubscriptionCard({
       )}
 
       {sub.pendingCadence && (
-        <div className="mt-3 flex items-start gap-2 rounded-xl bg-sage-soft px-3 py-2.5 text-xs font-medium text-sage-text">
+        <div className="mt-3 flex items-start gap-2 rounded-2xl bg-sage-soft px-4 py-3 text-xs font-medium leading-relaxed text-sage-text">
           <Info aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <p>
             Plan change to {sub.pendingCadence} · {sub.pendingMealsPerDelivery} meals
             {sub.pendingChangeReauthRequired ? " awaiting authorisation — " : " takes effect next cycle."}
             {sub.pendingChangeReauthRequired && (
-              <button type="button" onClick={() => setShowChangePlan(true)} className="underline">
+              <button type="button" onClick={() => setShowChangePlan(true)} className="font-semibold underline underline-offset-4">
                 Complete authorisation
               </button>
             )}
@@ -93,20 +93,20 @@ export function SubscriptionCard({
         </div>
       )}
       {(actionsFor(sub.status).length > 0 || sub.status !== "cancelled") && (
-        <div className="mt-3 flex flex-wrap items-center gap-4 border-t border-line pt-3 text-sm font-medium">
+        <div className="mt-4 flex flex-wrap items-center gap-x-5 border-t border-line pt-1 text-sm font-semibold">
           {actionsFor(sub.status).map((a) => (
             <button
               key={a}
               type="button"
               disabled={busy}
               onClick={() => onAction(a)}
-              className={`-m-1 p-1 hover:underline disabled:opacity-40 ${a === "cancel" ? "text-[var(--danger)]" : "text-gold-text"}`}
+              className={`inline-flex min-h-11 items-center underline-offset-4 hover:underline disabled:opacity-40 ${a === "cancel" ? "text-[var(--danger)]" : "text-primary"}`}
             >
               {ACTION_LABEL[a]}
             </button>
           ))}
           {sub.status === "active" && !showChangePlan && (
-            <button type="button" onClick={() => setShowChangePlan(true)} className="-m-1 p-1 text-gold-text hover:underline">
+            <button type="button" onClick={() => setShowChangePlan(true)} className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline">
               Change plan
             </button>
           )}
@@ -115,7 +115,7 @@ export function SubscriptionCard({
               type="button"
               onClick={() => setShowDeliveries((s) => !s)}
               aria-expanded={showDeliveries}
-              className="-m-1 p-1 text-gold-text hover:underline"
+              className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline"
             >
               {showDeliveries ? "Hide deliveries" : "Deliveries"}
             </button>

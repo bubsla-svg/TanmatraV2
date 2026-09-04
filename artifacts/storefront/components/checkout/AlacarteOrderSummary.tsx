@@ -7,6 +7,7 @@ import { useCart } from "@/components/cart/CartProvider";
 import type { QuoteSnapshot } from "@/lib/quoteApi";
 import type { QuoteUiState } from "./AlacarteCheckout";
 import { QuoteBreakdown } from "./QuoteBreakdown";
+import { QuantityStepper } from "@/components/primitives/QuantityStepper";
 
 /**
  * The order summary as a DISCLOSURE at the top of the form (T-09). It used to
@@ -36,12 +37,12 @@ export function AlacarteOrderSummary({
     quoteState === "active" && quote ? formatPaise(quote.payableNowPaise) : `${formatPaise(subtotalPaise(cart))} est.`;
 
   return (
-    <details className="group rounded-3xl border border-line bg-surface" data-testid="alc-order-summary">
+    <details className="group rounded-2xl border border-line bg-surface" data-testid="alc-order-summary">
       <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 [&::-webkit-details-marker]:hidden">
-        <span className="text-sm font-semibold text-ink">
+        <span className="font-display text-lg font-semibold leading-tight text-primary">
           <span className="tabular">{count}</span> {count === 1 ? "item" : "items"}{" "}
           <span aria-hidden className="text-ink-faint">·</span>{" "}
-          <span className="tabular">{headline}</span>
+          <span className="font-data text-base font-bold">{headline}</span>
         </span>
         <span className="flex items-center gap-1 text-xs font-medium text-ink-muted">
           <span className="group-open:hidden">Show order</span>
@@ -49,18 +50,18 @@ export function AlacarteOrderSummary({
           <span aria-hidden className="transition-transform group-open:rotate-180">▾</span>
         </span>
       </summary>
-      <Card padding={5} className="rounded-b-3xl rounded-t-none border-0 border-t border-line">
-        <p className="mb-1 text-xs font-bold uppercase tracking-[0.2em] text-ink-muted">Current order</p>
+      <Card padding={5} className="rounded-b-2xl rounded-t-none border-0 border-t border-line">
+        <p className="mb-1 text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Current order</p>
         <ul className="divide-y divide-line">
           {cart.lines.map((l) => (
             <li key={`${l.kind}-${l.dishId}-${(l.customizations ?? []).join("|")}`} className="py-3">
-              <p className="line-clamp-2 text-sm font-medium text-ink">{l.name}</p>
+              <p className="line-clamp-2 font-display text-lg font-semibold leading-tight text-primary">{l.name}</p>
               {l.customizations && l.customizations.length > 0 && (
                 <p className="line-clamp-2 text-xs text-ink-muted">{l.customizations.join(", ")}</p>
               )}
               <div className="mt-2 flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
+                  <p className="font-data text-xs text-ink-muted">{formatPaise(l.pricePaise)}</p>
                   {l.macros && (
                     <p className="tabular text-xs text-ink-faint">
                       {formatMacroLine(l.macros, l.macros.estimated, l.macros.provisional)}
@@ -68,12 +69,15 @@ export function AlacarteOrderSummary({
                   )}
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center rounded-full border border-line-strong" role="group" aria-label={`${l.name} quantity`}>
-                    <button type="button" aria-label="Decrease" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) - 1, l.customizations))} className="touch-target-critical text-ink transition-transform active:scale-[0.98]">−</button>
-                    <span aria-live="polite" className="tabular min-w-6 text-center text-sm font-semibold text-ink">{l.qty}</span>
-                    <button type="button" aria-label="Increase" onClick={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) + 1, l.customizations))} className="touch-target-critical text-ink transition-transform active:scale-[0.98]">+</button>
-                  </div>
-                  <span className="tabular w-16 text-right text-sm font-semibold text-ink">
+                  <QuantityStepper
+                    value={l.qty}
+                    label={`${l.name} quantity`}
+                    decreaseLabel="Decrease"
+                    increaseLabel="Increase"
+                    onDecrease={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) - 1, l.customizations))}
+                    onIncrease={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) + 1, l.customizations))}
+                  />
+                  <span className="font-data w-16 text-right text-sm font-bold text-primary">
                     {formatPaise(l.pricePaise * l.qty)}
                   </span>
                 </div>

@@ -35,7 +35,7 @@ export function MenuControls({
 }) {
   const chipCls = (active: boolean) =>
     `inline-flex min-h-11 shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-3.5 text-xs font-semibold transition-transform active:scale-95 ${
-      active ? "border-gold bg-gold/10 text-gold-text" : "border-line bg-surface text-ink-muted hover:text-ink"
+      active ? "border-gold bg-primary/10 text-primary" : "border-transparent bg-secondary text-ink-muted hover:text-ink"
     }`;
 
   return (
@@ -59,7 +59,7 @@ export function MenuControls({
         onClick={onOpenFilter}
         data-testid="menu-filter-trigger"
         aria-label={activeFilterCount > 0 ? `Filters (${activeFilterCount} active)` : "Filters"}
-        className="inline-flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-surface-raised px-3.5 text-xs font-semibold text-ink transition-transform active:scale-95"
+        className="inline-flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-transparent bg-secondary px-3.5 text-xs font-semibold text-ink transition-transform active:scale-95"
       >
         <svg aria-hidden className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="4" y1="6" x2="20" y2="6" />
@@ -71,7 +71,7 @@ export function MenuControls({
         </svg>
         Filters
         {activeFilterCount > 0 && (
-          <span aria-hidden className="tabular flex h-5 min-w-5 items-center justify-center rounded-full bg-gold px-1.5 text-2xs font-bold text-[var(--gold-ink)]">
+          <span aria-hidden className="tabular flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-2xs font-bold text-amber-ink">
             {activeFilterCount}
           </span>
         )}

@@ -17,14 +17,14 @@ export function DishRationale({ dishId }: { dishId: number }) {
   });
 
   if (isPending) {
-    return <div className="mt-4 h-16 animate-pulse rounded-lg border border-line bg-surface" />;
+    return <div className="mt-4 h-16 animate-pulse rounded-2xl border border-line bg-surface" />;
   }
 
   if (!data || !data.rationale) return null;
 
   return (
-    <div className="mt-4 rounded-lg border border-line bg-surface p-3">
-      <p className="text-2xs font-semibold uppercase tracking-wider text-sage-text">Why this dish</p>
+    <div className="mt-4 rounded-2xl border border-line bg-surface p-4">
+      <p className="text-[10px] font-bold uppercase tracking-[.16em] text-accent">Why this dish</p>
       <p className="mt-1 text-sm text-ink">{data.rationale}</p>
       {data.expanded && data.expanded !== data.rationale && (
         <p className="mt-1 text-xs leading-relaxed text-ink-muted">{data.expanded}</p>

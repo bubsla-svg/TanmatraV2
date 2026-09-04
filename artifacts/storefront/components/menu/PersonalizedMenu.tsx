@@ -12,6 +12,7 @@
 // because ranking/filtering are computed over the DishData themselves — only
 // the rendering is server-side now.
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useScrollHide } from "@/lib/useScrollHide";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { DishForMatch, PreferencesForMatch } from "@workspace/preferences-match";
 import { apiGet } from "@/lib/apiClient";
@@ -180,6 +181,7 @@ export function PersonalizedMenu({
 
   const stickyRef = useRef<HTMLDivElement>(null);
   useStickyAnchorOffset(stickyRef);
+  const headerHidden = useScrollHide(false);
 
   // §3.9 / Law 3. Disabled while a dish drawer is open (`?dish=`): that is a
   // same-route overlay whose own close already restores position, and
@@ -199,11 +201,19 @@ export function PersonalizedMenu({
           sections just below it.
 
           `min-h-16 justify-center`: the global Header is sticky, 63px, at the
-          SAME z (--z-chrome), so this strip paints over it by document order
-          when both pin; 64px covers it exactly with no sliver peeking out. */}
+          SAME z (--z-chrome). It used to be covered by this strip by document
+          order whenever both pinned — which made the header's location
+          trigger, search and theme toggle unreachable on /menu after the
+          first scroll (Law 1 keeps the location trigger visible). PR-11c: the
+          strip now pins just below the header while the header is revealed
+          and takes the top edge only while the header has retreated — read
+          off the same scroll stream (`useScrollHide`) the header and the
+          tab bar already share, so the three move together. */}
       <div
         ref={stickyRef}
-        className="sticky top-0 z-[var(--z-chrome)] -mx-4 flex min-h-16 flex-col justify-center gap-1.5 bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-4 py-2 backdrop-blur"
+        className={`sticky z-[var(--z-chrome)] -mx-4 flex min-h-16 flex-col justify-center gap-1.5 bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-4 py-2 backdrop-blur transition-[top] duration-200 motion-reduce:transition-none ${
+          headerHidden ? "top-0" : "top-[63px]"
+        }`}
       >
         {/* Section anchors are derived from the SAME rows/visibleIds MenuGrid
             draws, so a section whose dishes are all filtered out loses its

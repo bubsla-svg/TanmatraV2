@@ -54,14 +54,14 @@ export function PreferencesHub() {
       );
     }
     return (
-      <div className="rounded-2xl border border-line bg-surface p-8 text-center shadow-[var(--shadow-card)]">
+      <div className="rounded-2xl border border-line bg-surface p-5 text-center">
         <p className="text-sm font-semibold text-[var(--danger)]">
           {authQuery.error instanceof ApiError ? authQuery.error.message : "Couldn't load your preferences."}
         </p>
         <button
           type="button"
           onClick={() => void authQuery.refetch()}
-          className="mt-4 rounded-full border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-colors hover:border-line-strong"
+          className="mt-4 min-h-11 rounded-full border border-line-strong bg-surface px-4 text-sm font-bold text-ink"
         >
           Try again
         </button>

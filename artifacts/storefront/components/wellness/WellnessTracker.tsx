@@ -59,7 +59,7 @@ export function WellnessTracker() {
       <div className="rounded-2xl border border-line bg-surface px-6 py-10 text-center">
         <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load your tracker</p>
         <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-ink-faint">Something went wrong on our end — this usually clears up on retry.</p>
-        <button type="button" onClick={() => void todayQuery.refetch()} className="mt-4 rounded-lg border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-opacity hover:opacity-80">Try again</button>
+        <button type="button" onClick={() => void todayQuery.refetch()} className="mt-4 rounded-lg border border-line px-5 py-2 text-xs font-semibold text-primary transition-opacity hover:opacity-80">Try again</button>
       </div>
     );
   }
@@ -84,7 +84,7 @@ export function WellnessTracker() {
       <div className="flex items-center justify-between gap-4">
         <div className="flex shrink-0 gap-2">
           {WATER_PRESETS.map((ml) => (
-            <button key={ml} type="button" onClick={() => logWaterMutation.mutate(ml)} disabled={busy} className="tabular rounded-full border border-line px-4 py-2 text-xs text-ink-muted transition-colors hover:bg-surface hover:brightness-110 disabled:opacity-50">+{ml} ml</button>
+            <button key={ml} type="button" onClick={() => logWaterMutation.mutate(ml)} disabled={busy} className="font-data rounded-full border border-transparent bg-secondary px-4 py-2 text-xs text-ink-muted transition-colors hover:brightness-110 disabled:opacity-50">+{ml} ml</button>
           ))}
         </div>
         <Button type="button" onClick={() => setLogOpen(true)} shape="pill" size="fluid" className="flex shrink-0 items-center gap-2 px-6 py-3 font-semibold hover:brightness-110">
@@ -96,13 +96,13 @@ export function WellnessTracker() {
       {(streaks.protein || streaks.veg) && (
         <div className="flex flex-wrap gap-2">
           {streaks.protein && (
-            <span className="tabular inline-flex items-center gap-2 rounded-full border border-sage/20 bg-sage-soft px-4 py-2 text-xs text-sage-text">
+            <span className="font-data inline-flex items-center gap-2 rounded-full border border-sage/20 bg-sage-soft px-4 py-2 text-xs text-sage-text">
               <Star aria-hidden className="h-3.5 w-3.5" />
               Protein streak {streaks.protein.currentDays}d · best {streaks.protein.bestDays}d
             </span>
           )}
           {streaks.veg && (
-            <span className="tabular inline-flex items-center gap-2 rounded-full border border-sage/20 bg-sage-soft px-4 py-2 text-xs text-sage-text">
+            <span className="font-data inline-flex items-center gap-2 rounded-full border border-sage/20 bg-sage-soft px-4 py-2 text-xs text-sage-text">
               <Droplet aria-hidden className="h-3.5 w-3.5" />
               Veg streak {streaks.veg.currentDays}d · best {streaks.veg.bestDays}d
             </span>
@@ -111,7 +111,7 @@ export function WellnessTracker() {
       )}
 
       <div>
-        <h2 className="text-xl font-medium text-ink">Today&rsquo;s entries</h2>
+        <h2 className="font-display text-lg font-semibold leading-tight text-primary">Today&rsquo;s entries</h2>
         {logs.length === 0 ? (
           <p className="mt-3 text-sm text-ink-muted">Nothing logged yet today. Order a meal or add one manually.</p>
         ) : (
@@ -162,7 +162,7 @@ function Entry({ log, onRemove, busy }: { log: NutritionLog; onRemove: () => voi
     <li className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface-raised p-4">
       <div className="min-w-0">
         <p className="truncate text-base text-ink">{log.label}</p>
-        <p className="tabular mt-0.5 text-xs text-ink-muted">
+        <p className="font-data mt-0.5 text-xs text-ink-muted">
           {SOURCE_LABEL[log.source] ?? "Manual"} · {meta}
         </p>
       </div>

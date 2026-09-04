@@ -19,7 +19,7 @@ export default function AccountPage() {
       data-screen-state="default"
       className="mx-auto max-w-md px-4 py-10"
     >
-      <h1 className="text-3xl font-semibold tracking-tight text-ink">Account</h1>
+      <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">Account</h1>
       <AccountHub />
     </section>
   );

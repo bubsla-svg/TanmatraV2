@@ -319,7 +319,7 @@ export function AlacarteCheckout() {
     return (
       <div aria-busy="true" aria-label="Loading your cart" data-screen-state="checkout-loading" className="flex flex-col gap-5">
         <div className="h-12 animate-pulse rounded-2xl bg-surface-raised" />
-        <div className="flex flex-col gap-3 rounded-3xl border border-line bg-surface p-5">
+        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
           {[0, 1, 2].map((i) => (
             <div key={i} className="flex flex-col gap-2 py-3">
               <div className="h-4 w-3/4 animate-pulse rounded bg-surface-raised" />
@@ -341,7 +341,7 @@ export function AlacarteCheckout() {
   if (hydrated && itemCount(cart) === 0) {
     return (
       <div className="flex flex-col items-start gap-4">
-        <h2 className="text-xl font-semibold text-ink">Your cart is empty</h2>
+        <h2 className="font-display text-2xl font-semibold leading-tight text-primary">Your cart is empty</h2>
         <p className="text-sm text-ink-muted">Add a dish or a pantry item and it&rsquo;ll show up here to check out.</p>
         <div className="flex flex-wrap gap-2">
           <Button asChild shape="pill" size="fluid" className="px-6 py-3 font-semibold">
@@ -358,7 +358,7 @@ export function AlacarteCheckout() {
   if (hydrated && dishLines.length === 0) {
     return (
       <div className="flex flex-col items-start gap-4">
-        <h2 className="text-xl font-semibold text-ink">Your cart only has pantry items</h2>
+        <h2 className="font-display text-2xl font-semibold leading-tight text-primary">Your cart only has pantry items</h2>
         <p className="text-sm text-ink-muted">
           Pantry &amp; marketplace items ship separately from meals and aren&rsquo;t part of this checkout — buy them from their own product page.
         </p>

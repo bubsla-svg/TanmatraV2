@@ -15,10 +15,10 @@ export default function ChallengeTrackerPage() {
       className="mx-auto max-w-5xl px-4 py-12 flex flex-col gap-8"
     >
       <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
+        <span className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">
           Your streak
         </span>
-        <h1 className="text-3xl font-semibold tracking-tight text-ink">
+        <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">
           Dietary Challenge Tracker
         </h1>
         <p className="text-sm leading-relaxed text-ink-muted max-w-2xl">

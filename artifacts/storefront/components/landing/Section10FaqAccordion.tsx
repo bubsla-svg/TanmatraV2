@@ -1,15 +1,13 @@
-"use client"; // Interactive FAQ accordion state and event emission
+"use client"; // Hands the Disclosure primitive its faq_open analytics callback
 
-import React, { useState } from "react";
 import { emitLpEvent } from "@/lib/lpEvents";
+import { Disclosure } from "@/components/primitives/Disclosure";
 
 /**
  * §10: FAQ Accordion with Mandatory Medical Treatment Disclaimer.
  * Provides clinical governance clarity and enforces required therapeutic disclosures. Strictly ≤ 150 lines.
  */
 export function Section10FaqAccordion() {
-  const [openIdx, setOpenIdx] = useState<number | null>(null);
-
   const faqItems = [
     {
       question: "How do you ensure the meals are actually healthy?",
@@ -33,55 +31,31 @@ export function Section10FaqAccordion() {
     },
   ];
 
-  const toggle = (idx: number, question: string) => {
-    const next = openIdx === idx ? null : idx;
-    setOpenIdx(next);
-    if (next === idx) {
-      emitLpEvent("faq_open", { page: "/", question });
-    }
-  };
-
   return (
-    <section id="faq" className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-      <div className="text-center">
-        <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
+    <section id="faq" className="mx-auto max-w-4xl px-5 py-16 sm:px-8 sm:py-24">
+      <div className="animate-rise-in">
+        <span className="text-[11px] font-bold uppercase tracking-[.2em] text-accent">
           Helpful Answers
         </span>
-        <h2 className="mt-2 text-2xl font-bold text-ink sm:text-4xl">
+        <h2 className="mt-3 font-display text-4xl font-semibold leading-none text-primary sm:text-5xl">
           Frequently Asked Questions
         </h2>
-        <p className="mt-2 text-sm text-ink-muted">
+        <p className="mt-5 max-w-md text-base leading-7 text-ink-muted">
           Find answers to common questions about our meals, delivery, and plans.
         </p>
       </div>
 
-      <div className="mt-10 divide-y divide-line border-y border-line">
-        {faqItems.map((item, idx) => {
-          const isOpen = openIdx === idx;
-          return (
-            <div key={idx} className="py-2">
-              {/* min-h-11 (T-22): the row measured 24px — the text's own
-                  line-height was the whole hit area. */}
-              <button
-                type="button"
-                aria-expanded={isOpen}
-                onClick={() => toggle(idx, item.question)}
-                className="flex min-h-11 w-full items-center justify-between py-2 text-left text-base font-semibold text-ink outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm transition-opacity hover:opacity-90"
-              >
-                <span>{item.question}</span>
-                <span className="ml-4 shrink-0 text-xs font-bold text-ink-faint">
-                  {isOpen ? "−" : "+"}
-                </span>
-              </button>
-              {isOpen && (
-                <div className="mt-3 pr-8 text-sm leading-relaxed text-ink-muted">
-                  {item.answer}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      {/* PR-11b: the shared Disclosure (48px rows — T-22's min-h-11 floor
+          and then some; the text's own line-height used to be the whole hit
+          area). Content unchanged. */}
+      <Disclosure
+        className="mt-10"
+        items={faqItems.map((item) => ({ key: item.question, summary: item.question, body: item.answer }))}
+        onOpen={(i) => {
+          const question = faqItems[i]?.question;
+          if (question) emitLpEvent("faq_open", { page: "/", question });
+        }}
+      />
 
       {/* Mandatory Medical Treatment Disclaimer */}
       <div className="mt-12 rounded-card border border-line bg-surface-raised p-5 shadow-inner">

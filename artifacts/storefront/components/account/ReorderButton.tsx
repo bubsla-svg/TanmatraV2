@@ -45,7 +45,7 @@ export function ReorderButton({ items }: { items: OrderLineItem[] }) {
         {done.added > 0 ? (
           <>
             Added {done.added} item{done.added === 1 ? "" : "s"} to your cart.{" "}
-            <Link href="/menu" className="font-medium text-gold-text hover:underline">
+            <Link href="/menu" className="font-semibold text-primary underline-offset-4 hover:underline">
               View cart &rarr;
             </Link>
           </>
@@ -62,14 +62,14 @@ export function ReorderButton({ items }: { items: OrderLineItem[] }) {
   }
 
   return (
-    <span className="mt-2 inline-flex items-center gap-3">
+    <span className="inline-flex items-center gap-3">
       <button
         type="button"
         disabled={busy}
         aria-busy={busy}
         aria-live="polite"
         onClick={() => void reorder()}
-        className="text-sm font-medium text-gold-text hover:underline disabled:opacity-40"
+        className="-my-2 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline disabled:opacity-40"
       >
         {busy ? "Adding…" : "Reorder"}
       </button>

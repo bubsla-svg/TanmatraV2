@@ -18,7 +18,7 @@ import {
 } from "@/lib/otpFlow";
 
 const inputCls =
-  "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus-visible:border-line-strong";
+  "w-full min-h-[50px] rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none placeholder:text-ink-faint focus-visible:border-primary";
 
 /**
  * Optional sign-in (SF-03). Firebase sends the SMS, its idToken is exchanged for
@@ -218,7 +218,7 @@ export function PhoneAuth({
       <button
         type="button"
         onClick={() => setStage("phone")}
-        className="inline-flex min-h-11 items-center self-start text-sm font-medium text-gold-text underline-offset-4 hover:underline"
+        className="inline-flex min-h-11 items-center self-start text-sm font-medium text-primary underline-offset-4 hover:underline"
       >
         Have an account? Sign in for faster checkout
       </button>
@@ -238,7 +238,7 @@ export function PhoneAuth({
    * their own sign-in copy (a card heading would duplicate it). No handler,
    * copy, or redirect changes. */
   return (
-    <Card padding={6} className="flex flex-col gap-3 rounded-3xl">
+    <Card padding={6} className="flex flex-col gap-4 rounded-2xl">
       {stage === "phone" ? (
         <>
           <Field label="Mobile number" inputID="pa-phone">
@@ -250,7 +250,7 @@ export function PhoneAuth({
           <Button
             type="button" disabled={busy} onClick={() => void send()}
             aria-busy={busy} aria-live="polite"
-            shape="pill" size="fluid" className="px-6 py-3 font-semibold disabled:opacity-40"
+            shape="pill" size="fluid" className="min-h-12 px-6 py-3 font-semibold disabled:opacity-40"
           >
             {busy ? "Sending…" : "Send code"}
           </Button>
@@ -267,7 +267,7 @@ export function PhoneAuth({
             <Button
               type="button" disabled={busy} onClick={() => void verify()}
               aria-busy={busy} aria-live="polite"
-              shape="pill" size="fluid" className="px-6 py-3 font-semibold disabled:opacity-40"
+              shape="pill" size="fluid" className="min-h-12 px-6 py-3 font-semibold disabled:opacity-40"
             >
               {busy ? "Verifying…" : "Verify"}
             </Button>
@@ -280,14 +280,14 @@ export function PhoneAuth({
               type="button"
               onClick={() => void send()}
               disabled={busy || !resendReady}
-              className="-m-2 p-2 text-xs font-medium text-ink-muted hover:underline disabled:no-underline disabled:opacity-60"
+              className="-m-2 p-2 text-xs font-medium text-ink-muted underline-offset-4 hover:text-ink hover:underline disabled:no-underline disabled:opacity-60"
             >
               {resendReady ? "Resend code" : `Resend in ${secondsLeft}s`}
             </button>
             <button
               type="button"
               onClick={() => { setStage("phone"); setError(null); setNotice(null); }}
-              className="-m-2 p-2 text-xs font-medium text-ink-muted hover:underline"
+              className="-m-2 p-2 text-xs font-medium text-ink-muted underline-offset-4 hover:text-ink hover:underline"
             >
               Change number
             </button>

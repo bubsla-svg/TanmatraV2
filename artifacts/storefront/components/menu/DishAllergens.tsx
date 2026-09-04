@@ -16,21 +16,21 @@ export function DishAllergens({ dish }: { dish: DishData }) {
 
   return (
     <section
-      className={`mt-6 rounded-card border bg-surface p-5 ${
+      className={`mt-6 rounded-2xl border bg-surface p-5 ${
         warn ? "border-[var(--danger)]" : "border-line"
       }`}
     >
-      <h2 className="text-2xs font-semibold uppercase tracking-wide text-ink-faint">
+      <h2 className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">
         Allergens
       </h2>
-      <p className="mt-1 text-sm font-semibold text-ink">{view.heading}</p>
+      <p className="mt-1 font-display text-lg font-semibold leading-tight text-primary">{view.heading}</p>
 
       {view.items.length > 0 && (
         <ul className="mt-2.5 flex flex-wrap gap-1.5">
           {view.items.map((item) => (
             <li
               key={item}
-              className="rounded-full border border-line bg-surface-raised px-2.5 py-1 text-xs text-ink-muted"
+              className="rounded-full bg-secondary px-2.5 py-1 text-xs text-ink-muted"
             >
               {item}
             </li>

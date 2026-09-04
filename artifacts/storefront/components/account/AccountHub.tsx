@@ -104,9 +104,9 @@ export function AccountHub() {
     return (
       <div className="mt-4 flex flex-col gap-3" aria-hidden>
         <Skeleton className="h-6 w-40" />
-        <Skeleton className="h-32 w-full rounded-xl" />
-        <Skeleton className="h-16 w-full rounded-xl" />
-        <Skeleton className="h-16 w-full rounded-xl" />
+        <Skeleton className="h-32 w-full rounded-2xl" />
+        <Skeleton className="h-16 w-full rounded-2xl" />
+        <Skeleton className="h-16 w-full rounded-2xl" />
       </div>
     );
   }
@@ -116,7 +116,7 @@ export function AccountHub() {
       return <SignInOffer onVerified={(u) => queryClient.setQueryData(ME_KEY, u)} />;
     }
     return (
-      <div className="mt-4 rounded-card border border-line bg-surface p-6 text-center">
+      <div className="mt-4 rounded-2xl border border-line bg-surface p-5 text-center">
         <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load your account</p>
         <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-ink-faint">
           Something went wrong on our end — this usually clears up on retry.
@@ -124,7 +124,7 @@ export function AccountHub() {
         <button
           type="button"
           onClick={() => void refetchUser()}
-          className="mt-4 rounded-lg border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-opacity hover:opacity-80"
+          className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full border border-line-strong bg-surface px-4 text-sm font-bold text-ink transition-colors hover:bg-surface-raised"
         >
           Try again
         </button>
@@ -138,8 +138,8 @@ export function AccountHub() {
 
   return (
     <div className="mt-4 flex flex-col gap-8">
-      <div className="flex items-end justify-between">
-        <p className="text-base font-medium text-ink">
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-display text-lg font-semibold leading-tight text-primary">
           {user.firstName ?? user.phoneE164 ?? "Signed in"}
         </p>
         <button
@@ -148,7 +148,7 @@ export function AccountHub() {
           disabled={signOut.isPending}
           aria-busy={signOut.isPending}
           aria-live="polite"
-          className="-m-1 p-1 text-sm font-medium text-ink-muted transition-colors hover:text-ink disabled:opacity-50"
+          className="-my-2.5 inline-flex min-h-11 shrink-0 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline disabled:opacity-50"
         >
           {signOut.isPending ? "Signing out…" : "Sign out"}
         </button>
@@ -157,15 +157,15 @@ export function AccountHub() {
       {live && (
         <Link
           href={`/track/${encodeURIComponent(live.externalOrderId)}`}
-          className="group relative block overflow-hidden rounded-xl border border-line bg-surface p-6 transition-transform active:scale-[0.98]"
+          className="group relative block overflow-hidden rounded-2xl border border-line bg-surface p-5 transition-transform active:scale-[0.98]"
         >
           {/* Atmospheric signal wash — decorative, sage reads as status not action. */}
           <div
             aria-hidden
             className="pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full bg-sage/5 blur-3xl"
           />
-          <div className="mb-4 flex items-start justify-between">
-            <span className="tabular text-3xs uppercase tracking-widest text-sage-text">
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-[.16em] text-sage-text">
               Live order
             </span>
             <span className="relative flex h-2 w-2">
@@ -173,25 +173,25 @@ export function AccountHub() {
               <span className="relative inline-flex h-2 w-2 rounded-full bg-sage" />
             </span>
           </div>
-          <p className="text-lg font-medium text-ink">{statusLabel(live.status)}</p>
-          <p className="tabular mt-1 text-xs text-ink-faint">#{live.externalOrderId}</p>
-          <span className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-gold-text">
+          <p className="font-display text-lg font-semibold leading-tight text-primary">{statusLabel(live.status)}</p>
+          <p className="font-data mt-1 text-xs text-ink-faint">#{live.externalOrderId}</p>
+          <span className="mt-2 inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-primary underline-offset-4 group-hover:underline">
             Track live
             <ArrowRight aria-hidden className="h-4 w-4" />
           </span>
         </Link>
       )}
 
-      <nav aria-label="Account sections" className="flex flex-col gap-3">
+      <nav aria-label="Account sections" className="flex flex-col divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
         {SECTIONS.map((s) => (
           <Link
             key={s.href}
             href={s.href}
-            className="group flex items-center justify-between rounded-xl border border-line bg-surface p-5 transition-all hover:bg-surface-raised active:scale-[0.98]"
+            className="group flex items-center justify-between gap-3 px-5 py-4 transition-colors hover:bg-surface-raised"
           >
-            <span>
-              <span className="block text-base font-bold text-ink">{s.label}</span>
-              <span className="mt-1 block text-sm text-ink-muted">{s.sub}</span>
+            <span className="min-w-0">
+              <span className="block font-display text-lg font-semibold leading-tight text-primary">{s.label}</span>
+              <span className="mt-0.5 block text-sm text-ink-muted">{s.sub}</span>
             </span>
             <ChevronRight
               aria-hidden
@@ -201,9 +201,9 @@ export function AccountHub() {
         ))}
       </nav>
 
-      <div className="flex justify-center gap-6 pt-2 pb-4 text-xs font-semibold uppercase tracking-widest text-ink-muted">
+      <div className="flex justify-center gap-6 pt-2 pb-4 text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">
         {LEGAL.map((l) => (
-          <Link key={l.href} href={l.href} className="transition-colors hover:text-gold-text">
+          <Link key={l.href} href={l.href} className="inline-flex min-h-11 items-center transition-colors hover:text-primary">
             {l.label}
           </Link>
         ))}

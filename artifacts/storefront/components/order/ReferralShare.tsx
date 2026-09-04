@@ -79,7 +79,7 @@ export function ReferralShare() {
   return (
     <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
       <div>
-        <p className="text-sm font-semibold text-ink">
+        <p className="font-display text-lg font-semibold leading-tight text-primary">
           Give {formatPaise(data.awards.refereePaise)}, get{" "}
           {formatPaise(data.awards.referrerPaise)}
         </p>

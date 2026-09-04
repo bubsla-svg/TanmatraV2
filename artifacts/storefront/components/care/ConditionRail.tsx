@@ -12,9 +12,9 @@ export function ConditionRail() {
         <Link
           key={c.slug}
           href={`/care/${c.slug}`}
-          className="flex h-full items-center rounded-card border border-line bg-surface p-5 transition-colors hover:border-line-strong"
+          className="flex h-full min-h-[72px] items-center rounded-2xl border border-line bg-surface p-5 transition-colors hover:border-line-strong active:scale-[0.98]"
         >
-          <span className="text-sm font-semibold text-ink">{c.name}</span>
+          <span className="font-display text-lg font-semibold leading-tight text-primary">{c.name}</span>
         </Link>
       ))}
     </CardSection>

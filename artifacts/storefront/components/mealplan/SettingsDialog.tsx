@@ -55,37 +55,37 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
   const busy = saveMutation.isPending;
   const errorText = validationError ?? (saveMutation.isError ? "Couldn't save settings." : null);
 
-  const input = "w-full rounded-2xl border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus-visible:border-[var(--gold)]";
+  const input = "w-full min-h-[50px] rounded-2xl border border-line bg-surface px-4 py-3 text-base text-ink outline-none placeholder:text-ink-faint focus-visible:border-primary";
   return (
     <Dialog.Root open onOpenChange={(o) => { if (!o) onClose(); }}>
       <Dialog.Portal>
         {/* Scrim: --scrim, never data-stitch — see the invariant on
             components/ui/drawer.tsx's DrawerOverlay. */}
         <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-[var(--scrim)] backdrop-blur-sm" />
-        <Dialog.Content aria-describedby={undefined} className="fixed left-1/2 top-24 z-[var(--z-modal)] w-[92vw] max-w-sm -translate-x-1/2 animate-dialog-in rounded-3xl border border-line bg-surface p-5 shadow-lg">
-          <Dialog.Title className="text-sm font-semibold text-ink">Meal planner settings</Dialog.Title>
+        <Dialog.Content aria-describedby={undefined} className="fixed left-1/2 top-24 z-[var(--z-modal)] w-[92vw] max-w-sm -translate-x-1/2 animate-dialog-in rounded-2xl border border-line bg-surface p-5 shadow-[var(--shadow-raised)]">
+          <Dialog.Title className="font-display text-xl font-semibold leading-tight text-primary">Meal planner settings</Dialog.Title>
           {settingsQuery.isError && (
-            <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-line bg-surface px-3 py-2">
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-secondary px-4 py-3">
               <p className="text-xs font-medium text-[var(--danger)]">Couldn&rsquo;t load your current settings.</p>
-              <button type="button" onClick={() => void settingsQuery.refetch()} className="shrink-0 text-xs font-semibold text-gold-text hover:opacity-80">Try again</button>
+              <button type="button" onClick={() => void settingsQuery.refetch()} className="-my-2 inline-flex min-h-11 shrink-0 items-center text-xs font-semibold text-ink underline underline-offset-4 hover:text-ink-muted">Try again</button>
             </div>
           )}
           <div className="mt-4 flex flex-col gap-4">
-            <label className="flex items-center justify-between gap-3 text-sm text-ink-muted">
+            <label className="flex min-h-11 cursor-pointer items-center justify-between gap-3 text-sm text-ink-muted">
               Auto-replan weekly
-              <input type="checkbox" role="switch" checked={autoReplan} onChange={(e) => setAutoReplan(e.target.checked)} className="accent-[var(--gold)]" />
+              <input type="checkbox" role="switch" checked={autoReplan} onChange={(e) => setAutoReplan(e.target.checked)} className="size-6 shrink-0 cursor-pointer accent-[var(--gold)]" />
             </label>
             <label className="text-sm text-ink-muted">Weekly budget (₹)
-              <input type="number" min="0" inputMode="numeric" placeholder="No limit" value={budget} onChange={(e) => setBudget(e.target.value)} className={`mt-1 ${input}`} />
+              <input type="number" min="0" inputMode="numeric" placeholder="No limit" value={budget} onChange={(e) => setBudget(e.target.value)} className={`mt-2 ${input}`} />
             </label>
             <label className="text-sm text-ink-muted">Max repetitions per dish (per week)
-              <input type="number" min="1" max="7" value={maxReps} onChange={(e) => setMaxReps(e.target.value)} className={`mt-1 ${input}`} />
+              <input type="number" min="1" max="7" value={maxReps} onChange={(e) => setMaxReps(e.target.value)} className={`mt-2 ${input}`} />
             </label>
             {errorText && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{errorText}</p>}
           </div>
           <div className="mt-5 flex justify-end gap-3">
-            <Dialog.Close className="rounded-full px-4 py-2 text-sm font-medium text-ink-muted hover:text-ink">Cancel</Dialog.Close>
-            <Button type="button" onClick={save} disabled={busy} aria-busy={busy} aria-live="polite" shape="pill" size="fluid" className="px-4 py-2 font-semibold disabled:opacity-60">{busy ? "Saving…" : "Save"}</Button>
+            <Dialog.Close className="inline-flex min-h-11 items-center rounded-full px-4 py-2 text-sm font-medium text-ink-muted hover:text-ink">Cancel</Dialog.Close>
+            <Button type="button" onClick={save} disabled={busy} aria-busy={busy} aria-live="polite" shape="pill" size="fluid" className="px-5 py-2.5 font-semibold disabled:opacity-60">{busy ? "Saving…" : "Save"}</Button>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

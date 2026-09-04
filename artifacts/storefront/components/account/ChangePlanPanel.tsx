@@ -15,11 +15,11 @@ export function ChangePlanPanel(
   _props: { sub: Subscription; onDone: () => void },
 ) {
   return (
-    <div className="mt-3 flex flex-col gap-2 border-t border-line pt-4">
+    <div className="mt-4 flex flex-col gap-1 rounded-2xl bg-secondary px-4 py-3">
       <p className="text-sm leading-relaxed text-ink">
         Plan changes are temporarily unavailable while we fix a pricing issue.
       </p>
-      <p className="text-xs text-ink-muted">
+      <p className="text-xs leading-relaxed text-ink-muted">
         Your current plan and billing are unaffected. Contact support if you need to change your plan now.
       </p>
     </div>

@@ -68,11 +68,11 @@ export function QuoteBreakdown({
         <dl className="flex flex-col gap-1.5 text-sm">
           <div className="flex justify-between gap-3">
             <dt className="text-ink-muted">Item subtotal</dt>
-            <dd className="tabular text-ink">{formatPaise(quote.subtotalPaise)}</dd>
+            <dd className="font-data text-ink">{formatPaise(quote.subtotalPaise)}</dd>
           </div>
           <div className="flex justify-between gap-3">
             <dt className="text-ink-muted">Delivery</dt>
-            <dd className="tabular text-ink">
+            <dd className="font-data text-ink">
               {quote.deliveryFeePaise === 0 ? "Free" : formatPaise(quote.deliveryFeePaise)}
             </dd>
           </div>
@@ -83,19 +83,19 @@ export function QuoteBreakdown({
           )}
           <div className="flex justify-between gap-3">
             <dt className="text-ink-muted">Packaging</dt>
-            <dd className="tabular text-ink">{quote.packagingPaise === 0 ? "Included" : formatPaise(quote.packagingPaise)}</dd>
+            <dd className="font-data text-ink">{quote.packagingPaise === 0 ? "Included" : formatPaise(quote.packagingPaise)}</dd>
           </div>
           <div className="flex justify-between gap-3">
             <dt className="text-ink-muted">Discount</dt>
-            <dd className="tabular text-ink">{quote.discountPaise === 0 ? "—" : `−${formatPaise(quote.discountPaise)}`}</dd>
+            <dd className="font-data text-ink">{quote.discountPaise === 0 ? "—" : `−${formatPaise(quote.discountPaise)}`}</dd>
           </div>
           <div className="flex justify-between gap-3">
             <dt className="text-ink-muted">GST (5% food · 18% delivery)</dt>
-            <dd className="tabular text-ink">{formatPaise(quote.taxPaise)}</dd>
+            <dd className="font-data text-ink">{formatPaise(quote.taxPaise)}</dd>
           </div>
           <div className="mt-1 flex justify-between gap-3 border-t border-line pt-2">
-            <dt className="font-semibold text-ink">Amount payable now</dt>
-            <dd className="tabular font-semibold text-gold-text">{formatPaise(quote.payableNowPaise)}</dd>
+            <dt className="font-display text-base font-semibold text-primary">Amount payable now</dt>
+            <dd className="font-data font-bold text-primary">{formatPaise(quote.payableNowPaise)}</dd>
           </div>
         </dl>
       )}

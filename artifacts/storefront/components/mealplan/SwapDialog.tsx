@@ -38,9 +38,9 @@ export function SwapDialog({ planId, target, onClose, onPick }: {
         <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-[var(--scrim)] backdrop-blur-sm" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed left-1/2 top-20 z-[var(--z-modal)] w-[92vw] max-w-md -translate-x-1/2 animate-dialog-in overflow-hidden rounded-3xl border border-line bg-surface shadow-lg"
+          className="fixed left-1/2 top-20 z-[var(--z-modal)] w-[92vw] max-w-md -translate-x-1/2 animate-dialog-in overflow-hidden rounded-2xl border border-line bg-surface shadow-[var(--shadow-raised)]"
         >
-          <Dialog.Title className="border-b border-line px-4 py-3 text-sm font-semibold text-ink">
+          <Dialog.Title className="border-b border-line px-5 py-4 font-display text-xl font-semibold leading-tight text-primary">
             Swap {SLOT_LABEL[target.slot]}
           </Dialog.Title>
           <div className="max-h-[60vh] overflow-y-auto p-2">
@@ -54,27 +54,27 @@ export function SwapDialog({ planId, target, onClose, onPick }: {
             {suggestionsQuery.isError && (
               <div className="flex flex-col items-center gap-2 p-4 text-center">
                 <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load alternatives</p>
-                <button type="button" onClick={() => void suggestionsQuery.refetch()} className="rounded-lg border border-line px-4 py-1.5 text-xs font-semibold text-gold-text transition-opacity hover:opacity-80">Try again</button>
+                <button type="button" onClick={() => void suggestionsQuery.refetch()} className="inline-flex min-h-11 items-center rounded-full border border-line px-4 text-xs font-semibold text-ink transition-colors hover:border-line-strong">Try again</button>
               </div>
             )}
-            {items?.length === 0 && <p className="p-3 text-sm text-ink-muted">No safe alternatives match your constraints.</p>}
+            {items?.length === 0 && <p className="p-3 text-sm leading-relaxed text-ink-muted">No safe alternatives match your constraints.</p>}
             {items?.map((it) => (
               <button
                 key={it.dishId}
                 type="button"
                 onClick={() => onPick(it.dishId)}
-                className="flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-2.5 text-left hover:bg-bg active:scale-[0.98]"
+                className="flex min-h-11 w-full items-center justify-between gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-secondary active:scale-[0.98]"
               >
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-medium text-ink">{it.name}</span>
-                  <span className="tabular block text-2xs text-ink-muted">{it.calories} kcal · {it.protein}g protein</span>
+                  <span className="block truncate font-display text-lg font-semibold leading-tight text-primary">{it.name}</span>
+                  <span className="font-data block text-xs text-ink-muted">{it.calories} kcal · {it.protein}g protein</span>
                 </span>
-                <span className="tabular shrink-0 text-sm font-semibold text-ink">{formatPaise(it.pricePaise)}</span>
+                <span className="font-data shrink-0 text-sm font-bold text-primary">{formatPaise(it.pricePaise)}</span>
               </button>
             ))}
           </div>
           <div className="border-t border-line p-2">
-            <Dialog.Close className="w-full rounded-full px-3 py-2 text-sm font-medium text-ink-muted hover:text-ink">
+            <Dialog.Close className="flex min-h-11 w-full items-center justify-center rounded-full px-3 py-2 text-sm font-medium text-ink-muted hover:text-ink">
               Cancel
             </Dialog.Close>
           </div>

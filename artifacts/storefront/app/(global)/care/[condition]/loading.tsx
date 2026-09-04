@@ -13,7 +13,7 @@ export default function CareConditionLoading() {
         Loading care plan…
       </p>
       <section className="mx-auto max-w-xl px-4 py-12">
-        <Link href="/care" className="text-xs font-semibold text-gold-text hover:underline">
+        <Link href="/care" className="text-xs font-semibold text-primary hover:underline">
           &larr; Back to Care Directory
         </Link>
         <div aria-hidden>
@@ -22,10 +22,10 @@ export default function CareConditionLoading() {
           <Skeleton className="mt-1 h-4 w-4/5" />
 
           <div className="mt-6">
-            <Skeleton className="h-[70px] w-full rounded-xl" />
+            <Skeleton className="h-[70px] w-full rounded-2xl" />
           </div>
 
-          <div className="mt-6 rounded-xl border border-line bg-surface p-6">
+          <div className="mt-6 rounded-2xl border border-line bg-surface p-6">
             <Skeleton className="h-5 w-40" />
             <div className="mt-3 flex flex-col gap-2">
               <Skeleton className="h-3 w-full" />

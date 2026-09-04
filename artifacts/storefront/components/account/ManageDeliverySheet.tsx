@@ -81,7 +81,7 @@ export function ManageDeliverySheet({
         <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-[var(--scrim)] backdrop-blur-sm" />
         <Dialog.Content data-ui-generation="stitch-74" data-screen-id="9.2" data-screen-state="manage-delivery-open"
           aria-describedby={undefined}
-          className="fixed inset-x-0 bottom-0 z-[var(--z-modal)] max-h-[85vh] animate-dialog-in overflow-y-auto rounded-t-3xl border-t border-line bg-surface p-4 shadow-lg sm:inset-x-auto sm:left-1/2 sm:top-20 sm:bottom-auto sm:w-[92vw] sm:max-w-md sm:-translate-x-1/2 sm:rounded-3xl sm:border"
+          className="fixed inset-x-0 bottom-0 z-[var(--z-modal)] max-h-[85vh] animate-dialog-in overflow-y-auto rounded-t-2xl border-t border-line bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-[var(--shadow-raised)] sm:inset-x-auto sm:left-1/2 sm:top-20 sm:bottom-auto sm:w-[92vw] sm:max-w-md sm:-translate-x-1/2 sm:rounded-2xl sm:border sm:pb-5"
         >
           {swapIndex !== null ? (
             <DishPicker
@@ -92,18 +92,18 @@ export function ManageDeliverySheet({
             />
           ) : (
             <div className="flex flex-col gap-4">
-              <Dialog.Title className="text-sm font-semibold text-ink">
+              <Dialog.Title className="font-display text-2xl font-semibold leading-tight text-primary">
                 Manage delivery — {fmtDay(delivery.scheduledFor)}
               </Dialog.Title>
 
               {pastCutoff && (
-                <p className="rounded-xl bg-bg px-3 py-2 text-xs text-ink-muted">
+                <p className="rounded-2xl bg-secondary px-4 py-3 text-xs leading-relaxed text-ink-muted">
                   This delivery is too close to its delivery time to change — it&rsquo;s already with the kitchen.
                 </p>
               )}
 
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-ink-faint" htmlFor="reschedule-date">
+                <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted" htmlFor="reschedule-date">
                   Delivery date
                 </label>
                 <input
@@ -117,7 +117,7 @@ export function ManageDeliverySheet({
                   min={earliestReschedulableDateISO()}
                   disabled={pastCutoff || reschedule.isPending}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus-visible:border-line-strong disabled:opacity-50"
+                  className="w-full min-h-[50px] rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none focus-visible:border-gold disabled:opacity-50"
                 />
                 <Button
                   type="button"
@@ -127,7 +127,7 @@ export function ManageDeliverySheet({
                   onClick={() => reschedule.mutate()}
                   shape="xl"
                   size="fluid"
-                  className="self-start px-4 py-2.5 text-sm font-semibold disabled:opacity-40"
+                  className="self-start rounded-full px-6 py-2.5 text-sm font-semibold disabled:opacity-40"
                 >
                   {reschedule.isPending ? "Saving…" : "Save new date"}
                 </Button>
@@ -135,19 +135,19 @@ export function ManageDeliverySheet({
 
               {items.length > 0 && (
                 <div className="flex flex-col gap-2 border-t border-line pt-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Dishes on this delivery</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Dishes on this delivery</p>
                   <ul className="flex flex-col gap-1.5">
                     {items.map((it, i) => (
-                      <li key={`${it.slug}-${i}`} className="flex items-center justify-between gap-2 rounded-xl bg-bg px-3 py-2.5 text-sm">
+                      <li key={`${it.slug}-${i}`} className="flex items-center justify-between gap-2 rounded-xl bg-secondary p-3 text-sm">
                         <span className="min-w-0 truncate text-ink">
                           {it.name}
-                          {it.quantity > 1 ? <span className="text-ink-faint"> ×{it.quantity}</span> : null}
+                          {it.quantity > 1 ? <span className="font-data text-ink-faint"> ×{it.quantity}</span> : null}
                         </span>
                         <button
                           type="button"
                           disabled={pastCutoff || swap.isPending}
                           onClick={() => setSwapIndex(i)}
-                          className="-m-1 shrink-0 p-1 text-xs font-medium text-gold-text hover:underline disabled:opacity-40"
+                          className="-my-3 inline-flex min-h-11 shrink-0 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline disabled:opacity-40"
                         >
                           Swap
                         </button>
@@ -168,7 +168,7 @@ export function ManageDeliverySheet({
                 </div>
               )}
 
-              <Dialog.Close className="mt-1 w-full rounded-full border border-line px-3 py-2 text-sm font-medium text-ink-muted hover:text-ink">
+              <Dialog.Close className="mt-1 w-full inline-flex min-h-11 items-center justify-center rounded-full border border-line-strong bg-surface px-4 text-sm font-bold text-ink transition-colors hover:bg-surface-raised">
                 Close
               </Dialog.Close>
             </div>
@@ -202,8 +202,8 @@ function DishPicker({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <Dialog.Title className="text-sm font-semibold text-ink">Swap dish</Dialog.Title>
-        <button type="button" onClick={onCancel} disabled={busy} className="-m-2 p-2 text-xs font-medium text-ink-muted hover:text-ink disabled:opacity-40">
+        <Dialog.Title className="font-display text-2xl font-semibold leading-tight text-primary">Swap dish</Dialog.Title>
+        <button type="button" onClick={onCancel} disabled={busy} className="-my-2 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline disabled:opacity-40">
           Back
         </button>
       </div>
@@ -218,7 +218,7 @@ function DishPicker({
         {menuQuery.isError && (
           <div className="flex flex-col items-center gap-2 p-4 text-center">
             <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load the menu</p>
-            <button type="button" onClick={() => void menuQuery.refetch()} className="rounded-lg border border-line px-4 py-1.5 text-xs font-semibold text-gold-text hover:opacity-80">
+            <button type="button" onClick={() => void menuQuery.refetch()} className="inline-flex min-h-11 items-center justify-center rounded-full border border-line-strong bg-surface px-4 text-sm font-bold text-ink transition-colors hover:bg-surface-raised">
               Try again
             </button>
           </div>
@@ -230,15 +230,15 @@ function DishPicker({
                 type="button"
                 disabled={busy || d.slug === currentSlug}
                 onClick={() => onPick(d)}
-                className="flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-2.5 text-left hover:bg-bg disabled:opacity-40"
+                className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-secondary disabled:opacity-40"
               >
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-medium text-ink">
+                  <span className="block truncate text-sm font-semibold text-ink">
                     {d.name}
                     {d.slug === currentSlug ? <span className="text-ink-faint"> (current)</span> : null}
                   </span>
                 </span>
-                <span className="tabular shrink-0 text-sm font-semibold text-ink">{formatPaise(d.price)}</span>
+                <span className="font-data shrink-0 text-sm font-bold text-primary">{formatPaise(d.price)}</span>
               </button>
             </li>
           ))}

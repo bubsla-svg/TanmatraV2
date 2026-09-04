@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Rail } from "@/components/primitives/Rail";
 
 type Tab =
   | "subscriptions"
@@ -22,15 +23,15 @@ export function AccountNav({ active }: { active: Tab }) {
     <Link
       href={href}
       aria-current={active === key ? "page" : undefined}
-      className={`-mb-px border-b-2 px-1 pb-2 text-sm font-medium ${
-        active === key ? "border-gold text-ink" : "border-transparent text-ink-muted hover:text-ink"
+      className={`inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-full border px-4 text-sm font-medium transition-colors ${
+        active === key ? "border-gold bg-primary/10 text-primary" : "border-transparent bg-secondary text-ink-muted hover:text-ink"
       }`}
     >
       {label}
     </Link>
   );
   return (
-    <nav aria-label="Account" className="mb-6 flex gap-5 overflow-x-auto border-b border-line">
+    <Rail as="nav" snap="none" aria-label="Account" className="mb-6 gap-2 py-1">
       {link("/account/subscriptions", "subscriptions", "Plans")}
       {link("/account/orders", "orders", "Orders")}
       {link("/account/appointments", "appointments", "Consults")}
@@ -42,6 +43,6 @@ export function AccountNav({ active }: { active: Tab }) {
       {link("/account/loyalty", "loyalty", "Rewards")}
       {link("/account/symptoms", "symptoms", "Symptoms")}
       {link("/account/history", "history", "History")}
-    </nav>
+    </Rail>
   );
 }

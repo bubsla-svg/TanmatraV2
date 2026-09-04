@@ -17,14 +17,14 @@ interface DailyQuestsCardProps {
 
 export const DailyQuestsCard: React.FC<DailyQuestsCardProps> = ({ quests, onToggleQuest }) => {
   return (
-    <div className="bg-surface rounded-3xl p-6 sm:p-8 border border-line shadow-xl space-y-6">
+    <div className="bg-surface rounded-2xl p-6 sm:p-8 border border-line space-y-6">
       <div className="flex items-center justify-between border-b border-line pb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-sage/10 text-sage-text flex items-center justify-center font-bold">
             <Zap className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-ink font-heading">Daily Wellness Quests</h3>
+            <h3 className="font-display text-lg font-semibold leading-tight text-primary">Daily Wellness Quests</h3>
             <span className="text-xs text-ink-muted font-medium">Complete daily actions to earn points & badges</span>
           </div>
         </div>
@@ -37,8 +37,8 @@ export const DailyQuestsCard: React.FC<DailyQuestsCardProps> = ({ quests, onTogg
             onClick={() => onToggleQuest(quest.id)}
             className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between gap-4 ${
               quest.completed 
-                ? 'border-[var(--sage)]/50 bg-sage-soft' 
-                : 'border-line bg-surface-subtle hover:border-[var(--sage)]/30'
+                ? 'border-sage/50 bg-sage-soft'
+                : 'border-line bg-secondary hover:border-sage/30'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -52,7 +52,7 @@ export const DailyQuestsCard: React.FC<DailyQuestsCardProps> = ({ quests, onTogg
               </span>
             </div>
 
-            <span className="px-3 py-1 rounded-full bg-gold/10 text-[var(--gold-text)] text-xs font-black shrink-0">
+            <span className="px-3 py-1 rounded-full bg-secondary text-primary text-xs font-data font-bold shrink-0">
               +{quest.points} Pts
             </span>
           </div>

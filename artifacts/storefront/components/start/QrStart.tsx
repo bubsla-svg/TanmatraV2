@@ -111,9 +111,9 @@ export function QrStart({ pricePaise }: { pricePaise: number }) {
     const earliest = formatDeliveryDate(nextWeekdayISO(new Date()));
     return (
       <section className="flex flex-col gap-5" aria-label="Start your taste test">
-        <div className="rounded-2xl border border-line bg-surface px-4 py-3 text-center">
-          <p className="text-sm font-semibold text-ink">
-            We deliver to <span className="tabular">{state.pincode}</span>
+        <div className="rounded-2xl border border-line bg-surface p-5 text-center">
+          <p className="font-display text-lg font-semibold leading-tight text-primary">
+            We deliver to <span className="font-data tabular">{state.pincode}</span>
           </p>
           <p className="tabular mt-1 text-xs text-ink-muted">
             {earliest ? `Earliest box: ${earliest}, ${PLAN_DELIVERY_WINDOW_LABEL}` : null}
@@ -124,20 +124,20 @@ export function QrStart({ pricePaise }: { pricePaise: number }) {
               setState({ verdict: "unknown", pincode: "" });
               setPincode("");
             }}
-            className="mt-2 text-2xs underline text-ink-faint hover:text-ink"
+            className="mt-1 inline-flex min-h-11 items-center text-xs font-medium text-ink-muted underline underline-offset-4 hover:text-ink"
           >
             Change PIN code
           </button>
         </div>
 
         <div className="flex flex-col items-center gap-2">
-          <p id="qr-diet-label" className="text-xs font-semibold uppercase tracking-wide text-ink-faint">
+          <p id="qr-diet-label" className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">
             How do you eat?
           </p>
           <div
             role="group"
             aria-labelledby="qr-diet-label"
-            className="inline-flex gap-1 rounded-full border border-line bg-surface p-1"
+            className="flex flex-wrap justify-center gap-2"
           >
             {([
               { id: "veg" as const, label: "Veg" },
@@ -148,8 +148,8 @@ export function QrStart({ pricePaise }: { pricePaise: number }) {
                 type="button"
                 aria-pressed={track === t.id}
                 onClick={() => chooseTrack(t.id)}
-                className={`rounded-full px-6 py-2 text-sm font-medium transition-colors active:scale-[0.98] ${
-                  track === t.id ? "bg-gold text-[var(--gold-ink)]" : "text-ink-muted hover:text-ink"
+                className={`inline-flex min-h-11 items-center rounded-full border px-6 text-sm font-medium transition-colors active:scale-[0.98] ${
+                  track === t.id ? "border-gold bg-primary/10 text-primary" : "border-transparent bg-secondary text-ink-muted hover:text-ink"
                 }`}
               >
                 {t.label}
@@ -163,7 +163,7 @@ export function QrStart({ pricePaise }: { pricePaise: number }) {
           onClick={start}
           shape="pill"
           size="fluid"
-          className="w-full px-8 py-4 text-center text-base font-semibold"
+          className="w-full min-h-12 px-8 py-3.5 text-center text-base font-semibold"
         >
           Get my 3 boxes · {formatPaise(pricePaise)}
         </Button>
@@ -174,7 +174,7 @@ export function QrStart({ pricePaise }: { pricePaise: number }) {
 
   return (
     <section className="flex flex-col gap-3" aria-label="Delivery availability">
-      <label htmlFor="qr-pincode" className="text-sm font-semibold text-ink">
+      <label htmlFor="qr-pincode" className="font-display text-xl font-semibold leading-tight text-primary">
         Do we deliver to you?
       </label>
       <div className="flex gap-2">
@@ -189,19 +189,19 @@ export function QrStart({ pricePaise }: { pricePaise: number }) {
           }}
           placeholder="201301"
           aria-invalid={pincode.length > 0 && !pinValid}
-          className="min-w-0 flex-1 rounded-2xl border border-line bg-transparent px-4 py-3 text-base text-ink outline-none placeholder:text-ink-faint focus-visible:border-line-strong"
+          className="min-w-0 min-h-[50px] flex-1 rounded-2xl border border-line bg-surface px-4 py-3 text-base text-ink outline-none placeholder:text-ink-faint focus-visible:border-primary"
         />
         <Button
           shape="pill"
           onClick={() => void check()}
           disabled={!pinValid || busy}
-          className="shrink-0 px-5 py-3 font-semibold"
+          className="min-h-12 shrink-0 px-5 py-3 font-semibold"
         >
           {busy ? "Checking…" : "Check"}
         </Button>
       </div>
 
-      {error && <p role="alert" className="text-sm text-[var(--danger)]">{error}</p>}
+      {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
 
       {state.verdict === "unserviceable" && (
         // Never a dead end (Law 10): an unserved PIN ends in a captured lead
