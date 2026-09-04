@@ -347,3 +347,39 @@ Unchanged on purpose: every rendered string, `useQuery` key, challenge/care data
 `href`, handler and form field — presentation only. Deferred to later remainder slices: the
 clinical dashboards (`/account/{history,symptoms,wellness}`), b2b + legal + utility pages, then
 11i analytics.
+
+## PR-11 remainder (2/4) — clinical dashboards
+
+The two clinical trackers behind `/account/history` and `/account/symptoms` —
+`MealHistoryDashboard` and `SymptomTrackerView`. Their page shells (accent eyebrow +
+display h1) were restyled in 11g; this restyles the dashboard **bodies** onto the same
+grammar. The wellness hub (`WellnessHub` + 16 gamification components) is a separate,
+larger slice (2b).
+
+`remainder-2/after*` vs `remainder-2/before*` (both themes). Both dashboards are auth-gated browser
+`useQuery`s — the signed-in frames stub `/api/nutrition-history` and `/api/symptom-logs`
+(the meals, macros, targets and symptom logs shown are **fixture data**), the signed-out
+frames show the honest `PhoneAuth` island.
+
+| Frame | Surface |
+|---|---|
+| `s01`, `s01b` | `/account/history` (signed in) — the macro-adherence tiles, and the verified-intake log list |
+| `s02`, `s02b` | `/account/symptoms` (signed in) — the log-a-symptom form, and the recorded-history column |
+| `s03`, `s04` | `/account/{history,symptoms}` signed-out — the `PhoneAuth` island |
+
+### Choices without a reference screen (what changed → why)
+
+| Before | Production | Rule |
+|---|---|---|
+| Metric-tile values as `tabular … text-ink`; "Target" line in `text-gold-text` | values in `.font-data text-primary`; target in muted ink | figures are data; the target is metadata, not a highlight |
+| Symptom form fields `rounded-xl … focus-visible:border-gold` | the field grammar (`min-h-[50px] rounded-2xl … focus-visible:border-primary`) | the 11c field grammar; `--primary` is the same value, lint-visible |
+| "Physiological Telemetry" / "Your meals" eyebrows and section headers in `text-gold-text` | accent eyebrow / neutral small-label / display card-titles | gold text as a highlighter becomes accent/ink; headings take the display face |
+| The "logged successfully" confirmation as a `border-gold/20 bg-gold/5` gold note | a `bg-sage-soft` sage note | success is a positive signal, not the gold action colour |
+| Severity figures and the dish-slug in `tabular`/`font-mono text-gold-text` | `.font-data` (severity → primary, slug → ink) | one data face across the clinical figures |
+| Retry links as `rounded-lg … text-gold-text`; skeletons `bg-surface-raised` | primary text-actions on pill borders; skeletons `bg-secondary` | gold-text highlighter → primary; secondary fill for pending state |
+
+Unchanged on purpose: every rendered string, number, `useQuery` key, the record-symptom
+mutation, all form fields (`select`/`range`/`text`/`textarea` names, `min`/`max`, placeholders),
+`aria`, `href` and handlers — presentation only. The symptom badge keeps its sage signal; the
+severity slider keeps its gold fill (its one action accent). Deferred: the wellness hub (2b),
+then b2b + legal + utility pages (3), then 11i analytics.
