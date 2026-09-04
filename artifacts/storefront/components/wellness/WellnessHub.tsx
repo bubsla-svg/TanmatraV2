@@ -22,11 +22,11 @@ export function WellnessHub() {
           onClick={() => setActiveTab("precision")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "precision"
-              ? "bg-gold text-[var(--gold-ink)] shadow-md"
-              : "bg-surface text-ink-muted hover:bg-surface-subtle"
+              ? "border border-gold bg-primary/10 text-primary"
+              : "border border-transparent bg-secondary text-ink-muted hover:text-primary"
           }`}
         >
-          <Sparkles className="w-4 h-4 text-[var(--gold-text)]" />
+          <Sparkles className="w-4 h-4 text-accent" />
           <span>ICMR Precision Planner</span>
         </button>
 
@@ -35,8 +35,8 @@ export function WellnessHub() {
           onClick={() => setActiveTab("blood_ocr")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "blood_ocr"
-              ? "bg-gold text-[var(--gold-ink)] shadow-md"
-              : "bg-surface text-ink-muted hover:bg-surface-subtle"
+              ? "border border-gold bg-primary/10 text-primary"
+              : "border border-transparent bg-secondary text-ink-muted hover:text-primary"
           }`}
         >
           <Activity className="w-4 h-4 text-[var(--danger)]" />
@@ -48,11 +48,11 @@ export function WellnessHub() {
           onClick={() => setActiveTab("pantry_vision")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "pantry_vision"
-              ? "bg-gold text-[var(--gold-ink)] shadow-md"
-              : "bg-surface text-ink-muted hover:bg-surface-subtle"
+              ? "border border-gold bg-primary/10 text-primary"
+              : "border border-transparent bg-secondary text-ink-muted hover:text-primary"
           }`}
         >
-          <Camera className="w-4 h-4 text-[var(--gold-text)]" />
+          <Camera className="w-4 h-4 text-accent" />
           <span>Pantry Vision Scanner</span>
         </button>
 
@@ -61,11 +61,11 @@ export function WellnessHub() {
           onClick={() => setActiveTab("hydration")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "hydration"
-              ? "bg-gold text-[var(--gold-ink)] shadow-md"
-              : "bg-surface text-ink-muted hover:bg-surface-subtle"
+              ? "border border-gold bg-primary/10 text-primary"
+              : "border border-transparent bg-secondary text-ink-muted hover:text-primary"
           }`}
         >
-          <Droplets className="w-4 h-4 text-[var(--gold-text)]" />
+          <Droplets className="w-4 h-4 text-accent" />
           <span>Hydration & Fasting</span>
         </button>
 
@@ -74,11 +74,11 @@ export function WellnessHub() {
           onClick={() => setActiveTab("leaderboard")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "leaderboard"
-              ? "bg-gold text-[var(--gold-ink)] shadow-md"
-              : "bg-surface text-ink-muted hover:bg-surface-subtle"
+              ? "border border-gold bg-primary/10 text-primary"
+              : "border border-transparent bg-secondary text-ink-muted hover:text-primary"
           }`}
         >
-          <Trophy className="w-4 h-4 text-[var(--gold-text)]" />
+          <Trophy className="w-4 h-4 text-accent" />
           <span>Family Leaderboard</span>
         </button>
 
@@ -87,8 +87,8 @@ export function WellnessHub() {
           onClick={() => setActiveTab("nutrition")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "nutrition"
-              ? "bg-gold text-[var(--gold-ink)] shadow-md"
-              : "bg-surface text-ink-muted hover:bg-surface-subtle"
+              ? "border border-gold bg-primary/10 text-primary"
+              : "border border-transparent bg-secondary text-ink-muted hover:text-primary"
           }`}
         >
           <Utensils className="w-4 h-4 text-sage-text" />

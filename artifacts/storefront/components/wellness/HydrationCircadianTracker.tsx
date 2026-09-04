@@ -121,17 +121,17 @@ export const HydrationCircadianTracker: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Top Banner Header */}
-      <div className="bg-gradient-to-r from-[var(--gold)]/15 via-[var(--gold)]/10 to-[var(--surface)] text-ink p-6 sm:p-8 rounded-3xl shadow-2xl relative overflow-hidden border border-[var(--gold)]/30">
+      <div className="bg-gradient-to-r from-[var(--gold)]/15 via-[var(--gold)]/10 to-surface text-ink p-6 sm:p-8 rounded-2xl relative overflow-hidden border border-[var(--gold)]/30">
         <div className="absolute top-0 right-0 w-80 h-80 bg-gold/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-gold/20 text-[var(--gold-text)] font-extrabold text-xs border border-[var(--gold)]/30 flex items-center gap-1.5 shadow-sm">
-                <Droplets className="w-3.5 h-3.5 text-[var(--gold-text)]" /> Circadian Rhythm & Electrolyte Studio
+              <span className="px-3 py-1 rounded-full bg-gold/20 text-primary font-extrabold text-xs border border-[var(--gold)]/30 flex items-center gap-1.5">
+                <Droplets className="w-3.5 h-3.5 text-primary" /> Circadian Rhythm & Electrolyte Studio
               </span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black font-heading tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-black font-display tracking-tight">
               AI Hydration & Circadian Timing Tracker
             </h2>
             <p className="text-xs sm:text-sm text-ink-faint font-medium max-w-xl">
@@ -140,10 +140,10 @@ export const HydrationCircadianTracker: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3 bg-surface-raised p-4 rounded-2xl border border-line backdrop-blur-md shrink-0">
-            <Droplets className="w-8 h-8 text-[var(--gold-text)] animate-bounce" />
+            <Droplets className="w-8 h-8 text-primary animate-bounce" />
             <div>
-              <strong className="text-2xl font-black text-ink font-heading block">{totalWaterLoggedMl} <span className="text-xs text-[var(--gold-text)]">/ {dailyGoalMl} mL</span></strong>
-              <span className="text-3xs text-ink-faint uppercase tracking-wider font-bold">Daily Hydration Index: {hydrationPercentage}%</span>
+              <strong className="font-data text-2xl font-bold text-primary block">{totalWaterLoggedMl} <span className="text-xs text-primary">/ {dailyGoalMl} mL</span></strong>
+              <span className="text-[10px] text-ink-muted uppercase tracking-[.16em] font-bold">Daily Hydration Index: {hydrationPercentage}%</span>
             </div>
           </div>
         </div>

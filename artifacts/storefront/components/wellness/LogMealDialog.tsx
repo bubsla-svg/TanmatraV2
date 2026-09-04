@@ -40,7 +40,7 @@ export function LogMealDialog({ onClose, onLogged }: { onClose: () => void; onLo
     catch (e) { setError(e instanceof ApiError ? e.message : "Couldn't save that log."); setBusy(false); }
   }
 
-  const cls = "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus-visible:border-[var(--gold)]";
+  const cls = "w-full min-h-[50px] rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-ink outline-none focus-visible:border-primary";
   return (
     <Dialog.Root open onOpenChange={(o) => { if (!o) onClose(); }}>
       <Dialog.Portal>
@@ -51,8 +51,8 @@ export function LogMealDialog({ onClose, onLogged }: { onClose: () => void; onLo
             One keyframe can't serve both correctly (a bottom-anchored slide
             reads wrong once the panel re-anchors to viewport-center), so the
             entrance swaps at the same `sm:` breakpoint the layout does. */}
-        <Dialog.Content aria-describedby={undefined} className="fixed bottom-0 left-1/2 z-[var(--z-modal)] w-[92vw] max-w-md -translate-x-1/2 animate-sheet-in rounded-t-2xl border border-line bg-surface p-5 shadow-lg sm:bottom-auto sm:top-24 sm:animate-dialog-in sm:rounded-2xl">
-          <Dialog.Title className="text-sm font-semibold text-ink">Log a meal or snack</Dialog.Title>
+        <Dialog.Content aria-describedby={undefined} className="fixed bottom-0 left-1/2 z-[var(--z-modal)] w-[92vw] max-w-md -translate-x-1/2 animate-sheet-in rounded-t-2xl border border-line bg-surface p-5 shadow-[var(--shadow-raised)] sm:bottom-auto sm:top-24 sm:animate-dialog-in sm:rounded-2xl">
+          <Dialog.Title className="font-display text-sm font-semibold text-primary">Log a meal or snack</Dialog.Title>
           <label className="mt-4 block text-sm text-ink-muted">What was it?
             <input autoFocus value={label} onChange={(e) => setLabel(e.target.value)} placeholder="e.g. Greek yoghurt with berries" className={`mt-1 ${cls}`} />
           </label>
@@ -66,7 +66,7 @@ export function LogMealDialog({ onClose, onLogged }: { onClose: () => void; onLo
           {error && <p role="alert" className="mt-2 text-xs font-medium text-[var(--danger)]">{error}</p>}
           <div className="mt-5 flex justify-end gap-3">
             <Dialog.Close className="rounded-lg px-4 py-2 text-sm font-medium text-ink-muted hover:brightness-110">Cancel</Dialog.Close>
-            <Button type="button" onClick={save} disabled={busy} aria-busy={busy} aria-live="polite" size="fluid" className="rounded-lg px-4 py-2 font-semibold disabled:opacity-60">{busy ? "Saving…" : "Save log"}</Button>
+            <Button type="button" onClick={save} disabled={busy} aria-busy={busy} aria-live="polite" shape="pill" size="fluid" className="px-4 py-2 font-semibold disabled:opacity-60">{busy ? "Saving…" : "Save log"}</Button>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

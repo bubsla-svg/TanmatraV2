@@ -383,3 +383,46 @@ mutation, all form fields (`select`/`range`/`text`/`textarea` names, `min`/`max`
 `aria`, `href` and handlers — presentation only. The symptom badge keeps its sage signal; the
 severity slider keeps its gold fill (its one action accent). Deferred: the wellness hub (2b),
 then b2b + legal + utility pages (3), then 11i analytics.
+
+## PR-11 remainder (2b/4) — the wellness hub
+
+`/account/wellness` — `WellnessHub`, a six-tab dashboard (ICMR Precision Planner, Blood Report
+AI OCR, Pantry Vision Scanner, Hydration & Fasting, Family Leaderboard, Nutrition Tracker) and
+its 16 sub-components (the rings, week bars, fasting dial, leaderboard, quests, badges,
+precision funnel/results, pantry + OCR tools) plus `rd/BloodReportOCR`. The page shell (eyebrow
++ "Nutrition & Health Studio" h1) was restyled in 11g; this restyles the hub and every tab body.
+
+`remainder-2b/after*` vs `remainder-2b/before*` (both themes). The hub is almost entirely
+client-side/demo — only the Nutrition Tracker tab fetches, so it is stubbed
+(`/api/wellness/today` + `/week`; **the macros, rings, streaks and week bars there are fixture
+data**). The other five tabs render their own local data. Each frame is one tab, reached by
+clicking the sub-nav.
+
+| Frame | Tab |
+|---|---|
+| `w01` | ICMR Precision Planner (`PrecisionMealPlanner` / `PrecisionPlannerFunnel`) |
+| `w02` | Blood Report AI OCR (`BloodReportOCR`) |
+| `w03` | Pantry Vision Scanner (`PantryVisionScanner`) |
+| `w04` | Hydration & Fasting (`HydrationCircadianTracker` / `FastingClock` / `HydrationLogger`) |
+| `w05` | Family Leaderboard (`FamilyLeaderboardView` / `LeaderboardTable`) |
+| `w06`, `w06b` | Nutrition Tracker (`WellnessTracker` / `NutritionRing` / `WeekBars`), top and scrolled |
+
+### Choices without a reference screen (what changed → why)
+
+| Before | Production | Rule |
+|---|---|---|
+| Sub-nav tabs: active = solid `bg-gold` pill with `shadow-md` | the selection tint (`border-gold bg-primary/10 text-primary` / idle `bg-secondary`), tab icons → accent | gold is the action colour; an active tab is a selection, not a CTA |
+| Gradient "engine" cards, `rounded-3xl`, gold-tinted panels | `rounded-2xl` grammar cards / `bg-secondary` panels | one card treatment; fill, not gradient+shadow |
+| Streaks, macros, ranks, BMR/TDEE and biomarker figures in `tabular`/gold text | `.font-data` in the primary ink | figures are data |
+| Eyebrows, titles and stat labels in `text-[var(--gold-text)]` | accent eyebrows / display card-titles / neutral small labels | gold text as a highlighter becomes accent/ink/display |
+| Precision-funnel and OCR form fields `rounded-xl … focus-visible:border-gold`; water/preset chips as solid fills | the field grammar; chips on the tap-to-select tint | the 11c field + selection grammar |
+| Arbitrary colour utilities (`[var(--gold-text)]`, `[var(--surface-subtle)]`, raw `bg-[var(--surface)]`) | the registered tokens | the token layer, lint-visible |
+
+**Data-viz is preserved.** The `NutritionRing` progress arcs, `WeekBars` bars and `FastingClock`
+dial keep their SVG geometry and their gold/accent data colour — only their container cards,
+labels and numeric read-outs took the grammar. Biomarker high/normal/low and "AI" chips keep
+their signal colour. Each tool's primary CTA stays the one gold action.
+
+Unchanged on purpose: every rendered string/number, tab label, `useQuery` key, upload/log
+mutation, form field, `aria`, `href` and handler — presentation only. This closes the account
+clinical/wellness surface; remaining: b2b + legal + utility pages (3), then 11i analytics.
