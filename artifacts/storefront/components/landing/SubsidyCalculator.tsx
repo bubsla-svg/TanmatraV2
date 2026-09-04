@@ -42,12 +42,12 @@ export function SubsidyCalculator() {
 
   return (
     <section className="py-[var(--space-section)]">
-      <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">Subsidy models</p>
-      <h2 className="mt-1 text-2xl font-semibold tracking-tight text-ink">Pick a model, see the number</h2>
+      <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Subsidy models</p>
+      <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight text-primary">Pick a model, see the number</h2>
 
-      <div className="mt-8 flex flex-col gap-8 rounded-3xl border border-line bg-surface p-6">
+      <div className="mt-8 flex flex-col gap-8 rounded-2xl border border-line bg-surface p-6">
         <div>
-          <p className="text-3xs font-semibold uppercase tracking-widest text-ink-faint">Funding model</p>
+          <p className="text-2xs font-semibold uppercase tracking-widest text-ink-faint">Funding model</p>
           <div className="mt-4 -mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
             {SUBSIDY_MODELS.map((m) => {
               const on = m.id === modelId;
@@ -59,7 +59,7 @@ export function SubsidyCalculator() {
                   onClick={() => setModelId(m.id)}
                   className={`shrink-0 rounded-full border px-4 py-2 text-xs font-medium transition-colors ${
                     on
-                      ? "border-[var(--gold)] bg-[color-mix(in_srgb,var(--gold)_10%,transparent)] text-gold-text"
+                      ? "border-gold bg-primary/10 text-primary"
                       : "border-line text-ink-muted hover:border-line-strong"
                   }`}
                 >
@@ -74,10 +74,10 @@ export function SubsidyCalculator() {
         <div>
           <label
             htmlFor="corp-team-size"
-            className="flex items-center justify-between text-3xs font-semibold uppercase tracking-widest text-ink-faint"
+            className="flex items-center justify-between text-2xs font-semibold uppercase tracking-widest text-ink-faint"
           >
             Team size
-            <span className="tabular text-base font-semibold text-ink">{teamSize}</span>
+            <span className="font-data text-base font-bold text-primary">{teamSize}</span>
           </label>
           <input
             id="corp-team-size"
@@ -97,16 +97,16 @@ export function SubsidyCalculator() {
         <div className="flex flex-col gap-4 border-t border-line pt-6">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-muted">Per employee / month</p>
-            <span className="tabular text-sm text-ink">{formatPaise(perEmployee)}</span>
+            <span className="font-data text-sm text-ink">{formatPaise(perEmployee)}</span>
           </div>
           <div className="flex items-end justify-between gap-4">
             <p className="text-base text-ink">
               Monthly total
-              <span className="mt-0.5 block text-3xs font-semibold uppercase tracking-widest text-ink-faint">
+              <span className="mt-0.5 block text-2xs font-semibold uppercase tracking-widest text-ink-faint">
                 Estimate · GST included
               </span>
             </p>
-            <span className="tabular text-2xl font-semibold tracking-tight text-gold-text">
+            <span className="font-data text-2xl font-bold tracking-tight text-primary">
               {formatPaise(monthlyPaise)}
             </span>
           </div>

@@ -61,7 +61,7 @@ export function FlipCard({ spec, initialFlipped = false }: FlipCardProps) {
         className="flex w-full flex-col text-left outline-none"
         aria-label={`View clinical spec sheet for ${spec.name}`}
       >
-        <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-raised">
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-secondary">
           {spec.image && (
             <SafeImage
               src={spec.image}
@@ -89,7 +89,7 @@ export function FlipCard({ spec, initialFlipped = false }: FlipCardProps) {
             carrying either field, would have appeared under every one of
             them. A card that says less but only true things is the trade. */}
         <div className="flex flex-col gap-1.5 p-3 pb-0">
-          <h3 className="text-sm font-semibold leading-snug text-ink">{spec.name}</h3>
+          <h3 className="font-display text-sm font-semibold leading-snug text-primary">{spec.name}</h3>
           {spec.giClass && (
             <p className="text-2xs font-semibold text-ink-muted">{spec.giClass}</p>
           )}
@@ -101,17 +101,17 @@ export function FlipCard({ spec, initialFlipped = false }: FlipCardProps) {
 
       <div className="mt-auto flex items-center justify-between gap-2 p-3 pt-2">
         <div className="flex flex-col">
-          <span className="tabular text-sm font-semibold text-ink">
+          <span className="font-data text-sm font-bold text-primary">
             {formatPaise(spec.price)}
           </span>
-          <span className="tabular text-2xs text-ink-faint">
+          <span className="font-data text-2xs text-ink-faint">
             {formatMacroLine(spec.macros, spec.macrosEstimated, spec.macrosProvisional)}
           </span>
         </div>
         <Button
           type="button"
           onClick={() => toggleFlip(true)}
-          shape="xl" size="fluid" className="px-3 py-1.5 text-xs font-semibold"
+          shape="pill" size="fluid" className="px-3 py-1.5 text-xs font-semibold"
         >
           View Specs
         </Button>
