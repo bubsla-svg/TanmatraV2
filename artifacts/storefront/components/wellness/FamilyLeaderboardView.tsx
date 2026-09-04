@@ -149,17 +149,17 @@ export const FamilyLeaderboardView: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Top Banner Header */}
-      <div className="bg-gradient-to-r from-[var(--gold)]/15 via-[var(--gold)]/10 to-[var(--surface)] text-ink p-6 sm:p-8 rounded-3xl shadow-2xl relative overflow-hidden border border-[var(--gold)]/30">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-gold/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="bg-surface text-ink p-6 sm:p-8 rounded-2xl relative overflow-hidden border border-line">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-secondary rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-gold/20 text-[var(--gold-text)] font-extrabold text-xs border border-[var(--gold)]/30 flex items-center gap-1.5 shadow-sm">
-                <Trophy className="w-3.5 h-3.5 text-[var(--gold-text)]" /> Family Health Gamification Engine
+              <span className="px-3 py-1 rounded-full bg-secondary text-accent font-bold text-xs border border-line flex items-center gap-1.5">
+                <Trophy className="w-3.5 h-3.5 text-accent" /> Family Health Gamification Engine
               </span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black font-heading tracking-tight">
+            <h2 className="font-display text-2xl sm:text-3xl font-semibold leading-tight text-primary tracking-tight">
               Family Health Leaderboard & Daily Streaks
             </h2>
             <p className="text-xs sm:text-sm text-ink-faint font-medium max-w-xl">
@@ -168,10 +168,10 @@ export const FamilyLeaderboardView: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4 bg-surface-raised p-4 rounded-2xl border border-line backdrop-blur-md shrink-0">
-            <Flame className="w-8 h-8 text-[var(--gold-text)] animate-pulse" />
+            <Flame className="w-8 h-8 text-gold-text animate-pulse" />
             <div>
-              <strong className="text-2xl font-black text-[var(--gold-text)] font-heading block">{sortedMembers[0]?.streakDays || 14} Days 🔥</strong>
-              <span className="text-3xs text-ink-faint uppercase tracking-wider font-bold">Top Family Habit Streak</span>
+              <strong className="font-data text-2xl font-bold text-primary block">{sortedMembers[0]?.streakDays || 14} Days 🔥</strong>
+              <span className="text-2xs text-ink-faint uppercase tracking-wider font-bold">Top Family Habit Streak</span>
             </div>
           </div>
         </div>
@@ -201,8 +201,8 @@ export const FamilyLeaderboardView: React.FC = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div onClick={() => setIsAddModalOpen(false)} className="fixed inset-0 bg-surface/80 backdrop-blur-md z-[99]" />
           
-          <div className="relative z-[100] bg-surface rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-line space-y-4">
-            <h3 className="text-lg font-black font-heading text-ink">Add Family Member</h3>
+          <div className="relative z-[100] bg-surface rounded-2xl max-w-sm w-full p-6 shadow-[var(--shadow-raised)] border border-line space-y-4">
+            <h3 className="font-display text-lg font-semibold leading-tight text-primary">Add Family Member</h3>
             
             <form onSubmit={handleAddMember} className="space-y-3">
               <div>
@@ -213,7 +213,7 @@ export const FamilyLeaderboardView: React.FC = () => {
                   value={newMemberName}
                   onChange={(e) => setNewMemberName(e.target.value)}
                   placeholder="e.g. Rahul Sharma"
-                  className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus-visible:border-[var(--gold)]"
+                  className="w-full bg-secondary border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus-visible:border-gold"
                 />
               </div>
 
@@ -222,7 +222,7 @@ export const FamilyLeaderboardView: React.FC = () => {
                 <select
                   value={newMemberRelation}
                   onChange={(e) => setNewMemberRelation(e.target.value)}
-                  className="w-full bg-surface-subtle border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus-visible:border-[var(--gold)]"
+                  className="w-full bg-secondary border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus-visible:border-gold"
                 >
                   <option value="Spouse">Spouse</option>
                   <option value="Sister">Sister</option>
@@ -243,7 +243,7 @@ export const FamilyLeaderboardView: React.FC = () => {
                       key={av}
                       type="button"
                       onClick={() => setNewMemberAvatar(av)}
-                      className={`text-2xl p-2 rounded-xl border ${newMemberAvatar === av ? 'border-[var(--gold)] bg-gold/10' : 'border-line'}`}
+                      className={`text-2xl p-2 rounded-xl border ${newMemberAvatar === av ? 'border-gold bg-primary/10' : 'border-line'}`}
                     >
                       {av}
                     </button>
@@ -255,7 +255,7 @@ export const FamilyLeaderboardView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-surface-subtle text-ink-muted text-xs font-bold"
+                  className="px-4 py-2 rounded-xl bg-secondary text-ink-muted text-xs font-bold"
                 >
                   Cancel
                 </button>

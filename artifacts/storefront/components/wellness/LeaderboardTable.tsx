@@ -24,14 +24,14 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
   // no longer travel.
   const shouldReduceMotion = useReducedMotion();
   return (
-    <div className="bg-surface rounded-3xl p-6 sm:p-8 border border-line shadow-xl space-y-6">
+    <div className="bg-surface rounded-2xl p-6 sm:p-8 border border-line space-y-6">
       <div className="flex items-center justify-between border-b border-line pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gold/10 text-[var(--gold-text)] flex items-center justify-center font-bold">
-            <Trophy className="w-5 h-5 text-[var(--gold-text)]" />
+          <div className="w-10 h-10 rounded-2xl bg-gold/10 text-accent flex items-center justify-center font-bold">
+            <Trophy className="w-5 h-5 text-accent" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-ink font-heading">Family Wellness Leaderboard</h3>
+            <h3 className="font-display text-lg font-semibold leading-tight text-primary">Family Wellness Leaderboard</h3>
             <span className="text-xs text-ink-muted font-medium">Total Combined Points: {totalFamilyPoints} Pts</span>
           </div>
         </div>
@@ -53,13 +53,13 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
             animate={{ opacity: 1, y: 0 }}
             className={`p-4 sm:p-5 rounded-2xl border-2 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
               idx === 0 
-                ? 'border-[var(--gold)]/60 bg-gradient-to-r from-[var(--gold)]/10/50 via-[var(--surface)] to-[var(--gold)]/10/30 shadow-md' 
-                : 'border-line bg-surface-subtle'
+                ? 'border-gold bg-primary/10'
+                : 'border-line bg-secondary'
             }`}
           >
             <div className="flex items-center gap-4">
               {/* Rank Badge */}
-              <div className="w-8 h-8 rounded-xl bg-surface-raised font-black text-xs text-ink flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-surface-raised font-data text-xs font-bold text-ink flex items-center justify-center shrink-0">
                 {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
               </div>
 
@@ -68,14 +68,14 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
               <div>
                 <div className="flex items-center gap-2">
                   <strong className="text-sm font-bold text-ink font-heading">{member.name}</strong>
-                  <span className="text-3xs px-2 py-0.5 rounded-full bg-gold/10 text-[var(--gold-text)] font-extrabold">
+                  <span className="text-2xs px-2 py-0.5 rounded-full bg-secondary text-accent font-bold">
                     {member.relation}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-3 text-xs text-ink-muted mt-1 font-medium">
-                  <span className="text-[var(--gold-text)] font-bold flex items-center gap-1">
-                    <Flame className="w-3.5 h-3.5 fill-[var(--gold)] text-[var(--gold-text)]" /> {member.streakDays} Day Streak
+                  <span className="text-gold-text font-bold flex items-center gap-1">
+                    <Flame className="w-3.5 h-3.5 fill-gold text-gold-text" /> {member.streakDays} Day Streak
                   </span>
                   <span>• Health Index: <strong className="text-sage-text font-bold">{member.healthScore}/10</strong></span>
                 </div>
@@ -84,10 +84,10 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
 
             <div className="flex items-center justify-between sm:justify-end gap-6 pt-2 sm:pt-0 border-t sm:border-t-0 border-line">
               <div className="text-right">
-                <strong className="text-lg font-black text-[var(--gold-text)] font-heading block">
+                <strong className="font-data text-lg font-bold text-primary block">
                   {member.points} <span className="text-xs font-bold">Pts</span>
                 </strong>
-                <span className="text-3xs text-ink-faint block font-bold">{member.badge}</span>
+                <span className="text-2xs text-ink-faint block font-bold">{member.badge}</span>
               </div>
 
               {member.id !== '1' && (
