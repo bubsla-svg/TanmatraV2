@@ -22,10 +22,10 @@ export default async function MealGuidePage({ params }: { params: Promise<{ dish
     <div data-ui-generation="stitch-74" data-screen-id="5.11" data-screen-state="default" className="min-h-dvh flex flex-col bg-bg pb-24">
       <div className="sticky top-0 z-20 bg-bg/95 backdrop-blur-md pt-4 pb-4 px-gutter border-b border-line flex items-center justify-between">
         <div>
-          <h1 className="font-bold text-3xl text-ink">Meal Guide</h1>
+          <h1 className="font-display font-bold text-3xl text-primary">Meal Guide</h1>
           <p className="text-sm text-ink-muted">Nutrition insights & pairing</p>
         </div>
-        <Link href={`/dish/${dish.slug}`} className="px-4 py-2 rounded-full bg-surface-raised border border-line text-xs font-semibold text-ink hover:bg-surface-raised/80 transition-colors">
+        <Link href={`/dish/${dish.slug}`} className="px-4 py-2 rounded-full bg-secondary border border-line text-xs font-semibold text-ink hover:bg-secondary/80 transition-colors">
           View Dish
         </Link>
       </div>
@@ -37,27 +37,27 @@ export default async function MealGuidePage({ params }: { params: Promise<{ dish
             <SafeImage src={dish.image ?? ""} alt={dish.name} className="h-full w-full" />
           </div>
           <div>
-            <h2 className="font-bold text-lg text-ink mb-1">{dish.name}</h2>
+            <h2 className="font-display font-bold text-lg text-primary mb-1">{dish.name}</h2>
             <div className="flex gap-2">
-              <span className="font-mono text-xs text-ink-muted">{dish.macros?.calories ?? 0} kcal</span>
+              <span className="font-data text-xs font-bold text-primary">{dish.macros?.calories ?? 0} kcal</span>
               <span className="text-ink-muted text-xs">•</span>
-              <span className="font-mono text-xs text-ink-muted">{dish.macros?.protein ?? 0}g P</span>
+              <span className="font-data text-xs font-bold text-primary">{dish.macros?.protein ?? 0}g P</span>
             </div>
           </div>
         </div>
 
         {/* Clinical Breakdown */}
         <div>
-          <h3 className="font-bold text-xl text-ink mb-4">Clinical Breakdown</h3>
+          <h3 className="font-display font-bold text-xl text-primary mb-4">Clinical Breakdown</h3>
           <div className="grid gap-3">
             <div className="rounded-2xl border border-line bg-surface p-4">
-              <h4 className="font-bold text-3xs text-primary uppercase tracking-widest mb-1">Blood Sugar Impact</h4>
+              <h4 className="font-bold text-2xs text-primary uppercase tracking-widest mb-1">Blood Sugar Impact</h4>
               <p className="text-sm text-ink-muted leading-relaxed">
                 Formulated with {dish.macros?.fiber ?? 0}g of dietary fiber to blunt insulin spikes. Best consumed during peak metabolic windows (12 PM - 3 PM).
               </p>
             </div>
             <div className="rounded-2xl border border-line bg-surface p-4">
-              <h4 className="font-bold text-3xs text-primary uppercase tracking-widest mb-1">Satiety Index</h4>
+              <h4 className="font-bold text-2xs text-primary uppercase tracking-widest mb-1">Satiety Index</h4>
               <p className="text-sm text-ink-muted leading-relaxed">
                 High protein density ({dish.macros?.protein ?? 0}g) ensures prolonged satiety without gastric distress.
               </p>
@@ -67,8 +67,8 @@ export default async function MealGuidePage({ params }: { params: Promise<{ dish
 
         {/* Pairing Suggestions */}
         <div>
-          <h3 className="font-bold text-xl text-ink mb-4">Optimal Pairing</h3>
-          <p className="text-sm text-ink-muted leading-relaxed bg-surface-raised p-4 rounded-2xl border border-line">
+          <h3 className="font-display font-bold text-xl text-primary mb-4">Optimal Pairing</h3>
+          <p className="text-sm text-ink-muted leading-relaxed bg-secondary p-4 rounded-2xl border border-line">
             Pair with a hydration source or a light probiotic side to enhance nutrient absorption. Avoid combining with refined carbohydrates.
           </p>
         </div>
