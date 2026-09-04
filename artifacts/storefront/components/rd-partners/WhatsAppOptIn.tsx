@@ -95,10 +95,10 @@ export function WhatsAppOptIn({
           ✓
         </span>
         <div className="flex flex-col">
-          <span className="tabular text-sm text-ink">
+          <span className="font-data text-sm text-ink">
             {countryCode} {phone}
           </span>
-          <span className="text-3xs font-semibold uppercase tracking-widest text-sage-text">Verified</span>
+          <span className="text-2xs font-semibold uppercase tracking-widest text-sage-text">Verified</span>
         </div>
         <button
           type="button"
@@ -116,7 +116,7 @@ export function WhatsAppOptIn({
   return (
     <div className="flex flex-col gap-5 rounded-2xl border border-line bg-bg p-6">
       <div className="flex flex-col gap-1">
-        <h3 className="text-base font-semibold text-ink">{C.heading}</h3>
+        <h3 className="text-base font-display font-semibold text-primary">{C.heading}</h3>
         <p className="text-sm leading-relaxed text-ink-muted">{C.blurb}</p>
       </div>
 
@@ -154,7 +154,7 @@ export function WhatsAppOptIn({
           onClick={() => void (phase === "sent" ? verify() : send())}
           shape="pill"
           size="fluid"
-          className="self-start px-6 py-3 text-3xs font-semibold uppercase tracking-widest disabled:opacity-40"
+          className="self-start px-6 py-3 text-2xs font-semibold uppercase tracking-widest disabled:opacity-40"
         >
           {busy ? "Working…" : phase === "sent" ? "Verify code" : "Send code"}
         </Button>

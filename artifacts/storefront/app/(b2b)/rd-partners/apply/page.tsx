@@ -13,10 +13,10 @@ export default function RdPartnersApplyPage() {
   return (
     <section className="mx-auto flex max-w-[640px] flex-col gap-10 px-4 py-[var(--space-section)]">
       <header className="flex flex-col gap-2 text-center">
-        <span className="text-3xs font-semibold uppercase tracking-widest text-ink-faint">
+        <span className="text-2xs font-semibold uppercase tracking-widest text-ink-faint">
           RD partner programme
         </span>
-        <h1 className="text-3xl font-semibold leading-tight tracking-tight text-ink">
+        <h1 className="text-3xl font-display font-semibold leading-tight tracking-tight text-primary">
           Dietitian partner application
         </h1>
         <p className="text-sm leading-relaxed text-ink-muted">

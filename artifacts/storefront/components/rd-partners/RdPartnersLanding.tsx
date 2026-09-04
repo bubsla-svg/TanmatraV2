@@ -20,10 +20,10 @@ export function RdPartnersLanding({ screenId }: { screenId: "12.6" | "12.7" }) {
       className="pb-32"
     >
       <section className="mx-auto max-w-3xl px-4 py-16 text-center">
-        <span className="inline-block rounded-full border border-line bg-surface px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-gold-text">
+        <span className="inline-block rounded-full border border-line bg-surface px-4 py-1.5 text-[11px] font-bold uppercase tracking-[.18em] text-accent">
           Registered dietitian network
         </span>
-        <h1 className="mt-6 text-3xl font-bold leading-tight tracking-tight text-ink md:text-5xl">
+        <h1 className="mt-6 text-3xl font-display font-bold leading-tight tracking-tight text-primary md:text-5xl">
           Prescribe real culinary medicine to your patients.
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-ink-muted md:text-base">
@@ -39,7 +39,7 @@ export function RdPartnersLanding({ screenId }: { screenId: "12.6" | "12.7" }) {
           </Link>
           <Link
             href="/clinical"
-            className="w-full rounded-full border border-line bg-surface px-8 py-4 text-xs font-bold uppercase tracking-widest text-ink transition-all hover:bg-surface-raised active:scale-[0.98] sm:w-auto"
+            className="w-full rounded-full border border-line bg-surface px-8 py-4 text-xs font-bold uppercase tracking-widest text-ink transition-all hover:bg-secondary active:scale-[0.98] sm:w-auto"
           >
             View clinical governance
           </Link>
@@ -47,20 +47,20 @@ export function RdPartnersLanding({ screenId }: { screenId: "12.6" | "12.7" }) {
       </section>
 
       <section className="mx-auto grid max-w-5xl gap-6 px-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-line bg-surface p-6 shadow-sm">
-          <h3 className="text-base font-bold text-ink">Protocol prescriptions</h3>
+        <div className="rounded-2xl border border-line bg-surface p-6">
+          <h3 className="text-base font-display font-bold text-primary">Protocol prescriptions</h3>
           <p className="mt-2 text-xs leading-relaxed text-ink-muted">
             Create custom macro protocols and send direct checkout links to patients.
           </p>
         </div>
-        <div className="rounded-2xl border border-line bg-surface p-6 shadow-sm">
-          <h3 className="text-base font-bold text-ink">Patient compliance visibility</h3>
+        <div className="rounded-2xl border border-line bg-surface p-6">
+          <h3 className="text-base font-display font-bold text-primary">Patient compliance visibility</h3>
           <p className="mt-2 text-xs leading-relaxed text-ink-muted">
             See meal intake and delivery status ahead of your consultations.
           </p>
         </div>
-        <div className="rounded-2xl border border-line bg-surface p-6 shadow-sm">
-          <h3 className="text-base font-bold text-ink">Recurring advisory revenue</h3>
+        <div className="rounded-2xl border border-line bg-surface p-6">
+          <h3 className="text-base font-display font-bold text-primary">Recurring advisory revenue</h3>
           <p className="mt-2 text-xs leading-relaxed text-ink-muted">
             Earn recurring clinical consulting fees on subscribed meal regimens you manage.
           </p>
@@ -68,7 +68,7 @@ export function RdPartnersLanding({ screenId }: { screenId: "12.6" | "12.7" }) {
       </section>
 
       <section className="mx-auto mt-16 max-w-2xl px-4 text-center">
-        <h2 className="text-2xl font-bold text-ink">Join the Tanmatra RD network</h2>
+        <h2 className="text-2xl font-display font-bold text-primary">Join the Tanmatra RD network</h2>
         <p className="mt-2 text-xs text-ink-muted">
           Our governance committee evaluates every clinical registration to keep patient
           therapeutic compliance strict.

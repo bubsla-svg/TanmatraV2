@@ -52,10 +52,10 @@ function PathStep({ draft, patch }: StepProps) {
             aria-pressed={on}
             onClick={() => patch({ path: o.id as RdPath })}
             className={`rounded-2xl border p-5 text-left transition-colors ${
-              on ? "border-[var(--gold)] bg-[color-mix(in_srgb,var(--gold)_6%,transparent)]" : "border-line hover:border-line-strong"
+              on ? "border-gold bg-primary/10 text-primary" : "border-transparent bg-secondary text-ink-muted"
             }`}
           >
-            <span className={`text-base font-semibold ${on ? "text-gold-text" : "text-ink"}`}>{o.label}</span>
+            <span className={`text-base font-semibold ${on ? "text-primary" : "text-ink"}`}>{o.label}</span>
             <span className="mt-1 block text-sm leading-relaxed text-ink-muted">{o.desc}</span>
           </button>
         );
@@ -261,7 +261,7 @@ function ReviewStep({ draft, errors, patch }: StepProps) {
       <dl className="flex flex-col gap-3 rounded-2xl border border-line bg-bg p-5">
         {summary.map((row) => (
           <div key={row.label} className="flex items-baseline justify-between gap-4">
-            <dt className="text-3xs font-semibold uppercase tracking-widest text-ink-faint">{row.label}</dt>
+            <dt className="text-2xs font-semibold uppercase tracking-widest text-ink-faint">{row.label}</dt>
             <dd className="truncate text-sm text-ink">{row.value || "—"}</dd>
           </div>
         ))}
