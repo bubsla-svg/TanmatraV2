@@ -426,3 +426,41 @@ their signal colour. Each tool's primary CTA stays the one gold action.
 Unchanged on purpose: every rendered string/number, tab label, `useQuery` key, upload/log
 mutation, form field, `aria`, `href` and handler — presentation only. This closes the account
 clinical/wellness surface; remaining: b2b + legal + utility pages (3), then 11i analytics.
+
+## PR-11 remainder (4/4) — legal, utility, education & nutrition-tail
+
+The last of the customer-facing tail, closing the screen map: **legal** (`/legal`,
+`LegalArticle`/`LegalMasthead`), **utility** (`/vouchers` redeem, `/premium` membership,
+`/track/[orderId]` order status), **education** (`/faq`, `/how-it-works`) and the
+**nutrition tail** (`CoachActionCard`, `/meal-recommendations`, `/meal-guides/[dishSlug]`).
+14 files, class-only onto the same grammar. (The already-conformant `/clinical`, `/coach`,
+`/performance`, `CoachChat`, `/offline` were left untouched.)
+
+`remainder-4/after*` vs `remainder-4/before*` (both themes). All public pages — no auth, no
+fixture data. Frames cover the six that render standalone; `/meal-guides/[dishSlug]` and
+`/track/[orderId]` need live dish/order data to render and are covered by the diff, not a frame.
+
+| Frame | Surface |
+|---|---|
+| `u01` | `/legal` — the legal index |
+| `u02` | `/faq` — the help-centre accordion |
+| `u03`, `u03b` | `/how-it-works` — hero, then the numbered plan/step cards |
+| `u04`, `u04b` | `/premium` — hero, then the membership benefit cards |
+| `u05` | `/vouchers` — the voucher-redeem form |
+| `u06` | `/meal-recommendations` — the "For You" rec cards |
+
+### Choices without a reference screen (what changed → why)
+
+| Before | Production | Rule |
+|---|---|---|
+| `rounded-3xl` cards; `bg-surface-raised`/`bg-surface-subtle` panels; `shape="xl"` CTAs; `text-3xs` | `rounded-2xl`; `bg-secondary`; `shape="pill"`; `text-2xs` | the registered surface + button + type scale |
+| Voucher-code field `rounded-xl … bg-bg focus-visible:border-line-strong` | the field grammar (`min-h-[50px] rounded-2xl bg-surface focus-visible:border-primary`) | the 11c field grammar |
+| Balances, voucher amounts, prices, ETAs, section numerals in `tabular`/`font-mono`/gold text | `.font-data font-bold text-primary` | figures are data |
+| Eyebrows, page titles, section & card headings in `text-gold-text`/plain sans | accent eyebrows / display headings | gold text as a highlighter becomes accent; headings take the display face |
+| Retry/inline actions in `text-gold-text` | `text-primary` text-actions | gold-text highlighter → primary ink |
+
+Data preserved: the `TrackStatus` order timeline keeps its geometry, sage glow/ping-dot and
+`--danger` failed state; each surface keeps its one gold CTA (`shadow-[var(--shadow-card)]`
+retained where the design uses it). Unchanged on purpose: every rendered string/number, form
+field, `useQuery` key, `aria`, `href` and handler — presentation only. **This closes the PR-11
+customer + b2b screen map; only 11i (analytics) remains.**
