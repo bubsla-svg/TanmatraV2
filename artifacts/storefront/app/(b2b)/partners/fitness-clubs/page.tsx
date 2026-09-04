@@ -39,18 +39,18 @@ export default function FitnessClubsPage() {
       <section className="py-[var(--space-section)]">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-semibold tracking-tight text-ink">Perfect post-run fuel</h2>
+            <h2 className="font-display text-2xl font-semibold tracking-tight text-primary">Perfect post-run fuel</h2>
             <p className="mt-2 text-sm text-ink-muted">A sneak peek at our popular recovery breakfast options.</p>
           </div>
-          <Link href="/menu" className="shrink-0 text-sm font-semibold text-gold-text hover:underline">
+          <Link href="/menu" className="shrink-0 text-sm font-semibold text-primary hover:underline">
             Full menu &rarr;
           </Link>
         </div>
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           {FITNESS_MENU.map((d) => (
             <div key={d.name} className="rounded-2xl border border-line bg-surface p-5">
-              <h3 className="text-sm font-semibold text-ink">{d.name}</h3>
-              <p className="tabular mt-1 text-2xs font-medium text-gold-text">{d.macros}</p>
+              <h3 className="font-display text-sm font-semibold text-primary">{d.name}</h3>
+              <p className="font-data mt-1 text-2xs font-bold text-primary">{d.macros}</p>
               <p className="mt-2 text-sm leading-relaxed text-ink-muted">{d.body}</p>
             </div>
           ))}
@@ -59,7 +59,7 @@ export default function FitnessClubsPage() {
 
       <section id="lead-form" className="scroll-mt-20 border-t border-line py-[var(--space-section)]">
         <div className="mx-auto max-w-xl">
-          <h2 className="text-2xl font-semibold tracking-tight text-ink">{L.form.heading}</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight text-primary">{L.form.heading}</h2>
           <p className="mt-2 text-sm leading-relaxed text-ink-muted">{L.form.blurb}</p>
           <div className="mt-8">
             <PartnerLeadForm

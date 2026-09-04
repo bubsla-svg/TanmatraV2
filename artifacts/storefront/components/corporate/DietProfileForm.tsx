@@ -70,7 +70,7 @@ export function DietProfileForm({ initial, busy, saved, error, onSubmit }: {
             onChange={(n) => setCount(f.key, n)} />
         ))}
       </Grid>
-      <p className="text-xs text-ink-faint">Non-vegetarian (derived): <span className="tabular text-ink-muted">{nonVeg}</span></p>
+      <p className="text-xs text-ink-faint">Non-vegetarian (derived): <span className="font-data font-bold text-primary">{nonVeg}</span></p>
 
       <Field label="Allergens to avoid" inputID="dp-allergens" labelID="dp-allergens-label" isGroupLabel>
         <ul id="dp-allergens" aria-labelledby="dp-allergens-label" className="flex flex-wrap gap-2">
@@ -104,7 +104,7 @@ export function DietProfileForm({ initial, busy, saved, error, onSubmit }: {
 
       {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
       <div className="flex flex-col gap-3 border-t border-line pt-5">
-        <Button type="button" disabled={busy} aria-busy={busy} aria-live="polite" onClick={submit} shape="xl" size="fluid" className="w-full px-5 py-3.5 font-semibold disabled:opacity-40">
+        <Button type="button" disabled={busy} aria-busy={busy} aria-live="polite" onClick={submit} shape="pill" size="fluid" className="w-full px-5 py-3.5 font-semibold disabled:opacity-40">
           {busy ? "Saving…" : "Save team profile"}
         </Button>
         {saved && <span className="text-xs font-medium text-sage-text">Saved</span>}
