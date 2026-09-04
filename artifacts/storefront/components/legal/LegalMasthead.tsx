@@ -34,11 +34,11 @@ export function LegalMasthead({
           {backLabel}
         </Link>
       )}
-      <p className={`text-xs font-semibold uppercase tracking-wide text-gold-text ${backHref ? "mt-4" : ""}`}>
+      <p className={`text-[11px] font-bold uppercase tracking-[.18em] text-accent ${backHref ? "mt-4" : ""}`}>
         {eyebrow}
       </p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">{title}</h1>
-      {byline && <p className="tabular mt-1 text-xs text-ink-faint">{byline}</p>}
+      <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight text-primary">{title}</h1>
+      {byline && <p className="font-data mt-1 text-xs text-ink-faint">{byline}</p>}
       <p className="mt-4 max-w-prose text-sm leading-relaxed text-ink-muted">{dek}</p>
     </header>
   );

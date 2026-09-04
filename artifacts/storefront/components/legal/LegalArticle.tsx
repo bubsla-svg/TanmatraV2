@@ -51,9 +51,9 @@ export function LegalArticle({ doc }: { doc: LegalDoc }) {
               <li key={s.heading}>
                 <a
                   href={`#${sectionId(i)}`}
-                  className="flex items-baseline gap-2 text-sm text-ink-muted hover:text-gold-text"
+                  className="flex items-baseline gap-2 text-sm text-ink-muted hover:text-primary"
                 >
-                  <span className="tabular shrink-0 text-xs text-ink-faint">
+                  <span className="font-data shrink-0 text-xs text-ink-faint">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span className="truncate">{s.heading}</span>
@@ -67,7 +67,7 @@ export function LegalArticle({ doc }: { doc: LegalDoc }) {
       <div className="mt-8 flex flex-col gap-8">
         {doc.sections.map((s, i) => (
           <section key={s.heading}>
-            <h2 id={sectionId(i)} className="scroll-mt-24 text-base font-semibold text-ink">
+            <h2 id={sectionId(i)} className="scroll-mt-24 font-display text-base font-semibold text-primary">
               {s.heading}
             </h2>
             {s.body?.map((p, j) => (

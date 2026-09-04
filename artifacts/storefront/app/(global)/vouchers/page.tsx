@@ -16,8 +16,8 @@ export default function VouchersPage() {
       {/* pb-44 clears the sticky footer VoucherRedeem renders (single Redeem
           button) — same reasoning as /checkout's pb-44. */}
       <section className="mx-auto max-w-md px-4 pt-10 pb-44">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">Your account</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">Wallet &amp; vouchers</h1>
+        <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Your account</p>
+        <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight text-primary">Wallet &amp; vouchers</h1>
         <p className="mt-2 text-sm leading-relaxed text-ink-muted">
           Redeem a voucher code to top up your wallet. Credit is applied automatically at your next checkout.
         </p>

@@ -90,12 +90,12 @@ export function VoucherRedeem() {
         {loadFailed ? (
           <div className="mt-1.5 flex items-center gap-3">
             <p className="text-sm font-medium text-[var(--danger)]">Couldn&rsquo;t load your wallet.</p>
-            <button type="button" onClick={() => void refetch()} className="text-xs font-semibold text-gold-text hover:underline">
+            <button type="button" onClick={() => void refetch()} className="text-xs font-semibold text-primary hover:underline">
               Try again
             </button>
           </div>
         ) : (
-          <p className="tabular mt-1 text-3xl font-bold text-gold-text">{isPending ? "…" : formatPaise(wallet.balance)}</p>
+          <p className="font-data mt-1 text-3xl font-bold text-primary">{isPending ? "…" : formatPaise(wallet.balance)}</p>
         )}
         <p className="mt-1 text-xs text-ink-muted">Credit applies automatically at your next checkout.</p>
       </div>
@@ -106,7 +106,7 @@ export function VoucherRedeem() {
           id="voucher-code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())}
           onKeyDown={(e) => { if (e.key === "Enter") doRedeem(); }}
           placeholder="Enter your code" autoCapitalize="characters" autoComplete="off"
-          className="tabular mt-3 w-full rounded-2xl border border-line bg-bg px-4 py-3 text-base tracking-wide text-ink outline-none focus-visible:border-line-strong"
+          className="font-data mt-3 w-full min-h-[50px] rounded-2xl border border-line bg-surface px-4 py-3 text-base tracking-wide text-ink outline-none placeholder:text-ink-faint focus-visible:border-primary"
         />
         {msg && (
           <div className="mt-3 flex items-center gap-2 border-t border-line pt-3">
@@ -122,16 +122,16 @@ export function VoucherRedeem() {
           <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-ink-faint">Redeemed vouchers</h2>
           <ul className="mt-3 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
             {wallet.redeemed.map((v) => (
-              <li key={v.id} className="flex items-center justify-between p-4 transition-colors hover:bg-surface-raised">
+              <li key={v.id} className="flex items-center justify-between p-4 transition-colors hover:bg-secondary">
                 <div className="flex flex-col gap-1">
-                  <span className="tabular text-sm font-medium tracking-wide text-ink">{v.code}</span>
+                  <span className="font-data text-sm font-medium tracking-wide text-ink">{v.code}</span>
                   <span className="text-xs text-ink-faint">
                     {v.redeemedAt
                       ? `Redeemed · ${new Date(v.redeemedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`
                       : "Redeemed"}
                   </span>
                 </div>
-                <span className="tabular text-sm font-semibold text-ink">{formatPaise(v.amountPaise)}</span>
+                <span className="font-data text-sm font-semibold text-ink">{formatPaise(v.amountPaise)}</span>
               </li>
             ))}
           </ul>
