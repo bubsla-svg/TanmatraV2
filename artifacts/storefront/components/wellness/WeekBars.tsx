@@ -17,15 +17,15 @@ export function WeekBars({ week }: { week: WellnessWeek }) {
   const targets = week.targets;
   return (
     <div>
-      <h2 className="text-xl font-medium text-ink">Last 7 days</h2>
+      <h2 className="font-display text-lg font-semibold leading-tight text-primary">Last 7 days</h2>
       <div className="mt-6 grid grid-cols-2 gap-4">
         {METRICS.map((m) => {
           const target = targets[m.tKey];
           return (
-            <div key={m.key} className="rounded-3xl border border-line bg-surface p-5">
-              <p className="text-2xs font-bold uppercase tracking-wider text-ink-muted">
+            <div key={m.key} className="rounded-2xl border border-line bg-surface p-5">
+              <p className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">
                 {m.label}
-                <span className="tabular font-normal normal-case tracking-normal text-ink-faint"> · target {target}{m.unit}</span>
+                <span className="font-data font-normal normal-case tracking-normal text-ink-faint"> · target {target}{m.unit}</span>
               </p>
               <div className="mt-4 flex items-end gap-1">
                 {week.days.map((d) => {
@@ -35,7 +35,7 @@ export function WeekBars({ week }: { week: WellnessWeek }) {
                       <div className="flex h-12 w-full items-end overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--ink)_6%,transparent)]" title={`${dow(d.date)} — ${Math.round(value)}${m.unit}`}>
                         <div className="w-full rounded-full bg-gold" style={{ height: `${pctOf(value, target)}%` }} />
                       </div>
-                      <span className="tabular text-3xs text-ink-faint">{dow(d.date)}</span>
+                      <span className="text-2xs text-ink-faint">{dow(d.date)}</span>
                     </div>
                   );
                 })}
