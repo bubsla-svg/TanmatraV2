@@ -35,8 +35,8 @@ export function LocationSummaryCard({
     : place?.formattedAddress || "Move the map pin or use current location to set delivery area";
 
   return (
-    <div className="flex flex-col gap-4 border-t border-line bg-surface p-4 shadow-xl sm:rounded-t-2xl sm:p-6">
-      <h2 className={`text-xs font-bold tracking-wider uppercase ${outOfZone ? "text-[var(--danger)]" : "text-ink-muted"}`}>
+    <div className="flex flex-col gap-4 border-t border-line bg-surface p-4 shadow-[var(--shadow-raised)] sm:rounded-t-2xl sm:p-6">
+      <h2 className={`text-[10px] font-bold uppercase tracking-[.16em] ${outOfZone ? "text-[var(--danger)]" : "text-ink-muted"}`}>
         {heading}
       </h2>
 
@@ -58,7 +58,7 @@ export function LocationSummaryCard({
         <button
           type="button"
           onClick={onChangeTap}
-          className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-3 text-xs font-bold text-[var(--primary)] hover:underline"
+          className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-3 text-xs font-bold text-primary hover:underline"
         >
           Change
         </button>
@@ -68,7 +68,7 @@ export function LocationSummaryCard({
         type="button"
         disabled={loading || !place}
         onClick={onConfirm}
-        shape="xl"
+        shape="pill"
         size="fluid"
         className="flex w-full min-h-12 items-center justify-center gap-2 px-5 py-3.5 text-base font-bold shadow-md hover:opacity-95 disabled:opacity-40"
       >

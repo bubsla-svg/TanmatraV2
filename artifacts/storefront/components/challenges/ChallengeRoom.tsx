@@ -110,13 +110,13 @@ export function ChallengeRoom({ slug }: { slug: string }) {
 
   return (
     <div className="mt-10 border-t border-line pt-10">
-      <h2 className="text-lg font-semibold text-ink">Your cohort</h2>
+      <h2 className="font-display text-lg font-semibold leading-tight text-primary">Your cohort</h2>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <button
           type="button"
           onClick={() => void toggleJoin()}
           disabled={busy}
-          className={`rounded-full px-6 py-2.5 text-sm font-semibold transition-colors disabled:opacity-40 ${joined ? "border border-line text-ink hover:bg-surface-raised" : "bg-gold text-[var(--gold-ink)] hover:opacity-90"}`}
+          className={`rounded-full px-6 py-2.5 text-sm font-semibold transition-colors disabled:opacity-40 ${joined ? "border border-line text-ink hover:bg-secondary" : "bg-gold text-[var(--gold-ink)] hover:opacity-90"}`}
         >
           {joined ? "Leave challenge" : "Join challenge"}
         </button>
@@ -134,7 +134,7 @@ export function ChallengeRoom({ slug }: { slug: string }) {
 
       {joined && checkIns.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-lg font-semibold text-ink">Upcoming RD check-ins</h2>
+          <h2 className="font-display text-lg font-semibold leading-tight text-primary">Upcoming RD check-ins</h2>
           <ul className="mt-4 flex flex-col gap-3">
             {checkIns.map((ci) => (
               <li
@@ -143,7 +143,7 @@ export function ChallengeRoom({ slug }: { slug: string }) {
               >
                 <div>
                   <p className="text-sm font-semibold text-ink">{ci.title}</p>
-                  <p className="tabular mt-1 text-xs text-ink-faint">
+                  <p className="font-data mt-1 text-xs text-ink-faint">
                     {new Date(ci.scheduledAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>
@@ -159,7 +159,7 @@ export function ChallengeRoom({ slug }: { slug: string }) {
       )}
 
       <div className="mt-10">
-        <h2 className="text-lg font-semibold text-ink">Cohort feed</h2>
+        <h2 className="font-display text-lg font-semibold leading-tight text-primary">Cohort feed</h2>
         {joined ? (
           <form
             onSubmit={submitPost}

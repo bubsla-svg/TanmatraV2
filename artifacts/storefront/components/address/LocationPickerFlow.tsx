@@ -10,7 +10,7 @@ import { LocationSummaryCard } from "./LocationSummaryCard";
 
 const PickerMap = dynamic(() => import("./LocationPickerMap"), {
   ssr: false,
-  loading: () => <div className="flex h-full w-full items-center justify-center bg-[var(--bg)] text-xs font-medium text-ink-muted">Loading interactive map…</div>,
+  loading: () => <div className="flex h-full w-full items-center justify-center bg-bg text-xs font-medium text-ink-muted">Loading interactive map…</div>,
 });
 
 export function LocationPickerFlow({
@@ -160,19 +160,19 @@ export function LocationPickerFlow({
   if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[var(--z-modal)] flex animate-sheet-in flex-col bg-bg sm:mx-auto sm:my-8 sm:max-w-xl sm:animate-dialog-in sm:rounded-3xl sm:border sm:border-line sm:shadow-2xl sm:overflow-hidden">
+    <div className="fixed inset-0 z-[var(--z-modal)] flex animate-sheet-in flex-col bg-bg sm:mx-auto sm:my-8 sm:max-w-xl sm:animate-dialog-in sm:rounded-2xl sm:border sm:border-line sm:shadow-[var(--shadow-raised)] sm:overflow-hidden">
       <div className="flex items-center gap-3 border-b border-line bg-surface px-4 py-3.5">
         <button type="button" onClick={onClose} aria-label="Go back" className="rounded-xl p-1 text-ink hover:bg-bg">
           <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
         </button>
-        <h1 className="text-lg font-bold text-ink">Add address</h1>
+        <h1 className="font-display text-xl font-semibold leading-tight text-primary">Add address</h1>
       </div>
 
       <div className="relative z-10 px-4 pt-3 bg-surface pb-2">
         {/* T-03: a labelled 50px search field at 16px (no iOS zoom), with a
             search return key — it was 14px text in a 20px box, unlabelled. */}
         <label htmlFor="location-search" className="sr-only">Search area, locality or PIN code</label>
-        <div className="flex min-h-[50px] items-center gap-3 rounded-2xl border border-line bg-bg px-3.5 shadow-sm focus-within:border-line-strong">
+        <div className="flex min-h-[50px] items-center gap-3 rounded-2xl border border-line bg-bg px-3.5 focus-within:border-line-strong">
           <svg aria-hidden className="h-5 w-5 shrink-0 text-ink-muted" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
           <input
             ref={searchInputRef}
@@ -185,11 +185,11 @@ export function LocationPickerFlow({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Area, locality or PIN code"
-            className="min-h-[48px] w-full bg-transparent text-base font-medium text-ink outline-none placeholder:text-ink-muted"
+            className="min-h-[48px] w-full bg-transparent text-base font-medium text-ink outline-none placeholder:text-ink-faint"
           />
         </div>
         {suggestions.length > 0 && (
-          <ul className="absolute left-4 right-4 top-14 z-50 max-h-60 overflow-y-auto rounded-2xl border border-line bg-surface p-1.5 shadow-2xl">
+          <ul className="absolute left-4 right-4 top-14 z-50 max-h-60 overflow-y-auto rounded-2xl border border-line bg-surface p-1.5 shadow-[var(--shadow-raised)]">
             {suggestions.map((item, idx) => (
               <li key={idx}><button type="button" onClick={() => handleSuggestionSelect(item)} className="w-full rounded-xl px-3 py-2.5 text-left hover:bg-bg"><div className="text-sm font-bold text-ink">{item.city || "Area"}</div><div className="truncate text-xs text-ink-muted">{item.formattedAddress}</div></button></li>
             ))}
@@ -203,7 +203,7 @@ export function LocationPickerFlow({
           <div className="pointer-events-none absolute inset-x-0 top-3 z-[600] flex justify-center px-4">
             <p
               role="status"
-              className="max-w-sm rounded-2xl border border-[var(--warning)]/40 bg-[var(--surface)] px-4 py-2.5 text-center text-xs font-semibold text-[var(--ink)] shadow-xl"
+              className="max-w-sm rounded-2xl border border-[var(--warning)]/40 bg-surface px-4 py-2.5 text-center text-xs font-semibold text-ink shadow-[var(--shadow-raised)]"
             >
               {gpsConfidence === "weak"
                 ? "Weak GPS signal. Drag the pin to your exact building so the morning drop reaches the right door."
@@ -212,8 +212,8 @@ export function LocationPickerFlow({
           </div>
         )}
         <div className="absolute bottom-4 left-0 right-0 z-[600] flex justify-center px-4">
-          <button type="button" onClick={handleUseCurrentLocation} className="flex items-center gap-2.5 rounded-2xl border border-line bg-surface px-5 py-3 font-bold text-ink shadow-xl transition hover:opacity-90">
-            <svg className="h-5 w-5 text-[var(--gold)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M12 2v3m0 14v3M2 12h3m14 0h3" /></svg>
+          <button type="button" onClick={handleUseCurrentLocation} className="flex items-center gap-2.5 rounded-2xl border border-line bg-surface px-5 py-3 font-bold text-ink shadow-[var(--shadow-raised)] transition hover:opacity-90">
+            <svg className="h-5 w-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M12 2v3m0 14v3M2 12h3m14 0h3" /></svg>
             <span className="text-sm">Use current location</span>
           </button>
         </div>
