@@ -53,30 +53,30 @@ export function SymptomTrackerView() {
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
       <form onSubmit={handleSubmit} className="lg:col-span-5 flex flex-col gap-5 rounded-2xl border border-line bg-surface p-6 h-fit">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">Physiological Telemetry</span>
-          <h3 className="text-lg font-semibold text-ink mt-1">Log Post-Meal Symptom</h3>
+          <span className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Physiological Telemetry</span>
+          <h3 className="mt-1 font-display text-lg font-semibold leading-tight text-primary">Log Post-Meal Symptom</h3>
           <p className="text-xs text-ink-muted mt-1 leading-relaxed">
             Record GI comfort, blood sugar stability, or satiety responses to inform your dietitian prescriptions.
           </p>
         </div>
 
         {recordMutation.isSuccess && (
-          <div className="rounded-xl border border-gold/20 bg-gold/5 p-3 text-xs font-semibold text-gold-text">
+          <div className="rounded-2xl bg-sage-soft p-3 text-xs font-semibold text-sage-text">
             Physiological response logged successfully to clinical record.
           </div>
         )}
         {recordMutation.isError && (
-          <div role="alert" className="rounded-xl border border-line bg-surface p-3 text-xs font-semibold text-[var(--danger)]">
+          <div role="alert" className="rounded-2xl bg-secondary p-3 text-xs font-semibold text-[var(--danger)]">
             Couldn&rsquo;t save this entry. Please try again.
           </div>
         )}
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <label className="text-2xs font-semibold uppercase tracking-wider text-ink-muted">Symptom Classification</label>
+          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Symptom Classification</label>
           <select
             value={symptom}
             onChange={(e) => setSymptom(e.target.value)}
-            className="rounded-xl border border-line bg-surface p-2.5 font-medium text-ink focus-visible:border-gold outline-none"
+            className="min-h-[50px] rounded-2xl border border-line bg-surface px-4 py-3 font-medium text-ink placeholder:text-ink-faint focus-visible:border-primary outline-none"
           >
             <option value="bloating">Post-Meal Bloating &amp; Gas</option>
             <option value="glucose_spike">Afternoon Lethargy / Glucose Dip</option>
@@ -87,8 +87,8 @@ export function SymptomTrackerView() {
 
         <div className="flex flex-col gap-1.5 text-xs">
           <div className="flex justify-between items-center">
-            <span className="text-2xs font-semibold uppercase tracking-wider text-ink-muted">Reaction Severity</span>
-            <span className="tabular text-sm font-semibold text-ink">{severity} / 5</span>
+            <span className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Reaction Severity</span>
+            <span className="font-data text-sm font-semibold text-ink">{severity} / 5</span>
           </div>
           <input
             type="range"
@@ -98,31 +98,31 @@ export function SymptomTrackerView() {
             onChange={(e) => setSeverity(Number(e.target.value))}
             className="w-full accent-gold cursor-pointer"
           />
-          <div className="flex justify-between px-0.5 text-3xs font-semibold uppercase tracking-wider text-ink-faint">
+          <div className="flex justify-between px-0.5 text-[10px] font-bold uppercase tracking-[.16em] text-ink-faint">
             <span>Mild</span>
             <span>Severe</span>
           </div>
         </div>
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <label className="text-2xs font-semibold uppercase tracking-wider text-ink-muted">Related Dish or Meal (Optional)</label>
+          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Related Dish or Meal (Optional)</label>
           <input
             type="text"
             value={dishSlug}
             onChange={(e) => setDishSlug(e.target.value)}
             placeholder="e.g. hp-paneer-bowl"
-            className="rounded-xl border border-line bg-surface p-2.5 font-medium text-ink focus-visible:border-gold outline-none"
+            className="min-h-[50px] rounded-2xl border border-line bg-surface px-4 py-3 font-medium text-ink placeholder:text-ink-faint focus-visible:border-primary outline-none"
           />
         </div>
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <label className="text-2xs font-semibold uppercase tracking-wider text-ink-muted">Clinical Annotations</label>
+          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Clinical Annotations</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
             placeholder="e.g. Experienced slight heaviness 45 mins after eating…"
-            className="rounded-xl border border-line bg-surface p-2.5 font-medium text-ink focus-visible:border-gold outline-none"
+            className="min-h-[50px] rounded-2xl border border-line bg-surface px-4 py-3 font-medium text-ink placeholder:text-ink-faint focus-visible:border-primary outline-none"
           />
         </div>
 
@@ -133,20 +133,20 @@ export function SymptomTrackerView() {
           aria-live="polite"
           shape="pill"
           size="fluid"
-          className="py-3 text-xs font-semibold mt-2"
+          className="min-h-12 py-3 text-xs font-semibold mt-2"
         >
           {recordMutation.isPending ? "Recording Telemetry…" : "Record Symptom Log →"}
         </Button>
       </form>
 
       <div className="lg:col-span-7 flex flex-col gap-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-gold-text">Recorded Symptom History</h2>
+        <h2 className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Recorded Symptom History</h2>
         {logsQuery.isPending ? (
           <SymptomHistorySkeleton />
         ) : logsQuery.isError ? (
           <div className="rounded-2xl border border-line bg-surface p-8 text-center flex flex-col gap-3">
             <p className="text-xs font-semibold text-[var(--danger)]">Couldn&rsquo;t load your symptom history</p>
-            <button type="button" onClick={() => void logsQuery.refetch()} className="mx-auto rounded-lg border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-opacity hover:opacity-80">Try again</button>
+            <button type="button" onClick={() => void logsQuery.refetch()} className="mx-auto rounded-full border border-line px-5 py-2 text-xs font-semibold text-primary transition-opacity hover:opacity-80">Try again</button>
           </div>
         ) : logsQuery.data.length === 0 ? (
           <div className="rounded-2xl border border-line bg-surface p-8 text-center text-xs text-ink-muted">
@@ -157,16 +157,16 @@ export function SymptomTrackerView() {
             {logsQuery.data.map((l) => (
               <div key={l.id} className="rounded-2xl border border-line bg-surface p-5 flex flex-col gap-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-2xs font-bold uppercase tracking-wide text-sage-text">
+                  <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[.12em] text-sage-text">
                     {l.symptomType.replace("_", " ")}
                   </span>
                   <span className="text-xs font-medium text-ink-muted">{l.loggedDate}</span>
                 </div>
                 <div className="text-xs font-medium text-ink-muted">
-                  Severity: <strong className="tabular text-sm font-bold text-gold-text">{l.severity} / 5</strong>
+                  Severity: <strong className="font-data text-sm font-bold text-primary">{l.severity} / 5</strong>
                   {l.relatedDishSlug && (
                     <>
-                      {" "}&bull; Correlated with: <span className="font-mono text-ink">{l.relatedDishSlug}</span>
+                      {" "}&bull; Correlated with: <span className="font-data text-ink">{l.relatedDishSlug}</span>
                     </>
                   )}
                 </div>
@@ -186,7 +186,7 @@ function SymptomHistorySkeleton() {
       <p className="sr-only">Loading your symptom history…</p>
       <div aria-hidden className="flex flex-col gap-3.5">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-24 animate-pulse rounded-2xl bg-surface-raised" />
+          <div key={i} className="h-24 animate-pulse rounded-2xl bg-secondary" />
         ))}
       </div>
     </div>
