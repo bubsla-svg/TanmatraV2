@@ -426,3 +426,79 @@ their signal colour. Each tool's primary CTA stays the one gold action.
 Unchanged on purpose: every rendered string/number, tab label, `useQuery` key, upload/log
 mutation, form field, `aria`, `href` and handler — presentation only. This closes the account
 clinical/wellness surface; remaining: b2b + legal + utility pages (3), then 11i analytics.
+
+## PR-11 remainder (3/4) — b2b, corporate & lead-gen surfaces
+
+The business-facing tail: the **corporate wellness** landing + invite/lunch-planner flow
+(`corporate/*`), the **gym / fitness-club / dietitian partner** pages and their lead-gen
+landing blocks (`landing/*` — hero, benefit grid, ROI & subsidy calculators, spec-sheet and
+flip cards, proof strip), and the **RD-partner onboarding wizard** (`rd-partners/*`). 24 files,
+all class-only onto the same Astryx grammar the customer surfaces already carry.
+
+`remainder-3/after*` vs `remainder-3/before*` (both themes). Every page here is a public
+marketing/lead-gen surface — no auth, no API, no fixture data; the frames render the real
+components. Each frame is one surface; the gyms page is captured at three scroll depths to
+show the restyled calculators and spec cards below the hero.
+
+| Frame | Surface |
+|---|---|
+| `r01` | `/corporate-wellness` — corporate pilot landing (`CompanyInvite` / lead form) |
+| `r02a`, `r02b`, `r02c` | `/partners/gyms` — hero, then `GymRevenueCalculator` + `SubsidyCalculator`, then `SpecSheetCard` / `BenefitGrid` |
+| `r03` | `/partners/fitness-clubs` — partner value page |
+| `r04` | `/rd-partners` — `RdPartnersLanding` |
+| `r05` | `/rd-partners/apply` — `PartnerWizard` (multi-step onboarding form) |
+
+### Choices without a reference screen (what changed → why)
+
+| Before | Production | Rule |
+|---|---|---|
+| Gradient "engine" / gold-tinted `rounded-3xl` cards with `shadow-*` | `rounded-2xl` flat grammar cards (`bg-surface` / `bg-secondary`) | one card treatment; fill, not gradient+shadow |
+| Calculator outputs, ROI/subsidy/payout figures, prices in `tabular`/gold text | `.font-data font-bold text-primary` | figures are data |
+| Eyebrows, page titles and card headings in `text-gold-text` | accent eyebrows / display headings / neutral small labels | gold text as a highlighter becomes accent/ink/display |
+| Corporate & partner lead-form fields `rounded-xl … focus-visible:border-gold`; wizard step tiles & funding/tier chips as gold-mix fills | the field grammar; the tap-to-select tint | the 11c field + selection grammar |
+| `bg-surface-raised` / `bg-surface-subtle` panels; `shape="xl"` CTAs; `text-3xs` | `bg-secondary`; `shape="pill"`; `text-2xs` | the registered surface + button + type scale |
+
+Data preserved: the wizard progress indicator and proof-stat values keep their data colour;
+sage/`--danger` success and validation states keep their signal colour; each surface keeps its
+one gold CTA. Unchanged on purpose: every rendered string/number, form field
+(`name`/`type`/`min`/`max`/`placeholder`), `useQuery` key, `aria`, `href` and handler — and the
+GSAP-free landing blocks' `useState` interactivity — presentation only. Remaining after this:
+legal + utility + nutrition-tail pages (remainder 4), then 11i analytics.
+
+## PR-11 remainder (4/4) — legal, utility, education & nutrition-tail
+
+The last of the customer-facing tail, closing the screen map: **legal** (`/legal`,
+`LegalArticle`/`LegalMasthead`), **utility** (`/vouchers` redeem, `/premium` membership,
+`/track/[orderId]` order status), **education** (`/faq`, `/how-it-works`) and the
+**nutrition tail** (`CoachActionCard`, `/meal-recommendations`, `/meal-guides/[dishSlug]`).
+14 files, class-only onto the same grammar. (The already-conformant `/clinical`, `/coach`,
+`/performance`, `CoachChat`, `/offline` were left untouched.)
+
+`remainder-4/after*` vs `remainder-4/before*` (both themes). All public pages — no auth, no
+fixture data. Frames cover the six that render standalone; `/meal-guides/[dishSlug]` and
+`/track/[orderId]` need live dish/order data to render and are covered by the diff, not a frame.
+
+| Frame | Surface |
+|---|---|
+| `u01` | `/legal` — the legal index |
+| `u02` | `/faq` — the help-centre accordion |
+| `u03`, `u03b` | `/how-it-works` — hero, then the numbered plan/step cards |
+| `u04`, `u04b` | `/premium` — hero, then the membership benefit cards |
+| `u05` | `/vouchers` — the voucher-redeem form |
+| `u06` | `/meal-recommendations` — the "For You" rec cards |
+
+### Choices without a reference screen (what changed → why)
+
+| Before | Production | Rule |
+|---|---|---|
+| `rounded-3xl` cards; `bg-surface-raised`/`bg-surface-subtle` panels; `shape="xl"` CTAs; `text-3xs` | `rounded-2xl`; `bg-secondary`; `shape="pill"`; `text-2xs` | the registered surface + button + type scale |
+| Voucher-code field `rounded-xl … bg-bg focus-visible:border-line-strong` | the field grammar (`min-h-[50px] rounded-2xl bg-surface focus-visible:border-primary`) | the 11c field grammar |
+| Balances, voucher amounts, prices, ETAs, section numerals in `tabular`/`font-mono`/gold text | `.font-data font-bold text-primary` | figures are data |
+| Eyebrows, page titles, section & card headings in `text-gold-text`/plain sans | accent eyebrows / display headings | gold text as a highlighter becomes accent; headings take the display face |
+| Retry/inline actions in `text-gold-text` | `text-primary` text-actions | gold-text highlighter → primary ink |
+
+Data preserved: the `TrackStatus` order timeline keeps its geometry, sage glow/ping-dot and
+`--danger` failed state; each surface keeps its one gold CTA (`shadow-[var(--shadow-card)]`
+retained where the design uses it). Unchanged on purpose: every rendered string/number, form
+field, `useQuery` key, `aria`, `href` and handler — presentation only. **This closes the PR-11
+customer + b2b screen map; only 11i (analytics) remains.**

@@ -58,7 +58,7 @@ export function PremiumMembership() {
       <div className="rounded-2xl border border-line bg-surface px-6 py-10 text-center">
         <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load Premium</p>
         <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-ink-faint">Something went wrong on our end — this usually clears up on retry.</p>
-        <button type="button" onClick={() => void premiumQuery.refetch()} className="mt-4 rounded-lg border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-opacity hover:opacity-80">Try again</button>
+        <button type="button" onClick={() => void premiumQuery.refetch()} className="mt-4 rounded-lg border border-line px-5 py-2 text-xs font-semibold text-primary transition-opacity hover:opacity-80">Try again</button>
       </div>
     );
   }
@@ -68,7 +68,7 @@ export function PremiumMembership() {
   const active = me.isPremium && m;
   return (
     <div className="rounded-2xl border border-line bg-surface p-6">
-      <p className="tabular text-3xl font-bold text-gold-text">{formatPaise(me.pricePaise)}<span className="text-sm font-medium text-ink-muted"> / month</span></p>
+      <p className="font-data text-3xl font-bold text-primary">{formatPaise(me.pricePaise)}<span className="text-sm font-medium text-ink-muted"> / month</span></p>
       {actionError && (
         <p role="alert" className="mt-2 text-xs font-medium text-[var(--danger)]">
           {actionError instanceof ApiError ? actionError.message : "Something went wrong. Please try again."}
@@ -82,20 +82,20 @@ export function PremiumMembership() {
           </p>
           <div className="flex items-center justify-between border-y border-line py-3">
             <span className="text-sm text-ink-muted">RD consults used this period</span>
-            <span className="tabular text-sm font-semibold text-ink">{m.rdConsultsUsedThisPeriod} / {m.rdConsultsPerPeriod}</span>
+            <span className="font-data text-sm font-semibold text-ink">{m.rdConsultsUsedThisPeriod} / {m.rdConsultsPerPeriod}</span>
           </div>
-          <Button asChild shape="xl" size="fluid" className="px-5 py-3 text-center font-semibold">
+          <Button asChild shape="pill" size="fluid" className="px-5 py-3 text-center font-semibold">
             <Link href="/rd">Book your free RD consult</Link>
           </Button>
           <div className="flex justify-center pt-1">
             {m.status === "cancelled"
-              ? <button type="button" onClick={() => resumeMutation.mutate()} disabled={busy} aria-busy={busy} aria-live="polite" className="text-sm font-medium text-gold-text hover:underline disabled:opacity-60">{busy ? "Working…" : "Resume auto-renewal"}</button>
+              ? <button type="button" onClick={() => resumeMutation.mutate()} disabled={busy} aria-busy={busy} aria-live="polite" className="text-sm font-medium text-primary hover:underline disabled:opacity-60">{busy ? "Working…" : "Resume auto-renewal"}</button>
               : <button type="button" onClick={() => cancelMutation.mutate()} disabled={busy} aria-busy={busy} aria-live="polite" className="text-sm font-medium text-ink-muted hover:text-ink disabled:opacity-60">{busy ? "Working…" : "Cancel renewal"}</button>}
           </div>
         </div>
       ) : (
         <div className="mt-5 flex flex-col gap-3">
-          <Button type="button" onClick={() => joinMutation.mutate()} disabled={busy} aria-busy={joinMutation.isPending} aria-live="polite" shape="xl" size="fluid" className="px-6 py-3.5 font-semibold disabled:opacity-60">
+          <Button type="button" onClick={() => joinMutation.mutate()} disabled={busy} aria-busy={joinMutation.isPending} aria-live="polite" shape="pill" size="fluid" className="px-6 py-3.5 font-semibold disabled:opacity-60">
             {joinMutation.isPending ? "Opening payment…" : "Join Tanmatra Premium"}
           </Button>
           <p className="text-center text-xs text-ink-faint">Cancel anytime · your first RD consult is included every period.</p>
@@ -110,9 +110,9 @@ function PremiumMembershipSkeleton() {
     <div className="rounded-2xl border border-line bg-surface p-6">
       <p className="sr-only">Loading Premium…</p>
       <div aria-hidden className="flex flex-col gap-3">
-        <div className="h-9 w-40 animate-pulse rounded-lg bg-surface-raised" />
-        <div className="mt-2 h-12 animate-pulse rounded-lg bg-surface-raised" />
-        <div className="h-12 animate-pulse rounded-lg bg-surface-raised" />
+        <div className="h-9 w-40 animate-pulse rounded-lg bg-secondary" />
+        <div className="mt-2 h-12 animate-pulse rounded-lg bg-secondary" />
+        <div className="h-12 animate-pulse rounded-lg bg-secondary" />
       </div>
     </div>
   );

@@ -30,8 +30,8 @@ const BENEFITS: { title: string; body: string; icon: LandingIconName }[] = [
 export default function PremiumPage() {
   return (
     <section className="mx-auto max-w-lg px-4 py-10">
-      <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">Tanmatra Premium</p>
-      <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink">Eat better, recover faster, get expert guidance.</h1>
+      <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Tanmatra Premium</p>
+      <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-primary">Eat better, recover faster, get expert guidance.</h1>
       <p className="mt-2 text-sm text-ink-muted">
         One membership unlocks priority delivery, a monthly RD consult, premium-only dishes and exclusive pantry drops.
       </p>
@@ -40,14 +40,14 @@ export default function PremiumPage() {
         <PremiumMembership />
       </div>
 
-      <h2 className="mt-10 text-base font-semibold text-ink">What&rsquo;s included</h2>
+      <h2 className="mt-10 font-display text-base font-semibold text-primary">What&rsquo;s included</h2>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {BENEFITS.map((b) => (
           <div key={b.title} className="rounded-2xl border border-line bg-surface p-5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--gold)_12%,transparent)] text-gold-text">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--gold)_12%,transparent)] text-primary">
               <LandingIcon name={b.icon} className="h-5 w-5" />
             </div>
-            <h3 className="mt-4 text-base font-semibold text-ink">{b.title}</h3>
+            <h3 className="mt-4 font-display text-base font-semibold text-primary">{b.title}</h3>
             <p className="mt-2 text-sm leading-relaxed text-ink-muted">{b.body}</p>
           </div>
         ))}

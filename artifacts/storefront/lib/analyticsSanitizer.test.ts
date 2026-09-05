@@ -38,18 +38,53 @@ test("sanitizeAnalyticsEvent passes through every allowlisted key", () => {
     cart_item_count: 3,
     checkout_step: "pay",
     payment_provider: "razorpay",
+    customer_state: "returning",
+    auth_state: "authed",
+    intent: "plan_upgrade",
+    viewport_bucket: "sm",
+    payment_method: "upi",
+    failure_reason: "gateway_timeout",
   };
   assert.deepEqual(sanitizeAnalyticsEvent(full), full);
+});
+
+test("PR-11i realignment: the six new funnel dimensions pass, but PII never rides alongside them", () => {
+  const payload = {
+    event_name: "begin_checkout",
+    // the six realignment dimensions — enums / machine codes, allowed
+    customer_state: "lapsed",
+    auth_state: "anon",
+    intent: "trial_start",
+    viewport_bucket: "xs",
+    payment_method: "card",
+    failure_reason: "insufficient_funds",
+    // PII that must still be stripped even now that the list is wider
+    phone: "+919876543210",
+    pincode: "560001",
+    address: "12 MG Road, Bengaluru",
+  };
+  // deepEqual to exactly the seven allowed keys is the whole assertion: it proves
+  // the six dimensions survive AND that phone/pincode/address did not ride along.
+  assert.deepEqual(sanitizeAnalyticsEvent(payload), {
+    event_name: "begin_checkout",
+    customer_state: "lapsed",
+    auth_state: "anon",
+    intent: "trial_start",
+    viewport_bucket: "xs",
+    payment_method: "card",
+    failure_reason: "insufficient_funds",
+  });
 });
 
 test("sanitizeAnalyticsEvent on an empty payload returns an empty object, not a throw", () => {
   assert.deepEqual(sanitizeAnalyticsEvent({}), {});
 });
 
-test("the allowlist is exactly the eight documented keys — an unreviewed addition should fail this test", () => {
+test("the allowlist is exactly the fourteen documented keys — an unreviewed addition should fail this test", () => {
   assert.deepEqual(
     [...ANALYTICS_KEY_ALLOWLIST].sort(),
     [
+      // base eight
       "cart_item_count",
       "checkout_step",
       "device_type",
@@ -58,7 +93,14 @@ test("the allowlist is exactly the eight documented keys — an unreviewed addit
       "plan_id",
       "route",
       "timestamp",
-    ],
+      // PR-11i analytics realignment — six funnel dimensions (enums / machine codes)
+      "auth_state",
+      "customer_state",
+      "failure_reason",
+      "intent",
+      "payment_method",
+      "viewport_bucket",
+    ].sort(),
   );
 });
 

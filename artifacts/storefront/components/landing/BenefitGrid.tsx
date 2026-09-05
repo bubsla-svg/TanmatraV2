@@ -37,8 +37,8 @@ export function BenefitGrid({
 }) {
   return (
     <section id={id} className="scroll-mt-20 py-[var(--space-section)]">
-      {eyebrow && <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">{eyebrow}</p>}
-      <h2 className="mt-1 text-2xl font-semibold tracking-tight text-ink">{heading}</h2>
+      {eyebrow && <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">{eyebrow}</p>}
+      <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight text-primary">{heading}</h2>
       {sub && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-muted">{sub}</p>}
 
       {variant === "steps" ? (
@@ -47,11 +47,11 @@ export function BenefitGrid({
             const { number, label } = stepLabel(b.title, i);
             return (
               <li key={b.title} className="flex items-start gap-4">
-                <span className="tabular flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-sm font-semibold text-gold-text">
+                <span className="font-data flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-sm font-bold text-primary">
                   {number}
                 </span>
                 <div className="flex-1 rounded-2xl border border-line bg-surface p-5">
-                  <h3 className="text-base font-semibold text-ink">{label}</h3>
+                  <h3 className="font-display text-base font-semibold text-primary">{label}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-ink-muted">{b.body}</p>
                 </div>
               </li>
@@ -71,11 +71,11 @@ export function BenefitGrid({
               {variant === "tiles" ? (
                 <LandingIcon name={b.icon} className="h-7 w-7 text-[var(--danger)]" />
               ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--gold)_12%,transparent)] text-gold-text">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--gold)_12%,transparent)] text-primary">
                   <LandingIcon name={b.icon} className="h-5 w-5" />
                 </div>
               )}
-              <h3 className="mt-4 text-base font-semibold text-ink">{b.title}</h3>
+              <h3 className="mt-4 font-display text-base font-semibold text-primary">{b.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-ink-muted">{b.body}</p>
             </div>
           ))}

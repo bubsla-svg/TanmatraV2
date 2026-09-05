@@ -21,10 +21,10 @@ export default async function TrackPage({
   return (
     <div className="min-h-dvh">
       <section className="mx-auto flex max-w-lg flex-col items-center px-4 py-12 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-primary">
           Tracking your order
         </h1>
-        <p className="tabular mt-3 inline-block rounded-full border border-line bg-surface-raised px-3 py-1 text-xs tracking-wider text-ink-muted">
+        <p className="font-data mt-3 inline-block rounded-full border border-line bg-secondary px-3 py-1 text-xs tracking-wider text-ink-muted">
           #{orderId}
         </p>
         <div className="mt-8 w-full">

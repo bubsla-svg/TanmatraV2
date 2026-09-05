@@ -17,7 +17,7 @@ export default async function MealRecommendationsPage() {
   return (
     <div data-ui-generation="stitch-74" data-screen-id="5.10" data-screen-state="default" className="min-h-dvh flex flex-col bg-bg pb-24">
       <div className="sticky top-0 z-20 bg-bg/95 backdrop-blur-md pt-4 pb-4 px-gutter border-b border-line">
-        <h1 className="font-bold text-3xl text-ink">For You</h1>
+        <h1 className="font-display font-bold text-3xl text-primary">For You</h1>
         <p className="text-sm text-ink-muted">Dishes matching your metabolic profile</p>
       </div>
 
@@ -25,7 +25,7 @@ export default async function MealRecommendationsPage() {
         {recommendations.slice(0, 10).map(({ dish, badge, rationale }) => (
           <div key={dish.id} className="flex flex-col gap-3">
             <div className="px-1">
-              <span className="inline-block px-2 py-1 rounded-full bg-surface-raised border border-line font-bold text-3xs text-primary uppercase tracking-widest mb-1">
+              <span className="inline-block px-2 py-1 rounded-full bg-secondary border border-line font-bold text-2xs text-primary uppercase tracking-widest mb-1">
                 {badge}
               </span>
               <p className="text-xs text-ink-muted italic">{rationale}</p>

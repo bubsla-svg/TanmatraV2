@@ -86,7 +86,7 @@ export default async function CorporateWellnessPage() {
       />
 
       <section className="py-[var(--space-section)]">
-        <p className="text-3xs font-semibold uppercase tracking-widest text-ink-faint">
+        <p className="text-2xs font-semibold uppercase tracking-widest text-ink-faint">
           Where we already deliver daily
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -95,7 +95,7 @@ export default async function CorporateWellnessPage() {
               key={d}
               className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 py-2 text-xs text-ink-muted"
             >
-              <LandingIcon name="map-pin" className="h-3.5 w-3.5 text-gold-text" />
+              <LandingIcon name="map-pin" className="h-3.5 w-3.5 text-primary" />
               {d}
             </span>
           ))}
@@ -104,8 +104,8 @@ export default async function CorporateWellnessPage() {
 
       <section id="pilot-form" className="scroll-mt-20 border-t border-line py-[var(--space-section)]">
         <div className="mx-auto max-w-xl">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">Pilot pricing</p>
-          <h2 className="mt-1 text-2xl font-semibold tracking-tight text-ink">{F.heading}</h2>
+          <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Pilot pricing</p>
+          <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight text-primary">{F.heading}</h2>
           <p className="mt-2 text-sm leading-relaxed text-ink-muted">{F.blurb}</p>
           <div className="mt-8">
             <CorporateLeadForm
@@ -120,7 +120,7 @@ export default async function CorporateWellnessPage() {
       </section>
 
       <section className="border-t border-line py-[var(--space-section)]">
-        <h2 className="text-2xl font-semibold tracking-tight text-ink">What HR asks us</h2>
+        <h2 className="font-display text-2xl font-semibold tracking-tight text-primary">What HR asks us</h2>
         {/* Landers open fully collapsed (brief 14) and report faq_open. */}
         <FaqAccordion items={CORPORATE_FAQ} pageSlug="/corporate-wellness" defaultOpen={null} />
       </section>

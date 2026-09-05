@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
  * errors, button NOT disabled), submit(), 429 copy, lpEvents ordering, done
  * branch, form-level role="alert" and the wa.me link are untouched. */
 const phoneInputCls =
-  "w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none transition-colors focus-visible:border-[var(--gold)] focus-visible:ring-1 focus-visible:ring-[var(--gold)]";
+  "w-full min-h-[50px] rounded-2xl border border-line bg-surface px-4 py-3 text-base text-ink outline-none transition-colors placeholder:text-ink-faint focus-visible:border-primary";
 
 /**
  * Partner lead form (Stitch brief 17) — posts to `/partners/leads`, NOT the
@@ -110,7 +110,7 @@ export function PartnerLeadForm({
   // Only reached once the server persisted the lead.
   if (done) {
     return (
-      <div className="rounded-3xl border border-line bg-surface p-8 text-center">
+      <div className="rounded-2xl border border-line bg-surface p-8 text-center">
         <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-sage-soft text-sage-text">
           ✓
         </span>
@@ -129,7 +129,7 @@ export function PartnerLeadForm({
   const phoneErr = err("phone");
 
   return (
-    <div className="flex flex-col gap-4 rounded-3xl border border-line bg-surface p-6">
+    <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-6">
       {!lockKind && (
         <Selector
           label="You're a"
@@ -229,7 +229,7 @@ export function PartnerLeadForm({
             href={`https://wa.me/${whatsApp}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-gold-text underline underline-offset-2"
+            className="font-medium text-primary underline underline-offset-2"
           >
             WhatsApp us
           </a>

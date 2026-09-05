@@ -32,10 +32,10 @@ export default async function LegalIndexPage() {
           <li key={d.slug}>
             <Link
               href={`/legal/${d.slug}`}
-              className="flex items-center gap-4 rounded-2xl border border-line bg-surface p-5 hover:bg-surface-raised"
+              className="flex items-center gap-4 rounded-2xl border border-line bg-surface p-5 hover:bg-secondary"
             >
               <div className="min-w-0 flex-1">
-                <span className="block text-base font-semibold text-ink">{d.title}</span>
+                <span className="block font-display text-base font-semibold text-primary">{d.title}</span>
                 <span className="mt-1 block max-w-prose text-sm text-ink-muted">{d.summary}</span>
               </div>
               <ChevronRight aria-hidden className="h-5 w-5 shrink-0 text-ink-faint" />

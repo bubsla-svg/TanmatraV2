@@ -32,22 +32,22 @@ export default function HowItWorksPage() {
   return (
     <section className="mx-auto max-w-3xl px-4 py-10">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">Plans</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">How it works</h1>
+        <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Plans</p>
+        <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight text-primary">How it works</h1>
         <p className="mt-4 max-w-prose text-sm leading-relaxed text-ink-muted">
           What arrives, when it arrives, how to change a delivery, and which
           plans keep charging you.
         </p>
       </header>
 
-      <h2 className="mt-10 text-lg font-semibold text-ink">When food arrives</h2>
+      <h2 className="mt-10 font-display text-lg font-semibold text-primary">When food arrives</h2>
       <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-muted">
         Delivered {PLAN_DELIVERY_DAYS_LABEL.toLowerCase()}, {PLAN_DELIVERY_WINDOW_LABEL}. Your first
         delivery is the next weekday after you order — deliveries never land on a
         weekend.
       </p>
 
-      <h2 className="mt-10 text-lg font-semibold text-ink">Changing a delivery</h2>
+      <h2 className="mt-10 font-display text-lg font-semibold text-primary">Changing a delivery</h2>
       <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-muted">{SKIP_SWAP_SENTENCE}</p>
       <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-muted">
         After the cutoff the kitchen has already begun that meal, so it can no
@@ -55,7 +55,7 @@ export default function HowItWorksPage() {
         delivery you can still change.
       </p>
 
-      <h2 className="mt-10 text-lg font-semibold text-ink">
+      <h2 className="mt-10 font-display text-lg font-semibold text-primary">
         {mixed ? "Which plans renew — and which do not" : "Renewal"}
       </h2>
       {mixed && (
@@ -71,9 +71,9 @@ export default function HowItWorksPage() {
 
       <div className="mt-6 flex flex-col gap-5">
         {plans.map((plan) => (
-          <article key={plan.planId} className="rounded-3xl border border-line bg-surface p-5">
+          <article key={plan.planId} className="rounded-2xl border border-line bg-surface p-5">
             <div className="flex items-baseline justify-between gap-3">
-              <h3 className="text-sm font-semibold text-ink">{plan.name}</h3>
+              <h3 className="font-display text-sm font-semibold text-primary">{plan.name}</h3>
               <span className="text-xs font-medium text-ink-faint">
                 {plan.cycles.length === 1
                   ? plan.cycles[0]!.renews
@@ -106,7 +106,7 @@ export default function HowItWorksPage() {
             )}
             <Link
               href={`/plan/${plan.planId}`}
-              className="mt-3 inline-block text-sm font-medium text-gold-text underline-offset-4 hover:underline"
+              className="mt-3 inline-block text-sm font-medium text-primary underline-offset-4 hover:underline"
             >
               See {plan.name}
             </Link>
@@ -116,7 +116,7 @@ export default function HowItWorksPage() {
 
       <p className="mt-10 max-w-prose text-sm leading-relaxed text-ink-muted">
         Still deciding?{" "}
-        <Link href="/menu" className="font-medium text-gold-text underline-offset-4 hover:underline">
+        <Link href="/menu" className="font-medium text-primary underline-offset-4 hover:underline">
           Browse the menu
         </Link>{" "}
         — every dish can be ordered on its own, with no plan at all.
