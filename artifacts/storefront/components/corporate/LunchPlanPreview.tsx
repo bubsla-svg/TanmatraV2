@@ -28,12 +28,12 @@ export function LunchPlanPreview({ proposal, onSchedule, scheduling, perEmployee
     <div className="flex flex-col gap-5 rounded-2xl border border-line bg-surface p-6">
       <div className="flex flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className={`rounded-full px-2.5 py-0.5 text-2xs font-semibold ${plan.generatedBy === "ai" ? "bg-[color-mix(in_srgb,var(--gold)_14%,transparent)] text-gold-text" : "bg-sage-soft text-sage-text"}`}>
+          <span className={`rounded-full px-2.5 py-0.5 text-2xs font-semibold ${plan.generatedBy === "ai" ? "bg-[color-mix(in_srgb,var(--gold)_14%,transparent)] text-primary" : "bg-sage-soft text-sage-text"}`}>
             {plan.generatedBy === "ai" ? "AI-generated" : "Rule-based"}
           </span>
           {scheduled && <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-2xs font-semibold text-sage-text">Scheduled</span>}
         </div>
-        <h3 className="text-base font-semibold tracking-tight text-ink">Week of {dayLabel(plan.weekStartDate)}</h3>
+        <h3 className="font-display text-base font-semibold tracking-tight text-primary">Week of {dayLabel(plan.weekStartDate)}</h3>
         {plan.summary && <p className="text-sm text-ink-muted">{plan.summary}</p>}
       </div>
 
@@ -68,7 +68,7 @@ export function LunchPlanPreview({ proposal, onSchedule, scheduling, perEmployee
         </p>
       ) : (
         <div className="flex flex-col gap-2 border-t border-line pt-5">
-          <Button type="button" onClick={onSchedule} disabled={scheduling} aria-busy={scheduling} aria-live="polite" shape="xl" size="fluid" className="w-full px-5 py-3.5 font-semibold disabled:opacity-40">
+          <Button type="button" onClick={onSchedule} disabled={scheduling} aria-busy={scheduling} aria-live="polite" shape="pill" size="fluid" className="w-full px-5 py-3.5 font-semibold disabled:opacity-40">
             {scheduling ? "Scheduling…" : "Schedule this week"}
           </Button>
           <p className="text-xs text-ink-faint">Creates one office lunch per day at {hour12} {ampm}, {formatPaise(perEmployeePaise)}/person. Members pick within budget.</p>

@@ -72,8 +72,8 @@ export default function GymsPartnerPage() {
       <GymRevenueCalculator />
 
       <section className="py-[var(--space-section)]">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">Integration models</p>
-        <h2 className="mt-1 text-2xl font-semibold tracking-tight text-ink">Flexible integration models</h2>
+        <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Integration models</p>
+        <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight text-primary">Flexible integration models</h2>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-muted">
           Choose how you want to partner and scale with Tanmatra.
         </p>
@@ -83,12 +83,12 @@ export default function GymsPartnerPage() {
           {GYM_MODELS.map((m) => (
             <div
               key={m.tag}
-              className="w-[85%] shrink-0 snap-center rounded-3xl border border-line bg-surface p-6 md:w-auto"
+              className="w-[85%] shrink-0 snap-center rounded-2xl border border-line bg-surface p-6 md:w-auto"
             >
-              <span className="inline-flex rounded-full border border-[var(--gold)]/30 px-3 py-1 text-3xs font-semibold uppercase tracking-widest text-gold-text">
+              <span className="inline-flex rounded-full border border-[var(--gold)]/30 px-3 py-1 text-2xs font-semibold uppercase tracking-widest text-accent">
                 {m.tag}
               </span>
-              <h3 className="mt-4 text-lg font-semibold text-ink">{m.title}</h3>
+              <h3 className="mt-4 font-display text-lg font-semibold text-primary">{m.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-ink-muted">{m.body}</p>
               <ul className="mt-5 flex flex-col gap-2 text-sm text-ink">
                 {m.points.map((p) => (
@@ -104,13 +104,13 @@ export default function GymsPartnerPage() {
       </section>
 
       <section className="border-t border-line py-[var(--space-section)]">
-        <h2 className="text-2xl font-semibold tracking-tight text-ink">Frequently asked questions</h2>
+        <h2 className="font-display text-2xl font-semibold tracking-tight text-primary">Frequently asked questions</h2>
         <FaqAccordion pageSlug="/partners/gyms" items={FAQ_ITEMS} defaultOpen={null} />
       </section>
 
       <section id="lead-form" className="scroll-mt-20 border-t border-line py-[var(--space-section)]">
         <div className="mx-auto max-w-xl">
-          <h2 className="text-2xl font-semibold tracking-tight text-ink">{L.form.heading}</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight text-primary">{L.form.heading}</h2>
           <p className="mt-2 text-sm leading-relaxed text-ink-muted">{L.form.blurb}</p>
           <div className="mt-8">
             <PartnerLeadForm

@@ -98,11 +98,11 @@ export function PartnerWizard() {
   // Confirmed by the server — the only path that reaches this panel.
   if (submitted) {
     return (
-      <div className="rounded-3xl border border-line bg-surface p-8 text-center">
+      <div className="rounded-2xl border border-line bg-surface p-8 text-center">
         <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-sage-soft text-lg text-sage-text">
           ✓
         </span>
-        <h2 className="mt-6 text-xl font-semibold tracking-tight text-ink">Application received</h2>
+        <h2 className="mt-6 text-xl font-display font-semibold tracking-tight text-primary">Application received</h2>
         <p className="mt-2 text-sm leading-relaxed text-ink-muted">
           Thanks, {submitted.fullName}. Our clinical governance team reviews credentials and will contact
           you at {submitted.email}.
@@ -112,7 +112,7 @@ export function PartnerWizard() {
             The padded RD- form is the same lookup key support needs, presented
             as a reference. (A server-issued opaque ref would be better still —
             that's an API change, out of this surface's reach.) */}
-        <p className="tabular mt-4 text-3xs font-semibold uppercase tracking-widest text-ink-faint">
+        <p className="font-data mt-4 text-2xs font-semibold uppercase tracking-widest text-ink-faint">
           Application reference RD-{String(submitted.id).padStart(5, "0")}
         </p>
       </div>
@@ -135,8 +135,8 @@ export function PartnerWizard() {
                 />
                 <span
                   aria-current={current ? "step" : undefined}
-                  className={`text-3xs font-semibold uppercase tracking-widest ${
-                    current ? "text-gold-text" : done ? "text-ink-muted" : "text-ink-faint"
+                  className={`text-2xs font-semibold uppercase tracking-widest ${
+                    current ? "text-primary" : done ? "text-ink-muted" : "text-ink-faint"
                   }`}
                 >
                   {s.label}
@@ -155,9 +155,9 @@ export function PartnerWizard() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-3xl border border-line bg-surface">
+      <div className="overflow-hidden rounded-2xl border border-line bg-surface">
         <div className="flex flex-col gap-8 p-6 md:p-8">
-          <h2 className="text-xl font-semibold tracking-tight text-ink">{RD_WIZARD_STEPS[step]?.heading}</h2>
+          <h2 className="text-xl font-display font-semibold tracking-tight text-primary">{RD_WIZARD_STEPS[step]?.heading}</h2>
           <WizardStepBody
             step={step}
             draft={draft}
@@ -187,7 +187,7 @@ export function PartnerWizard() {
             onClick={() => void (step === LAST_STEP ? submit() : next())}
             shape="pill"
             size="fluid"
-            className="order-1 w-full px-8 py-4 text-3xs font-semibold uppercase tracking-widest disabled:opacity-40 sm:order-2 sm:w-auto"
+            className="order-1 w-full px-8 py-4 text-2xs font-semibold uppercase tracking-widest disabled:opacity-40 sm:order-2 sm:w-auto"
           >
             {busy ? "Submitting…" : step === LAST_STEP ? "Submit application" : "Continue"}
           </Button>

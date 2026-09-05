@@ -61,12 +61,12 @@ export function SpecSheetCard({ spec, onFlipBack }: SpecSheetCardProps) {
     <article className="flex flex-col overflow-hidden rounded-lg border border-line bg-surface p-4 shadow-[var(--shadow-card)]">
       <div className="flex items-center justify-between border-b border-line pb-3">
         <div className="flex flex-col">
-          <span className="text-xs font-semibold uppercase tracking-wider text-gold-text">
+          <span className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">
             Clinical Spec Sheet
           </span>
-          <h3 className="text-base font-semibold text-ink">{spec.name}</h3>
+          <h3 className="font-display text-base font-semibold text-primary">{spec.name}</h3>
         </div>
-        <span className="tabular text-sm font-semibold text-ink">
+        <span className="font-data text-sm font-bold text-primary">
           {formatPaise(spec.price)}
         </span>
       </div>
@@ -77,7 +77,7 @@ export function SpecSheetCard({ spec, onFlipBack }: SpecSheetCardProps) {
             the honest state, and it reappears by itself the day the catalog
             carries real GI data. */}
         {spec.giClass && (
-          <div className="flex items-center justify-between rounded-md border border-line bg-surface-raised p-2">
+          <div className="flex items-center justify-between rounded-md border border-line bg-secondary p-2">
             <span className="font-semibold text-ink-muted">Glycemic Index</span>
             <span className="font-semibold text-ink">{spec.giClass}</span>
           </div>
@@ -85,20 +85,20 @@ export function SpecSheetCard({ spec, onFlipBack }: SpecSheetCardProps) {
 
         <div className="grid grid-cols-4 gap-1 rounded-md border border-line bg-surface p-2 text-center">
           <div className="flex flex-col">
-            <span className="text-3xs text-ink-faint">KCAL</span>
-            <span className="font-semibold text-ink">{est}{spec.macros.calories}</span>
+            <span className="text-2xs text-ink-faint">KCAL</span>
+            <span className="font-data font-semibold text-ink">{est}{spec.macros.calories}</span>
           </div>
           <div className="flex flex-col border-l border-line">
-            <span className="text-3xs text-ink-faint">PRO</span>
-            <span className="font-semibold text-ink">{est}{spec.macros.protein}g</span>
+            <span className="text-2xs text-ink-faint">PRO</span>
+            <span className="font-data font-semibold text-ink">{est}{spec.macros.protein}g</span>
           </div>
           <div className="flex flex-col border-l border-line">
-            <span className="text-3xs text-ink-faint">CARB</span>
-            <span className="font-semibold text-ink">{est}{spec.macros.carbs}g</span>
+            <span className="text-2xs text-ink-faint">CARB</span>
+            <span className="font-data font-semibold text-ink">{est}{spec.macros.carbs}g</span>
           </div>
           <div className="flex flex-col border-l border-line">
-            <span className="text-3xs text-ink-faint">FAT</span>
-            <span className="font-semibold text-ink">{est}{spec.macros.fat}g</span>
+            <span className="text-2xs text-ink-faint">FAT</span>
+            <span className="font-data font-semibold text-ink">{est}{spec.macros.fat}g</span>
           </div>
         </div>
 
@@ -106,11 +106,11 @@ export function SpecSheetCard({ spec, onFlipBack }: SpecSheetCardProps) {
             explicitly `false`, so an unknown verification status rendered as
             "Verified" — the one direction a trust badge must never guess. */}
         {showRdBlock && (
-          <div className="flex flex-col gap-1 rounded-md border border-line bg-surface-raised p-2">
+          <div className="flex flex-col gap-1 rounded-md border border-line bg-secondary p-2">
             <div className="flex items-center gap-1.5">
               <span className="text-2xs font-semibold text-ink">RD Protocol Verification</span>
               {spec.rdVerified === true && (
-                <span className="rounded border border-line bg-surface px-1.5 py-0.5 text-3xs font-semibold text-ink-muted">
+                <span className="rounded border border-line bg-surface px-1.5 py-0.5 text-2xs font-semibold text-ink-muted">
                   Verified
                 </span>
               )}

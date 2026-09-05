@@ -6,7 +6,7 @@
 import type { ReactNode } from "react";
 
 const controlCls =
-  "w-full rounded-xl border bg-bg px-4 py-4 text-base text-ink outline-none transition-colors focus-visible:border-[var(--gold)]";
+  "w-full min-h-[50px] rounded-2xl border bg-surface px-4 py-3 text-base text-ink outline-none transition-colors placeholder:text-ink-faint focus-visible:border-primary";
 
 /** Caps label + optional inline error, wrapped around any control. */
 export function Field({
@@ -28,13 +28,13 @@ export function Field({
       <div className="flex items-end justify-between gap-3">
         <label
           htmlFor={htmlFor}
-          className={`text-3xs font-semibold uppercase tracking-widest ${
+          className={`text-2xs font-semibold uppercase tracking-widest ${
             error ? "text-[var(--danger)]" : "text-ink-faint"
           }`}
         >
           {label}
         </label>
-        {hint && <span className="tabular text-3xs text-ink-faint">{hint}</span>}
+        {hint && <span className="font-data text-2xs text-ink-faint">{hint}</span>}
       </div>
       {children}
       {error && (
@@ -83,7 +83,7 @@ export function TextField({
       placeholder={placeholder}
       aria-invalid={invalid || undefined}
       className={`${controlCls} ${invalid ? "border-[var(--danger)]" : "border-line"} ${
-        type === "number" || inputMode === "numeric" ? "tabular" : ""
+        type === "number" || inputMode === "numeric" ? "font-data" : ""
       }`}
     />
   );
@@ -193,8 +193,8 @@ export function ChipCloud({
               onClick={() => onToggle(o)}
               className={`rounded-full border px-4 py-2 text-xs transition-colors ${
                 on
-                  ? "border-[var(--gold)] bg-[color-mix(in_srgb,var(--gold)_10%,transparent)] text-gold-text"
-                  : "border-line text-ink-muted hover:border-line-strong"
+                  ? "border-gold bg-primary/10 text-primary"
+                  : "border-transparent bg-secondary text-ink-muted"
               }`}
             >
               {o}

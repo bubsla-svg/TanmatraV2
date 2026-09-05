@@ -32,14 +32,14 @@ export function LandingHero({
   return (
     <header className="border-b border-line py-[var(--space-section)]">
       {image && (
-        <div className="mb-8 ml-auto h-56 w-[90%] overflow-hidden rounded-3xl border border-line sm:h-72">
+        <div className="mb-8 ml-auto h-56 w-[90%] overflow-hidden rounded-2xl border border-line sm:h-72">
           {/* The one above-the-fold hero on a lander — eager + high priority. */}
           <SafeImage src={image.src} alt={image.alt} priority className="h-full w-full" />
         </div>
       )}
-      <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">{hero.eyebrow}</p>
-      <h1 className="mt-3 max-w-3xl pr-4 text-3xl font-semibold leading-tight tracking-tight text-ink sm:pr-8 sm:text-4xl">
-        {hero.title} <span className="text-gold-text">{hero.accent}</span>
+      <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">{hero.eyebrow}</p>
+      <h1 className="mt-3 max-w-3xl pr-4 font-display text-3xl font-semibold leading-tight tracking-tight text-primary sm:pr-8 sm:text-4xl">
+        {hero.title} <span className="text-primary">{hero.accent}</span>
       </h1>
       <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-muted">{hero.subtitle}</p>
       <div className="mt-8 flex flex-wrap items-center gap-3">

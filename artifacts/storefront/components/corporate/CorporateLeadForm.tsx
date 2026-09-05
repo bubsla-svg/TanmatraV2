@@ -34,7 +34,7 @@ const KINDS: { id: CorporateLeadKind; label: string }[] = [
 const emailOk = (e: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e.trim());
 
 const phoneInputCls =
-  "w-full rounded-xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none transition-colors focus-visible:border-[var(--gold)] focus-visible:ring-1 focus-visible:ring-[var(--gold)]";
+  "w-full min-h-[50px] rounded-2xl border border-line bg-surface px-4 py-3 text-base text-ink outline-none transition-colors placeholder:text-ink-faint focus-visible:border-primary";
 
 export interface CorporateLeadFormProps {
   /** Pre-select the segment (a landing page implies its own kind). */
@@ -229,7 +229,7 @@ export function CorporateLeadForm({
             href={`https://wa.me/${whatsApp}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-gold-text underline underline-offset-2"
+            className="font-medium text-primary underline underline-offset-2"
           >
             WhatsApp us
           </a>

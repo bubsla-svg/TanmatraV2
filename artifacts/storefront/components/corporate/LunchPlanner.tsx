@@ -73,7 +73,7 @@ export function LunchPlanner({ slug }: { slug: string }) {
     return (
       <div className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-6">
         <p className="text-sm text-ink-muted">Couldn&rsquo;t load the lunch planner. Please try again.</p>
-        <button type="button" onClick={() => void plannerQuery.refetch()} className="shrink-0 text-sm font-semibold text-gold-text hover:underline">Try again</button>
+        <button type="button" onClick={() => void plannerQuery.refetch()} className="shrink-0 text-sm font-semibold text-primary hover:underline">Try again</button>
       </div>
     );
   }
@@ -89,14 +89,14 @@ export function LunchPlanner({ slug }: { slug: string }) {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <Link href={`/corporate/${slug}`} className="text-sm font-medium text-gold-text hover:underline">&larr; Company workspace</Link>
-        <h1 className="mt-2 text-xl font-semibold tracking-tight text-ink">Lunch planner</h1>
+        <Link href={`/corporate/${slug}`} className="text-sm font-medium text-primary hover:underline">&larr; Company workspace</Link>
+        <h1 className="mt-2 font-display text-xl font-semibold tracking-tight text-primary">Lunch planner</h1>
         <p className="mt-1 text-sm text-ink-muted">Set your team&rsquo;s diet profile, generate a week of lunches, then schedule them for the office.</p>
       </div>
 
       <section className="flex flex-col gap-4">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight text-ink">1 &middot; Team diet profile</h2>
+          <h2 className="font-display text-lg font-semibold tracking-tight text-primary">1 &middot; Team diet profile</h2>
           <p className="mt-0.5 text-sm text-ink-muted">Drives which dishes the planner may pick.</p>
         </div>
         <DietProfileForm
@@ -111,10 +111,10 @@ export function LunchPlanner({ slug }: { slug: string }) {
       <section className="flex flex-col gap-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight text-ink">2 &middot; Weekly plan</h2>
+            <h2 className="font-display text-lg font-semibold tracking-tight text-primary">2 &middot; Weekly plan</h2>
             <p className="mt-0.5 text-sm text-ink-muted">Generated against the saved profile.</p>
           </div>
-          <Button type="button" onClick={() => generateMutation.mutate()} disabled={!profile || saveMutation.isPending || generateMutation.isPending || scheduleMutation.isPending} aria-busy={generateMutation.isPending} aria-live="polite" shape="xl" size="fluid" className="shrink-0 px-4 py-2 font-semibold disabled:opacity-40">
+          <Button type="button" onClick={() => generateMutation.mutate()} disabled={!profile || saveMutation.isPending || generateMutation.isPending || scheduleMutation.isPending} aria-busy={generateMutation.isPending} aria-live="polite" shape="pill" size="fluid" className="shrink-0 px-4 py-2 font-semibold disabled:opacity-40">
             {generateMutation.isPending ? "Generating…" : proposal ? "Regenerate" : "Generate plan"}
           </Button>
         </div>

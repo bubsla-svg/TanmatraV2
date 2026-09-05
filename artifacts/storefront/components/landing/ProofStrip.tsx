@@ -31,7 +31,7 @@ export function ProofStrip({ items, heading }: ProofStripProps) {
           {items.map((item, idx) => (
             <div key={`${item.label}-${idx}`} className="flex flex-col items-center text-center">
               {item.icon && (
-                <div className="mb-2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface-subtle text-sage">
+                <div className="mb-2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-secondary text-sage">
                   <LandingIcon name={item.icon} className="h-5 w-5" />
                 </div>
               )}

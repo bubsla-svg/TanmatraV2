@@ -38,9 +38,9 @@ export function CompanyInvite({ token }: { token: string }) {
 
   if (needsAuth) {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-3xl border border-line bg-surface p-8 text-center">
+      <div className="flex flex-col items-center gap-4 rounded-2xl border border-line bg-surface p-8 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full border border-line bg-surface">
-          <Building2 className="h-7 w-7 text-gold-text" strokeWidth={1.75} />
+          <Building2 className="h-7 w-7 text-primary" strokeWidth={1.75} />
         </div>
         <p className="text-sm text-ink-muted">Sign in to accept this invite.</p>
         <PhoneAuth startExpanded onVerified={() => void accept()} />
@@ -52,7 +52,7 @@ export function CompanyInvite({ token }: { token: string }) {
     return (
       <div className="flex flex-col items-center gap-4 py-16 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full border border-line bg-surface">
-          <Building2 className="h-7 w-7 text-gold-text" strokeWidth={1.75} />
+          <Building2 className="h-7 w-7 text-primary" strokeWidth={1.75} />
         </div>
         <p className="text-sm text-ink-muted">Fetching your invitation…</p>
       </div>
@@ -65,20 +65,20 @@ export function CompanyInvite({ token }: { token: string }) {
     // 500 — is transient and gets a retry, not a dead end.
     const notFound = inviteQuery.error instanceof ApiError && inviteQuery.error.status === 404;
     return (
-      <div className="flex flex-col items-center gap-2 rounded-3xl border border-line bg-surface p-8 text-center">
+      <div className="flex flex-col items-center gap-2 rounded-2xl border border-line bg-surface p-8 text-center">
         <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-full border border-line bg-surface">
           <Building2 className="h-7 w-7 text-ink-faint" strokeWidth={1.75} />
         </div>
-        <h1 className="text-base font-semibold text-ink">{notFound ? "Invite unavailable" : "Couldn't load this invite"}</h1>
+        <h1 className="font-display text-base font-semibold text-primary">{notFound ? "Invite unavailable" : "Couldn't load this invite"}</h1>
         <p className="text-sm text-ink-muted">
           {notFound
             ? "This link may have expired or already been used. Ask your company admin for a fresh invite."
             : "Something went wrong loading this invite. Please try again."}
         </p>
         {notFound ? (
-          <Link href="/corporate-wellness" className="mt-2 inline-block text-sm font-medium text-gold-text hover:underline">Back to Corporate</Link>
+          <Link href="/corporate-wellness" className="mt-2 inline-block text-sm font-medium text-primary hover:underline">Back to Corporate</Link>
         ) : (
-          <button type="button" onClick={() => void inviteQuery.refetch()} className="mt-2 text-sm font-medium text-gold-text hover:underline">Try again</button>
+          <button type="button" onClick={() => void inviteQuery.refetch()} className="mt-2 text-sm font-medium text-primary hover:underline">Try again</button>
         )}
       </div>
     );
@@ -87,16 +87,16 @@ export function CompanyInvite({ token }: { token: string }) {
   const { invite, company } = inviteQuery.data;
 
   return (
-    <div className="flex flex-col items-center rounded-3xl border border-line bg-surface p-8 text-center">
+    <div className="flex flex-col items-center rounded-2xl border border-line bg-surface p-8 text-center">
       <div className="flex h-16 w-16 items-center justify-center rounded-full border border-line bg-surface">
-        <Building2 className="h-7 w-7 text-gold-text" strokeWidth={1.75} />
+        <Building2 className="h-7 w-7 text-primary" strokeWidth={1.75} />
       </div>
-      <h1 className="mt-5 text-xl font-semibold tracking-tight text-ink">{company?.name ?? "Company meal program"}</h1>
+      <h1 className="mt-5 font-display text-xl font-semibold tracking-tight text-primary">{company?.name ?? "Company meal program"}</h1>
       <p className="mt-2 text-sm text-ink-muted">
         You&rsquo;ve been invited as a{invite.role === "admin" ? "n" : ""} <span className="font-medium text-ink">{invite.role}</span>. Accept to start using the company meal program.
       </p>
 
-      <div className="mt-6 w-full rounded-2xl border border-line bg-surface-raised p-4 text-left">
+      <div className="mt-6 w-full rounded-2xl border border-line bg-secondary p-4 text-left">
         <p className="text-2xs font-semibold uppercase tracking-wide text-ink-faint">Invitation for</p>
         <p className="mt-1 text-sm text-ink">{invite.email}</p>
       </div>
