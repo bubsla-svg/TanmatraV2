@@ -20,7 +20,7 @@ export function WellnessHub() {
         <button
           type="button"
           onClick={() => setActiveTab("precision")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-2 min-h-11 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "precision"
               ? "border border-gold bg-primary/10 text-primary"
               : "border border-transparent bg-secondary text-ink-muted hover:text-primary"
@@ -33,7 +33,7 @@ export function WellnessHub() {
         <button
           type="button"
           onClick={() => setActiveTab("blood_ocr")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-2 min-h-11 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "blood_ocr"
               ? "border border-gold bg-primary/10 text-primary"
               : "border border-transparent bg-secondary text-ink-muted hover:text-primary"
@@ -46,7 +46,7 @@ export function WellnessHub() {
         <button
           type="button"
           onClick={() => setActiveTab("pantry_vision")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-2 min-h-11 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "pantry_vision"
               ? "border border-gold bg-primary/10 text-primary"
               : "border border-transparent bg-secondary text-ink-muted hover:text-primary"
@@ -59,7 +59,7 @@ export function WellnessHub() {
         <button
           type="button"
           onClick={() => setActiveTab("hydration")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-2 min-h-11 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "hydration"
               ? "border border-gold bg-primary/10 text-primary"
               : "border border-transparent bg-secondary text-ink-muted hover:text-primary"
@@ -72,7 +72,7 @@ export function WellnessHub() {
         <button
           type="button"
           onClick={() => setActiveTab("leaderboard")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-2 min-h-11 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "leaderboard"
               ? "border border-gold bg-primary/10 text-primary"
               : "border border-transparent bg-secondary text-ink-muted hover:text-primary"
@@ -85,7 +85,7 @@ export function WellnessHub() {
         <button
           type="button"
           onClick={() => setActiveTab("nutrition")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+          className={`flex items-center gap-2 min-h-11 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "nutrition"
               ? "border border-gold bg-primary/10 text-primary"
               : "border border-transparent bg-secondary text-ink-muted hover:text-primary"
