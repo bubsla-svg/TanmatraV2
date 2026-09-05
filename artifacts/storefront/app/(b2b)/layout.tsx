@@ -21,27 +21,27 @@ export default function B2BLayout({
   return (
     <>
       <header className="sticky top-0 z-10 border-b border-line bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+        <div className="mx-auto flex min-h-14 max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2">
           <Link
             href="/"
             aria-label="Tanmatra home"
-            className="text-lg font-semibold tracking-tight text-ink"
+            className="shrink-0 whitespace-nowrap text-lg font-semibold tracking-tight text-ink"
           >
             {SITE.brand}
             <span className="ml-2 text-xs font-medium uppercase tracking-wide text-ink-muted">
               For business
             </span>
           </Link>
-          <nav aria-label="Business" className="flex items-center gap-4 text-sm">
-            <Link href="/corporate-wellness" className="text-ink-muted hover:text-ink">
+          <nav aria-label="Business" className="ml-auto flex min-w-0 items-center gap-3 text-sm">
+            <Link href="/corporate-wellness" className="inline-flex min-h-11 items-center px-1 text-ink-muted hover:text-ink">
               Corporate
             </Link>
-            <Link href="/rd-partners" className="text-ink-muted hover:text-ink">
+            <Link href="/rd-partners" className="inline-flex min-h-11 items-center px-1 text-ink-muted hover:text-ink">
               Partners
             </Link>
             <Link
               href="/menu"
-              className="rounded-full border border-line px-3 py-1.5 font-medium text-ink hover:bg-surface-raised"
+              className="inline-flex min-h-11 items-center whitespace-nowrap rounded-full border border-line px-3 py-1.5 font-medium text-ink hover:bg-secondary"
             >
               Explore meals
             </Link>

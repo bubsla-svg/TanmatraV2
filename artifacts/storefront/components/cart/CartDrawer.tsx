@@ -125,7 +125,14 @@ export function CartDrawer({
               <span aria-hidden className="text-xl leading-none">✕</span>
             </DrawerClose>
           </div>
-          <ul className="mt-3 flex-1 divide-y divide-line overflow-y-auto overscroll-contain">
+          {/* One scroll region for the order lines AND the upsell rail. The
+              rail used to sit below the list as a non-shrinkable sibling, so
+              on a short viewport the flex algorithm starved the customer's own
+              lines to a sliver to fit three recommendations — the orders are
+              the content, the rail is decoration, so the rail scrolls after
+              them and the subtotal/Checkout footer stays pinned. */}
+          <div className="mt-3 min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <ul className="divide-y divide-line">
             {cart.lines.map((l) => (
               <li key={`${l.kind}-${l.dishId}-${(l.customizations ?? []).join("|")}`} className="flex items-start justify-between gap-3 py-3">
                 {/* `items-start`, not `items-center`: once the name is allowed
@@ -212,6 +219,7 @@ export function CartDrawer({
               );
             }}
           />
+          </div>
           <div className="mt-3 border-t border-line pt-3">
             {/* N5.2 — the fee is disclosed HERE, while quantities are still
                 being decided, not sprung on the pay screen. Every number is
