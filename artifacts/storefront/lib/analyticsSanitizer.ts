@@ -28,6 +28,15 @@ export const ANALYTICS_KEY_ALLOWLIST = new Set([
   "cart_item_count",
   "checkout_step",
   "payment_provider",
+  // PR-11i analytics realignment (brief §"Analytics realignment"): six funnel
+  // dimensions, each a coarse enum / machine code — never free text and never a
+  // phone, pincode, or address. `failure_reason` is a server machine code only.
+  "customer_state",
+  "auth_state",
+  "intent",
+  "viewport_bucket",
+  "payment_method",
+  "failure_reason",
 ]);
 
 /** Strips every property not on the allowlist. Never throws — a malformed or
