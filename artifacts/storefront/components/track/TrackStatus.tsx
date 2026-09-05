@@ -59,14 +59,14 @@ export function TrackStatus({ externalOrderId }: { externalOrderId: string }) {
     return (
       <div
         aria-hidden
-        className="h-56 w-full animate-pulse rounded-3xl border border-line bg-surface-raised"
+        className="h-56 w-full animate-pulse rounded-2xl border border-line bg-secondary"
       />
     );
   }
 
   if (result.kind === "not_found") {
     return (
-      <div role="status" className="rounded-3xl border border-line bg-surface p-6 text-center">
+      <div role="status" className="rounded-2xl border border-line bg-surface p-6 text-center">
         <p className="text-sm font-semibold text-ink">We can&rsquo;t find that order.</p>
         <p className="mt-1 text-sm text-ink-muted">
           Check the link from your confirmation — order IDs are case-sensitive.
@@ -77,7 +77,7 @@ export function TrackStatus({ externalOrderId }: { externalOrderId: string }) {
 
   if (result.kind === "unavailable") {
     return (
-      <div role="status" className="rounded-3xl border border-line bg-surface p-6 text-center">
+      <div role="status" className="rounded-2xl border border-line bg-surface p-6 text-center">
         <p className="text-sm font-semibold text-ink">
           Live tracking is unreachable right now.
         </p>
@@ -101,7 +101,7 @@ export function TrackStatus({ externalOrderId }: { externalOrderId: string }) {
   return (
     <div
       aria-live="polite"
-      className={`relative flex flex-col items-center gap-6 overflow-hidden rounded-3xl border border-line bg-surface p-8 text-center shadow-[var(--shadow-card)] ${
+      className={`relative flex flex-col items-center gap-6 overflow-hidden rounded-2xl border border-line bg-surface p-8 text-center shadow-[var(--shadow-card)] ${
         tone === "failed" ? "opacity-70" : ""
       }`}
     >
@@ -113,7 +113,7 @@ export function TrackStatus({ externalOrderId }: { externalOrderId: string }) {
         />
       )}
       <p
-        className={`relative z-10 inline-flex items-center gap-2 rounded-full border border-line bg-surface-raised px-4 py-2 text-xs font-semibold uppercase tracking-widest ${TONE_TEXT[tone]}`}
+        className={`relative z-10 inline-flex items-center gap-2 rounded-full border border-line bg-secondary px-4 py-2 text-xs font-semibold uppercase tracking-widest ${TONE_TEXT[tone]}`}
       >
         {tone === "live" && (
           <span aria-hidden className="relative flex h-2.5 w-2.5">
@@ -126,7 +126,7 @@ export function TrackStatus({ externalOrderId }: { externalOrderId: string }) {
       {trackable && timing === "on_demand" && (
         <div className="relative z-10 flex flex-col items-center gap-1">
           <span className="text-sm text-ink-muted">Estimated arrival in</span>
-          <span className="tabular flex items-baseline gap-1.5 text-5xl font-semibold leading-none text-ink">
+          <span className="flex items-baseline gap-1.5 font-data text-5xl font-bold leading-none text-primary">
             {etaMinutes}
             <span className="text-xs font-semibold uppercase tracking-widest text-ink-muted">
               min
@@ -137,11 +137,11 @@ export function TrackStatus({ externalOrderId }: { externalOrderId: string }) {
       {trackable && timing === "scheduled" && (
         <div className="relative z-10 flex flex-col items-center gap-1">
           <span className="text-sm text-ink-muted">Scheduled for</span>
-          <span className="text-2xl font-semibold leading-tight text-ink">
+          <span className="font-display text-2xl font-semibold leading-tight text-primary">
             {scheduledLabel}
           </span>
           {deliveryWindow && (
-            <span className="tabular text-sm text-ink-muted">{deliveryWindow}</span>
+            <span className="font-data text-sm text-ink-muted">{deliveryWindow}</span>
           )}
         </div>
       )}

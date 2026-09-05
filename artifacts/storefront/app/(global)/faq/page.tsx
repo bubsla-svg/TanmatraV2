@@ -28,8 +28,8 @@ export default function FaqPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       <header>
-        <p className="text-xs font-semibold uppercase tracking-wide text-gold-text">Help centre</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">
+        <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Help centre</p>
+        <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight text-primary">
           Frequently asked questions
         </h1>
         <p className="mt-4 max-w-prose text-sm leading-relaxed text-ink-muted">
@@ -46,7 +46,7 @@ export default function FaqPage() {
         </div>
         <Link
           href="/rd"
-          className="shrink-0 rounded-full border border-line px-6 py-2.5 text-sm font-semibold text-gold-text transition-opacity hover:opacity-80"
+          className="shrink-0 rounded-full border border-line px-6 py-2.5 text-sm font-semibold text-primary transition-opacity hover:opacity-80"
         >
           Talk to an RD
         </Link>
