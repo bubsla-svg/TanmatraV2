@@ -5,6 +5,7 @@
 // see lib/themes/stitch.css.
 import "@/lib/themes/stitch.css";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { addLine, qtyOf, setQty, subtotalPaise } from "@/lib/cartStore";
 import { QuantityStepper } from "@/components/primitives/QuantityStepper";
 import { formatMacroLine, formatPaise } from "@/lib/format";
@@ -16,7 +17,9 @@ import Link from "next/link";
 import { Drawer, DrawerClose, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 import { CartUpsellRail } from "./CartUpsellRail";
-import type { MarketplaceItem } from "@/lib/marketplaceApi";
+import { RAIL_GAP_PX, useUpsellRailFit } from "./useUpsellRailFit";
+import { listItems, type MarketplaceItem } from "@/lib/marketplaceApi";
+import { selectUpsellItems } from "@/lib/upsell";
 
 /**
  * Cart as a bottom sheet (§4.3). Line items with in-place steppers; the
@@ -85,6 +88,35 @@ export function CartDrawer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, dishKey]);
 
+  // Upsell candidates — the REAL catalog, same query key as MarketplaceGrid
+  // (one cache entry serves both surfaces), fetched only while the sheet is
+  // open: this component is mounted on every page. Selection rules (in-cart
+  // exclusion, stock gating, max 3) live in lib/upsell.ts. A failed fetch
+  // simply means no rail — decoration must not add noise where the customer
+  // is about to pay. Nothing here gates the money path.
+  const { data: catalog } = useQuery({
+    queryKey: ["marketplace", "items"],
+    queryFn: () => listItems(),
+    staleTime: 5 * 60_000,
+    retry: 1,
+    enabled: open,
+  });
+  const upsell = selectUpsellItems(catalog?.items ?? [], cart.lines);
+
+  // Where the rail sits under the order is measured, not assumed (see
+  // useUpsellRailFit): 0 extra padding when it fits in view, else enough to
+  // start it at the fold — never cut, never a pixel taken from the order.
+  const regionRef = useRef<HTMLDivElement>(null);
+  const orderRef = useRef<HTMLUListElement>(null);
+  const railRef = useRef<HTMLDivElement>(null);
+  const railSpacerPx = useUpsellRailFit(
+    regionRef,
+    orderRef,
+    railRef,
+    open,
+    `${hydrated}:${cart.lines.length}:${upsell.length}`,
+  );
+
   let footer: ReactNode;
   if (LIVE_CHECKOUT_ENABLED) {
     footer = (
@@ -129,10 +161,11 @@ export function CartDrawer({
               rail used to sit below the list as a non-shrinkable sibling, so
               on a short viewport the flex algorithm starved the customer's own
               lines to a sliver to fit three recommendations — the orders are
-              the content, the rail is decoration, so the rail scrolls after
-              them and the subtotal/Checkout footer stays pinned. */}
-          <div className="mt-3 min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          <ul className="divide-y divide-line">
+              the content, the rail is decoration, so the order renders first,
+              the rail after it (whole, or wholly below the fold — measured),
+              and the subtotal/Checkout footer stays pinned. */}
+          <div ref={regionRef} className="mt-3 min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <ul ref={orderRef} className="divide-y divide-line">
             {cart.lines.map((l) => (
               <li key={`${l.kind}-${l.dishId}-${(l.customizations ?? []).join("|")}`} className="flex items-start justify-between gap-3 py-3">
                 {/* `items-start`, not `items-center`: once the name is allowed
@@ -204,21 +237,26 @@ export function CartDrawer({
           </ul>
           {/* Real catalog items, same line shape as MarketplaceGrid's add —
               ids/slugs/prices all resolve server-side (the rail used to add
-              invented items checkout could only dead-end on). */}
-          <CartUpsellRail
-            cartLines={cart.lines}
-            onAdd={(item: MarketplaceItem) => {
-              setCart(
-                addLine(cart, {
-                  dishId: item.id,
-                  kind: "marketplace",
-                  slug: item.slug,
-                  name: item.name,
-                  pricePaise: item.pricePaise,
-                })
-              );
-            }}
-          />
+              invented items checkout could only dead-end on). The wrapper's
+              top padding is the rail's gap plus the measured spacer. */}
+          {upsell.length > 0 && (
+            <div ref={railRef} style={{ paddingTop: RAIL_GAP_PX + railSpacerPx }}>
+              <CartUpsellRail
+                items={upsell}
+                onAdd={(item: MarketplaceItem) => {
+                  setCart(
+                    addLine(cart, {
+                      dishId: item.id,
+                      kind: "marketplace",
+                      slug: item.slug,
+                      name: item.name,
+                      pricePaise: item.pricePaise,
+                    })
+                  );
+                }}
+              />
+            </div>
+          )}
           </div>
           <div className="mt-3 border-t border-line pt-3">
             {/* N5.2 — the fee is disclosed HERE, while quantities are still
