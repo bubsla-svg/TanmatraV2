@@ -53,7 +53,7 @@ export default async function MealGuidePage({ params }: { params: Promise<{ dish
             <div className="rounded-2xl border border-line bg-surface p-4">
               <h4 className="font-bold text-2xs text-primary uppercase tracking-widest mb-1">Blood Sugar Impact</h4>
               <p className="text-sm text-ink-muted leading-relaxed">
-                Formulated with {dish.macros?.fiber ?? 0}g of dietary fiber to blunt insulin spikes. Best consumed during peak metabolic windows (12 PM - 3 PM).
+                Formulated with {dish.macros?.fiber ?? 0}g of dietary fiber to blunt insulin spikes.
               </p>
             </div>
             <div className="rounded-2xl border border-line bg-surface p-4">

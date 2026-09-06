@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { getRds } from "@/lib/rdApi";
+import { RD_SERVICES_ENABLED } from "@/lib/flags";
 import { RdCard } from "@/components/rd/RdCard";
 
 export const metadata: Metadata = {
@@ -13,6 +15,9 @@ export const revalidate = 3600;
 /** `/rd` — RD directory (route-parity Wave D, read-only). Server-fetched grid.
  *  Booking + payment is a separate, checkpoint-gated slice. */
 export default async function RdDirectoryPage() {
+  // RD services are off until a dietitian is on board (lib/flags.ts). The
+  // route stays in the tree; with the flag off it is simply not a page.
+  if (!RD_SERVICES_ENABLED) notFound();
   const rds = await getRds();
   return (
     <section

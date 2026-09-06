@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const SECTIONS = [
   { href: "/account/subscriptions", label: "Plans", sub: "Your active metabolic protocols" },
   { href: "/account/orders", label: "Orders", sub: "History and clinical summaries" },
-  { href: "/account/appointments", label: "Consults", sub: "Dietitian video and chat sessions" },
+  { href: "/account/appointments", label: "Consults", sub: "Video and chat sessions" },
   { href: "/account/addresses", label: "Addresses", sub: "Delivery locations" },
   { href: "/account/billing", label: "Billing", sub: "Credit ledger and wallet balance" },
   { href: "/account/preferences", label: "Preferences", sub: "Dietary and clinical filters" },

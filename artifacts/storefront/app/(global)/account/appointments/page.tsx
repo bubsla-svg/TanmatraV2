@@ -17,7 +17,7 @@ export default function AppointmentsPage() {
       <AccountNav active="appointments" />
       <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">Your consultations</h1>
       <p className="mt-2 mb-6 text-sm text-ink-muted">
-        Your scheduled advisory video sessions and chat consultations with Registered Dietitians.
+        Your scheduled advisory video sessions and chat consultations.
       </p>
       <AppointmentsList />
     </section>

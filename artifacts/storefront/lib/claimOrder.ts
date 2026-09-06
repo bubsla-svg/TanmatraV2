@@ -77,7 +77,7 @@ export function claimRefusalCopy(code: ClaimCode): string {
     case "owned_by_other":
       return "This order is already saved to another account. Sign in with the number used at checkout to see it.";
     case "unprovable":
-      return "This order was placed without a contact number, so we can't match it to an account. Our support team can link it for you.";
+      return "This order was placed without a contact number, so we can't match it to an account. Message us on WhatsApp and we can link it for you.";
     case "unknown_order":
       return "We can't find that order. Open it from the link in your confirmation message.";
     case "claimable":

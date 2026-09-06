@@ -78,30 +78,30 @@ export const PROTOCOL_CONFIG: Record<ProtocolKey, ProtocolConfig> = {
   clinical: {
     metaTitle: "Clinical Nutrition Protocol | Tanmatra",
     metaDescription:
-      "RD-supervised, low-GI therapeutic meals with published nutrition on every dish. The clinical thinking comes from your registered dietitian, in a free 15-minute consult.",
+      "Low-GI, sugar-capped meals with published nutrition on every dish, so you can check them against the targets your own doctor set.",
     eyebrow: "Clinical Protocol",
     headline: "Therapeutic nutrition,",
-    accent: "RD-supervised.",
-    desc: "Low-GI, sugar-capped, controlled-sodium meals — built to measurable specs and RD-signed before dispatch, with the numbers published on every dish. What the numbers mean for you is a conversation with a registered dietitian; the first 15 minutes are free.",
+    accent: "measured, not claimed.",
+    desc: "Low-GI, sugar-capped, controlled-sodium meals — built to measurable specs, with the numbers published on every dish. What they mean for you is a conversation with your own doctor — take the labels along.",
     pillars: [
       {
         icon: "scale",
         title: "Built to measurable specs",
-        body: "Low-GI carbs, capped sugar and controlled sodium — the specs are printed on every label, RD-signed before it leaves the kitchen.",
+        body: "Low-GI carbs, capped sugar and controlled sodium — the specs are printed on every label before it leaves the kitchen.",
       },
       {
         icon: "clipboard",
         title: "Care-team friendly",
-        body: "Weekly plans and per-dish nutrition labels you can share with your doctor or dietitian.",
+        body: "Weekly plans and per-dish nutrition labels you can hand to whoever looks after your care.",
       },
       {
         icon: "shield-check",
         title: "Claims we can measure",
-        body: "Diet-descriptive, measurable claims only — no outcome promises. The clinical thinking rides on your RD consult, not the food.",
+        body: "Diet-descriptive, measurable claims only — no outcome promises. We publish what is on the plate; the clinical thinking stays with your own doctor.",
       },
     ],
     featuredLabel: "Lowest-sugar clinical picks",
-    featuredSub: "RD-verified, low-GI dishes that pass the Clinical criteria, sorted by lowest sugar per serving.",
+    featuredSub: "Low-GI dishes that pass the Clinical criteria, sorted by lowest sugar per serving.",
     planId: "steady",
     filter: "clinical",
     rdKeywords: ["diabet", "pcos", "cardio", "cholesterol", "clinical", "ibs", "gut"],
@@ -110,11 +110,11 @@ export const PROTOCOL_CONFIG: Record<ProtocolKey, ProtocolConfig> = {
   wellness: {
     metaTitle: "Wellness Protocol — Preventive, Everyday Nutrition | Tanmatra",
     metaDescription:
-      "Preventive, longevity-leaning meals — high-fibre, low-GI, and gentle on sodium and sugar. RD-portioned for daily energy and gut health, with published nutrition on every dish.",
+      "Preventive, longevity-leaning meals — high-fibre, low-GI, and gentle on sodium and sugar. Portioned for daily energy and gut health, with published nutrition on every dish.",
     eyebrow: "Wellness Protocol",
     headline: "Preventive nutrition for",
     accent: "everyday vitality.",
-    desc: "Balanced, RD-portioned meals for daily energy and gut health — high-fibre, low-glycaemic, and gentle on sodium and sugar, with the numbers published on every dish.",
+    desc: "Balanced, portion-controlled meals for daily energy and gut health — high-fibre, low-glycaemic, and gentle on sodium and sugar, with the numbers published on every dish.",
     pillars: [
       {
         icon: "shield-check",

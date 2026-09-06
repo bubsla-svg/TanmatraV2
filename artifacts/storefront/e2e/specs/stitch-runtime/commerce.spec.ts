@@ -191,7 +191,7 @@ test.describe("stitch-runtime: commerce (5.x)", () => {
 
   fullStack("5.12 recipe library is wired", async ({ page }) => {
     await page.goto("/recipes");
-    await expect(page.getByRole("heading", { name: "Clinical Recipes", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Recipes", exact: true })).toBeVisible();
     // Primary action "Open recipe": at least one recipe card link.
     await expect(page.locator('a[href^="/recipes/"]').first()).toBeVisible();
     await expect(marker(page, "5.12", "default")).toBeVisible();

@@ -46,14 +46,14 @@ export interface CareConfig {
 
 export const CARE_CONFIG: Record<CareCondition, CareConfig> = {
   pcos: {
-    metaTitle: "Hormone-Aware Meals, Designed by RDs | Tanmatra Care",
+    metaTitle: "Hormone-Aware Meals — The Numbers, Published | Tanmatra Care",
     metaDescription:
-      "A low-GI, anti-inflammatory, fibre-forward menu designed by registered dietitians, plus a free 15-minute RD intro consult. Published nutrition on every dish, delivered hot across Noida.",
+      "A low-GI, anti-inflammatory, fibre-forward menu with published nutrition on every dish, so you can check it against your own targets. Delivered hot across Noida.",
     conditionLabel: "PCOS",
     protocolLabel: "Hormone-aware menu",
-    heroTitle: "Hormone-aware meals, designed by RDs — not influencers.",
+    heroTitle: "Hormone-aware meals. The numbers, not the claims.",
     heroSub:
-      "A low-GI, anti-inflammatory, fibre-and-omega-3-forward menu built by registered dietitians — with the numbers published on every dish. The clinical thinking comes from your RD, in a free 15-minute consult.",
+      "A low-GI, anti-inflammatory, fibre-and-omega-3-forward menu, with the numbers published on every dish. What they mean for you is a conversation with your own doctor — take the labels along.",
     planId: "steady",
     capsBody:
       "Low-GI carbs, a 100g/day protein floor, magnesium-rich greens and omega-3 sources — the low-GI rotation is built to those specs and each plate’s numbers are printed on its label.",
@@ -63,12 +63,12 @@ export const CARE_CONFIG: Record<CareCondition, CareConfig> = {
   diabetes: {
     metaTitle: "Low-GI, Sugar-Conscious Meals — Measured, Not Marketed | Tanmatra Care",
     metaDescription:
-      "Published GI bands, carbs and sugar on every dish, with meals held to measured caps — and a free 15-minute consult with a registered dietitian. Delivered hot across Noida.",
+      "Published GI bands, carbs and sugar on every dish, with meals held to measured caps. Delivered hot across Noida.",
     conditionLabel: "Diabetes",
     protocolLabel: "Sugar-conscious menu",
     heroTitle: "Low-GI, measured — not marketed.",
     heroSub:
-      "Low-GI here means the FSSAI-defined band, and we publish each dish’s GI band, carbs and sugar per serving. What the numbers mean for you is a conversation with a registered dietitian — the first 15 minutes are free.",
+      "Low-GI here means the FSSAI-defined band, and we publish each dish’s GI band, carbs and sugar per serving. What the numbers mean for you is a conversation with your own doctor — take the labels along.",
     planId: "steady",
     capsBody:
       "The sugar-conscious rotation holds every meal to ≤45g carbs and ≤8g sugar, pairs protein with fibre on each plate, and prints GI band, carbs and sugar per serving on the label.",
@@ -83,18 +83,18 @@ export const CARE_CONFIG: Record<CareCondition, CareConfig> = {
 export const PROTOCOL_STEPS: LandingBenefit[] = [
   {
     icon: "clipboard",
-    title: "1 · RD intake",
-    body: "A free 15-minute intro consult: your history, routines, preferences, allergens — and your labs, if you’d like to share them.",
+    title: "1 · Tell us your preferences",
+    body: "Your routine, what you like, what you avoid, and every allergen we need to keep off your plate.",
   },
   {
     icon: "check",
     title: "2 · A personalised low-GI plan",
-    body: "Your RD assembles a weekly rotation from the program and calibrates portions to the targets you agree on together.",
+    body: "We assemble a weekly rotation from the program and size the portions to the targets you set.",
   },
   {
     icon: "users",
     title: "3 · Weekly adjustments",
-    body: "Check in through your RD chat. The plan adjusts week by week as your routine, appetite and priorities change.",
+    body: "Tell us what worked and what did not. The plan adjusts week by week as your routine, appetite and priorities change.",
   },
 ];
 
@@ -118,6 +118,6 @@ export const CARE_SAFETY = {
 };
 
 export const CARE_CLOSE = {
-  headline: "Start with a conversation, not a cart.",
-  body: "Fifteen free minutes with a registered dietitian — or try three days of the menu first and bring the labels to your next appointment.",
+  headline: "Start with three days, not a commitment.",
+  body: "Try three days of the menu, then take the labels to your next appointment.",
 };

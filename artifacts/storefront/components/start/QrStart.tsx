@@ -10,7 +10,7 @@ import { emitFunnel } from "@/lib/funnel";
 import { formatPaise } from "@/lib/format";
 import { formatDeliveryDate } from "@/lib/deliveryCutoff";
 import { recallDiet, rememberDiet } from "@/lib/dietMemory";
-import { nextWeekdayISO, PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
+import { nextWeekdayISO } from "@/lib/planCheckout";
 import {
   checkServiceability,
   loadServiceabilityState,
@@ -116,7 +116,7 @@ export function QrStart({ pricePaise }: { pricePaise: number }) {
             We deliver to <span className="font-data tabular">{state.pincode}</span>
           </p>
           <p className="tabular mt-1 text-xs text-ink-muted">
-            {earliest ? `Earliest box: ${earliest}, ${PLAN_DELIVERY_WINDOW_LABEL}` : null}
+            {earliest ? `Earliest box: ${earliest}` : null}
           </p>
           <button
             type="button"

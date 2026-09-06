@@ -24,7 +24,6 @@ import { planOfferDishes } from "./planOffer";
 import {
   PLAN_DELIVERY_DAYS_LABEL,
   PLAN_DELIVERY_WINDOW,
-  PLAN_DELIVERY_WINDOW_LABEL,
   nextWeekdayISO,
 } from "./planCheckout";
 
@@ -115,26 +114,24 @@ test("the sample is deterministic", () => {
   assert.deepEqual(a, b);
 });
 
-test("the window shown is the window booked", () => {
-  // Three surfaces had hand-typed "12:30–1:30" beside a constant reading
-  // "12:30–13:30". They agreed by luck. The label is derived now, so the two
-  // cannot part company.
-  const [from, to] = PLAN_DELIVERY_WINDOW.split(/[–-]/);
-  assert.ok(from && to);
-  assert.match(PLAN_DELIVERY_WINDOW_LABEL, new RegExp(from.replace(":", ":")));
-  const [toH = "0", toM = "00"] = to.split(":");
-  const to12 = Number(toH) % 12 === 0 ? 12 : Number(toH) % 12;
-  assert.match(
-    PLAN_DELIVERY_WINDOW_LABEL,
-    new RegExp(`${to12}:${toM}`),
-    "the closing time must survive the 12-hour rendering",
+test("the booked window is booking data only — nothing renders it", () => {
+  // It used to be BOTH: `PLAN_DELIVERY_WINDOW` went into the subscription input
+  // and a derived 12-hour label went onto eight surfaces. The label is gone
+  // (owner, 2026-09-06 — no clock-time promise), the booking is not: the server
+  // still needs a window to schedule against, so the constant stays.
+  assert.match(PLAN_DELIVERY_WINDOW, /^\d{1,2}:\d{2}[–-]\d{1,2}:\d{2}$/);
+  const src = fs.readFileSync(path.join(HERE, "planCheckout.ts"), "utf8");
+  assert.doesNotMatch(
+    src,
+    /PLAN_DELIVERY_WINDOW_LABEL/,
+    "a customer-facing form of the window is exactly what was removed — do not re-derive one",
   );
-  assert.match(PLAN_DELIVERY_WINDOW_LABEL, /pm|am/, "a 12-hour time without a suffix is ambiguous");
 });
 
-test("no customer surface hand-types the delivery window", () => {
-  // The three that did agreed with the booked constant by luck. This is the
-  // guard that keeps them agreeing on purpose.
+test("no customer surface states a delivery time", () => {
+  // Was: a guard that three surfaces hand-typing "12:30–1:30" agreed with the
+  // booked constant. The rule is stricter now — no surface may state a delivery
+  // clock time at all, derived or typed.
   const roots = [path.join(HERE, "..", "components"), path.join(HERE, "..", "app")];
   const offenders: string[] = [];
   const walk = (dir: string) => {
@@ -147,15 +144,18 @@ test("no customer surface hand-types the delivery window", () => {
       }
       if (!entry.name.endsWith(".tsx")) continue;
       const src = fs.readFileSync(full, "utf8");
-      // Any clock range in the plan's delivery hours, however it is punctuated.
-      if (/12:30\s*(&ndash;|–|-)\s*1?:?\d/.test(src)) offenders.push(path.relative(HERE, full));
+      // Any clock range in the plan's delivery hours, however it is punctuated,
+      // and any re-import of the label that used to render one.
+      if (/12:30\s*(&ndash;|–|-)\s*1?:?\d/.test(src) || /PLAN_DELIVERY_WINDOW_LABEL/.test(src)) {
+        offenders.push(path.relative(HERE, full));
+      }
     }
   };
   for (const r of roots) walk(r);
   assert.deepEqual(
     offenders,
     [],
-    `import PLAN_DELIVERY_WINDOW_LABEL instead of typing the window: ${offenders.join(", ")}`,
+    `state the delivery DAYS, never a time: ${offenders.join(", ")}`,
   );
 });
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PLAN_DELIVERY_DAYS_SENTENCE, PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
+import { PLAN_DELIVERY_DAYS_SENTENCE } from "@/lib/planCheckout";
 import { bookablePlans, renewalIsMixed, SKIP_SWAP_SENTENCE } from "@/lib/howItWorks";
 
 export const metadata: Metadata = {
@@ -40,7 +40,7 @@ export default function HowItWorksPage() {
 
       <h2 className="mt-10 font-display text-lg font-semibold text-primary">When food arrives</h2>
       <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-muted">
-        Delivered {PLAN_DELIVERY_DAYS_SENTENCE}, {PLAN_DELIVERY_WINDOW_LABEL}. Your first
+        Delivered {PLAN_DELIVERY_DAYS_SENTENCE}. Your first
         delivery is the next weekday after you order — deliveries never land on a
         weekend.
       </p>

@@ -8,10 +8,10 @@ import { formatPaise } from "@/lib/format";
 import { planDisplay, planQuoteView } from "@/lib/plans";
 import { planAllowsAddOn, addOnView } from "@/lib/addons";
 import { emitFunnel } from "@/lib/funnel";
-import { PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
 import { planValueAnchor } from "@/lib/planValueAnchor";
 import { Button } from "@/components/ui/button";
 import { OrderBump } from "./OrderBump";
+import { RD_SERVICES_ENABLED } from "@/lib/flags";
 import type { PlanId, DietTrack, PlanCycle } from "@workspace/subscription-rules";
 import type { PlanBuilderData } from "@/lib/plans";
 import { Leaf, Egg, Bone, Check } from "lucide-react";
@@ -92,7 +92,9 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
   // The RD bump is the only upsell here (02d stage 4), offered only where the
   // plan permits it. RD identity is blocked on #3, so OrderBump renders the
   // honest generic offer — no fabricated name/face.
-  const canBump = planAllowsAddOn(planId, "rd_bump");
+  // Gated, not deleted: `rd_bump` is a priced spine entry and the offer is a
+  // PAID service. It is not offered while no dietitian is on board.
+  const canBump = RD_SERVICES_ENABLED && planAllowsAddOn(planId, "rd_bump");
   const rdBump = addOnView("rd_bump");
   const total = (currentQuote?.cycleTotalPaise ?? 0) + (bump ? rdBump.pricePaise : 0);
 
@@ -122,7 +124,7 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
         {/* Plan name is now the page's FocusHeader h1 (app/(focus)/plan/[planId]/page.tsx) —
             this used to duplicate it as a second h1. */}
         <p className="mt-1 text-sm text-ink-muted">
-          {currentQuote.mealsPerCycle} lunches a {cycle === "weekly" ? "week" : cycle === "quarterly" ? "quarter" : "month"} · delivered {PLAN_DELIVERY_WINDOW_LABEL} · pause or skip anytime
+          {currentQuote.mealsPerCycle} lunches a {cycle === "weekly" ? "week" : cycle === "quarterly" ? "quarter" : "month"} · delivered on weekdays · pause or skip anytime
         </p>
       </div>
 

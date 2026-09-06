@@ -15,7 +15,7 @@ test("safety_block with the production unchecked_allergens reason gets real copy
   ] as unknown as string[]);
   const msg = humanizeOrderError(e);
   assert.ok(!msg.includes("Safety block"), `raw server string leaked: ${msg}`);
-  assert.match(msg, /allergen information hasn't been verified/);
+  assert.match(msg, /allergen information hasn't been checked/);
   assert.match(msg, /Remove the affected dish/);
 });
 

@@ -1,5 +1,8 @@
 "use client"; // Hands the Disclosure primitive its faq_open analytics callback
 
+// The cutoff is a business rule, not copy: this FAQ used to promise "before
+// 9:00 PM the night before", a clock time the system never enforced.
+import { SKIP_SWAP_CUTOFF_HOURS } from "@/lib/planDecisionFacts";
 import { emitLpEvent } from "@/lib/lpEvents";
 import { Disclosure } from "@/components/primitives/Disclosure";
 
@@ -20,7 +23,7 @@ export function Section10FaqAccordion() {
     },
     {
       question: "Can I change my plan or pause deliveries?",
-      answer: "Yes, you can switch between Veg, Egg, and Non-Veg options or pause deliveries anytime before 9:00 PM the night before.",
+      answer: `Yes — switch between Veg, Egg and Non-Veg, or pause a delivery up to ${SKIP_SWAP_CUTOFF_HOURS} hours before it arrives.`,
     },
     {
       question: "Where do you deliver?",

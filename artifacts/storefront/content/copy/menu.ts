@@ -1,7 +1,7 @@
 export const menuCopy = {
   header: {
     title: "Clinical Meal Protocols",
-    subtitle: "Nutritionist-designed meals tailored for metabolic health and clinical goals.",
+    subtitle: "Meals built around your goals, with the numbers published on every dish.",
   },
   filters: {
     all: "All Meals",

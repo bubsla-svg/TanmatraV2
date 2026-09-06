@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { PartnerWizard } from "@/components/rd-partners/PartnerWizard";
+import { RD_SERVICES_ENABLED } from "@/lib/flags";
 
 export const metadata: Metadata = {
   title: "Apply for Clinical Partnership",
@@ -10,6 +12,9 @@ export const metadata: Metadata = {
  *  640px column with the header above the stepper. Everything below the header,
  *  including step state, belongs to the PartnerWizard island. */
 export default function RdPartnersApplyPage() {
+  // RD services are off until a dietitian is on board (lib/flags.ts). The
+  // route stays in the tree; with the flag off it is simply not a page.
+  if (!RD_SERVICES_ENABLED) notFound();
   return (
     <section className="mx-auto flex max-w-[640px] flex-col gap-10 px-4 py-[var(--space-section)]">
       <header className="flex flex-col gap-2 text-center">

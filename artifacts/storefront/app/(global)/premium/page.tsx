@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { RD_SERVICES_ENABLED } from "@/lib/flags";
 import { PremiumMembership } from "@/components/premium/PremiumMembership";
 import { LandingIcon } from "@/components/landing/LandingIcon";
 import type { LandingIconName } from "@/content/landing/partners";
@@ -6,7 +7,7 @@ import type { LandingIconName } from "@/content/landing/partners";
 export const metadata: Metadata = {
   title: "Premium",
   description:
-    "One membership unlocks priority delivery, a monthly RD consult, premium-only dishes and exclusive pantry drops.",
+    "One membership unlocks priority delivery, premium-only dishes and exclusive pantry drops.",
   alternates: { canonical: "/premium" },
 };
 
@@ -15,9 +16,13 @@ export const metadata: Metadata = {
 // storefront — see BATCH-9-BRIEFS.md Brief 56 for why it isn't the imported
 // component itself (its section padding is tuned for full landing sections,
 // not this narrower account/money shell).
+// The monthly consult is listed only while RD services are on (lib/flags.ts):
+// selling a membership on a consult nobody can deliver is the claim, not the copy.
 const BENEFITS: { title: string; body: string; icon: LandingIconName }[] = [
   { icon: "timer", title: "Priority delivery", body: "Your orders jump the kitchen queue and ship in our first rider wave — a kitchen-queue benefit, not a delivery-time guarantee." },
-  { icon: "clipboard", title: "1 free RD consult / month", body: "A 30-minute video session with a registered dietitian — included every billing period." },
+  ...(RD_SERVICES_ENABLED
+    ? [{ icon: "clipboard" as LandingIconName, title: "1 free consult / month", body: "A 30-minute video session with a registered dietitian — included every billing period." }]
+    : []),
   { icon: "fork-knife", title: "Premium-only meals", body: "Chef-table dishes reserved for members, unlocked across the menu." },
   { icon: "coffee", title: "Exclusive add-ons", body: "Marine collagen, chef-curated tonics, and limited pantry drops in your checkout add-on rail." },
 ];
@@ -31,9 +36,9 @@ export default function PremiumPage() {
   return (
     <section className="mx-auto max-w-lg px-4 py-10">
       <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Tanmatra Premium</p>
-      <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-primary">Eat better, recover faster, get expert guidance.</h1>
+      <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-primary">Eat better, every weekday.</h1>
       <p className="mt-2 text-sm text-ink-muted">
-        One membership unlocks priority delivery, a monthly RD consult, premium-only dishes and exclusive pantry drops.
+        One membership unlocks priority delivery, premium-only dishes and exclusive pantry drops.
       </p>
 
       <div className="mt-6">
@@ -54,8 +59,7 @@ export default function PremiumPage() {
       </div>
 
       <p className="mt-6 text-xs leading-relaxed text-ink-faint">
-        Premium is operated directly by Tanmatra. RD consults are conducted by registered dietitians on our care team.
-        Priority delivery is a kitchen-queue benefit — not a delivery-time guarantee. Cancel anytime from your account.
+        Premium is operated directly by Tanmatra. Priority delivery is a kitchen-queue benefit — not a delivery-time guarantee. Cancel anytime from your account.
       </p>
     </section>
   );

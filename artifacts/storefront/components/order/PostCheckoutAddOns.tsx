@@ -24,7 +24,7 @@ const AVAILABLE_ADDONS: AddOnItem[] = [
   {
     view: addOnView("evening_add"),
     title: "Evening Companion Drop",
-    description: "Light soup & salad delivered at 6:30 PM",
+    description: "Light soup & salad, delivered in the evening",
   },
 ];
 

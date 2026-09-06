@@ -29,32 +29,15 @@ export const PLAN_DELIVERY_DAYS_LABEL = "Weekdays, Monday to Friday";
  */
 export const PLAN_DELIVERY_DAYS_SENTENCE = "weekdays, Monday to Friday";
 
-function to12Hour(hhmm: string): { time: string; suffix: "am" | "pm" } {
-  const [rawH = "0", rawM = "00"] = hhmm.trim().split(":");
-  const h = Number(rawH);
-  const suffix = h >= 12 ? "pm" : "am";
-  const h12 = h % 12 === 0 ? 12 : h % 12;
-  return { time: `${h12}:${rawM}`, suffix };
-}
-
 /**
- * The delivery window in the 12-hour form customers read, DERIVED from the same
- * constant `buildSubscriptionInput` books the delivery with.
- *
- * Three surfaces had hand-typed "12:30–1:30" beside a constant reading
- * "12:30–13:30". They agreed by luck. Deriving it means a change to the booked
- * window cannot leave a promise behind that we no longer keep.
+ * NO DELIVERY TIME IS RENDERED (owner, 2026-09-06). `PLAN_DELIVERY_WINDOW` is
+ * BOOKING DATA — `buildSubscriptionInput` writes it into `deliveryWindow` so the
+ * server schedules against a real window — and it is deliberately the only form
+ * of it left. The derived 12-hour label eight surfaces used to print
+ * ("12:30–1:30 pm") is gone: the storefront no longer promises a clock time it
+ * cannot keep for every address. Do not re-derive one here; planOffer.test.ts
+ * fails the build on any surface that states a delivery time.
  */
-export const PLAN_DELIVERY_WINDOW_LABEL = (() => {
-  const [from = "", to = ""] = PLAN_DELIVERY_WINDOW.split(/[–-]/);
-  const a = to12Hour(from);
-  const b = to12Hour(to);
-  // "12:30–1:30 pm" when both ends share a half of the day; both suffixes
-  // otherwise, since "9:30–1:30 pm" would read as a four-hour window.
-  return a.suffix === b.suffix
-    ? `${a.time}–${b.time} ${b.suffix}`
-    : `${a.time} ${a.suffix}–${b.time} ${b.suffix}`;
-})();
 
 /**
  * The eater's diet, from the track they already chose (Law 4).

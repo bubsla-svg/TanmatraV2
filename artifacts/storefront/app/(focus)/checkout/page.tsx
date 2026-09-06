@@ -8,6 +8,7 @@ import {
   type PlanId,
 } from "@workspace/subscription-rules";
 import { planDisplay, planQuoteView } from "@/lib/plans";
+import { RD_SERVICES_ENABLED } from "@/lib/flags";
 import { fetchMenu } from "@/lib/catalog";
 import { planOfferDishes, type PlanOfferDish } from "@/lib/planOffer";
 import { buildSharedMacroKeys } from "@/lib/dishTrust";
@@ -104,7 +105,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
     // an absent or unrecognised value falls back to monthly, the builder's
     // own default, never a guess.
     const requestedCadence = asBuilderCycle(cycle);
-    const withRdBump = bump === "1" && planAllowsAddOn(id, "rd_bump");
+    const withRdBump = RD_SERVICES_ENABLED && bump === "1" && planAllowsAddOn(id, "rd_bump");
     // N5.11: the sign-in gate used to be a bare phone field in empty canvas —
     // the customer was asked for their number before being reminded what they
     // were buying. This recap is the SPINE's list quote for the exact
@@ -210,7 +211,9 @@ export default async function CheckoutPage({ searchParams }: Props) {
   const afterCredit = credit === "1" && !isTrial ? planTotalAfterCredit(base) : base;
   const creditPaise = base - afterCredit;
 
-  const applyBump = bump === "1" && planAllowsAddOn(id, "rd_bump");
+  // The builder no longer offers the bump, but a `?bump=1` link already sent
+  // or bookmarked would still attach a paid dietitian. Same flag, both ends.
+  const applyBump = RD_SERVICES_ENABLED && bump === "1" && planAllowsAddOn(id, "rd_bump");
   const bumpPaise = applyBump ? addOnView("rd_bump").pricePaise : 0;
   const total = afterCredit + bumpPaise;
 

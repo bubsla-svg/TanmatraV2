@@ -61,7 +61,7 @@ export const BUNDLE_SPECS: BundleSpec[] = [
     id: "low-gi-balance-5d",
     title: "5-Day Low-GI Balance",
     badge: "Low GI only",
-    desc: "Five strictly low-glycaemic lunches — the clinical end of the menu, RD-reviewed.",
+    desc: "Five strictly low-glycaemic lunches — the low-GI end of the menu.",
     mealCount: 5,
     rule: "low_gi",
   },

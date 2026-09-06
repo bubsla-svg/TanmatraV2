@@ -10,6 +10,12 @@ import { collectErrors } from "../fixtures";
  * isn't "#" or javascript:, exactly one h1 exists, and the rails are
  * keyboard-operable (native <a> elements inside a scroll container — no
  * custom widget needing its own key handling).
+ *
+ * The by-condition half of the ruled hierarchy is behind
+ * CARE_BY_CONDITION_ENABLED and OFF by default (consumer copy deck), so the
+ * expectations below are the flag-off page: header, goal rail, and the two
+ * commerce entries. The dead-control and single-h1 probes are unchanged —
+ * they are properties of the page in either state.
  */
 
 test("every card on /care navigates — zero dead controls", async ({ page }) => {
@@ -35,26 +41,30 @@ test("exactly one h1 on /care", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Care", level: 1 })).toBeVisible();
 });
 
-test("the ruled hierarchy is present: goal rail, condition rail, and all four named entries", async ({ page }) => {
+test("the flag-off hierarchy: goal rail and both commerce entries, no condition surface", async ({ page }) => {
   await page.goto("/care");
   await expect(page.getByRole("heading", { name: "By goal", exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "By condition", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Find my starting point" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Explore plans" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Try Tanmatra" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Clinical support" })).toBeVisible();
 });
 
-test("the assessment entry has no ?condition= param from the index (unlike the per-condition page)", async ({ page }) => {
+test("no condition name, assessment entry or clinical-support link is rendered while the flag is off", async ({ page }) => {
   await page.goto("/care");
-  await expect(page.getByRole("link", { name: "Find my starting point" })).toHaveAttribute("href", "/quick-setup");
+  await expect(page.getByRole("heading", { name: "By condition", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Find my starting point" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Clinical support" })).toHaveCount(0);
+  // The condition names themselves, not just the rail that framed them.
+  const body = await page.locator("body").innerText();
+  for (const name of ["PCOS", "Diabetes", "Prediabetes", "Hypertension", "Insulin Resistance", "GERD"]) {
+    expect(body, `"${name}" is still rendered on /care`).not.toContain(name);
+  }
 });
 
 test("rails are keyboard-operable — native links reachable and activatable by keyboard", async ({ page }) => {
   await page.goto("/care");
-  const firstConditionCard = page.getByRole("link", { name: "PCOS" });
-  await firstConditionCard.focus();
-  await expect(firstConditionCard).toBeFocused();
+  const explorePlans = page.getByRole("link", { name: "Explore plans" });
+  await explorePlans.focus();
+  await expect(explorePlans).toBeFocused();
   await page.keyboard.press("Enter");
-  await expect(page).toHaveURL(/\/care\/pcos$/);
+  await expect(page).toHaveURL(/\/plans$/);
 });

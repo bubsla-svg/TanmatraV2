@@ -24,15 +24,15 @@ import type { FaqItem } from "@/content/faq";
 export const METABOLIC_META = {
   title: "Metabolic Meal Programs — Fat Loss & Lean Muscle | Tanmatra",
   description:
-    "RD-reviewed fat-loss and muscle-gain meal programs for Noida professionals. Published macros on every dish, fired after you order, delivered hot in 40–45 minutes.",
+    "Fat-loss and muscle-gain meal programs for Noida professionals. Published macros on every dish, fired after you order and delivered hot.",
 };
 
 export const METABOLIC_HERO = {
-  eyebrow: "Noida tech corridor · fresh-fired · 40–45 min",
+  eyebrow: "Noida tech corridor · fresh-fired",
   title: "Your macros, engineered.",
-  accent: "Your lunch, in 45 minutes.",
+  accent: "Your lunch, fired to order.",
   subtitle:
-    "Two RD-reviewed programs — low-GI Steady and high-protein Protein Build — designed by dietitians and fired in our ISO 22000:2018 kitchen only after you order.",
+    "Two programs — low-GI Steady and high-protein Protein Build — cooked in our ISO 22000:2018 kitchen only after you order.",
 };
 
 export type GoalId = "fat_loss" | "muscle_gain";
@@ -94,7 +94,7 @@ export const PAIN_CARDS: LandingBenefit[] = [
 export const METABOLIC_FAQ: FaqItem[] = [
   {
     q: "How do you verify macros?",
-    a: "Every dish ships with a per-dish nutrition label. Macros are ingredient-derived, lab-informed estimates reviewed by our RD team — and when a value is provisional, we label it provisional.",
+    a: "Every dish ships with a per-dish nutrition label. Macros are ingredient-derived, lab-informed estimates — and when a value is provisional, we label it provisional.",
   },
   {
     q: "Can I switch between fat loss and muscle gain?",
@@ -102,10 +102,10 @@ export const METABOLIC_FAQ: FaqItem[] = [
   },
   {
     q: "Are there vegetarian options?",
-    a: "Most programs offer veg, egg, and non-veg tracks — the plan builder shows each plan’s available tracks before you commit. Ask a dietitian for a veg-first variant designed around you.",
+    a: "Most programs offer veg, egg, and non-veg tracks — the plan builder shows each plan’s available tracks before you commit.",
   },
   {
     q: "When do meals arrive?",
-    a: "Fired in our Sector 104 kitchen only after you order, sealed hot, and delivered in about 40–45 minutes inside our Noida service zones — never a morning cold-drop.",
+    a: "Fired in our Sector 104 kitchen only after you order, sealed hot, and brought straight to you inside our Noida service zones — never a morning cold-drop.",
   },
 ];

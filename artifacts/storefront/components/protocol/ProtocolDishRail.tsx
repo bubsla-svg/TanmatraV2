@@ -87,7 +87,7 @@ export function ProtocolDishRail({
                   </span>
                   {d.rdVerified && (
                     <span className="rounded-full bg-sage-soft px-2.5 py-1 text-2xs font-bold text-sage-text backdrop-blur-sm">
-                      RD-verified
+                      Nutrition checked
                     </span>
                   )}
                 </div>

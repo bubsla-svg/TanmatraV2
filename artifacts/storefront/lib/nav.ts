@@ -50,9 +50,11 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     // Two-tier IA: the core plan actions (choose a plan / start a trial) sit up
-    // top; the five goal- & condition-specific landers — all entry points into
-    // the same catalog (they each map to a real PlanId) — are grouped under one
-    // sub-section so a large group reads as a short list, not a flat pile.
+    // top; the goal-specific landers — all entry points into the same catalog
+    // (they each map to a real PlanId) — are grouped under one sub-section so a
+    // large group reads as a short list, not a flat pile. The two by-condition
+    // landers (/care/pcos, /care/diabetes) left this list with the by-condition
+    // surface (consumer copy deck); they return with CARE_BY_CONDITION_ENABLED.
     key: "plan",
     label: "Plan",
     href: "/plans",
@@ -67,14 +69,16 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Quick start", href: "/quick-setup", desc: "Set up in three steps" },
       { label: "Recommended for you", href: "/meal-recommendations", desc: "Dishes matched to your goal" },
       { label: "Combos", href: "/meal-deals", desc: "Meal combos, priced together" },
-      { label: "Metabolic programs", href: "/metabolic", desc: "Fat-loss & lean-muscle programs", section: "By goal & condition" },
-      { label: "PCOS care", href: "/care/pcos", desc: "Hormone-aware, low-GI menu", section: "By goal & condition" },
-      { label: "Diabetes care", href: "/care/diabetes", desc: "Sugar-conscious, low-GI menu", section: "By goal & condition" },
-      { label: "Performance protocol", href: "/performance", desc: "High-protein, recovery-tuned", section: "By goal & condition" },
-      { label: "Clinical protocol", href: "/clinical", desc: "RD-supervised, low-GI therapeutic", section: "By goal & condition" },
+      { label: "Metabolic programs", href: "/metabolic", desc: "Fat-loss & lean-muscle programs", section: "By goal" },
+      { label: "Performance protocol", href: "/performance", desc: "High-protein, recovery-tuned", section: "By goal" },
+      { label: "Clinical protocol", href: "/clinical", desc: "Low-GI, sugar-capped, measured", section: "By goal" },
     ],
   },
   {
+    // "Our dietitians" (/rd) left this list with the RD services flag: the
+    // route 404s while it is off, and a nav entry into a 404 is worse than no
+    // entry. It comes back with RD_SERVICES_ENABLED, as does the partner
+    // network below.
     key: "track",
     label: "Track",
     href: "/account/orders",
@@ -87,7 +91,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Nutrition tracker", href: "/account/wellness", desc: "Log food & water, track streaks" },
       { label: "Meal planner", href: "/meal-planner", desc: "Plan & swap your week" },
       { label: "Nutrition coach", href: "/coach", desc: "Chat with an AI nutrition coach" },
-      { label: "Our dietitians", href: "/rd", desc: "Meet the registered dietitians" },
     ],
   },
   {
@@ -96,11 +99,10 @@ export const NAV_GROUPS: NavGroup[] = [
     href: "/recipes",
     links: [
       { label: "Recipes", href: "/recipes", desc: "Macro-labelled" },
-      { label: "Community Q&A forum", href: "/qa", desc: "Clinical answers from dietitians" },
-      { label: "Our team", href: "/team", desc: "Chefs & dietitians" },
-      { label: "Challenges", href: "/challenges", desc: "RD-led cohort programmes" },
+      { label: "Community Q&A forum", href: "/qa", desc: "Nutrition questions, answered" },
+      { label: "Our team", href: "/team", desc: "The people who cook your food" },
+      { label: "Challenges", href: "/challenges", desc: "Cohort programmes with check-ins" },
       { label: "Corporate wellness", href: "/corporate-wellness", desc: "Team lunches for offices" },
-      { label: "Dietitian partner network", href: "/rd-partners", desc: "For clinical RDs & nutritionists" },
     ],
   },
   {
@@ -109,10 +111,10 @@ export const NAV_GROUPS: NavGroup[] = [
     href: "/account",
     links: [
       { label: "Account hub", href: "/account" },
-      { label: "Tanmatra Premium", href: "/premium", desc: "Priority delivery + a monthly RD consult" },
+      { label: "Tanmatra Premium", href: "/premium", desc: "Priority delivery + premium-only dishes" },
       { label: "Subscriptions", href: "/account/subscriptions" },
       { label: "Orders", href: "/account/orders" },
-      { label: "Consults", href: "/account/appointments", desc: "View booked RD sessions" },
+      { label: "Consults", href: "/account/appointments", desc: "View your booked sessions" },
       { label: "Billing & credits", href: "/account/billing", desc: "Wallet balance & credit activity" },
       { label: "Wallet & vouchers", href: "/vouchers", desc: "Redeem a voucher · wallet balance" },
       { label: "Addresses", href: "/account/addresses" },

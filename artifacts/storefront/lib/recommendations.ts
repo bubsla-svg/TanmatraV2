@@ -33,8 +33,8 @@ export function generateSmartRecommendation(
     dislikedIngredients: prefs.dislikedIngredients ?? [],
   };
   const fit = computeDishFit(dish, normPrefs);
-  let badge = "Therapeutic Select";
-  let rationale = "Macro-calibrated by our Registered Dietitians for balanced daily nutrition.";
+  let badge = "Balanced Select";
+  let rationale = "Macro-calibrated for balanced daily nutrition.";
   let score = 50;
 
   if (fit.band === "conflict") {

@@ -53,3 +53,12 @@ export const COMPANY = {
 } as const;
 
 export type Company = typeof COMPANY;
+
+/**
+ * WhatsApp is the support channel (owner decision, 2026-09-06).
+ *
+ * Derived from `COMPANY.supportPhone` rather than typed again, so the number a
+ * customer messages cannot drift from the one the legal pages print. wa.me
+ * takes digits only — no `+`, spaces or dashes.
+ */
+export const SUPPORT_WHATSAPP_URL = `https://wa.me/${COMPANY.supportPhone.replace(/\D/g, "")}`;

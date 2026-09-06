@@ -13,8 +13,8 @@ export default async function RecipesPage() {
   return (
     <div data-ui-generation="stitch-74" data-screen-id="5.12" data-screen-state="default" className="min-h-dvh flex flex-col bg-bg pb-24">
       <div className="sticky top-0 z-20 bg-bg/95 backdrop-blur-md pt-4 pb-4 px-gutter border-b border-line">
-        <h1 className="font-bold text-3xl text-ink">Clinical Recipes</h1>
-        <p className="text-sm text-ink-muted">RD-approved recipes for your goals</p>
+        <h1 className="font-bold text-3xl text-ink">Recipes</h1>
+        <p className="text-sm text-ink-muted">Recipes matched to your goals</p>
       </div>
 
       <div className="px-gutter pt-6">

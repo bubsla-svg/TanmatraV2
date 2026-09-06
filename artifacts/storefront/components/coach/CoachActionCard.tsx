@@ -6,21 +6,25 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import type { CoachAction } from "@/lib/coachApi";
+import { RD_SERVICES_ENABLED } from "@/lib/flags";
 
 export function CoachActionCard({ action }: { action: CoachAction }) {
+  // The coach may still emit book_rd; we just do not surface a booking for a
+  // service nobody can deliver yet (lib/flags.ts).
   if (action.kind === "book_rd") {
+    if (!RD_SERVICES_ENABLED) return null;
     const consults = action.premiumConsultsRemaining;
     return (
       <div className="mt-2 flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex-1">
-          <p className="text-sm font-semibold text-ink">Talk to a Registered Dietitian</p>
+          <p className="text-sm font-semibold text-ink">Talk to a registered dietitian</p>
           <p className="mt-1 text-xs text-ink-muted">
             {action.urgency === "soon" ? "Worth booking soon — " : "They can review your situation properly."}
             {consults != null ? ` You have ${consults} free consult${consults === 1 ? "" : "s"}.` : ""}
           </p>
         </div>
         <Button asChild shape="pill" size="fluid" className="gap-1 self-start px-4 py-2 text-xs font-semibold sm:self-center">
-          <Link href={action.href}>Book a dietitian &rarr;</Link>
+          <Link href={action.href}>Book a consult &rarr;</Link>
         </Button>
       </div>
     );
