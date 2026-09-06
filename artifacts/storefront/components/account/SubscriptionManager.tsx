@@ -92,10 +92,10 @@ export function SubscriptionManager() {
     void queryClient.invalidateQueries({ queryKey: ["account", "subscription"] });
   }
 
+  // The cancel confirmation renders in-page (SubscriptionCard) — a native
+  // window.confirm is invisible to assistive tech and said nothing about the
+  // paid remainder of the cycle (2026-09-06 audit).
   async function act(sub: Subscription, action: SubAction) {
-    if (action === "cancel" && !window.confirm("Cancel this plan? Upcoming deliveries stop and billing ends.")) {
-      return;
-    }
     setBusyIds((prev) => new Set(prev).add(sub.id));
     setActionError(null);
     try {

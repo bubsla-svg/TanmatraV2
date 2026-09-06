@@ -100,7 +100,6 @@ export function TrackStatus({ externalOrderId }: { externalOrderId: string }) {
     : null;
   return (
     <div
-      aria-live="polite"
       className={`relative flex flex-col items-center gap-6 overflow-hidden rounded-2xl border border-line bg-surface p-8 text-center shadow-[var(--shadow-card)] ${
         tone === "failed" ? "opacity-70" : ""
       }`}
@@ -112,7 +111,11 @@ export function TrackStatus({ externalOrderId }: { externalOrderId: string }) {
           className="pointer-events-none absolute -top-16 -left-16 h-48 w-48 rounded-full bg-sage-soft blur-3xl"
         />
       )}
+      {/* The status line alone is the live region: the whole card carried
+          aria-live and re-announced on every 20s poll (2026-09-06 audit). */}
       <p
+        role="status"
+        aria-live="polite"
         className={`relative z-10 inline-flex items-center gap-2 rounded-full border border-line bg-secondary px-4 py-2 text-xs font-semibold uppercase tracking-widest ${TONE_TEXT[tone]}`}
       >
         {tone === "live" && (

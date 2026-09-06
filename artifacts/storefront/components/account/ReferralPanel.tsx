@@ -18,6 +18,7 @@ export function ReferralPanel({ data }: { data: ReferralMe }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [redeemed, setRedeemed] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
 
   async function copyCode() {
     try {
@@ -25,8 +26,10 @@ export function ReferralPanel({ data }: { data: ReferralMe }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Clipboard permission denied/unavailable — the code is still visible
-      // on screen to copy by hand, so this is a silent no-op.
+      // Clipboard permission denied/unavailable. Silence was indistinguishable
+      // from a dead button, so say so — the code is on screen either way.
+      setCopyFailed(true);
+      setTimeout(() => setCopyFailed(false), 4000);
     }
   }
 
@@ -35,7 +38,7 @@ export function ReferralPanel({ data }: { data: ReferralMe }) {
     setBusy(true);
     setError(null);
     try {
-      await redeemReferralCode(code.trim());
+      await redeemReferralCode(code.trim().toUpperCase());
       setRedeemed(true);
       setCode("");
     } catch (e) {
@@ -45,6 +48,7 @@ export function ReferralPanel({ data }: { data: ReferralMe }) {
     }
   }
 
+  const copyNotice = copyFailed ? "Couldn't copy — select the code above to copy it by hand." : null;
   return (
     <div className="flex flex-col gap-5 rounded-2xl border border-line bg-surface p-5">
       <div>
@@ -76,6 +80,7 @@ export function ReferralPanel({ data }: { data: ReferralMe }) {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="Enter code"
+              autoComplete="off" autoCapitalize="characters" spellCheck={false} aria-label="Referral code"
               className="min-h-[50px] min-w-0 flex-1 rounded-2xl border border-line bg-bg px-4 py-3 text-base uppercase text-ink outline-none placeholder:text-ink-faint focus-visible:border-primary"
             />
             <button
@@ -88,6 +93,7 @@ export function ReferralPanel({ data }: { data: ReferralMe }) {
             >
               {busy ? "Applying…" : "Apply"}
             </button>
+        {copyNotice && <p role="status" className="mt-1 text-xs font-medium text-ink-muted">{copyNotice}</p>}
           </div>
         </label>
         {redeemed && (

@@ -23,7 +23,7 @@ export default function OrdersPage() {
       <AccountNav active="orders" />
       <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">Orders</h1>
       <p className="mt-1 mb-8 text-sm text-ink-muted">
-        Your clinical history and metabolic logs — most recent first.
+        Everything you have ordered — most recent first.
       </p>
       <OrderHistory />
     </section>

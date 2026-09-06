@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 // Client: controlled address/consent inputs for the guest money path.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -266,18 +267,18 @@ export function AlacarteDetails({
       <Field label="Mobile number" inputID="alc-phone">
         <input
           ref={phoneRef}
-          id="alc-phone" name="tel" type="tel" inputMode="numeric" autoComplete="tel" enterKeyHint="next" maxLength={14}
+          id="alc-phone" name="tel" type="tel" inputMode="tel" autoComplete="tel" enterKeyHint="next" maxLength={14}
           value={phone} onChange={(e) => onPhoneChange(e.target.value)} readOnly={phoneLocked} placeholder="98765 43210"
-          aria-invalid={attempted && !phoneValid}
+          aria-invalid={attempted && !phoneValid} aria-describedby={attempted && !phoneValid ? "alc-phone-err" : undefined} required
           className={phoneLocked ? `${inputCls} opacity-70` : inputCls}
         />
-        {attempted && !phoneValid && <span role="alert" className={errCls}>Enter your 10-digit mobile number.</span>}
+        {attempted && !phoneValid && <span id="alc-phone-err" role="alert" className={errCls}>Enter your 10-digit mobile number.</span>}
       </Field>
 
       {slotRequired && (
         <div ref={slotRef as React.RefObject<HTMLDivElement | null>} tabIndex={-1} className="outline-none">
-          <DeliverySlotPicker slots={openSlots} value={slot} onChange={setSlot} now={now} />
-          {attempted && !slot && <span role="alert" className={errCls}>Pick a delivery window.</span>}
+          <DeliverySlotPicker slots={openSlots} value={slot} onChange={setSlot} now={now} describedBy={attempted && !slot ? "alc-slot-err" : undefined} />
+          {attempted && !slot && <span id="alc-slot-err" role="alert" className={errCls}>Pick a delivery window.</span>}
         </div>
       )}
 
@@ -286,9 +287,9 @@ export function AlacarteDetails({
           ref={line1Ref}
           id="alc-line1" name="street-address" autoComplete="street-address" autoCapitalize="words" autoCorrect="off" spellCheck={false} enterKeyHint="next"
           value={line1} onChange={(e) => setLine1(e.target.value)} placeholder="Flat 3B, Sector 62"
-          aria-invalid={attempted && !line1Valid} className={inputCls}
+          aria-invalid={attempted && !line1Valid} aria-describedby={attempted && !line1Valid ? "alc-line1-err" : undefined} required className={inputCls}
         />
-        {attempted && !line1Valid && <span role="alert" className={errCls}>Add your flat or house and street.</span>}
+        {attempted && !line1Valid && <span id="alc-line1-err" role="alert" className={errCls}>Add your flat or house and street.</span>}
       </Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label="City" inputID="alc-city">
@@ -296,23 +297,23 @@ export function AlacarteDetails({
             ref={cityRef}
             id="alc-city" name="address-level2" autoComplete="address-level2" autoCapitalize="words" autoCorrect="off" enterKeyHint="next"
             value={city} onChange={(e) => setCity(e.target.value)} placeholder="Noida"
-            aria-invalid={attempted && !cityValid} className={inputCls}
+            aria-invalid={attempted && !cityValid} aria-describedby={attempted && !cityValid ? "alc-city-err" : undefined} required className={inputCls}
           />
-          {attempted && !cityValid && <span role="alert" className={errCls}>Add the city.</span>}
+          {attempted && !cityValid && <span id="alc-city-err" role="alert" className={errCls}>Add the city.</span>}
         </Field>
         <Field label="PIN code" inputID="alc-pin">
           <input
             ref={pinRef}
             id="alc-pin" name="postal-code" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]*" maxLength={6} enterKeyHint="done"
             value={pincode} onChange={(e) => { setPincode(e.target.value); onPincodeChange(e.target.value); }} placeholder="201301"
-            aria-invalid={(pincode.length > 0 || attempted) && !pinValid} className={inputCls}
+            aria-invalid={(pincode.length > 0 || attempted) && !pinValid} aria-describedby={attempted && !pinValid ? "alc-pin-err" : undefined} required className={inputCls}
           />
-          {attempted && !pinValid && <span role="alert" className={errCls}>6 digits.</span>}
+          {attempted && !pinValid && <span id="alc-pin-err" role="alert" className={errCls}>6 digits.</span>}
         </Field>
       </div>
       <Field label="Name or landmark for the rider (optional)" inputID="alc-rider-note">
         <input
-          id="alc-rider-note" name="name" autoComplete="name" autoCapitalize="words" enterKeyHint="done" maxLength={200}
+          id="alc-rider-note" name="rider-note" autoComplete="off" autoCapitalize="words" enterKeyHint="done" maxLength={200}
           value={riderNote} onChange={(e) => setRiderNote(e.target.value)} placeholder="Priya · gate 2, blue door"
           className={inputCls}
         />
@@ -336,13 +337,13 @@ export function AlacarteDetails({
           <input
             ref={consentRef}
             type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)}
-            aria-invalid={attempted && !consent}
+            aria-invalid={attempted && !consent} aria-describedby={attempted && !consent ? "alc-consent-err" : undefined}
             className="mt-0.5 size-6 shrink-0 cursor-pointer accent-[var(--gold)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]"
           />
           <span>
             {DPDP_CONSENT_COPY}
             <span className="mt-1 block text-xs text-ink-faint">{DPDP_SCOPE_NOTE}</span>
-            {attempted && !consent && <span role="alert" className={errCls}>Tick this to continue — we can&rsquo;t cook without it.</span>}
+            {attempted && !consent && <span id="alc-consent-err" role="alert" className={errCls}>Tick this to continue — we can&rsquo;t cook without it.</span>}
           </span>
         </label>
 
@@ -367,6 +368,12 @@ export function AlacarteDetails({
       <div className="flex flex-col items-center gap-1">
         <KitchenSafetyChip />
         <p className="text-center text-xs text-ink-faint">You won&rsquo;t be charged until you confirm in the payment step.</p>
+        {/* The terms a buyer is agreeing to, AT the point of commitment — they
+            were only linked from the account hub, i.e. after purchase. */}
+        <p className="text-center text-xs text-ink-faint">
+          By paying you accept our <Link href="/legal/terms" className="underline underline-offset-2 hover:text-ink">terms</Link> and{" "}
+          <Link href="/legal/refunds" className="underline underline-offset-2 hover:text-ink">refund policy</Link>.
+        </p>
       </div>
 
       <AlacartePayBar

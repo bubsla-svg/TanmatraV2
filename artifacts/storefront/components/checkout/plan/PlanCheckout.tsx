@@ -14,7 +14,7 @@ import { buildSubscriptionInput, nextWeekdayISO } from "@/lib/planCheckout";
 import { stashCheckoutPerks, type CheckoutPerks } from "@/lib/postCheckout";
 import { usePlanQuote } from "@/lib/usePlanQuote";
 import { emitFunnel, funnelErrorCode } from "@/lib/funnel";
-import { getAddresses, type Address, type AuthUser, type AddOnId, type DietTrack, type PlanCadence } from "@/lib/api";
+import { getAddresses, getAuthUser, type Address, type AuthUser, type AddOnId, type DietTrack, type PlanCadence } from "@/lib/api";
 // humanizeOrderError, not ApiError.message: #42 replaced the raw machine string
 // with copy that names the next step. This branch predated that change.
 import { humanizeOrderError } from "@/lib/orderErrors";
@@ -73,6 +73,20 @@ export function PlanCheckout({
 }) {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
+  // The session is PROBED, not assumed absent. The gate below used to branch on
+  // firebaseConfigured() alone, so a customer with a live session and saved
+  // addresses was told "Plan sign-in is temporarily unavailable" whenever the
+  // provider was unconfigured or down — exactly when it matters (2026-09-06
+  // audit). A 401 is the normal signed-out answer, not an error.
+  const [sessionChecked, setSessionChecked] = useState(false);
+  useEffect(() => {
+    let live = true;
+    getAuthUser()
+      .then(({ user: u }) => { if (live && u) setUser(u); })
+      .catch(() => {})
+      .finally(() => { if (live) setSessionChecked(true); });
+    return () => { live = false; };
+  }, []);
   const [track, setTrack] = useState<DietTrack>(initialTrack ?? servedTracks[0] ?? "veg");
   const billedCadence = cadence ?? "monthly";
   // Server quote per (plan, track, cadence, add-ons) — the billed total, net of
@@ -301,7 +315,7 @@ export function PlanCheckout({
   }
 
   if (!user) {
-    return <PlanIdentityGate planName={planName} recap={recap} onVerified={onVerified} />;
+    return <PlanIdentityGate planName={planName} recap={recap} onVerified={onVerified} sessionChecked={sessionChecked} />;
   }
 
   if (unresolved) {

@@ -54,5 +54,18 @@ export default function imageLoader({ src, width, quality }: ImageLoaderProps): 
     return dishDerivativePath(dishMatch[1]!, width);
   }
 
-  return `${src}${src.includes("?") ? "&" : "?"}w=${width}&q=${quality ?? DEFAULT_QUALITY}`;
+  // SET the params, never append a second pair. 49 live dishes carry
+  // `?w=800&q=80` from the catalogue, and imgix honours the FIRST `w`: the
+  // old append produced `?w=800&q=80&w=48&q=75`, which measured 104,874 bytes
+  // for a 48px thumbnail — the same file as w=800 — where a clean `?w=48`
+  // is 4,195 bytes (2026-09-06 audit).
+  const q = quality ?? DEFAULT_QUALITY;
+  try {
+    const url = new URL(src, "https://placeholder.invalid");
+    url.searchParams.set("w", String(width));
+    url.searchParams.set("q", String(q));
+    return url.hostname === "placeholder.invalid" ? `${url.pathname}${url.search}` : url.href;
+  } catch {
+    return `${src}${src.includes("?") ? "&" : "?"}w=${width}&q=${q}`;
+  }
 }

@@ -74,6 +74,8 @@ export function QuickSetupWizard() {
   // rides out a reload.
   const [draft] = useState(() => readQuickSetupDraft());
   const [step, setStep] = useState<1 | 2 | 3>(draft?.step ?? 1);
+  const [goalTouched, setGoalTouched] = useState(Boolean(draft?.goal));
+  const [goalError, setGoalError] = useState(false);
   const [goal, setGoal] = useState(draft?.goal ?? "maintenance");
   const [dietaryStyle, setDietaryStyle] = useState(draft?.dietaryStyle ?? "omnivore");
   const [allergens, setAllergens] = useState<string[]>(draft?.allergens ?? []);
@@ -141,6 +143,13 @@ export function QuickSetupWizard() {
   }
 
   function handleContinue() {
+    // Step 1 pre-selects "maintenance" for the visual; tapping straight
+    // through used to submit that as a declared answer (2026-09-06 audit).
+    if (step === 1 && !goalTouched) {
+      setGoalError(true);
+      return;
+    }
+    setGoalError(false);
     if (step === 3) {
       finish();
       return;
@@ -160,45 +169,60 @@ export function QuickSetupWizard() {
       {step === 1 && (
         <div data-ui-generation="stitch-74" data-screen-id="6.9.1" data-screen-state="step-1-goal" className="flex flex-col gap-3">
           <h2 className="font-display text-xl font-semibold leading-tight text-primary">What&rsquo;s your goal?</h2>
+          {/* radio semantics: single-select steps and the multi-select step
+              were indistinguishable to a screen reader (2026-09-06 audit). */}
+          <div role="radiogroup" aria-label="Your goal" className="flex flex-col gap-3">
           {GOALS.map((g) => (
             <button
               key={g.id}
               type="button"
-              onClick={() => setGoal(g.id)}
+              role="radio"
+              aria-checked={goal === g.id}
+              onClick={() => { setGoal(g.id); setGoalTouched(true); setGoalError(false); }}
               className={`${OPTION_ROW} ${goal === g.id ? OPTION_SELECTED : OPTION_IDLE}`}
             >
               <span className="block font-semibold">{g.label}</span>
               <span className="mt-0.5 block text-xs font-normal text-ink-muted">{g.desc}</span>
             </button>
           ))}
+          </div>
+          {goalError && (
+            <p role="alert" className="text-xs font-medium text-danger">Pick the goal that fits best — it decides what we suggest.</p>
+          )}
         </div>
       )}
 
       {step === 2 && (
         <div data-ui-generation="stitch-74" data-screen-id="6.9.2" data-screen-state="step-2-dietary-style" className="flex flex-col gap-3">
-          <h2 className="font-display text-xl font-semibold leading-tight text-primary">What&rsquo;s your kitchen dietary style?</h2>
+          <h2 className="font-display text-xl font-semibold leading-tight text-primary">What do you eat?</h2>
+          <div role="radiogroup" aria-label="Dietary style" className="flex flex-col gap-3">
           {STYLES.map((s) => (
             <button
               key={s.id}
               type="button"
+              role="radio"
+              aria-checked={dietaryStyle === s.id}
               onClick={() => setDietaryStyle(s.id)}
               className={`${OPTION_ROW} ${dietaryStyle === s.id ? OPTION_SELECTED : OPTION_IDLE}`}
             >
               <span className="block font-semibold">{s.label}</span>
             </button>
           ))}
+          </div>
         </div>
       )}
 
       {step === 3 && (
         <div data-ui-generation="stitch-74" data-screen-id="6.9.3" data-screen-state="step-3-allergens" className="flex flex-col gap-3">
           <h2 className="font-display text-xl font-semibold leading-tight text-primary">
-            Select dietary allergens our kitchen must strictly omit
+            Anything our kitchen must leave out?
           </h2>
           {ALLERGIES.map((a) => (
             <button
               key={a.id}
               type="button"
+              role="checkbox"
+              aria-checked={allergens.includes(a.id)}
               onClick={() => toggleAllergen(a.id)}
               className={`${OPTION_ROW} ${allergens.includes(a.id) ? OPTION_SELECTED : OPTION_IDLE}`}
             >
@@ -236,7 +260,7 @@ export function QuickSetupWizard() {
             only as a low-emphasis text link, never the primary exit. */}
         <Link
           href="/menu"
-          className="text-center text-xs font-medium text-ink-muted underline-offset-4 hover:text-ink hover:underline"
+          className="inline-flex min-h-11 items-center justify-center text-center text-xs font-medium text-ink-muted underline-offset-4 hover:text-ink hover:underline"
         >
           Skip &mdash; just browse matching dishes
         </Link>

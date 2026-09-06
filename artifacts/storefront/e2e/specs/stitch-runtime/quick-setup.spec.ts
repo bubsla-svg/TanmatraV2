@@ -26,22 +26,22 @@ test.describe("stitch-runtime · quick-setup wizard", () => {
     await expect(page.getByRole("heading", { name: "3-Step Dietary Setup" })).toBeVisible();
 
     // — 6.9.1 step-1-goal —
-    await expect(page.getByRole("button", { name: /fat loss & metabolic reset/i })).toBeVisible();
+    await expect(page.getByRole("radio", { name: /fat loss & metabolic reset/i })).toBeVisible();
     await expect(page.getByText(/step 1 of 3/i)).toBeVisible();
     await expect(marker(page, "6.9.1", "step-1-goal")).toBeVisible();
     await evidenceShot(page, "6.9.1");
 
     // Real trigger: pick a goal, then Continue (manifest transition CONTINUE).
-    await page.getByRole("button", { name: /fat loss & metabolic reset/i }).click();
+    await page.getByRole("radio", { name: /fat loss & metabolic reset/i }).click();
     await page.getByRole("button", { name: /continue/i }).click();
 
     // — 6.9.2 step-2-dietary-style —
-    await expect(page.getByRole("heading", { name: /what.s your kitchen dietary style/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /what do you eat/i })).toBeVisible();
     await expect(marker(page, "6.9.2", "step-2-dietary-style")).toBeVisible();
     // Make a selection this stage owns, so the Back leg below can prove the
     // draft survives. SquircleOptionCard marks selection with a border-gold
     // class, not an accessible-name change — assert on that.
-    const vegetarian = page.getByRole("button", { name: /strictly vegetarian/i });
+    const vegetarian = page.getByRole("radio", { name: /strictly vegetarian/i });
     await vegetarian.click();
     await expect(vegetarian).toHaveClass(/border-gold/);
     await evidenceShot(page, "6.9.2");
@@ -50,7 +50,7 @@ test.describe("stitch-runtime · quick-setup wizard", () => {
 
     // — 6.9.3 step-3-allergens —
     await expect(
-      page.getByRole("heading", { name: /select dietary allergens our kitchen must strictly omit/i }),
+      page.getByRole("heading", { name: /must leave out/i }),
     ).toBeVisible();
     await expect(page.getByRole("button", { name: /see my plan/i })).toBeVisible();
     await expect(marker(page, "6.9.3", "step-3-allergens")).toBeVisible();
@@ -64,7 +64,7 @@ test.describe("stitch-runtime · quick-setup wizard", () => {
     // "Back", so the selector has to say which one it means.
     await page.locator("section").getByRole("button", { name: "Back" }).click();
     await expect(marker(page, "6.9.2", "step-2-dietary-style")).toBeVisible();
-    await expect(page.getByRole("button", { name: /strictly vegetarian/i })).toHaveClass(/border-gold/);
+    await expect(page.getByRole("radio", { name: /strictly vegetarian/i })).toHaveClass(/border-gold/);
 
     expect(errors).toEqual([]);
   });

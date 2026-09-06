@@ -2,6 +2,7 @@
 // "use client" justification: Vaul's drawer is drag-physics + portal + focus
 // management — inherently interactive. This is the §4.2 bottom-sheet primitive;
 // per the motion contract its drag physics are native and never re-animated.
+import * as React from "react";
 import { Drawer as VaulDrawer } from "vaul";
 
 /**
@@ -9,7 +10,33 @@ import { Drawer as VaulDrawer } from "vaul";
  * TNM-UIF-01 §1). Exposes only what the storefront consumes; overlay and
  * content are styled with semantic tokens, no raw colours.
  */
-export const Drawer = VaulDrawer.Root;
+/**
+ * Vaul's Root leaves `autoFocus` OFF by default, so a sheet opened from a card
+ * or a button left focus on that trigger, behind the scrim — measured on
+ * /menu for the dish drawer, the cart drawer and the filter sheet
+ * (2026-09-06 audit). A modal that does not take focus is not modal to a
+ * keyboard or a screen reader. Every consumer gets the fix here.
+ */
+export function Drawer(props: React.ComponentProps<typeof VaulDrawer.Root>) {
+  // …and focus comes BACK. Vaul restores nothing on close, so with autoFocus on
+  // the sheet correctly took focus and then dropped it on <body> when it shut —
+  // measured, and worse than the bug it replaced. The opener is captured while
+  // it is still focused and restored on close/unmount. DishDrawer has no
+  // trigger element (it renders open, driven by the URL), so its opener is the
+  // card link the customer just activated, which is exactly right.
+  const openerRef = React.useRef<HTMLElement | null>(null);
+  React.useEffect(() => {
+    if (!props.open) return;
+    const opener = document.activeElement;
+    if (opener instanceof HTMLElement) openerRef.current = opener;
+    return () => {
+      const el = openerRef.current;
+      openerRef.current = null;
+      if (el?.isConnected) el.focus({ preventScroll: true });
+    };
+  }, [props.open]);
+  return <VaulDrawer.Root autoFocus {...props} />;
+}
 export const DrawerTrigger = VaulDrawer.Trigger;
 export const DrawerPortal = VaulDrawer.Portal;
 export const DrawerClose = VaulDrawer.Close;

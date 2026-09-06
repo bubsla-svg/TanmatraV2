@@ -173,7 +173,7 @@
     --color-overlay-pressed: light-dark(#25252a1a, #f3f3f51a);
     --color-background-muted: light-dark(#e2e2e8, #3b3b3f);
     --color-text-primary: light-dark(#213630, #f6f1e9);
-    --color-text-secondary: light-dark(#5d726c, #c5bdaf);
+    --color-text-secondary: light-dark(#536560, #c5bdaf);
     --color-text-disabled: light-dark(#d7d7da, #5e5e61);
     --color-text-accent: light-dark(#25252a, #f3f3f5);
     --color-on-dark: #FFFFFF;
@@ -256,11 +256,11 @@
     --shadow-inset-error: inset 0px 0px 0px 2px #83838a30;
     --color-accent-ink: light-dark(#f6f1e9, #172622);
     --color-blue: light-dark(#506072, #99adc6);
-    --color-sage: light-dark(#556845, #b9c9a6);
+    --color-sage: light-dark(#556845, #cbd8bb);
     --color-danger: light-dark(#b94131, #d97c70);
     --color-background-app: light-dark(#f6f1e9, #172622);
     --color-background-raised: light-dark(#e7e0d4, #364a45);
-    --color-text-tertiary: light-dark(#5e6e6a, #b7b0a4);
+    --color-text-tertiary: light-dark(#566360, #c1bab0);
     --color-border-strong: light-dark(#968369, #5c7a72);
     --radius-sm: 12px;
     --radius-md: 14px;

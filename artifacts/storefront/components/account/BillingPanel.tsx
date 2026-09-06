@@ -81,7 +81,10 @@ export function BillingPanel() {
       <div>
         <h2 className="mb-3 font-display text-xl font-semibold leading-tight text-primary">Credit activity</h2>
         {ledger.entries.length === 0 ? (
-          <p className="rounded-2xl bg-secondary px-4 py-3 text-xs text-ink-muted">No credit activity yet.</p>
+          <p className="rounded-2xl bg-secondary px-4 py-3 text-xs text-ink-muted">
+            No credit activity yet. Credits arrive from referrals, vouchers and skipped deliveries —{" "}
+            <Link href="/account/loyalty" className="font-semibold text-primary underline-offset-2 hover:underline">share your referral code</Link>.
+          </p>
         ) : (
           <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
             {ledger.entries.map((e) => {

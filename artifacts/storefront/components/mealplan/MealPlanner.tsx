@@ -109,9 +109,12 @@ export function MealPlanner() {
 
       {/* Plan bar — the screen's single gold primary lives here: Accept &
           schedule while a draft exists, Generate/Regenerate otherwise. */}
-      <div className="sticky bottom-16 z-10 -mx-4 border-t border-line bg-glass px-4 pb-3 pt-3 backdrop-blur-xl md:bottom-0">
+      {/* Measured 2026-09-06 at 390px: this row ran 14px past the viewport and
+          clipped "Accept & schedule". It wraps now, and clears the tab bar's
+          safe-area strip like the other sticky bars. */}
+      <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 -mx-4 border-t border-line bg-glass px-4 pb-3 pt-3 backdrop-blur-xl md:bottom-0">
         {plan?.status === "draft" ? (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={() => void mp.discard()}
@@ -139,7 +142,7 @@ export function MealPlanner() {
               disabled={mp.busy}
               shape="pill"
               size="fluid"
-              className="shrink-0 px-5 py-3 font-semibold disabled:opacity-60"
+              className="min-w-0 shrink px-5 py-3 font-semibold disabled:opacity-60"
             >
               Accept &amp; schedule
             </Button>

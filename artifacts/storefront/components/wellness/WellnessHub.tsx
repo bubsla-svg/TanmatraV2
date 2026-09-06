@@ -16,9 +16,13 @@ export function WellnessHub() {
   return (
     <div className="space-y-6">
       {/* Sub-header navigation tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-line pb-3">
+      {/* Real tab semantics: these were plain buttons, so the selected tab
+          announced nothing and read as a dead control (2026-09-06 audit). */}
+      <div role="tablist" aria-label="Wellness tools" className="flex flex-wrap items-center gap-2 border-b border-line pb-3">
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "precision"}
           onClick={() => setActiveTab("precision")}
           className={`flex items-center gap-2 min-h-11 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "precision"
@@ -32,6 +36,8 @@ export function WellnessHub() {
 
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "blood_ocr"}
           onClick={() => setActiveTab("blood_ocr")}
           className={`flex items-center gap-2 min-h-11 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "blood_ocr"
@@ -45,6 +51,8 @@ export function WellnessHub() {
 
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "pantry_vision"}
           onClick={() => setActiveTab("pantry_vision")}
           className={`flex items-center gap-2 min-h-11 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "pantry_vision"
@@ -58,6 +66,8 @@ export function WellnessHub() {
 
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "hydration"}
           onClick={() => setActiveTab("hydration")}
           className={`flex items-center gap-2 min-h-11 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "hydration"
@@ -71,6 +81,8 @@ export function WellnessHub() {
 
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "leaderboard"}
           onClick={() => setActiveTab("leaderboard")}
           className={`flex items-center gap-2 min-h-11 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "leaderboard"
@@ -84,6 +96,8 @@ export function WellnessHub() {
 
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "nutrition"}
           onClick={() => setActiveTab("nutrition")}
           className={`flex items-center gap-2 min-h-11 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === "nutrition"

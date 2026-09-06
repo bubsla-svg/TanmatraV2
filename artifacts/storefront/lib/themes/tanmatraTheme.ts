@@ -64,7 +64,9 @@ export const tanmatraTheme = defineTheme({
     // sage stop that passes AS TEXT (5.4:1 on cream); the chip fill lives in
     // tanmatraBridge.css as --sage-soft. Warning is the amber at text weight
     // (31 61% 37%, 4.6:1) — the README rules the 53% amber decorative-only.
-    '--color-sage': ['#556845', '#b9c9a6'],
+    // Dark arm lifted #b9c9a6 → #cbd8bb (2026-09-06 audit): as text on the
+    // --sage-soft chip fill it measured 4.31:1; now 5.07:1, 6.3:1 on raised.
+    '--color-sage': ['#556845', '#cbd8bb'],
     '--color-success': ['#556845', '#b9c9a6'],
     '--color-warning': ['#986025', '#f2a85a'],
     // Dark arm was #b0655a — 4.14:1 on --color-background-surface, below AA's
@@ -90,14 +92,14 @@ export const tanmatraTheme = defineTheme({
     // --muted-foreground moves from 43% to 41% lightness to clear 4.5:1 on
     // dish descriptions (hex rounded to the side that keeps the margin).
     '--color-text-primary': ['#213630', '#f6f1e9'],
-    '--color-text-secondary': ['#5d726c', '#c5bdaf'],
+    '--color-text-secondary': ['#536560', '#c5bdaf'],
     // Stone neutral T45 light / T55 dark. NOT one shared #84848b (T55-ish):
     // that measures 3.71:1 on the light surface and 3.40:1 on the light app
     // background — below AA for body text, which tanmatraTheme.test.ts asserts
     // for every text token. Both stops are real Stone ramp values AND #838388
     // is also Stitch's tertiary ink, so this is the one neutral that needed no
     // repointing: light 5.38 / 4.85, dark 5.25 / 4.75 on the Stitch canvas.
-    '--color-text-tertiary': ['#5e6e6a', '#b7b0a4'],
+    '--color-text-tertiary': ['#566360', '#c1bab0'],
 
     /* ── Border & Divider Ramp ───────────────────────────────────────────── */
     // Stitch's dark rule is "zero flat borders": hairlines are white at 6% /

@@ -25,7 +25,12 @@ export default function B2BLayout({
         <div className="mx-auto flex min-h-14 max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2">
           <Link
             href="/"
-            aria-label="Tanmatra home"
+            // WCAG 2.5.3 Label in Name: this link SHOWS "Tanmatra For
+            // business", so a name of "Tanmatra home" left a voice-control
+            // user with nothing to say — "click Tanmatra for business" matched
+            // no control. The visible text has to be contained in the name.
+            // Built from SITE.brand so the two cannot drift apart.
+            aria-label={`${SITE.brand} For business, home`}
             className="shrink-0 whitespace-nowrap text-lg font-semibold tracking-tight text-ink"
           >
             {SITE.brand}

@@ -115,16 +115,21 @@ export function AddressForm({
     );
   }
 
+  // size="lg" throughout: the Astryx defaults rendered 32px/14px fields beside
+  // the 50px/16px native PIN and phone in the same grid (2026-09-06 audit).
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
       <Grid gap={4} columns={{ minWidth: 200 }}>
         <TextInput
+          size="lg"
           label="Label"
           value={label}
           onChange={setLabel}
           placeholder="Home, Office…"
+          htmlName="address-label"
         />
         <Selector
+          size="lg"
           label="Type"
           value={type}
           onChange={(v) => setType(v as AddressType)}
@@ -132,6 +137,7 @@ export function AddressForm({
         />
       </Grid>
       <TextInput
+        size="lg"
         label="Flat / house · street"
         value={line1}
         onChange={setLine1}
@@ -139,6 +145,7 @@ export function AddressForm({
         htmlName="address-line1"
       />
       <TextInput
+        size="lg"
         label="Landmark / area"
         value={line2}
         onChange={setLine2}
@@ -148,6 +155,7 @@ export function AddressForm({
       />
       <Grid gap={4} columns={{ minWidth: 200 }}>
         <TextInput
+          size="lg"
           label="City"
           value={city}
           onChange={setCity}
