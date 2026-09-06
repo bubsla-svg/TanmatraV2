@@ -24,7 +24,7 @@ export const privacyDoc: LegalDoc = {
     {
       heading: "2. Scope and your consent",
       body: [
-        `This policy applies to personal data we process when you use ${C.brand} — our website, apps, ordering and subscription services, the nutrition coach, and dietitian bookings.`,
+        `This policy applies to personal data we process when you use ${C.brand} — our website, apps, ordering and subscription services, the nutrition coach, and advisory session bookings.`,
         "By creating an account and using the service you consent to the processing described here. Your consent is specific to the purposes below, and you can withdraw it at any time (see \"Your rights\"). Withdrawing consent does not affect processing already carried out, and may mean we can no longer provide parts of the service.",
       ],
     },
@@ -47,7 +47,7 @@ export const privacyDoc: LegalDoc = {
         "To fulfil orders and subscriptions — prepare, bill, and deliver your meals and manage your plan.",
         "To take payments and prevent fraud — via Razorpay, and to detect and prevent misuse.",
         "To personalise your experience — rank menus, tailor the nutrition coach, and honour your dietary preferences and allergen filters.",
-        "To provide dietitian (RD) bookings and support you when you contact us.",
+        "To provide advisory session bookings and support you when you contact us.",
         "To keep food safe and meet legal duties — including our obligations as an FSSAI-registered food business, and tax, accounting, and other legal requirements.",
         "To send service messages, and — only with your consent — marketing about offers and new features. You can opt out of marketing at any time.",
       ],
@@ -56,7 +56,7 @@ export const privacyDoc: LegalDoc = {
       heading: "5. The nutrition coach and automated features",
       body: [
         "The nutrition coach uses an AI model to generate general guidance from your message and preferences. Before any conversation is stored, personal identifiers in your message (such as email, phone, or pincode) are masked.",
-        "The coach provides general nutrition information, not medical advice, and is designed to route clinical questions to a Registered Dietitian. See our Health & Nutrition Disclaimer. You are not required to use the coach.",
+        "The coach provides general nutrition information, not medical advice, and is designed to route clinical questions to a qualified healthcare professional. See our Health & Nutrition Disclaimer. You are not required to use the coach.",
       ],
     },
     {
