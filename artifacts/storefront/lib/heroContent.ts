@@ -17,6 +17,13 @@
  * The derivation is pure — a cookie string in, copy out — and both sides need
  * it, so it belongs in neither boundary's file. Keep it that way: nothing here
  * may import a `"use client"` module, or the same failure comes back.
+ *
+ * NO VARIANT NAMES A PROFESSION (owner, 2026-09-06). The referral variant used
+ * to greet "Sent here by your dietitian" with a "Dietitian referral" badge; the
+ * storefront makes no dietitian claim, so it greets the referral itself. The
+ * COOKIE PREFIXES below (`rd_`, `dietitian_`, `dr_`, …) are unchanged on
+ * purpose — they are attribution keys in links already printed and shared, and
+ * renaming them would silently un-route every one of them.
  */
 // Relative, not "@/lib/format": lint:filecap blocks the path alias inside lib/
 // because the bare node test runner cannot resolve it.
@@ -37,10 +44,10 @@ export function deriveHeroContent(refCookie?: string): HeroContent {
 
   if (ref.startsWith("rd_") || ref.startsWith("dietitian_") || ref.includes("diet") || ref.includes("clinic") || ref.startsWith("dr_")) {
     return {
-      eyebrow: "Sent here by your dietitian",
+      eyebrow: "Someone sent you here",
       headline: "Lunch that fits your plan, cooked fresh and brought to your desk.",
       blurb: `Cooked in cold-pressed oil and desi ghee, weighed to the gram, and brought to your desk hot. From ${basePrice} a meal.`,
-      badge: "Dietitian referral",
+      badge: "Referral",
     };
   }
 

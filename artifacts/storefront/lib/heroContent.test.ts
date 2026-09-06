@@ -9,19 +9,33 @@ import { PLAN_PRICE_TABLE } from "@workspace/subscription-rules";
 const basePrice = formatPaise(PLAN_PRICE_TABLE.desk_fuel.veg.perMealPaise!);
 
 // These two assert ROUTING — which cookie class reaches which variant — not
-// the wording, which is marketing's to change. They match the eyebrow on the
-// referral SOURCE (the one thing each variant must always name) and pin the
-// badge only against the other variants, so a copy edit does not turn into a
-// test edit but a mis-routed cookie still fails.
-const dietitianHero = deriveHeroContent("rd_sharma");
+// the wording, which is marketing's to change. The referral variant is pinned
+// by the badge and by being distinct, NOT by naming its source: it used to
+// assert /dietitian/i on the eyebrow, and the storefront no longer names that
+// profession anywhere (owner, 2026-09-06). The gym variant still names its
+// source because "gym" is not a claim about us.
+const referralHero = deriveHeroContent("rd_sharma");
 const gymHero = deriveHeroContent("gym_cult");
 
-test("an RD/clinic referral cookie yields the dietitian hero", () => {
+test("a referral cookie yields the referral hero, whatever profession sent it", () => {
   for (const ref of ["rd_sharma", "dietitian_kaur", "apollo_clinic", "dr_mehta", "DIET_partner"]) {
     const hero = deriveHeroContent(ref);
-    assert.deepEqual(hero, dietitianHero, `${ref} should reach the dietitian variant`);
-    assert.match(hero.eyebrow, /dietitian/i, "the eyebrow must name the referral source");
+    assert.deepEqual(hero, referralHero, `${ref} should reach the referral variant`);
     assert.ok(hero.badge, "a referred visitor gets a badge on the hero photo");
+  }
+});
+
+/**
+ * The cookie prefixes still say `rd_` / `dietitian_` — they are attribution
+ * keys in links already in the wild. What must never come back is that
+ * vocabulary in the COPY: the storefront claims no dietitian (owner,
+ * 2026-09-06), and a hero is the loudest place it could reappear.
+ */
+test("no hero variant renders dietitian vocabulary in its copy", () => {
+  for (const ref of [undefined, "rd_sharma", "dietitian_kaur", "gym_cult", "utm_facebook"]) {
+    const hero = deriveHeroContent(ref);
+    const copy = [hero.eyebrow, hero.headline, hero.blurb, hero.badge ?? ""].join(" ");
+    assert.doesNotMatch(copy, /dietitian|nutritionist|\bRDs?\b/i, `${ref} leaks a dietitian claim: ${copy}`);
   }
 });
 
@@ -35,7 +49,7 @@ test("a gym/trainer referral cookie yields the training hero", () => {
 });
 
 test("the three variants are actually different copy, not the same hero thrice", () => {
-  const variants = [deriveHeroContent(), dietitianHero, gymHero];
+  const variants = [deriveHeroContent(), referralHero, gymHero];
   const headlines = new Set(variants.map((v) => v.headline));
   assert.equal(headlines.size, 3, "personalisation that renders identical copy is not personalisation");
 });
