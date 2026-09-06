@@ -78,7 +78,7 @@ export async function Footer() {
             {/* "Reg.", not "Licence": the certificate on file is an FSSAI
                 Registration (petty-FBO tier), a distinct instrument from a
                 licence — see content/legal/company.ts. */}
-            <p className="mt-1 text-xs text-ink-faint">FSSAI Reg. No. {fssai} · RD-reviewed kitchen · Made in India</p>
+            <p className="mt-1 text-xs text-ink-faint">FSSAI Reg. No. {fssai} · ISO 22000 kitchen · Made in India</p>
             <p className="text-xs text-ink-faint">{address}</p>
             <p className="text-xs text-ink-faint">&copy; {brand}. All rights reserved.</p>
           </div>
