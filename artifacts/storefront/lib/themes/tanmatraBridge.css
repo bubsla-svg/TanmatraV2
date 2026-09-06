@@ -41,8 +41,11 @@
 
   /* Ink — Stone light / Stitch dark */
   --ink: light-dark(#213630, #f6f1e9);
-  --ink-muted: light-dark(#5d726c, #c5bdaf);
-  --ink-faint: light-dark(#5e6e6a, #b7b0a4);
+  /* Light arm #5d726c → #536560: measured 3.92:1 on --surface-raised, live on
+     /start's unselected diet chips (2026-09-06). Now 4.7:1 there, 5.5:1 on the
+     canvas. Both are pure TEXT tokens — no fill role to re-derive. */
+  --ink-muted: light-dark(#536560, #c5bdaf);
+  --ink-faint: light-dark(#566360, #c1bab0);
 
   /* Borders. Stitch's dark rule is "zero flat borders" — hairlines are white at
      6% / 16% so an edge reads as the surface underneath catching light, not as

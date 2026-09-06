@@ -75,8 +75,8 @@
   --surface: #fbf8f4;
   --surface-raised: #e7e0d4;
   --ink: #213630; /* primary text */
-  --ink-muted: #5d726c; /* secondary text — 4.6:1 on --bg (README fix: 43% → 41%) */
-  --ink-faint: #5e6e6a; /* tertiary text — 4.8:1 on --bg */
+  --ink-muted: #536560; /* secondary text — 5.5:1 on --bg, 4.7:1 on --surface-raised */
+  --ink-faint: #566360; /* tertiary text — 5.6:1 on --bg, 4.8:1 on --surface-raised */
   --line: #ddd3c6; /* hairline border, decorative */
   --line-strong: #968369; /* 3.2:1 — perceivable boundary */
 
@@ -164,7 +164,7 @@
   --surface-raised: #364a45;
   --ink: #f6f1e9; /* cream */
   --ink-muted: #c5bdaf;
-  --ink-faint: #b7b0a4;
+  --ink-faint: #c1bab0; /* 4.9:1 on the dark --surface-raised */
   --line: #364a45;
   --line-strong: #5c7a72;
   /* Dark arms of the theme tuples (tanmatraTheme.ts): the action colour is

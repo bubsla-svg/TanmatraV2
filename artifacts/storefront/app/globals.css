@@ -399,6 +399,23 @@ html, body {
   margin-bottom: env(safe-area-inset-bottom, 1rem);
 }
 
+/* Astryx's Selector renders its trigger as a 20px flex child inside a padded
+   shell, so only the text line answered a tap: measured 23px box / 24px hit
+   area inside a 40px field, next to the 50px native inputs in the same form
+   (2026-09-06 audit). The shell takes the repo's own 44px floor and the
+   trigger's hit area is stretched over it by a transparent ::after — no layout
+   move, the whole control is the target. Scoped to Astryx's own class so it
+   cannot reach any other control. */
+.astryx-selector {
+  min-height: 44px;
+  position: relative;
+}
+.astryx-selector > button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
 .touch-target-min {
   min-width: 44px;
   min-height: 44px;

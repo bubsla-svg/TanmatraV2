@@ -92,14 +92,14 @@ export const tanmatraTheme = defineTheme({
     // --muted-foreground moves from 43% to 41% lightness to clear 4.5:1 on
     // dish descriptions (hex rounded to the side that keeps the margin).
     '--color-text-primary': ['#213630', '#f6f1e9'],
-    '--color-text-secondary': ['#5d726c', '#c5bdaf'],
+    '--color-text-secondary': ['#536560', '#c5bdaf'],
     // Stone neutral T45 light / T55 dark. NOT one shared #84848b (T55-ish):
     // that measures 3.71:1 on the light surface and 3.40:1 on the light app
     // background — below AA for body text, which tanmatraTheme.test.ts asserts
     // for every text token. Both stops are real Stone ramp values AND #838388
     // is also Stitch's tertiary ink, so this is the one neutral that needed no
     // repointing: light 5.38 / 4.85, dark 5.25 / 4.75 on the Stitch canvas.
-    '--color-text-tertiary': ['#5e6e6a', '#b7b0a4'],
+    '--color-text-tertiary': ['#566360', '#c1bab0'],
 
     /* ── Border & Divider Ramp ───────────────────────────────────────────── */
     // Stitch's dark rule is "zero flat borders": hairlines are white at 6% /
