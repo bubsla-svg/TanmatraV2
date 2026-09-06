@@ -28,8 +28,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/plans", priority: 0.9, changeFrequency: "monthly" },
     { path: "/trial", priority: 0.8, changeFrequency: "monthly" },
     { path: "/metabolic", priority: 0.7, changeFrequency: "monthly" },
-    { path: "/care/pcos", priority: 0.7, changeFrequency: "monthly" },
-    { path: "/care/diabetes", priority: 0.7, changeFrequency: "monthly" },
     { path: "/performance", priority: 0.6, changeFrequency: "monthly" },
     { path: "/clinical", priority: 0.6, changeFrequency: "monthly" },
     { path: "/premium", priority: 0.6, changeFrequency: "monthly" },

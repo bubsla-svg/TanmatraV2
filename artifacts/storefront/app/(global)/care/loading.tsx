@@ -1,12 +1,17 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { CARE_BY_CONDITION_ENABLED } from "@/lib/flags";
 
 /**
  * Care hub skeleton. Mirrors page.tsx's ruled stack (D-05B): CareHeader,
  * NeedStateRail + ConditionRail (both `layout="grid"` — two visible columns,
- * NOT the snap-rail's clipped 280px cards), then four NavEntryCard-shaped rows
+ * NOT the snap-rail's clipped 280px cards), then the NavEntryCard-shaped rows
  * (Assessment/Therapeutic/Trial/ClinicalSupport all share that one component).
- * The counts match the real content: 4 goals, 6 conditions, so the skeleton
- * doesn't jump a row on resolve.
+ * The counts match the real content so the skeleton doesn't jump a row on
+ * resolve — which is why it tracks CARE_BY_CONDITION_ENABLED too: with the
+ * by-condition surface off the page resolves to 4 goals and two entry rows,
+ * and a skeleton still reserving a 6-card condition rail would promise a
+ * section that never arrives (and put "By condition" back on the page for a
+ * screen reader).
  */
 function RailSkeleton({ title, count }: { title: string; count: number }) {
   return (
@@ -42,11 +47,11 @@ export default function CareLoading() {
       <section className="mx-auto flex max-w-xl flex-col gap-6 px-4 py-12" aria-hidden>
         <Skeleton className="h-9 w-24" />
         <RailSkeleton title="By goal" count={4} />
-        <RailSkeleton title="By condition" count={6} />
+        {CARE_BY_CONDITION_ENABLED && <RailSkeleton title="By condition" count={6} />}
+        {CARE_BY_CONDITION_ENABLED && <NavEntryCardSkeleton />}
         <NavEntryCardSkeleton />
         <NavEntryCardSkeleton />
-        <NavEntryCardSkeleton />
-        <NavEntryCardSkeleton />
+        {CARE_BY_CONDITION_ENABLED && <NavEntryCardSkeleton />}
       </section>
     </div>
   );

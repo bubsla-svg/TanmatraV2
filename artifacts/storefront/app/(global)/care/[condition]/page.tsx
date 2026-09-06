@@ -13,7 +13,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { condition } = await params;
   const name = conditionDisplayName(condition);
   const known = isCareConditionKnown(condition);
-  return { title: known ? `${name} Therapeutic Care Plan` : `${name}` };
+  // De-indexed with the by-condition surface (consumer copy deck): the route
+  // still resolves for anyone holding the URL, but it is unlinked from nav and
+  // the sitemap and must not be indexed while the claim behind it is
+  // unreviewed. Restored by the same decision that flips
+  // CARE_BY_CONDITION_ENABLED.
+  return {
+    title: known ? `${name} Therapeutic Care Plan` : `${name}`,
+    robots: { index: false, follow: false },
+  };
 }
 
 export default async function CareConditionPage({ params }: Props) {

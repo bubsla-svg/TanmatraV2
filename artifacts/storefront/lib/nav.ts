@@ -50,9 +50,11 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     // Two-tier IA: the core plan actions (choose a plan / start a trial) sit up
-    // top; the five goal- & condition-specific landers — all entry points into
-    // the same catalog (they each map to a real PlanId) — are grouped under one
-    // sub-section so a large group reads as a short list, not a flat pile.
+    // top; the goal-specific landers — all entry points into the same catalog
+    // (they each map to a real PlanId) — are grouped under one sub-section so a
+    // large group reads as a short list, not a flat pile. The two by-condition
+    // landers (/care/pcos, /care/diabetes) left this list with the by-condition
+    // surface (consumer copy deck); they return with CARE_BY_CONDITION_ENABLED.
     key: "plan",
     label: "Plan",
     href: "/plans",
@@ -67,11 +69,9 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Quick start", href: "/quick-setup", desc: "Set up in three steps" },
       { label: "Recommended for you", href: "/meal-recommendations", desc: "Dishes matched to your goal" },
       { label: "Combos", href: "/meal-deals", desc: "Meal combos, priced together" },
-      { label: "Metabolic programs", href: "/metabolic", desc: "Fat-loss & lean-muscle programs", section: "By goal & condition" },
-      { label: "PCOS care", href: "/care/pcos", desc: "Hormone-aware, low-GI menu", section: "By goal & condition" },
-      { label: "Diabetes care", href: "/care/diabetes", desc: "Sugar-conscious, low-GI menu", section: "By goal & condition" },
-      { label: "Performance protocol", href: "/performance", desc: "High-protein, recovery-tuned", section: "By goal & condition" },
-      { label: "Clinical protocol", href: "/clinical", desc: "RD-supervised, low-GI therapeutic", section: "By goal & condition" },
+      { label: "Metabolic programs", href: "/metabolic", desc: "Fat-loss & lean-muscle programs", section: "By goal" },
+      { label: "Performance protocol", href: "/performance", desc: "High-protein, recovery-tuned", section: "By goal" },
+      { label: "Clinical protocol", href: "/clinical", desc: "RD-supervised, low-GI therapeutic", section: "By goal" },
     ],
   },
   {

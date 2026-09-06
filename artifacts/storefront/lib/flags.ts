@@ -16,3 +16,14 @@ export const MEALCARD_RAIL_ENABLED = process.env.NEXT_PUBLIC_MEALCARD_RAIL === "
  * a bare build. See docs/LIVE-CUTOVER.md.
  */
 export const LIVE_CHECKOUT_ENABLED = process.env.NEXT_PUBLIC_LIVE_CHECKOUT === "1";
+
+/**
+ * The /care "by condition" surface — the condition rail, the assessment entry
+ * and the clinical-support link. OFF by default (consumer copy deck,
+ * 2026-09-06): the storefront names no medical condition while the claim
+ * behind one is unreviewed. The components and the /care/[condition] route
+ * stay in the tree and keep working, so restoring the surface is this env
+ * flip, not a rebuild. /care still renders its goal rail and both commerce
+ * entries with the flag off.
+ */
+export const CARE_BY_CONDITION_ENABLED = process.env.NEXT_PUBLIC_CARE_BY_CONDITION === "1";
