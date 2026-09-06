@@ -3,7 +3,7 @@ import { COMPANY as C } from "./company";
 
 /**
  * Terms of Service. Covers the subscription/autopay money path, FSSAI food
- * compliance, and the coach/RD "not medical advice" boundary. Cross-references
+ * compliance, and the coach/advisory "not medical advice" boundary. Cross-references
  * the Refund & Cancellation, Shipping & Delivery, and Disclaimer pages.
  */
 export const termsDoc: LegalDoc = {
@@ -34,7 +34,7 @@ export const termsDoc: LegalDoc = {
     {
       heading: "4. The service",
       body: [
-        "The Platform offers freshly prepared meals through subscription plans and individual (à la carte) orders, along with a nutrition coach and Registered Dietitian (RD) bookings. Availability of meals, plans, delivery slots, and areas can change and is subject to serviceability at your location.",
+        "The Platform offers freshly prepared meals through subscription plans and individual (à la carte) orders, along with a nutrition coach and bookable advisory sessions. Availability of meals, plans, delivery slots, and areas can change and is subject to serviceability at your location.",
       ],
     },
     {
@@ -79,9 +79,9 @@ export const termsDoc: LegalDoc = {
       ],
     },
     {
-      heading: "11. Nutrition coach and RD services",
+      heading: "11. Nutrition coach and advisory sessions",
       body: [
-        "The nutrition coach provides general nutrition information and is not medical advice, diagnosis, or treatment. RD bookings connect you with a Registered Dietitian for advisory guidance and do not create a doctor–patient relationship or provide emergency care. Always consult a qualified healthcare professional for medical concerns. See the Health & Nutrition Disclaimer.",
+        "The nutrition coach provides general nutrition information and is not medical advice, diagnosis, or treatment. Bookable sessions provide general advisory guidance about food and nutrition and do not create a doctor–patient relationship or provide emergency care. Always consult a qualified healthcare professional for medical concerns. See the Health & Nutrition Disclaimer.",
       ],
     },
     {
