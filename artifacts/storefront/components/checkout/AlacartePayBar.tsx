@@ -41,9 +41,17 @@ export function AlacartePayBar({
           <p role="status" className="text-xs font-medium text-ink-muted">{blockedReason}</p>
         )}
         <PaymentMethodsRow />
+        {/* The amount column is the part that must never lose: it is
+            shrink-0 with a nowrap label, and the CTA takes whatever width is
+            left (flex-1). The CTA used to carry min-w-64 at every width, so on
+            a 375px iPhone the column was squeezed to 75px ("PAYABLE NOW"
+            wrapped to three lines) and at 320px to 20px — the payable amount
+            itself clipped behind the button. From sm up the CTA keeps its
+            fixed 16rem so the label changing under a thumb never resizes it;
+            below sm the flex layout fixes its width the same way. */}
         <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 flex-col">
-            <span className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Payable now</span>
+          <div className="flex min-w-0 shrink-0 flex-col">
+            <span className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Payable now</span>
             <span className="font-data text-xl font-bold leading-none text-primary">
               {amount}
               {amountEstimated && <span className="ml-1 text-xs font-medium text-ink-faint">est.</span>}
@@ -62,9 +70,7 @@ export function AlacartePayBar({
             onClick={onContinue}
             shape="pill"
             size="fluid"
-            // min-w-64: sized to the longest CTA state so the button never
-            // resizes as the label changes under a thumb.
-            className="min-h-12 min-w-64 px-8 py-3.5 text-center font-semibold disabled:opacity-40"
+            className="min-h-12 min-w-0 flex-1 px-4 py-3.5 text-center font-semibold disabled:opacity-40 sm:flex-none sm:min-w-64 sm:px-8"
           >
             {ctaLabel}
           </Button>

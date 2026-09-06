@@ -10,7 +10,7 @@ import { usePathname } from "next/navigation";
 import { COMPANY_LINKS, LEGAL_LINKS, SITE } from "@/lib/nav";
 import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 import { useScrollHide } from "@/lib/useScrollHide";
-import { Drawer, DrawerContent, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
+import { Drawer, DrawerClose, DrawerContent, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 
 export type CoreTab = "home" | "menu" | "care" | "account";
 
@@ -220,7 +220,18 @@ export function MobileBottomNav() {
       <Drawer open={accountSheetOpen} onOpenChange={setAccountSheetOpen}>
         <DrawerContent data-stitch="dark" className="md:hidden">
           <div className="flex flex-col overflow-y-auto overscroll-contain px-6 pb-6 text-ink">
-            <DrawerTitle className="text-lg font-bold">Account &amp; Information</DrawerTitle>
+            <div className="flex items-start justify-between gap-3">
+              <DrawerTitle className="text-lg font-bold">Account &amp; Information</DrawerTitle>
+              {/* T-01, as on CartDrawer: an explicit ≥44px Close — the sheet
+                  used to offer only the drag handle, scrim tap and the back
+                  gesture. */}
+              <DrawerClose
+                aria-label="Close account menu"
+                className="-mr-2 -mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink transition-transform active:scale-95"
+              >
+                <span aria-hidden className="text-xl leading-none">✕</span>
+              </DrawerClose>
+            </div>
             <DrawerDescription className="text-xs text-ink-muted mt-1">
               Manage profile, preferences, and policies
             </DrawerDescription>
@@ -252,7 +263,7 @@ export function MobileBottomNav() {
                     key={item.href}
                     href={item.href}
                     onClick={() => setAccountSheetOpen(false)}
-                    className="p-2 text-ink-muted hover:text-ink"
+                    className="flex min-h-11 items-center px-2 text-ink-muted hover:text-ink"
                   >
                     {item.label}
                   </Link>
