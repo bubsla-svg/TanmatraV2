@@ -31,15 +31,22 @@
  * -----
  * COPY_FIELDS — the columns this plan REWRITES — are customer copy only.
  *
- * `rd_note` is deliberately NOT one of them, and is deliberately not ignored
- * either: `/api/menu/public` serves it, and on 46 of the 95 live dishes it ends
+ * `rd_note` is CLEARED, not rewritten (owner, 2026-09-06). `/api/menu/public`
+ * serves it, and on 46 of the 95 live dishes it holds a health claim signed
  * "- Signed by Dr. Vikram Sethi" — a name from the seeded RD roster in
  * `artifacts/api-server/src/lib/rdIdentity.ts`, where he is listed as a
- * *dietitian*, not a doctor. No mounted component renders it today (PR #129
- * unmounted the two that did), so it is a payload claim rather than a page one.
- * Rewriting 46 review records is a data decision about internal provenance, not
- * a copy fix, so this plan REPORTS them under `noticeOnly` and never edits
- * them. `unavailable_reason` is an ops field and is out of scope entirely.
+ * *dietitian*, not a doctor.
+ *
+ * Clearing is the only honest option. Stripping just the signature leaves
+ * "MUFAs … support cardiovascular health" standing as an UNATTRIBUTED clinical
+ * claim, which is worse, not better; rewording it would be inventing a review
+ * nobody performed. The row's original text is preserved in the runner's backup
+ * JSON, so nothing is lost — it stops being served.
+ *
+ * Only notes carrying a claim or a signature are cleared. `draft-thin-dishes.ts`
+ * writes real ops records here ("Drafted below the data floor: …"), and those
+ * carry neither, so they survive untouched. `unavailable_reason` is an ops field
+ * and is out of scope entirely.
  */
 
 /** The customer-facing text columns on `menu_items`, by their Drizzle names. */
@@ -54,6 +61,14 @@ export const COPY_FIELDS = [
 
 export type CopyField = (typeof COPY_FIELDS)[number];
 
+/**
+ * `rd_note` is written, but only ever to null — it is cleared, never reworded.
+ * Keeping it out of COPY_FIELDS is what stops `rewriteCopy` being applied to it.
+ */
+export const CLEARED_FIELD = "rdNote" as const;
+
+export type WritableField = CopyField | typeof CLEARED_FIELD;
+
 /** The subset of a `menu_items` row this plan reads. */
 export interface DbCopyRow {
   slug: string;
@@ -64,8 +79,14 @@ export interface DbCopyRow {
   seoTitle: string | null;
   seoDescription: string | null;
   badge: string | null;
-  /** Reported, never rewritten — see SCOPE above. */
+  /** Cleared when it carries a claim or a signature — see SCOPE above. */
   rdNote?: string | null;
+}
+
+/** Does this `rd_note` carry an unearned claim, by vocabulary or by signature? */
+export function rdNoteIsUnearned(note: string | null | undefined): boolean {
+  if (typeof note !== "string" || note.length === 0) return false;
+  return CLAIM_PATTERN.test(note) || ATTRIBUTION_PATTERN.test(note);
 }
 
 /**
@@ -133,21 +154,16 @@ function stripAdvisoryBlocks(value: string): string {
 
 export interface CopyEdit {
   slug: string;
-  field: CopyField;
+  field: WritableField;
   before: string;
-  after: string;
+  /** null only for `rd_note`, which is cleared rather than reworded. */
+  after: string | null;
 }
 
 export interface Plan {
   edits: CopyEdit[];
   /** Detected claims no REWRITES entry can resolve. `--apply` refuses on these. */
   blockers: string[];
-  /**
-   * Claims found in `rd_note`. Surfaced so nobody reads a clean plan as "the
-   * database is clean", but never edited and never a blocker — they are review
-   * records, and what to do with them is the owner's call.
-   */
-  noticeOnly: string[];
   counts: Record<string, number>;
 }
 
@@ -182,16 +198,16 @@ export function rewriteCopy(value: string): string | null {
 export function buildPlan(rows: readonly DbCopyRow[]): Plan {
   const edits: CopyEdit[] = [];
   const blockers: string[] = [];
-  const noticeOnly: string[] = [];
   let rowsWithClaims = 0;
   let archivedWithClaims = 0;
+  let notesCleared = 0;
 
   for (const row of rows) {
-    if (
-      typeof row.rdNote === "string" &&
-      (CLAIM_PATTERN.test(row.rdNote) || ATTRIBUTION_PATTERN.test(row.rdNote))
-    ) {
-      noticeOnly.push(`${row.slug}.rdNote: ${row.rdNote}`);
+    if (rdNoteIsUnearned(row.rdNote)) {
+      // Cleared whole. No rewrite table, no blocker: there is no wording that
+      // makes a review nobody performed true.
+      edits.push({ slug: row.slug, field: CLEARED_FIELD, before: row.rdNote as string, after: null });
+      notesCleared += 1;
     }
     const hits = claimFields(row);
     if (hits.length === 0) continue;
@@ -217,14 +233,13 @@ export function buildPlan(rows: readonly DbCopyRow[]): Plan {
   return {
     edits,
     blockers,
-    noticeOnly,
     counts: {
       rows: rows.length,
       rowsWithClaims,
       archivedWithClaims,
       edits: edits.length,
       blocked: blockers.length,
-      rdNoteClaims: noticeOnly.length,
+      notesCleared,
     },
   };
 }
@@ -237,6 +252,7 @@ export function verifyPostState(rows: readonly DbCopyRow[]): string[] {
   const out: string[] = [];
   for (const row of rows) {
     for (const { field } of claimFields(row)) out.push(`${row.slug}.${field}`);
+    if (rdNoteIsUnearned(row.rdNote)) out.push(`${row.slug}.${CLEARED_FIELD}`);
   }
   return out;
 }
@@ -249,7 +265,7 @@ export function renderPlanMarkdown(plan: Plan): string {
       `(archived: ${plan.counts["archivedWithClaims"]}) · edits: **${plan.counts["edits"]}** · ` +
       `blocked: **${plan.counts["blocked"]}**`,
     "",
-    `\`rd_note\` rows carrying a claim (reported, NOT edited): **${plan.counts["rdNoteClaims"]}**`,
+    `\`rd_note\` rows cleared: **${plan.counts["notesCleared"]}**`,
     "",
   ];
   if (plan.blockers.length > 0) {
@@ -257,21 +273,16 @@ export function renderPlanMarkdown(plan: Plan): string {
     for (const b of plan.blockers) lines.push(`- ${b}`);
     lines.push("");
   }
-  if (plan.noticeOnly.length > 0) {
-    lines.push(
-      "## `rd_note` — reported only",
-      "",
-      "Review records, not customer copy. `/api/menu/public` serves them and no",
-      "mounted component renders them. What happens to them is a data decision.",
-      "",
-    );
-    for (const n of plan.noticeOnly) lines.push(`- ${n}`);
-    lines.push("");
-  }
   if (plan.edits.length > 0) {
     lines.push("## Edits", "");
     for (const e of plan.edits) {
-      lines.push(`### \`${e.slug}\` · \`${e.field}\``, "", `- before: ${e.before}`, `- after: ${e.after}`, "");
+      lines.push(
+        `### \`${e.slug}\` · \`${e.field}\``,
+        "",
+        `- before: ${e.before}`,
+        `- after: ${e.after === null ? "_(cleared)_" : e.after}`,
+        "",
+      );
     }
   }
   return lines.join("\n");

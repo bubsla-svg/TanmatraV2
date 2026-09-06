@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   ATTRIBUTION_PATTERN,
   CLAIM_PATTERN,
+  rdNoteIsUnearned,
   COPY_FIELDS,
   buildPlan,
   claimFields,
@@ -52,8 +53,8 @@ test("the vocabulary matches the claims and not the words that contain them", ()
 });
 
 test("claimFields reads customer copy and never the staff note", () => {
-  // rd_note and unavailable_reason are internal records. They are not in
-  // COPY_FIELDS, so a row is not even able to offer them to this plan.
+  // rd_note is written (cleared), but never REWRITTEN: keeping it out of
+  // COPY_FIELDS is what stops rewriteCopy ever being applied to it.
   assert.ok(!(COPY_FIELDS as readonly string[]).includes("rdNote"));
   assert.ok(!(COPY_FIELDS as readonly string[]).includes("unavailableReason"));
 
@@ -183,20 +184,35 @@ test("a description that is ONLY an advisory block collapses to empty, not to a 
   assert.equal(after, "");
 });
 
-test("rd_note claims are reported, never edited", () => {
-  // 46 of 95 live dishes carry "- Signed by Dr. Vikram Sethi" here. Rewriting a
-  // review record is a data decision; this plan surfaces it and stops.
+test("an unearned rd_note is cleared whole, never reworded", () => {
+  // 46 of 95 live dishes carry "- Signed by Dr. Vikram Sethi" here. Stripping
+  // only the signature would leave "MUFAs support cardiovascular health"
+  // standing as an unattributed clinical claim — worse, not better.
+  const note = "MUFAs support cardiovascular health. - Signed by Dr. Vikram Sethi";
   const plan = buildPlan([
-    row({
-      slug: "avocado-toast",
-      description: "Sourdough, avocado, chilli.",
-      rdNote: "MUFAs support cardiovascular health. - Signed by Dr. Vikram Sethi",
-    }),
+    row({ slug: "avocado-toast", description: "Sourdough, avocado, chilli.", rdNote: note }),
   ]);
-  assert.deepEqual(plan.edits, [], "rd_note is never an edit");
-  assert.deepEqual(plan.blockers, [], "and never blocks an apply");
-  assert.equal(plan.counts["rdNoteClaims"], 1);
-  assert.match(plan.noticeOnly[0] ?? "", /^avocado-toast\.rdNote: /);
+  assert.deepEqual(plan.blockers, [], "there is no wording to block on — it is a delete");
+  assert.equal(plan.counts["notesCleared"], 1);
+  assert.deepEqual(plan.edits, [
+    { slug: "avocado-toast", field: "rdNote", before: note, after: null },
+  ]);
+});
+
+test("an ops note without a claim or a signature is left alone", () => {
+  // draft-thin-dishes.ts writes exactly this into rd_note. It is a real record
+  // of a real action, and a blanket clear would destroy it.
+  const opsNote = "Drafted below the data floor: no ingredient list.";
+  assert.ok(!rdNoteIsUnearned(opsNote));
+  const plan = buildPlan([row({ slug: "thin", rdNote: opsNote })]);
+  assert.deepEqual(plan.edits, []);
+  assert.deepEqual(verifyPostState([row({ slug: "thin", rdNote: opsNote })]), []);
+});
+
+test("convergence covers rd_note — a cleared plan that left one is not clean", () => {
+  const note = "Balancing for Kapha. - Signed by Dr. Vikram Sethi";
+  assert.deepEqual(verifyPostState([row({ slug: "z", rdNote: note })]), ["z.rdNote"]);
+  assert.deepEqual(verifyPostState([row({ slug: "z", rdNote: null })]), []);
 });
 
 test("an unearned signature is detected even with no RD vocabulary in the note", () => {

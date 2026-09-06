@@ -19,10 +19,10 @@
  *      a human, never guessed at.
  *   2. Apply runs in ONE transaction and snapshots every touched row to a
  *      backup JSON first, so a bad run is one restore away.
- *   3. It writes only the customer-facing copy columns it planned. Never the
- *      price, never `archived`, never `rd_note` — that last one carries the same
- *      signature on 46 rows and is REPORTED rather than edited, because
- *      rewriting a review record is a data decision, not a copy fix.
+ *   3. It writes only the columns it planned — the customer-facing copy, plus
+ *      `rd_note` set to NULL where that note carries an unearned claim or
+ *      signature. Never the price, never `archived`, and never an `rd_note` that
+ *      carries neither (draft-thin-dishes.ts's ops records survive untouched).
  *   4. After applying it re-reads and asserts convergence: no row may still
  *      carry the vocabulary. An apply that does not converge exits non-zero
  *      rather than reporting success.
@@ -83,7 +83,7 @@ function toPlanRow(r: Record<string, unknown>): DbCopyRow {
     seoTitle: str("seoTitle"),
     seoDescription: str("seoDescription"),
     badge: str("badge"),
-    // Read for the notice-only report; never written back.
+    // Read so an unearned note can be cleared; never reworded.
     rdNote: str("rdNote"),
   };
 }
@@ -113,17 +113,17 @@ function report(plan: Plan): void {
     `rows ${plan.counts["rows"]} · carrying a claim ${plan.counts["rowsWithClaims"]} ` +
       `(archived ${plan.counts["archivedWithClaims"]}) · edits ${plan.counts["edits"]} · blocked ${plan.counts["blocked"]}`,
   );
-  if (plan.noticeOnly.length > 0) {
+  if ((plan.counts["notesCleared"] ?? 0) > 0) {
     console.log(
-      `  note: ${plan.noticeOnly.length} rd_note rows carry a claim. Served by /api/menu/public, ` +
-        `rendered by no mounted component, NOT edited here — see the SCOPE note in lib/honestClaimsPlan.ts.`,
+      `  note: ${plan.counts["notesCleared"]} rd_note rows will be CLEARED. Their text is kept in the ` +
+        `backup JSON — see the SCOPE note in lib/honestClaimsPlan.ts for why clearing beats rewording.`,
     );
   }
   for (const b of plan.blockers) console.error(`BLOCKER  ${b}`);
   for (const e of plan.edits) {
-    console.log(`  edit   ${e.slug}.${e.field}`);
+    console.log(`  ${e.after === null ? "clear " : "edit  "} ${e.slug}.${e.field}`);
     console.log(`         - ${e.before}`);
-    console.log(`         + ${e.after}`);
+    if (e.after !== null) console.log(`         + ${e.after}`);
   }
 }
 
@@ -150,7 +150,11 @@ async function applyPlan(plan: Plan, raw: Map<string, unknown>): Promise<void> {
       await tx.update(menuItemsTable).set(set).where(eq(menuItemsTable.slug, slug));
     }
   });
-  console.log(`applied: ${plan.edits.length} fields across ${bySlug.size} dishes.`);
+  const cleared = plan.edits.filter((e) => e.after === null).length;
+  console.log(
+    `applied: ${plan.edits.length} fields across ${bySlug.size} dishes ` +
+      `(${plan.edits.length - cleared} rewritten, ${cleared} cleared).`,
+  );
 
   // Convergence. The assertion is about the whole table, not just what we
   // wrote — a row we skipped is as much a live claim as one we got wrong.
