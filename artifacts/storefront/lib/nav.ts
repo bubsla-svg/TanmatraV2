@@ -45,7 +45,7 @@ export const NAV_GROUPS: NavGroup[] = [
     links: [
       { label: "Home", href: "/" },
       { label: "Menu", href: "/menu", desc: "Browse today's dishes" },
-      { label: "Marketplace", href: "/marketplace", desc: "RD-curated pantry & supplements" },
+      { label: "Marketplace", href: "/marketplace", desc: "Pantry: good oils, sauces and snacks" },
     ],
   },
   {
@@ -57,16 +57,16 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Plan",
     href: "/plans",
     links: [
-      { label: "Plans", href: "/plans", desc: "Therapeutic subscription plans" },
+      { label: "Plans", href: "/plans", desc: "Monthly lunch plans" },
       // T-18: customer vocabulary, not internal names. The trial costs ₹399
       // (TRIAL_CREDIT_PAISE in lib/subscription-rules) — it was listed here
       // as "Free trial". "hub", "wizard" and "smart" are how the team names
       // things, not how a customer looks for them.
       { label: "3-lunch trial · ₹399", href: "/trial", desc: "Three lunches, one payment" },
       { label: "Build your own plan", href: "/custom-build", desc: "Customize macros & boosts" },
-      { label: "Quick start", href: "/quick-setup", desc: "3-step clinical personalization" },
+      { label: "Quick start", href: "/quick-setup", desc: "Set up in three steps" },
       { label: "Recommended for you", href: "/meal-recommendations", desc: "Dishes matched to your goal" },
-      { label: "Combos", href: "/meal-deals", desc: "Macro density per rupee" },
+      { label: "Combos", href: "/meal-deals", desc: "Meal combos, priced together" },
       { label: "Metabolic programs", href: "/metabolic", desc: "Fat-loss & lean-muscle programs", section: "By goal & condition" },
       { label: "PCOS care", href: "/care/pcos", desc: "Hormone-aware, low-GI menu", section: "By goal & condition" },
       { label: "Diabetes care", href: "/care/diabetes", desc: "Sugar-conscious, low-GI menu", section: "By goal & condition" },
@@ -169,8 +169,8 @@ export const LEGAL_LINKS: NavLink[] = [
   { label: "Privacy Policy", href: "/legal/privacy" },
   { label: "Refund & Cancellation", href: "/legal/refunds" },
   { label: "Shipping & Delivery", href: "/legal/shipping" },
-  { label: "Health & Nutrition Disclaimer", href: "/legal/disclaimer" },
-  { label: "Grievance Redressal", href: "/legal/grievance" },
+  { label: "Nutrition disclaimer", href: "/legal/disclaimer" },
+  { label: "Complaints", href: "/legal/grievance" },
 ];
 
 /**
@@ -187,7 +187,7 @@ export const PARTNER_LINKS: NavLink[] = [
 /** Site-level facts surfaced in the footer. */
 export const SITE = {
   brand: "Tanmatra",
-  tagline: "Clinical nutrition, cooked fresh.",
+  tagline: "Fresh lunch, cooked after you order.",
   // FSSAI *Registration* number (petty-FBO tier, not a licence) — render it
   // as "FSSAI Reg. No.", per the certificate. See content/legal/company.ts.
   fssai: "22725926001018",

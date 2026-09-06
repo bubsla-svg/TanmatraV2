@@ -13,18 +13,18 @@ import { MenuPage } from "../support/pages/MenuPage";
 test("trial page states the offer honestly — price, creditback, no auto-renew", async ({ page }) => {
   const errors = collectErrors(page);
   await page.goto("/trial");
-  await expect(page.getByRole("heading", { name: /try 3 lunches for ₹399/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /try three lunches for ₹399/i })).toBeVisible();
   // The creditback promise and the no-auto-renew guarantee, verbatim spine copy.
   await expect(page.getByText(/comes back as credit/i).first()).toBeVisible();
   await expect(page.getByText(/never auto-renews/i)).toBeVisible();
-  await expect(page.getByRole("button", { name: /start the taste test/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /start with 3 lunches/i })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
 test("start hands off to checkout carrying the trial plan + chosen track", async ({ page }) => {
   await page.goto("/trial");
   await page.getByRole("button", { name: "Non-veg" }).click();
-  await page.getByRole("button", { name: /start the taste test/i }).click();
+  await page.getByRole("button", { name: /start with 3 lunches/i }).click();
   await page.waitForURL(/\/checkout\?plan=trial_3day&track=nonveg/);
 });
 
@@ -39,7 +39,7 @@ test("the start CTA stays visible and clickable even with items already in cart"
   await menu.addToCart();
 
   await page.goto("/trial");
-  const startCta = page.getByRole("button", { name: /start the taste test/i });
+  const startCta = page.getByRole("button", { name: /start with 3 lunches/i });
   await expect(startCta).toBeVisible();
   await startCta.click();
   await page.waitForURL(/\/checkout\?plan=trial_3day&track=veg/);

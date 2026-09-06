@@ -47,7 +47,7 @@ import { DishImage } from "@/components/menu/DishImage";
 function MacroChip({ dish, sharedMacroKeys }: { dish: DishData; sharedMacroKeys: ReadonlySet<string> }) {
   const trust = macroTrust(dish, sharedMacroKeys);
   if (trust === "unverified") {
-    return <ClinicalBadge variant="slate" className="w-fit" label="Macros being verified" />;
+    return <ClinicalBadge variant="slate" className="w-fit" label="Nutrition coming soon" />;
   }
   return (
     <ClinicalBadge

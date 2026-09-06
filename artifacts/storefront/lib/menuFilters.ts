@@ -107,13 +107,14 @@ export interface FilterOption<K> {
   label: string;
 }
 
-/** Group labels and chip copy come straight from the approved 5.3 prompt. */
+/** Plain-language goal chips (consumer copy deck, 2026-09). Keys are stable —
+ *  only the labels are the customer's words. */
 export const GOAL_OPTIONS: FilterOption<GoalFilter>[] = [
-  { key: "fat_loss", label: "Fat loss" },
-  { key: "glucose_steady", label: "Glucose steady" },
+  { key: "fat_loss", label: "Light" },
+  { key: "glucose_steady", label: "Steady sugar" },
   { key: "high_protein", label: "High protein" },
-  { key: "gut_light", label: "Gut light" },
-  { key: "energy_stable", label: "Energy stable" },
+  { key: "gut_light", label: "Easy on the stomach" },
+  { key: "energy_stable", label: "No afternoon slump" },
 ];
 
 export const DIETARY_OPTIONS: FilterOption<DietaryFilter>[] = [

@@ -42,7 +42,7 @@ export function GoalCard({
       >
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="font-display text-lg font-semibold leading-tight text-primary">{promise}</span>
-          <span className="text-xs text-ink-muted">{planName} · configure plan</span>
+          <span className="text-xs text-ink-muted">{planName}</span>
         </span>
         <span aria-hidden className="shrink-0 text-primary">
           &rarr;
@@ -54,7 +54,7 @@ export function GoalCard({
           onClick={() => emitFunnel("cuj_router_answer", { planId, answer: promise, source, door: "menu" })}
           className="flex min-h-11 items-center gap-1.5 border-t border-line px-5 text-xs font-semibold text-ink-muted hover:text-ink"
         >
-          See matching meals
+          See meals
           <span aria-hidden>&rarr;</span>
         </Link>
       )}

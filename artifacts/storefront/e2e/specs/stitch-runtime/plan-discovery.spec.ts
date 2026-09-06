@@ -30,7 +30,7 @@ test.describe("stitch-runtime · plan discovery", () => {
     // not the element type — so pinning `button` was pinning the old
     // implementation. Substring because the card's accessible name now also
     // carries the plan name subtitle it routes to.
-    await expect(page.getByRole("heading", { name: /what.s lunch for\?/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /what do you want lunch to do\?/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /Get me through the workday/ })).toBeVisible();
     await expect(marker(page, "6.1", "default")).toBeVisible();
     expect(errors).toEqual([]);
@@ -41,8 +41,8 @@ test.describe("stitch-runtime · plan discovery", () => {
     const errors = collectErrors(page);
     await page.goto("/trial");
     // Hero h1 + the sticky primary CTA — same accessible names cuj-04 pins.
-    await expect(page.getByRole("heading", { name: /try 3 lunches for/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /start the taste test/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /try three lunches for/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /start with 3 lunches/i })).toBeVisible();
     await expect(marker(page, "6.8", "default")).toBeVisible();
     expect(errors).toEqual([]);
     await evidenceShot(page, "6.8");

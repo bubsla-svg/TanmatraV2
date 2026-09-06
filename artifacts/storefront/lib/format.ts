@@ -60,7 +60,7 @@ export function formatGrams(grams: number, estimated?: boolean): string {
  * that is the worst way to be wrong: a number someone may plan a diabetic or
  * renal diet around, asserted with no basis under it.
  */
-export const MACROS_PENDING_LABEL = "Nutrition being verified";
+export const MACROS_PENDING_LABEL = "Nutrition coming soon";
 
 /**
  * `≈686 kcal · ≈42 g P` — the one-line summary a dense list shows (menu card,

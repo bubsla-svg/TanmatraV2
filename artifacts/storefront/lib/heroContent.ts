@@ -39,7 +39,7 @@ export function deriveHeroContent(refCookie?: string): HeroContent {
     return {
       eyebrow: "Sent here by your dietitian",
       headline: "Lunch that fits your plan, cooked fresh and brought to your desk.",
-      blurb: `Cooked in cold-pressed oil and desi ghee, weighed to the gram, and checked by our dietitians before it goes out. From ${basePrice} a meal.`,
+      blurb: `Cooked in cold-pressed oil and desi ghee, weighed to the gram, and brought to your desk hot. From ${basePrice} a meal.`,
       badge: "Dietitian referral",
     };
   }
@@ -55,8 +55,8 @@ export function deriveHeroContent(refCookie?: string): HeroContent {
 
   return {
     eyebrow: "Fresh lunch, Noida",
-    headline: "Lunch you look forward to. Cooked today, at your desk by one.",
-    blurb: `Home-style plates cooked after you order — never reheated from a tray. Real ghee, real portions, and you still feel light at 4pm. From ${basePrice} a meal.`,
+    headline: "Lunch you look forward to. Cooked after you order, at your desk by one.",
+    blurb: `Home-style plates, never reheated from a tray. Real ghee, real portions, and you still feel light at 4 pm. From ${basePrice} a meal.`,
     badge: null,
   };
 }

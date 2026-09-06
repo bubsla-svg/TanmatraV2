@@ -160,7 +160,7 @@ export function Section01ClinicalHero({
                 href="/trial"
                 onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "Try 3 lunches" })}
               >
-                Try 3 lunches
+                Try three lunches
               </Link>
             </Button>
           </div>
@@ -173,8 +173,8 @@ export function Section01ClinicalHero({
               Bring it back when reviews are a number we can read. */}
           {/* T-20: the credentials are TAPPABLE now — one chip in the first
               viewport opens the Kitchen & safety sheet (registration number,
-              ISO 22000 kitchen, RD review, allergen policy). The three claims
-              below stay as the one-line read. */}
+              ISO 22000 kitchen, cooked-to-order, allergen policy). The three
+              claims below stay as the one-line read. */}
           <div className="mt-7 flex animate-rise-in stagger-3">
             <KitchenSafetyChip />
           </div>
@@ -183,7 +183,7 @@ export function Section01ClinicalHero({
           <div className="mt-12 flex flex-wrap gap-x-8 gap-y-3 border-t border-primary/15 pt-5 animate-rise-in stagger-4">
             <TrustItem>Cooked after you order</TrustItem>
             <TrustItem>FSSAI-registered kitchen</TrustItem>
-            <TrustItem>Checked by our dietitians</TrustItem>
+            <TrustItem>ISO 22000 kitchen</TrustItem>
           </div>
         </div>
 

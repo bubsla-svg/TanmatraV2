@@ -17,10 +17,11 @@ import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
  * cannot drift between surfaces.
  *
  * Every line here is a claim the site already makes elsewhere — the
- * registration number from lib/nav's SITE (the footer's own source), the
- * ISO 22000 kitchen from /about, RD review from /rd. Nothing is added here
- * that a page cannot back. "Registered", never "licensed" — the certificate
- * is an FSSAI Registration (fssaiClaims.test.ts).
+ * registration number from lib/nav's SITE (the footer's own source) and the
+ * ISO 22000 kitchen from /about. Nothing is added here that a page cannot
+ * back, and no dietitian/RD "reviewed-by" claim appears until one is on board.
+ * "Registered", never "licensed" — the certificate is an FSSAI Registration
+ * (fssaiClaims.test.ts).
  */
 export function KitchenSafetyChip({
   variant = "quiet",
@@ -49,10 +50,11 @@ export function KitchenSafetyChip({
         <svg aria-hidden viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 text-gold">
           <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
         </svg>
-        {/* "Dietitians", not "RD-reviewed": the dish page must carry no
-            per-dish RD-review string (finding F5, menu-image-integrity.spec) —
-            the kitchen-level claim is stated inside the sheet, in full. */}
-        FSSAI · ISO 22000 · Dietitians
+        {/* No dietitian/RD claim on the chip or in the sheet: the site makes
+            no reviewed-by claim until a dietitian is actually on board. The
+            two credentials we hold — FSSAI registration and the ISO 22000
+            kitchen — are the whole label. */}
+        FSSAI · ISO 22000
         <span aria-hidden className="text-ink-faint">›</span>
       </button>
 
@@ -85,12 +87,10 @@ export function KitchenSafetyChip({
                 </dd>
               </div>
               <div className="flex flex-col gap-1 py-3">
-                <dt className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Dietitian review</dt>
+                <dt className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Cooked to order</dt>
                 <dd className="text-sm text-ink-muted">
-                  Registered dietitians design the plans and review the menu&rsquo;s macros and allergen disclosures.{" "}
-                  <Link href="/rd" className="font-medium text-gold-text underline-offset-4 hover:underline">
-                    Meet the dietitians
-                  </Link>
+                  Every plate is cooked after you order — never reheated from a tray — and each dish lists its
+                  calories and protein.
                 </dd>
               </div>
               <div className="flex flex-col gap-1 py-3">
@@ -98,7 +98,7 @@ export function KitchenSafetyChip({
                 <dd className="text-sm text-ink-muted">
                   Every dish lists what it contains. A list marked &ldquo;under review&rdquo; is never shown as allergen-free.{" "}
                   <Link href="/legal/disclaimer" className="font-medium text-gold-text underline-offset-4 hover:underline">
-                    Health &amp; nutrition disclaimer
+                    Nutrition disclaimer
                   </Link>
                 </dd>
               </div>

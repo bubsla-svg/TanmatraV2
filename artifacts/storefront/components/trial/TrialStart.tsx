@@ -49,7 +49,7 @@ export function TrialStart({
   }
 
   return (
-    <section className="flex flex-col gap-5" aria-label="Start the 3-day taste test">
+    <section className="flex flex-col gap-5" aria-label="Start the trial">
       <div className="flex flex-col items-center gap-2">
         <p
           id="trial-pref-label"
@@ -148,7 +148,7 @@ export function TrialStart({
             size="fluid"
             className="w-full min-h-12 px-8 py-3.5 text-center text-base font-semibold"
           >
-            Start the taste test · {formatPaise(pricePaise)}
+            Start with 3 lunches · {formatPaise(pricePaise)}
           </Button>
         </div>
       </StickyAction>

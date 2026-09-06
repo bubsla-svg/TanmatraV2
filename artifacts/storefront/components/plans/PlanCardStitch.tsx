@@ -28,11 +28,6 @@ export function PlanCardStitch({ id }: { id: PlanId }) {
           <p className="text-sm leading-relaxed text-ink-muted">{d.subtitle}</p>
         </div>
         <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
-          {d.clinical && (
-            <span className="rounded-full border border-line px-2.5 py-1 text-3xs font-semibold uppercase tracking-wide text-sage-text">
-              RD-reviewed
-            </span>
-          )}
           {q.servedTracks.map((t) => (
             <span
               key={t}
@@ -63,7 +58,7 @@ export function PlanCardStitch({ id }: { id: PlanId }) {
         </span>
       ) : (
         <span className="inline-flex items-center justify-center rounded-full border border-line-strong px-5 py-3 text-sm font-semibold text-ink">
-          Join waitlist &rarr;
+          Join the waitlist &rarr;
         </span>
       )}
     </Link>

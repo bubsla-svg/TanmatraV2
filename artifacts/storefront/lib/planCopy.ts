@@ -45,11 +45,11 @@ export interface PlanDisplay {
 
 export const PLAN_DISPLAY: Record<PlanId, PlanDisplay> = {
   desk_fuel: { id: "desk_fuel", name: "Desk Fuel", promise: "Get me through the workday", subtitle: "22 lunches that pull their weight.", clinical: false },
-  steady: { id: "steady", name: "Steady", promise: "Keep my sugar steady", subtitle: "Low-GI builds, RD-reviewed — steady energy, steady sugar.", clinical: true },
+  steady: { id: "steady", name: "Steady", promise: "Keep my blood sugar level", subtitle: "Low-GI plates, no refined sugar — steady energy, steady sugar.", clinical: true },
   glp1_companion: { id: "glp1_companion", name: "GLP-1 Companion", promise: "I'm on a GLP-1", subtitle: "Small portions, serious protein — built for how you eat now.", clinical: true },
   protein_build: { id: "protein_build", name: "Protein Build", promise: "Build muscle", subtitle: "Protein-per-rupee that trains with you.", clinical: false },
   teams: { id: "teams", name: "Tanmatra for Teams", promise: "Feed the team", subtitle: "Desk-drop for 10+ seats, weekly invoice.", clinical: false },
-  trial_3day: { id: "trial_3day", name: "3-Day Taste Test", promise: "Try a few days first", subtitle: "Three lunches, full creditback if you continue.", clinical: false },
+  trial_3day: { id: "trial_3day", name: "3-lunch trial", promise: "Try a few lunches first", subtitle: "Three lunches, full creditback if you continue.", clinical: false },
 };
 
 export function planDisplay(id: PlanId): PlanDisplay {

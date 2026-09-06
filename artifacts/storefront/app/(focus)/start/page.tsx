@@ -64,13 +64,13 @@ export default async function StartPage({
       <section className="mx-auto flex max-w-md flex-col gap-6 px-4 pt-8 pb-16">
         <div className="flex flex-col items-center gap-2 text-center">
           <span className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">
-            This week&rsquo;s taste test
+            This week&rsquo;s three
           </span>
           <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">
             Three lunches for {formatPaise(TRIAL_PRICE_PAISE)}
           </h1>
           <p className="max-w-[300px] text-sm leading-relaxed text-ink-muted">
-            All in — cooking, packaging and delivery included. Nothing added at checkout.
+            All in — cooking, packing and delivery. No delivery or packing charges at checkout.
           </p>
         </div>
 
@@ -94,7 +94,7 @@ export default async function StartPage({
             Act. Same wording as TrialStart's trust line and the footer;
             lib/fssaiClaims.test.ts fails the build on any other spelling. */}
         <p className="text-center text-2xs text-ink-faint">
-          FSSAI-registered, RD-reviewed kitchen · secure UPI checkout
+          FSSAI-registered kitchen · UPI checkout
         </p>
 
         {/* Law 3, in the only direction that exists here. This page is where a
@@ -105,7 +105,7 @@ export default async function StartPage({
         <p className="text-center text-xs text-ink-muted">
           Not ready?{" "}
           <Link href="/menu" className="font-medium text-primary underline underline-offset-4 hover:text-ink">
-            Browse the full menu
+            Just order one lunch
           </Link>
         </p>
       </section>

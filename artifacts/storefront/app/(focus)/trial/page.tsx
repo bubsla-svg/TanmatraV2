@@ -9,7 +9,7 @@ import { TrialStart } from "@/components/trial/TrialStart";
 import { FocusHeader } from "@/components/FocusHeader";
 
 export const metadata: Metadata = {
-  title: "3-Day Taste Test",
+  title: "Try three lunches",
   description:
     "Three lunches for ₹399 — every rupee credited back the moment you start a plan.",
 };
@@ -47,7 +47,7 @@ export default async function TrialPage() {
             Not ready for a month?
           </span>
           <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">
-            Try 3 lunches for {formatPaise(TRIAL_PRICE_PAISE)}
+            Try three lunches for {formatPaise(TRIAL_PRICE_PAISE)}
           </h1>
           <p className="max-w-[280px] text-sm leading-relaxed text-ink-muted">
             {TRIAL_COPY.creditLine}
@@ -61,7 +61,7 @@ export default async function TrialPage() {
         <div className="rounded-2xl border border-line bg-surface p-5">
           <h2 className="font-display text-lg font-semibold leading-tight text-primary">What happens after the trial?</h2>
           <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-            After your Taste Test, you can start a regular subscription. Our most
+            After your trial, you can start a regular subscription. Our most
             popular plan starts at{" "}
             <span className="font-data font-bold text-primary">
               {formatPaise(deskFuelWeekly.cycleTotalPaise)}/week

@@ -36,7 +36,7 @@ export default function PlansPage() {
 
         <div className="flex flex-col gap-4">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
-            Other plans that may fit
+            All plans
           </h2>
           <div className="flex flex-col gap-5">
             {plans.map((p) => (
@@ -47,14 +47,14 @@ export default function PlansPage() {
 
         <div className="flex flex-col items-center gap-1 border-t border-line pt-8 text-center">
           <p className="text-2xs font-semibold uppercase tracking-wider text-ink-muted">
-            Corporate solutions
+            For teams
           </p>
-          <h2 className="text-lg font-semibold text-ink">Tanmatra for Teams</h2>
+          <h2 className="text-lg font-semibold text-ink">Lunch for your whole office.</h2>
           <Link
             href="/corporate-wellness"
             className="-m-2 mt-1 p-2 text-sm font-semibold text-gold-text underline-offset-4 hover:underline"
           >
-            Talk to sales &rarr;
+            Talk to us &rarr;
           </Link>
         </div>
       </section>

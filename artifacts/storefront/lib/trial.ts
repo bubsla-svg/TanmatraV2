@@ -36,6 +36,9 @@ export function trialPlusWeeklyPaise(): number {
 }
 
 export const TRIAL_COPY = {
-  creditLine: "₹399 now — and all ₹399 comes back as credit the moment you start a plan.",
-  noAutoConvert: "7 days to decide. The trial never auto-renews — continuing is one tap.",
+  creditLine: "Pay ₹399 once. Start a plan later and the ₹399 comes back as credit.",
+  // "never auto-renews" is kept verbatim: it is the Law 5 denial a trial
+  // surface must state (schema/subscriptions.ts:44-52), asserted by
+  // cuj-04-trial.spec.ts — the copy deck's "Nothing renews" dropped it.
+  noAutoConvert: "The trial never auto-renews. If you like it, continuing is one tap.",
 } as const;

@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PLAN_DELIVERY_DAYS_LABEL, PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
+import { PLAN_DELIVERY_DAYS_SENTENCE, PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
 import { bookablePlans, renewalIsMixed, SKIP_SWAP_SENTENCE } from "@/lib/howItWorks";
 
 export const metadata: Metadata = {
   title: "How it works",
   description:
-    "What arrives, when it arrives, how to skip or swap a delivery, and exactly which plans renew.",
+    "What arrives, when, how to change it, and what renews.",
 };
 
 /**
@@ -32,17 +32,15 @@ export default function HowItWorksPage() {
   return (
     <section className="mx-auto max-w-3xl px-4 py-10">
       <header>
-        <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Plans</p>
-        <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight text-primary">How it works</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-primary">How it works</h1>
         <p className="mt-4 max-w-prose text-sm leading-relaxed text-ink-muted">
-          What arrives, when it arrives, how to change a delivery, and which
-          plans keep charging you.
+          What arrives, when, how to change it, and what renews.
         </p>
       </header>
 
       <h2 className="mt-10 font-display text-lg font-semibold text-primary">When food arrives</h2>
       <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-muted">
-        Delivered {PLAN_DELIVERY_DAYS_LABEL.toLowerCase()}, {PLAN_DELIVERY_WINDOW_LABEL}. Your first
+        Delivered {PLAN_DELIVERY_DAYS_SENTENCE}, {PLAN_DELIVERY_WINDOW_LABEL}. Your first
         delivery is the next weekday after you order — deliveries never land on a
         weekend.
       </p>
@@ -56,16 +54,13 @@ export default function HowItWorksPage() {
       </p>
 
       <h2 className="mt-10 font-display text-lg font-semibold text-primary">
-        {mixed ? "Which plans renew — and which do not" : "Renewal"}
+        {mixed ? "What renews" : "Renewal"}
       </h2>
       {mixed && (
         <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-muted">
-          It depends on the billing frequency you choose, not on which plan you
-          choose. Weekly and monthly billing set up UPI Autopay and renew until
-          you cancel, with a notification before each charge. Quarterly does
-          not — you pay once for that quarter, nothing renews automatically,
-          and you come back when you want the next one. The one-off trial never
-          renews. Every plan below is quoted monthly unless you pick otherwise.
+          Weekly and monthly billing renew by UPI Autopay until you cancel — we
+          message you before every charge. Quarterly is a one-time payment. The
+          3-lunch trial never renews.
         </p>
       )}
 
@@ -74,13 +69,11 @@ export default function HowItWorksPage() {
           <article key={plan.planId} className="rounded-2xl border border-line bg-surface p-5">
             <div className="flex items-baseline justify-between gap-3">
               <h3 className="font-display text-sm font-semibold text-primary">{plan.name}</h3>
-              <span className="text-xs font-medium text-ink-faint">
-                {plan.cycles.length === 1
-                  ? plan.cycles[0]!.renews
-                    ? "Renews automatically"
-                    : "Does not renew"
-                  : "Depends on the billing frequency you pick"}
-              </span>
+              {plan.cycles.length === 1 && (
+                <span className="text-xs font-medium text-ink-faint">
+                  {plan.cycles[0]!.renews ? "Renews automatically" : "Does not renew"}
+                </span>
+              )}
             </div>
             <ul className="mt-3 flex flex-col gap-1.5">
               {plan.facts.map((fact) => (
@@ -115,11 +108,11 @@ export default function HowItWorksPage() {
       </div>
 
       <p className="mt-10 max-w-prose text-sm leading-relaxed text-ink-muted">
-        Still deciding?{" "}
+        Or skip plans entirely —{" "}
         <Link href="/menu" className="font-medium text-primary underline-offset-4 hover:underline">
-          Browse the menu
-        </Link>{" "}
-        — every dish can be ordered on its own, with no plan at all.
+          every dish can be ordered on its own
+        </Link>
+        .
       </p>
     </section>
   );

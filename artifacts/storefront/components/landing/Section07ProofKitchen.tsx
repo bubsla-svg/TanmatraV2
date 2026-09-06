@@ -1,23 +1,23 @@
 import React from "react";
 
 /**
- * §7: Verification Proofs - Kitchen Credentials.
- * Showcases Noida medical-grade central kitchen infrastructure, strict sanitation logs,
- * and unbroken temperature-controlled thermal delivery.
+ * §7: Kitchen — where your lunch is cooked, and what stands behind it.
+ * Plain claims the site can back: cooked to order in the Sector 104 kitchen,
+ * delivered hot in insulated boxes, FSSAI-registered and ISO 22000.
  */
 export function Section07ProofKitchen() {
-  const safetyProtocols = [
+  const kitchenStandards = [
     {
-      title: "Noida Central Medical Kitchen",
-      desc: "Operating within Noida enterprise sector with strict sanitary zone separation and stainless-steel preparatory surfaces.",
+      title: "Cooked to order in Sector 104, Noida",
+      desc: "Fresh plates, cooked after you order — never reheated from a tray.",
     },
     {
-      title: "100% Thermal Insulated Delivery",
-      desc: "Dispatched in high-density insulated thermal containment boxes guaranteeing hot reception at office desks.",
+      title: "Arrives hot",
+      desc: "Insulated boxes, so lunch is hot when it reaches your desk.",
     },
     {
-      title: "FSSAI & ISO Quality Audits",
-      desc: "Fully compliant with FSSAI hygiene guidelines, daily microbiological swab checks, and traceable cold chain ingredients.",
+      title: "FSSAI-registered · ISO 22000",
+      desc: "Our kitchen follows FSSAI hygiene standards and ISO 22000 food-safety management.",
     },
   ];
 
@@ -37,23 +37,20 @@ export function Section07ProofKitchen() {
           </span>
           <h3 className="mt-4 max-w-md font-display text-4xl leading-[.98] sm:text-5xl">Where your lunch is actually cooked</h3>
           <span className="mt-6 inline-block rounded-full border border-primary-foreground/20 px-3 py-1 text-xs font-bold text-primary-foreground">
-            Noida Sectors Active
+            Sector 104, Noida
           </span>
         </div>
 
         <div className="grid gap-7 sm:grid-cols-3 animate-rise-in stagger-1">
-          {safetyProtocols.map((proto, idx) => (
+          {kitchenStandards.map((item, idx) => (
             <div key={idx} className="flex flex-col justify-between border-l border-primary-foreground/20 pl-5">
               <div>
                 <span className="font-data text-xs text-primary-foreground/80">
-                  Standard 0{idx + 1}
+                  0{idx + 1}
                 </span>
-                <h4 className="mt-4 font-display text-xl">{proto.title}</h4>
-                <p className="mt-2 text-sm leading-5 text-primary-foreground/65">{proto.desc}</p>
+                <h4 className="mt-4 font-display text-xl">{item.title}</h4>
+                <p className="mt-2 text-sm leading-5 text-primary-foreground/65">{item.desc}</p>
               </div>
-              <p className="mt-4 text-[10px] font-bold uppercase tracking-[.14em] text-primary-foreground/65">
-                Verified Compliance
-              </p>
             </div>
           ))}
         </div>
