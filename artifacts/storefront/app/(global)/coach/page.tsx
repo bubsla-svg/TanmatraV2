@@ -22,7 +22,7 @@ export default function CoachPage() {
       <div className="border-b border-line pb-4">
         <h1 className="text-xl font-bold text-ink">Nutrition coach</h1>
         <p className="mt-1 text-xs text-ink-muted">
-          General nutrition guidance, not medical advice. Clinical questions go to a Registered Dietitian.
+          General nutrition guidance, not medical advice. Take clinical questions to your doctor.
         </p>
       </div>
       <div className="mt-5 flex-1">

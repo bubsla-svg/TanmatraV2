@@ -62,7 +62,7 @@ export function CommunityQaForum() {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
       <div className="flex flex-col gap-4 lg:col-span-8">
-        <h2 className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-gold-text">Questions answered by our RDs</h2>
+        <h2 className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-gold-text">Questions answered by the Tanmatra team</h2>
         {threadsQuery.isPending ? (
           <p className="text-sm text-ink-muted">Loading questions…</p>
         ) : threadsQuery.isError ? (
@@ -72,7 +72,7 @@ export function CommunityQaForum() {
           </p>
         ) : threadsQuery.data.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-line bg-surface-subtle p-10 text-center">
-            <p className="text-sm text-ink-muted">No questions yet — be the first to ask our dietitians.</p>
+            <p className="text-sm text-ink-muted">No questions yet — be the first to ask.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
@@ -88,14 +88,14 @@ export function CommunityQaForum() {
                   <div className="mt-1 flex flex-col gap-1.5 rounded-xl border border-[color-mix(in_srgb,var(--gold)_35%,transparent)] bg-[color-mix(in_srgb,var(--gold)_7%,transparent)] p-4">
                     <div className="flex items-center gap-1.5 font-mono text-2xs font-bold uppercase tracking-wide text-gold-text">
                       <BadgeCheck aria-hidden className="h-3.5 w-3.5 shrink-0" />
-                      Answered by {t.rdAnsweredBy || "our RD team"}
+                      Answered by {t.rdAnsweredBy || "the Tanmatra team"}
                     </div>
                     <p className="text-sm leading-relaxed text-ink">{t.rdAnswer}</p>
                   </div>
                 ) : (
                   <div className="mt-1 flex items-center gap-2 border-t border-line pt-3 text-ink-faint">
                     <Clock aria-hidden className="h-3.5 w-3.5 shrink-0" />
-                    <span className="text-xs italic">Awaiting a dietitian&rsquo;s response.</span>
+                    <span className="text-xs italic">Awaiting a response.</span>
                   </div>
                 )}
               </article>
@@ -111,7 +111,7 @@ export function CommunityQaForum() {
               <span className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-gold-text">Ask the board</span>
               <h3 className="mt-1 text-xl font-semibold text-ink">Sign in to ask a question</h3>
               <p className="mt-1 text-sm leading-relaxed text-ink-muted">
-                Our registered dietitians answer questions each weekday morning.
+                We answer questions each weekday morning.
               </p>
             </div>
             {submitError && (
@@ -127,7 +127,7 @@ export function CommunityQaForum() {
               <span className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-gold-text">Ask the board</span>
               <h3 className="mt-1 text-xl font-semibold text-ink">Submit a nutrition question</h3>
               <p className="mt-1 text-sm leading-relaxed text-ink-muted">
-                Our registered dietitians answer questions each weekday morning.
+                We answer questions each weekday morning.
               </p>
             </div>
 
@@ -163,14 +163,14 @@ export function CommunityQaForum() {
             )}
             {submitMutation.isSuccess && (
               <p className="rounded-xl border border-sage/40 bg-sage-soft px-3.5 py-2.5 text-xs font-semibold text-sage-text">
-                Sent — an RD will reply here once they&rsquo;ve reviewed it.
+                Sent — we&rsquo;ll reply here once we&rsquo;ve reviewed it.
               </p>
             )}
 
             <Button type="submit" disabled={submitMutation.isPending} aria-busy={submitMutation.isPending} aria-live="polite" shape="pill" size="fluid" className="mt-1 flex items-center justify-center gap-2 py-3 text-xs font-semibold disabled:opacity-40">
               {submitMutation.isPending ? "Sending…" : (
                 <>
-                  Send to our RDs
+                  Send your question
                   <ArrowRight aria-hidden className="h-3.5 w-3.5" />
                 </>
               )}

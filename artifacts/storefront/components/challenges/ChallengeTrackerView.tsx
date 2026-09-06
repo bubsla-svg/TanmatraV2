@@ -124,7 +124,7 @@ export function ChallengeTrackerView() {
       </div>
 
       <div className="rounded-2xl border border-line bg-surface p-6 md:p-8">
-        <h3 className="mb-5 font-display text-lg font-semibold leading-tight text-primary">Upcoming dietitian check-ins</h3>
+        <h3 className="mb-5 font-display text-lg font-semibold leading-tight text-primary">Upcoming check-ins</h3>
         {data.checkIns.length === 0 ? (
           <p className="text-sm text-ink-muted">No check-ins scheduled right now — we&rsquo;ll post one here when your cohort has its next session.</p>
         ) : (

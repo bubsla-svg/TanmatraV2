@@ -5,7 +5,7 @@ import { ChallengeCard } from "@/components/challenges/ChallengeCard";
 export const metadata: Metadata = {
   title: "Challenges",
   description:
-    "RD-led community challenges with a cohort, scheduled check-ins, and a shared feed. Join one and stay accountable.",
+    "Community challenges with a cohort, scheduled check-ins, and a shared feed. Join one and stay accountable.",
 };
 
 export const revalidate = 3600;
@@ -28,7 +28,7 @@ export default async function ChallengesPage() {
       <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Community</p>
       <h1 className="mt-2 font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">Challenges</h1>
       <p className="mt-3 max-w-xl text-base leading-relaxed text-ink-muted">
-        RD-led programmes with a cohort, scheduled check-ins, and a shared feed. Join one and stay
+        Programmes with a cohort, scheduled check-ins, and a shared feed. Join one and stay
         accountable.
       </p>
       {!lookup.ok ? (

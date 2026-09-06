@@ -1,24 +1,27 @@
 import Link from "next/link";
+import { RD_SERVICES_ENABLED } from "@/lib/flags";
 
 export function ThankYouRecommendations() {
   const recommendations = [
-    {
-      title: "Talk to a Dietitian",
-      description: "Customize your protocol with an IDA-registered dietitian.",
-      badge: "Included Free",
-      cta: "Book 15-min Consult",
-      href: "/rd",
-    },
+    ...(RD_SERVICES_ENABLED
+      ? [{
+          title: "Talk to a dietitian",
+          description: "Tune your plan with a registered dietitian.",
+          badge: "Included Free",
+          cta: "Book 15-min consult",
+          href: "/rd",
+        }]
+      : []),
     {
       title: "Join a Cohort Challenge",
-      description: "Stay accountable with live RD check-ins & cohort support.",
+      description: "Stay accountable with scheduled check-ins & cohort support.",
       badge: "Community",
       cta: "Explore Challenges",
       href: "/challenges",
     },
     {
       title: "Upgrade to Premium",
-      description: "Unlock priority delivery, free monthly consults & secret dishes.",
+      description: "Unlock priority delivery, premium-only dishes & pantry drops.",
       badge: "VIP Care",
       cta: "View Premium Perks",
       href: "/premium",

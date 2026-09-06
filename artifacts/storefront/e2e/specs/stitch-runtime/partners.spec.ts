@@ -105,8 +105,17 @@ test.describe("stitch-runtime: partners & B2B (12.x)", () => {
     await evidenceShot(page, "12.5");
   });
 
-  test("12.6 dietitian referral lander is wired", async ({ page }) => {
-    await page.goto("/partners/dietitians");
+  // Both landers are gated on NEXT_PUBLIC_RD_SERVICES (lib/flags.ts) — they
+  // recruit dietitians into a network that does not exist yet.
+  const rdServices = process.env["NEXT_PUBLIC_RD_SERVICES"] === "1";
+
+  test("12.6 dietitian referral lander is wired, or gone", async ({ page }) => {
+    const res = await page.goto("/partners/dietitians");
+    if (!rdServices) {
+      expect(res?.status()).toBe(404);
+      await expect(marker(page, "12.6")).toHaveCount(0);
+      return;
+    }
     await expect(
       page.getByRole("heading", { name: /Prescribe real culinary medicine/, level: 1 }),
     ).toBeVisible();
@@ -118,8 +127,13 @@ test.describe("stitch-runtime: partners & B2B (12.x)", () => {
     await evidenceShot(page, "12.6");
   });
 
-  test("12.7 rd partner network lander is wired", async ({ page }) => {
-    await page.goto("/rd-partners");
+  test("12.7 rd partner network lander is wired, or gone", async ({ page }) => {
+    const res = await page.goto("/rd-partners");
+    if (!rdServices) {
+      expect(res?.status()).toBe(404);
+      await expect(marker(page, "12.7")).toHaveCount(0);
+      return;
+    }
     await expect(
       page.getByRole("heading", { name: /Prescribe real culinary medicine/, level: 1 }),
     ).toBeVisible();

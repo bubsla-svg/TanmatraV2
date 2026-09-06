@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { CommunityQaForum } from "@/components/qa/CommunityQaForum";
 
 export const metadata: Metadata = {
-  title: "Community Clinical Q&A & Social Forum",
-  description: "Questions other customers asked, answered by our registered dietitians.",
+  title: "Community Nutrition Q&A",
+  description: "Questions other customers asked, answered by the Tanmatra team.",
 };
 
 export default function CommunityQaPage() {
@@ -16,13 +16,13 @@ export default function CommunityQaPage() {
     >
       <div className="flex flex-col gap-2">
         <span className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-gold-text">
-          Ask a dietitian
+          Ask the kitchen
         </span>
         <h1 className="text-3xl font-semibold tracking-tight text-ink">
           Community Nutrition Q&amp;A Forum
         </h1>
         <p className="text-sm leading-relaxed text-ink-muted max-w-2xl">
-          Read what our dietitians have already answered for other customers, or ask your own question and get a reply from one of them.
+          Read what we have already answered for other customers, or ask your own question and get a reply.
         </p>
       </div>
 

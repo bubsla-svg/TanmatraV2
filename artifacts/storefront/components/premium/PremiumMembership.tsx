@@ -9,6 +9,7 @@ import { formatPaise } from "@/lib/format";
 import { createRazorpayAdapter } from "@/lib/razorpayAdapter";
 import { getPremium, payForPremium, cancelPremium, resumePremium } from "@/lib/premiumApi";
 import { Button } from "@/components/ui/button";
+import { RD_SERVICES_ENABLED } from "@/lib/flags";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 
 const day = (iso: string) =>
@@ -80,13 +81,17 @@ export function PremiumMembership() {
           <p className="rounded-lg bg-sage-soft px-3 py-2 text-sm font-medium text-sage-text">
             Active membership — {m.status === "cancelled" ? "ends" : "renews"} on {day(m.currentPeriodEnd)}.
           </p>
-          <div className="flex items-center justify-between border-y border-line py-3">
-            <span className="text-sm text-ink-muted">RD consults used this period</span>
-            <span className="font-data text-sm font-semibold text-ink">{m.rdConsultsUsedThisPeriod} / {m.rdConsultsPerPeriod}</span>
-          </div>
-          <Button asChild shape="pill" size="fluid" className="px-5 py-3 text-center font-semibold">
-            <Link href="/rd">Book your free RD consult</Link>
-          </Button>
+          {RD_SERVICES_ENABLED && (
+            <>
+              <div className="flex items-center justify-between border-y border-line py-3">
+                <span className="text-sm text-ink-muted">Consults used this period</span>
+                <span className="font-data text-sm font-semibold text-ink">{m.rdConsultsUsedThisPeriod} / {m.rdConsultsPerPeriod}</span>
+              </div>
+              <Button asChild shape="pill" size="fluid" className="px-5 py-3 text-center font-semibold">
+                <Link href="/rd">Book your free consult</Link>
+              </Button>
+            </>
+          )}
           <div className="flex justify-center pt-1">
             {m.status === "cancelled"
               ? <button type="button" onClick={() => resumeMutation.mutate()} disabled={busy} aria-busy={busy} aria-live="polite" className="text-sm font-medium text-primary hover:underline disabled:opacity-60">{busy ? "Working…" : "Resume auto-renewal"}</button>
@@ -98,7 +103,7 @@ export function PremiumMembership() {
           <Button type="button" onClick={() => joinMutation.mutate()} disabled={busy} aria-busy={joinMutation.isPending} aria-live="polite" shape="pill" size="fluid" className="px-6 py-3.5 font-semibold disabled:opacity-60">
             {joinMutation.isPending ? "Opening payment…" : "Join Tanmatra Premium"}
           </Button>
-          <p className="text-center text-xs text-ink-faint">Cancel anytime · your first RD consult is included every period.</p>
+          <p className="text-center text-xs text-ink-faint">Cancel anytime.</p>
         </div>
       )}
     </div>

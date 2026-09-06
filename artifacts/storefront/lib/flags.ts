@@ -27,3 +27,17 @@ export const LIVE_CHECKOUT_ENABLED = process.env.NEXT_PUBLIC_LIVE_CHECKOUT === "
  * entries with the flag off.
  */
 export const CARE_BY_CONDITION_ENABLED = process.env.NEXT_PUBLIC_CARE_BY_CONDITION === "1";
+
+/**
+ * Dietitian / RD services — the directory at /rd, the booking flow, the partner
+ * network, the paid RD add-on at plan review, and every "talk to a dietitian"
+ * entry point.
+ *
+ * OFF by default (owner, 2026-09-06): the storefront makes no dietitian claim
+ * until one is actually on board. This is not a copy problem — the RD bump is a
+ * PAID add-on (+₹499/mo) and /rd/[slug] takes a real Razorpay booking, so the
+ * surfaces sell a service nobody can deliver yet. The routes, components and
+ * the priced `rd_bump` spine entry all stay in the tree; with the flag on,
+ * behaviour is identical to before. Restoring the service is this env flip.
+ */
+export const RD_SERVICES_ENABLED = process.env.NEXT_PUBLIC_RD_SERVICES === "1";

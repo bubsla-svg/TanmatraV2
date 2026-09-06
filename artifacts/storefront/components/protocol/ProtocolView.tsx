@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ProtocolDishRail, matchesProtocolDish, type ProtocolDish } from "./ProtocolDishRail";
 import { PROTOCOL_CONFIG, type ProtocolKey } from "@/content/landing/protocol";
 import { CARE_SAFETY } from "@/content/landing/care";
+import { RD_SERVICES_ENABLED } from "@/lib/flags";
 
 /** Shared server template for /performance + /clinical (route-parity Wave B).
  *  Filters the live catalog + the /rd roster to the protocol; the program is the
@@ -23,12 +24,15 @@ export async function ProtocolView({ which }: { which: ProtocolKey }) {
     sugar: parseFloat(d.sugarPerServing) || 0, sugarPerServing: d.sugarPerServing, rdVerified: d.rdVerified,
   }));
   const qualifying = slim.filter((d) => matchesProtocolDish(d, cfg.filter)).length;
-  const protocolRds = rds.filter((rd) =>
-    rd.specialties.some((s) => cfg.rdKeywords.some((k) => s.toLowerCase().includes(k))),
-  );
-  const consultCta = cfg.clinical
-    ? { label: "Book a free RD consult", href: "/rd" }
-    : { label: "Find your plan", href: "/plans" };
+  // Empty while RD services are off (lib/flags.ts) — every block below keyed
+  // off this list disappears with it, rather than needing its own guard.
+  const protocolRds = RD_SERVICES_ENABLED
+    ? rds.filter((rd) => rd.specialties.some((s) => cfg.rdKeywords.some((k) => s.toLowerCase().includes(k))))
+    : [];
+  const consultCta =
+    cfg.clinical && RD_SERVICES_ENABLED
+      ? { label: "Book a free consult", href: "/rd" }
+      : { label: "Find your plan", href: "/plans" };
 
   return (
     <div
@@ -55,7 +59,7 @@ export async function ProtocolView({ which }: { which: ProtocolKey }) {
         </div>
         {qualifying > 0 && (
           <p className="tabular inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-xs text-ink-muted">
-            {qualifying} qualifying dishes · 1 program{protocolRds.length > 0 ? ` · ${protocolRds.length} specialist RD${protocolRds.length > 1 ? "s" : ""}` : ""}
+            {qualifying} qualifying dishes · 1 program{protocolRds.length > 0 ? ` · ${protocolRds.length} specialist${protocolRds.length > 1 ? "s" : ""}` : ""}
           </p>
         )}
       </header>
@@ -78,7 +82,7 @@ export async function ProtocolView({ which }: { which: ProtocolKey }) {
         <section className="py-[var(--space-section)]">
           <p className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Talk to a specialist</p>
           <h2 className="mt-2 font-display text-2xl font-semibold leading-tight text-primary sm:text-3xl">
-            Your {cfg.eyebrow.replace(" Protocol", "").toLowerCase()} {protocolRds.length > 1 ? "dietitians" : "dietitian"}
+            Your {cfg.eyebrow.replace(" Protocol", "").toLowerCase()} {protocolRds.length > 1 ? "specialists" : "specialist"}
           </h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {protocolRds.map((rd) => <RdCard key={rd.slug} rd={rd} />)}

@@ -11,6 +11,7 @@ import { emitFunnel } from "@/lib/funnel";
 import { planValueAnchor } from "@/lib/planValueAnchor";
 import { Button } from "@/components/ui/button";
 import { OrderBump } from "./OrderBump";
+import { RD_SERVICES_ENABLED } from "@/lib/flags";
 import type { PlanId, DietTrack, PlanCycle } from "@workspace/subscription-rules";
 import type { PlanBuilderData } from "@/lib/plans";
 import { Leaf, Egg, Bone, Check } from "lucide-react";
@@ -91,7 +92,9 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
   // The RD bump is the only upsell here (02d stage 4), offered only where the
   // plan permits it. RD identity is blocked on #3, so OrderBump renders the
   // honest generic offer — no fabricated name/face.
-  const canBump = planAllowsAddOn(planId, "rd_bump");
+  // Gated, not deleted: `rd_bump` is a priced spine entry and the offer is a
+  // PAID service. It is not offered while no dietitian is on board.
+  const canBump = RD_SERVICES_ENABLED && planAllowsAddOn(planId, "rd_bump");
   const rdBump = addOnView("rd_bump");
   const total = (currentQuote?.cycleTotalPaise ?? 0) + (bump ? rdBump.pricePaise : 0);
 

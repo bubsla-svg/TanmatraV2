@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getRds, getRdOrReason, type RdProfile } from "@/lib/rdApi";
+import { RD_SERVICES_ENABLED } from "@/lib/flags";
 import { formatPaise } from "@/lib/format";
 import { RdBooking } from "@/components/rd/RdBooking";
 
@@ -9,6 +10,8 @@ type Params = { params: Promise<{ slug: string }> };
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
+  // Nothing to prerender while the service is off — the page 404s anyway.
+  if (!RD_SERVICES_ENABLED) return [];
   const rds = await getRds();
   return rds.map((r) => ({ slug: r.slug }));
 }
@@ -48,6 +51,9 @@ const SESSIONS: { key: keyof RdProfile["pricing"]; label: string }[] = [
  *  server-owned consult pricing. Booking + payment is the checkpoint-gated
  *  slice; the CTA points to the live nutrition coach in the meantime. */
 export default async function RdProfilePage({ params }: Params) {
+  // RD services are off until a dietitian is on board (lib/flags.ts). The
+  // route stays in the tree; with the flag off it is simply not a page.
+  if (!RD_SERVICES_ENABLED) notFound();
   const { slug } = await params;
   const lookup = await getRdOrReason(slug);
   if (!lookup.ok && lookup.reason === "not_found") notFound();

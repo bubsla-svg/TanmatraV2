@@ -2,6 +2,7 @@
 // Client: loads the signed-in user's RD consultation schedule against live API.
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { RD_SERVICES_ENABLED } from "@/lib/flags";
 import { ApiError } from "@/lib/apiClient";
 import { getMyAppointments } from "@/lib/rdBookingApi";
 import { formatPaise } from "@/lib/format";
@@ -55,11 +56,17 @@ export function AppointmentsList() {
   if (appts.length === 0) {
     return (
       <p className="text-sm text-ink-muted">
-        No consultations booked yet.{" "}
-        <Link href="/rd" className="font-semibold text-primary underline-offset-4 hover:underline">
-          Browse Registered Dietitians
-        </Link>
-        .
+        No consultations booked yet.
+        {/* The directory 404s while RD services are off (lib/flags.ts) — an
+            empty list is honest, a link into a 404 is not. */}
+        {RD_SERVICES_ENABLED && (
+          <>
+            {" "}
+            <Link href="/rd" className="font-semibold text-primary underline-offset-4 hover:underline">
+              Browse our specialists
+            </Link>
+          </>
+        )}
       </p>
     );
   }
@@ -81,7 +88,7 @@ export function AppointmentsList() {
           </p>
           <div className="mt-1 flex items-center justify-between border-t border-line pt-2.5">
             <span className="text-xs text-ink-muted">
-              Dietitian Specialist: {a.rdSlug.replace("rd-", "").replace(/-/g, " ")}
+              Specialist: {a.rdSlug.replace("rd-", "").replace(/-/g, " ")}
             </span>
             {a.pricePaise === 0 ? (
               <span className="inline-flex items-center rounded-full border border-gold bg-primary/10 px-2.5 py-0.5 text-3xs font-bold uppercase tracking-wide text-primary">

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getRds, initialsOf, givenNameOf } from "@/lib/rdApi";
 import { SITE } from "@/lib/nav";
+import { RD_SERVICES_ENABLED } from "@/lib/flags";
 
 export const metadata: Metadata = {
   title: "Our story",
@@ -100,12 +101,12 @@ export default async function AboutPage() {
           </div>
         </section>
 
-        {/* API-gated to the real roster: renders nothing until a dietitian is
-            actually on board (getRds → []). Kept as a real, data-backed feature;
-            suppressing /rd entirely is a separate product decision (copy deck). */}
-        {dietitians.length > 0 && (
+        {/* Flag- AND API-gated: RD services are off (lib/flags.ts) and the roster
+            is empty until a dietitian is actually on board. Both must be true
+            before this section names anyone. */}
+        {RD_SERVICES_ENABLED && dietitians.length > 0 && (
           <section className="border-t border-line py-16">
-            <h2 className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Meet our dietitians</h2>
+            <h2 className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Meet the team</h2>
             <div className="mt-8 grid gap-5 md:grid-cols-3">
               {dietitians.map((d) => (
                 <div key={d.slug} className="flex flex-col items-start rounded-2xl border border-line bg-surface p-5">

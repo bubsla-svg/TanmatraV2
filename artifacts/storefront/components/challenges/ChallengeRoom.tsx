@@ -134,7 +134,7 @@ export function ChallengeRoom({ slug }: { slug: string }) {
 
       {joined && checkIns.length > 0 && (
         <div className="mt-8">
-          <h2 className="font-display text-lg font-semibold leading-tight text-primary">Upcoming RD check-ins</h2>
+          <h2 className="font-display text-lg font-semibold leading-tight text-primary">Upcoming check-ins</h2>
           <ul className="mt-4 flex flex-col gap-3">
             {checkIns.map((ci) => (
               <li

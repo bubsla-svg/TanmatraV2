@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SITE } from "@/lib/nav";
+import { RD_SERVICES_ENABLED } from "@/lib/flags";
 
 /**
  * B2BLayout — the enterprise/partner acquisition shell (P0 §9): /corporate,
@@ -36,7 +37,12 @@ export default function B2BLayout({
             <Link href="/corporate-wellness" className="inline-flex min-h-11 items-center px-1 text-ink-muted hover:text-ink">
               Corporate
             </Link>
-            <Link href="/rd-partners" className="inline-flex min-h-11 items-center px-1 text-ink-muted hover:text-ink">
+            {/* /rd-partners 404s while RD services are off (lib/flags.ts), so the
+                business header points at the partner lander that is actually live. */}
+            <Link
+              href={RD_SERVICES_ENABLED ? "/rd-partners" : "/partners/gyms"}
+              className="inline-flex min-h-11 items-center px-1 text-ink-muted hover:text-ink"
+            >
               Partners
             </Link>
             <Link

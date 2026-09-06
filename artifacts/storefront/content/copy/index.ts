@@ -11,7 +11,6 @@ export * from "./tracking";
 export * from "./account";
 export * from "./subscription";
 export * from "./coach";
-export * from "./rd";
 export * from "./premium";
 export * from "./marketplace";
 export * from "./group";

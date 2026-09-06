@@ -4416,7 +4416,7 @@ export interface DishCustomOption {
     "id": 120,
     "slug": "grilled-chicken-sauteed-veg-mash-potato",
     "name": "Grilled Chicken With Sautéed Vegetable And Mash Potato High Protein",
-    "description": "Lean grilled chicken breast served with warm sautéed seasonal vegetables and creamy mashed potato. RD-formulated for high protein muscle recovery.",
+    "description": "Lean grilled chicken breast served with warm sautéed seasonal vegetables and creamy mashed potato. Built for high-protein muscle recovery.",
     "longDescription": "Grilled chicken breast – 150 g · Sautéed broccoli, zucchini, carrots – 80 g · Mashed potato – 80 g · Olive oil – 1 tbsp · Garlic herb seasoning.",
     "image": "/images/dishes/grilled-chicken-sauteed-veg-mash-potato.jpg",
     "price": 33300,

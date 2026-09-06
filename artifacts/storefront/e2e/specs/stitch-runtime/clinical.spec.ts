@@ -3,6 +3,11 @@ import { marker, evidenceShot } from "./support";
 // Server-fetched data (RSC → API_BASE_URL) cannot be page.route-stubbed; these
 // entries verify only against the full local stack (run with E2E_FULL_STACK=1).
 const fullStack = process.env["E2E_FULL_STACK"] === "1" ? test : test.skip;
+// RD services (the /rd directory, booking, and the clinical consult CTA) are
+// off unless the build sets NEXT_PUBLIC_RD_SERVICES=1 — lib/flags.ts. Mirrored
+// here rather than asserted one way, so the same specs prove BOTH postures:
+// with the flag off the surfaces must be gone, not merely different.
+const rdServices = process.env["NEXT_PUBLIC_RD_SERVICES"] === "1";
 
 /**
  * Stitch runtime evidence â clinical & advisory surfaces (manifest 11.2â11.8).
@@ -34,9 +39,10 @@ test.describe("stitch-runtime: clinical & advisory (11.x)", () => {
     await expect(
       page.getByRole("heading", { name: /Therapeutic nutrition/, level: 1 }),
     ).toBeVisible();
-    // Clinical-only consult CTA (PROTOCOL_CONFIG.clinical branch).
+    // Clinical-only consult CTA (PROTOCOL_CONFIG.clinical branch), which
+    // falls back to the plan CTA while RD services are off.
     await expect(
-      page.getByRole("link", { name: "Book a free RD consult" }).first(),
+      page.getByRole("link", { name: rdServices ? "Book a free consult" : "Find your plan" }).first(),
     ).toBeVisible();
     await expect(marker(page, "11.3", "default")).toBeVisible();
     await expect(marker(page, "11.2")).toHaveCount(0);
@@ -55,8 +61,15 @@ test.describe("stitch-runtime: clinical & advisory (11.x)", () => {
     await evidenceShot(page, "11.4");
   });
 
-  test("11.5 rd directory is wired", async ({ page }) => {
-    await page.goto("/rd");
+  test("11.5 rd directory is wired, or gone", async ({ page }) => {
+    const res = await page.goto("/rd");
+    if (!rdServices) {
+      // Not a redirect and not an empty state: the route must 404 outright, or
+      // the site still offers a dietitian directory with no dietitian in it.
+      expect(res?.status()).toBe(404);
+      await expect(marker(page, "11.5")).toHaveCount(0);
+      return;
+    }
     await expect(
       page.getByRole("heading", { name: "Our dietitians", level: 1 }),
     ).toBeVisible();
@@ -65,6 +78,7 @@ test.describe("stitch-runtime: clinical & advisory (11.x)", () => {
   });
 
   fullStack("11.6 rd booking is wired", async ({ page }) => {
+    test.skip(!rdServices, "RD booking is off (NEXT_PUBLIC_RD_SERVICES)");
     // Real trigger: the directory card's own "View profile" link. The roster is
     // server-rendered from the api-server's canonical (all-bookable) RD list,
     // so the first profile lands on the booking-active resting state.
@@ -98,7 +112,7 @@ test.describe("stitch-runtime: clinical & advisory (11.x)", () => {
       page.getByRole("heading", { name: "Community Nutrition Q&A Forum", level: 1 }),
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Questions answered by our RDs" }),
+      page.getByRole("heading", { name: "Questions answered by the Tanmatra team" }),
     ).toBeVisible();
     await expect(marker(page, "11.8", "default")).toBeVisible();
     await evidenceShot(page, "11.8");
