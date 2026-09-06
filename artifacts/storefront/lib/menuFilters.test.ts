@@ -167,7 +167,7 @@ test("activeFilterLabels reports every active chip in group order", () => {
     macro: ["high_fiber"],
   });
   assert.deepEqual(activeFilterLabels(f), [
-    "Fat loss",
+    "Light",
     "Vegetarian",
     "Peanut-free",
     "High fiber",

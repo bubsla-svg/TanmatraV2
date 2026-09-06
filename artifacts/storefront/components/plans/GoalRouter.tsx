@@ -15,14 +15,14 @@ export function GoalRouter() {
   const plans = routerPlans();
 
   return (
-    <section aria-label="What's lunch for?" className="flex flex-col gap-4">
+    <section aria-label="What do you want lunch to do?" className="flex flex-col gap-4">
       {/* The page's h1, not an h2. /plans used to hide an h1 ("Choose your
           plan") with sr-only and show this as an h2 — so the document's one
           top-level heading was invisible, its visible headline outranked, and
           the two said different things. This question IS the page's subject
           and it is what a visitor reads first; /plans renders GoalRouter
           exactly once, so promoting it here keeps one h1 per document. */}
-      <h1 className="text-2xl font-semibold tracking-tight text-ink">What&rsquo;s lunch for?</h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">What do you want lunch to do?</h1>
       <div className="flex flex-col gap-3">
         {plans.map((p) => (
           <GoalCard key={p.id} planId={p.id} promise={p.promise} planName={p.name} source="plans" />
@@ -31,7 +31,7 @@ export function GoalRouter() {
           href="/menu"
           className="-m-2 mt-2 self-center p-2 text-sm font-medium text-ink-muted underline-offset-4 hover:underline"
         >
-          Just browsing &rarr;
+          Just show me the menu &rarr;
         </Link>
       </div>
     </section>

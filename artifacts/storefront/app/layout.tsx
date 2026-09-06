@@ -72,9 +72,9 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-const TITLE = "Tanmatra — clinical nutrition, cooked fresh";
+const TITLE = "Tanmatra — fresh lunch, cooked after you order";
 const DESCRIPTION =
-  "Lunches built around your macros, delivered to your desk. Real food, no jargon.";
+  "Fresh lunch, cooked after you order and delivered to your desk in Noida. Calories and protein on every dish.";
 
 export const metadata: Metadata = {
   // Absolute base for canonical + OpenGraph URLs. Env-overridable once a real

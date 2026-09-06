@@ -4,7 +4,7 @@
  * so the page + accordion .tsx stay under the component cap and the same list
  * feeds the FAQPage JSON-LD.
  *
- * NOTE for review: answer #9's refund window ("within 30 minutes") is the
+ * NOTE for review: the refund answer's window ("within 30 minutes") is the
  * legacy copy and should be reconciled with the canonical Refund & Cancellation
  * policy (/legal/refunds), which frames refunds around perishable cut-offs.
  */
@@ -15,16 +15,12 @@ export interface FaqItem {
 
 export const FAQS: FaqItem[] = [
   {
-    q: "What makes Tanmatra meals 'clinical-grade'?",
-    a: "Every dish on the Tanmatra menu is formulated by qualified registered dietitians (RDs) and macro-calibrated to specific therapeutic targets — protein, fibre, glycaemic load, sodium, and caloric density. Meals are prepared in an FSSAI-registered kitchen with ISO 22000-aligned processes, without preservatives or artificial flavours. Our meals are designed to support your health goals and any care plan from your doctor — they are not a medical treatment in themselves.",
+    q: "What's different about Tanmatra food?",
+    a: "Every dish is cooked fresh after you order in our FSSAI-registered kitchen, with the calories and protein on the label. Cold-pressed oils and desi ghee, no refined sugar, no preservatives or artificial flavours. It's good everyday food, not medical advice.",
   },
   {
-    q: "Who designs the meal plans?",
-    a: "Our in-house team of registered dietitians develops and reviews each recipe. When you book a 1-on-1 consultation, a dedicated RD reviews your health profile and builds a personalised plan tailored to your goals and any therapeutic protocols (Wellness, Performance, or Clinical).",
-  },
-  {
-    q: "Can I order if I have a specific medical condition (diabetes, hypertension, IBS)?",
-    a: "Yes. Tanmatra offers condition-specific therapeutic protocols. However, our meals are designed as adjuncts to medical care — they do not replace treatment prescribed by your doctor. Always consult your physician before beginning any therapeutic nutrition programme.",
+    q: "Can I order if I'm managing a health condition (diabetes, hypertension, IBS)?",
+    a: "Yes. Plans like Steady are built around low-GI, no-refined-sugar plates, and every dish lists its calories and protein. It's everyday food, not a treatment — if you're managing a condition or taking medication, check with your doctor before changing your diet.",
   },
   {
     q: "How do I check if Tanmatra delivers to my area?",
@@ -32,11 +28,11 @@ export const FAQS: FaqItem[] = [
   },
   {
     q: "What are the delivery timings?",
-    a: "Fresh meals are dispatched for same-day delivery. Ordering by 10 AM typically ensures delivery by lunch; by 2 PM for dinner. Exact windows are shown at checkout based on your delivery address.",
+    a: "Meals are cooked after you order and delivered the same day. The exact delivery window is shown at checkout, based on your address.",
   },
   {
-    q: "Can I subscribe to a weekly meal plan?",
-    a: "Yes. Weekly plans let you pre-select meals for the week at a discounted rate. Plans auto-renew unless cancelled at least 24 hours before the next cycle. You can pause, skip, or modify meals from the Subscriptions page.",
+    q: "How do plans and billing work?",
+    a: "Weekly and monthly plans let you pre-select meals at a better rate, and renew by UPI Autopay until you cancel — we message you before every charge. Skip, swap or pause from the Subscriptions page up to a day before. There's no lock-in.",
   },
   {
     q: "What payment methods do you accept?",
@@ -53,9 +49,5 @@ export const FAQS: FaqItem[] = [
   {
     q: "Are the meals suitable for vegans / vegetarians?",
     a: "The menu is clearly tagged: Vegan, Vegetarian, Egg, Poultry, Seafood, and Meat. You can filter by dietary preference on the Menu page. All meals are prepared in a shared kitchen, so cross-contact between ingredients is possible — we flag allergens on every dish so you can make an informed choice. If you have a severe allergy, please contact support before ordering.",
-  },
-  {
-    q: "What scientific references back Tanmatra's dietary protocols?",
-    a: "Our protocols are informed by peer-reviewed clinical guidelines: The Diabetes Protocol aligns with the American Diabetes Association (ADA) Carbohydrate & Glycemic Index recommendations (low-GI < 55). Saturated fat and sodium restrictions align with the American Heart Association (AHA) guidelines for prevention. Our Sports Recovery guidelines are built on the International Society of Sports Nutrition (ISSN) recommendations for post-exercise glycogen and protein synthesis.",
   },
 ];

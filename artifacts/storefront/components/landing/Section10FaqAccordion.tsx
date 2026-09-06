@@ -4,18 +4,19 @@ import { emitLpEvent } from "@/lib/lpEvents";
 import { Disclosure } from "@/components/primitives/Disclosure";
 
 /**
- * §10: FAQ Accordion with Mandatory Medical Treatment Disclaimer.
- * Provides clinical governance clarity and enforces required therapeutic disclosures. Strictly ≤ 150 lines.
+ * §10: FAQ accordion plus a short nutrition disclaimer.
+ * Plain answers about food, plans and delivery, and a line making clear the
+ * food is not medical advice. Strictly ≤ 150 lines.
  */
 export function Section10FaqAccordion() {
   const faqItems = [
     {
-      question: "How do you ensure the meals are actually healthy?",
-      answer: "Every meal is designed by Registered Dietitians with precise ingredient measurements, full allergy information, and absolutely no hidden sugars or low-quality seed oils.",
+      question: "Is the food actually healthy?",
+      answer: "Every plate is cooked fresh after you order, with calories and protein on the label. Cold-pressed oils and desi ghee, no refined sugar, no artificial additives.",
     },
     {
-      question: "What's the difference between your meal plans?",
-      answer: "Our Wellness Plans (like Desk Fuel) are designed to keep you energized and focused during work. Our Clinical Plans (like Steady) are tailored for specific health needs like blood sugar management and include support from our dietitians.",
+      question: "What's the difference between the plans?",
+      answer: "Desk Fuel keeps you full and focused through the workday. Steady is built on low-GI plates for level blood sugar. Protein Build packs more protein for training days.",
     },
     {
       question: "Can I change my plan or pause deliveries?",
@@ -23,11 +24,11 @@ export function Section10FaqAccordion() {
     },
     {
       question: "Where do you deliver?",
-      answer: "We deliver to homes and offices across Noida and parts of Greater Noida West, ensuring your food arrives fresh and at the right temperature.",
+      answer: "We deliver to homes and offices across Noida and parts of Greater Noida West, so your food arrives fresh and at the right temperature.",
     },
     {
-      question: "How do the expert consultations work?",
-      answer: "You can book a chat with our Registered Dietitians who will help customize your meal plan based on your health goals or specific medical advice.",
+      question: "Do plans lock me in?",
+      answer: "No. Skip or swap any lunch up to a day before, and cancel before the next charge. There's no lock-in.",
     },
   ];
 
@@ -38,7 +39,7 @@ export function Section10FaqAccordion() {
           Helpful Answers
         </span>
         <h2 className="mt-3 font-display text-4xl font-semibold leading-none text-primary sm:text-5xl">
-          Frequently Asked Questions
+          Frequently asked questions
         </h2>
         <p className="mt-5 max-w-md text-base leading-7 text-ink-muted">
           Find answers to common questions about our meals, delivery, and plans.
@@ -57,13 +58,13 @@ export function Section10FaqAccordion() {
         }}
       />
 
-      {/* Mandatory Medical Treatment Disclaimer */}
+      {/* Nutrition disclaimer — legal wording pending sign-off (copy deck [legal]). */}
       <div className="mt-12 rounded-card border border-line bg-surface-raised p-5 shadow-inner">
         <h3 className="text-xs font-bold uppercase tracking-wider text-ink">
-          ⚠️ Mandatory Medical Treatment &amp; Dietary Disclaimer
+          Nutrition disclaimer
         </h3>
         <p className="mt-2 text-xs leading-relaxed text-ink-muted">
-          Tanmatra nutritional meal protocols are designed by certified registered dietitians (RD) to support metabolic wellness, performance recovery, and general dietary alignment. Our services and therapeutic meal tracks do not constitute emergency medical treatment, professional medical diagnosis, or a replacement for pharmaceutical interventions prescribed by your licensed physician. Patients undergoing active medical treatment, including GLP-1 hormone receptor agonist therapy or renal management, must consult their qualified healthcare provider prior to initiating dietary adjustments.
+          Tanmatra meals are everyday food, not medical advice or treatment. We label calories and protein on every dish, but if you&rsquo;re managing a health condition or taking medication — including a GLP-1 — check with your doctor before changing your diet.
         </p>
       </div>
     </section>

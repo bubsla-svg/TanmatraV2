@@ -5,15 +5,15 @@ import { getRds, initialsOf, givenNameOf } from "@/lib/rdApi";
 import { SITE } from "@/lib/nav";
 
 export const metadata: Metadata = {
-  title: "Our Story",
+  title: "Our story",
   description:
-    "Clinical nutrition, delivered with integrity. How Tanmatra brings dietitian-designed, macro-precise meals into everyday life.",
+    "Proper lunch, cooked fresh, with the calories and protein on every dish. How Tanmatra cooks everyday food in Noida.",
 };
 
 const STEPS = [
-  { n: 1, title: "Dietitian Designs", body: "Registered dietitians formulate the precise macro splits, sodium limits, and clinical protocols." },
-  { n: 2, title: "Kitchen Prepares", body: "Our ISO 22000 certified kitchen cooks meals fresh, using cold-pressed oils and whole-food ingredients." },
-  { n: 3, title: "You Receive", body: "Fresh, hot meals arrive at your doorstep in Noida, ready to support your health journey." },
+  { n: 1, title: "We plan it", body: "Every dish is portioned and labelled — calories and protein on the card." },
+  { n: 2, title: "We cook it", body: "Fresh, after you order, in cold-pressed oils and desi ghee." },
+  { n: 3, title: "You eat it", body: "Hot, at your desk or door, anywhere we deliver in Noida." },
 ];
 
 // Matches /rd, the other page backed by this directory: hourly ISR rather than
@@ -44,26 +44,25 @@ export default async function AboutPage() {
     <div>
       <section className="bg-primary text-primary-foreground">
         <div className="mx-auto max-w-[1240px] px-5 py-16 sm:px-8 sm:py-24">
-          <h1 className="max-w-4xl font-display text-4xl font-semibold leading-[.94] tracking-[-.04em] text-primary-foreground sm:text-6xl">Our Story</h1>
+          <h1 className="max-w-4xl font-display text-4xl font-semibold leading-[.94] tracking-[-.04em] text-primary-foreground sm:text-6xl">Our story</h1>
           <p className="mt-6 max-w-xl text-base leading-7 text-primary-foreground/70 sm:text-lg">
-            Clinical nutrition, delivered with integrity.
+            Proper lunch, cooked fresh, numbers on the label.
           </p>
         </div>
       </section>
 
       <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
         <section className="grid gap-6 py-16 sm:py-24 lg:grid-cols-[.8fr_1.2fr] lg:gap-12">
-          <h2 className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Our Mission</h2>
+          {/* [founder to personalise] — copy deck. */}
+          <h2 className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Why we started</h2>
           <p className="font-display text-2xl leading-snug text-primary sm:text-3xl">
-            We believe clinical-grade nutrition should not be locked behind hospital walls or
-            expensive dietitian consultations. Tanmatra was founded to bring therapeutic,
-            macro-precise meals into everyday life — helping you manage metabolic health, optimise
-            recovery, and build sustainable wellness.
+            Eating well in Noida shouldn&rsquo;t mean a sad salad. We cook home-style food and put the
+            calories and protein on every dish, so you know exactly what you&rsquo;re eating.
           </p>
         </section>
 
         <section className="border-t border-line pt-16">
-          <h2 className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">How It Works</h2>
+          <h2 className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">How it works</h2>
           <div className="mt-8 grid gap-5 md:grid-cols-3">
             {STEPS.map((s) => (
               <div key={s.n} className="rounded-2xl border border-line bg-surface p-5">
@@ -86,10 +85,10 @@ export default async function AboutPage() {
               </svg>
             </div>
             <div>
-              <h3 className="font-display text-lg font-semibold leading-tight text-primary">ISO 22000 Certified Kitchen</h3>
+              <h3 className="font-display text-lg font-semibold leading-tight text-primary">Our kitchen</h3>
               <p className="mt-2 text-sm leading-6 text-ink-muted">
-                Every dish is prepared in a facility adhering to strict international food-safety
-                management standards.
+                FSSAI-registered and ISO 22000 certified, in Sector 104, Noida. Every dish is cooked
+                fresh after you order.
               </p>
               {/* The verifiable credential + the premises it attaches to, from
                   the same constants the footer and legal pages render — one
@@ -101,9 +100,12 @@ export default async function AboutPage() {
           </div>
         </section>
 
+        {/* API-gated to the real roster: renders nothing until a dietitian is
+            actually on board (getRds → []). Kept as a real, data-backed feature;
+            suppressing /rd entirely is a separate product decision (copy deck). */}
         {dietitians.length > 0 && (
           <section className="border-t border-line py-16">
-            <h2 className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Our Dietitian Experts</h2>
+            <h2 className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Meet our dietitians</h2>
             <div className="mt-8 grid gap-5 md:grid-cols-3">
               {dietitians.map((d) => (
                 <div key={d.slug} className="flex flex-col items-start rounded-2xl border border-line bg-surface p-5">
@@ -124,12 +126,12 @@ export default async function AboutPage() {
 
       <section className="bg-secondary">
         <div className="mx-auto max-w-[1240px] px-5 py-16 text-center sm:px-8 sm:py-20">
-          <h2 className="font-display text-3xl font-semibold leading-tight text-primary sm:text-4xl">Ready to start?</h2>
+          <h2 className="font-display text-3xl font-semibold leading-tight text-primary sm:text-4xl">Hungry?</h2>
           <p className="mx-auto mt-4 max-w-sm text-base leading-7 text-ink-muted">
-            Choose a dietitian-designed plan tailored to your health goals.
+            See today&rsquo;s menu, or start with three lunches.
           </p>
           <Button asChild shape="pill" size="fluid" className="mt-8 min-h-12 px-8 text-sm font-bold">
-            <Link href="/plans">Start your plan</Link>
+            <Link href="/menu">See today&rsquo;s menu</Link>
           </Button>
         </div>
       </section>

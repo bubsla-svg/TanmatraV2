@@ -63,7 +63,7 @@ export function MacroLegend({
     <div className="mt-1 flex flex-col gap-0.5">
       {anyEstimated && (
         <p className="text-xs text-ink-faint" data-testid="macro-legend">
-          <span aria-hidden>≈</span> = estimated from the recipe; RD verification in progress.
+          <span aria-hidden>≈</span> = estimated from the recipe.
         </p>
       )}
       {/* The FSSAI menu-labelling reference statement. Gated only on kcal

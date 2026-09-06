@@ -26,11 +26,6 @@ export function PlanCard({ id }: { id: PlanId }) {
       className="@container flex h-full flex-col rounded-3xl border bg-surface p-6 shadow-[var(--shadow-card)] transition-colors hover:border-line-strong"
       style={{ borderColor: q.launchable ? "var(--line-strong)" : "var(--line)" }}
     >
-      {d.clinical && (
-        <span className="mb-6 w-max rounded-full border border-blue/30 px-3 py-1 text-3xs font-semibold uppercase tracking-widest text-blue">
-          RD-reviewed
-        </span>
-      )}
       <h3 className="text-xl font-semibold tracking-tight text-ink">{d.name}</h3>
       <p className="mt-2 text-sm leading-relaxed text-ink-muted">{d.subtitle}</p>
 
@@ -50,7 +45,7 @@ export function PlanCard({ id }: { id: PlanId }) {
           </span>
         ) : (
           <span className="shrink-0 rounded-full border border-line-strong px-6 py-2.5 text-sm font-semibold text-ink">
-            Join waitlist
+            Join the waitlist
           </span>
         )}
       </div>

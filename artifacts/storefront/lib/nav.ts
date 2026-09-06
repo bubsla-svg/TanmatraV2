@@ -169,8 +169,8 @@ export const LEGAL_LINKS: NavLink[] = [
   { label: "Privacy Policy", href: "/legal/privacy" },
   { label: "Refund & Cancellation", href: "/legal/refunds" },
   { label: "Shipping & Delivery", href: "/legal/shipping" },
-  { label: "Health & Nutrition Disclaimer", href: "/legal/disclaimer" },
-  { label: "Grievance Redressal", href: "/legal/grievance" },
+  { label: "Nutrition disclaimer", href: "/legal/disclaimer" },
+  { label: "Complaints", href: "/legal/grievance" },
 ];
 
 /**

@@ -236,7 +236,7 @@ async function payAndAwaitSheet(page: Page): Promise<void> {
 test.describe("flipbook · trial · offer", () => {
   frame("F01 offer, veg default — price, creditback, no-auto-renew, the trio", async ({ page }) => {
     await page.goto("/trial");
-    await expect(page.getByRole("heading", { name: /try 3 lunches for ₹399/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /try three lunches for ₹399/i })).toBeVisible();
     // The two commercial promises must both be on the first screen, above any
     // question. Their absence here is the Law 1 / Law 5 failure this frame exists to catch.
     await expect(page.getByText(/comes back as credit/i).first()).toBeVisible();
@@ -411,14 +411,14 @@ test.describe("flipbook · trial · edges", () => {
     await stubServiceability(page);
     await page.goto("/trial");
     await page.getByRole("button", { name: "Non-veg" }).click();
-    await page.getByRole("button", { name: /start the taste test/i }).click();
+    await page.getByRole("button", { name: /start with 3 lunches/i }).click();
     await page.waitForURL(/plan=trial_3day&track=nonveg/);
 
     await page.goBack();
 
     // Law 3: back goes ONE step — to /trial, not out of the funnel entirely.
     await expect(page).toHaveURL(/\/trial/);
-    await expect(page.getByRole("heading", { name: /try 3 lunches for ₹399/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /try three lunches for ₹399/i })).toBeVisible();
     await evidenceShot(page, "trial-F11-back-to-offer");
   });
 
@@ -431,7 +431,7 @@ test.describe("flipbook · trial · edges", () => {
     });
     await page.goto("/trial", { waitUntil: "commit" });
     await evidenceShot(page, "trial-F12-slow-3g-loading");
-    await expect(page.getByRole("heading", { name: /try 3 lunches for ₹399/i })).toBeVisible({
+    await expect(page.getByRole("heading", { name: /try three lunches for ₹399/i })).toBeVisible({
       timeout: 30_000,
     });
     await evidenceShot(page, "trial-F12b-slow-3g-loaded");
