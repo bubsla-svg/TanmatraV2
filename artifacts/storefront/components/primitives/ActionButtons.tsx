@@ -10,7 +10,7 @@ export const IconButton: React.FC<IconButtonProps> = ({ icon, variant = "ghost",
   const variants = {
     ghost: "text-ink-muted hover:text-ink hover:bg-surface-subtle",
     solid: "bg-surface text-ink border border-line hover:border-line shadow-sm",
-    glass: "bg-[var(--glass)] backdrop-blur-md border border-line text-ink hover:bg-[var(--glass)]",
+    glass: "bg-glass backdrop-blur-md border border-line text-ink hover:bg-glass",
   };
 
   return (

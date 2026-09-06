@@ -107,7 +107,7 @@ function GroupAdd({ code, dish }: { code: string; dish: Dish }) {
       >
         {status === "adding" ? "Adding…" : status === "added" ? "Added ✓" : "Add to group"}
       </button>
-      {status === "error" && msg && <span className="max-w-32 text-right text-3xs text-[var(--danger)]" title={msg}>{msg}</span>}
+      {status === "error" && msg && <span className="max-w-32 text-right text-3xs text-danger" title={msg}>{msg}</span>}
     </div>
   );
 }

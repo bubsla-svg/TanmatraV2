@@ -36,7 +36,7 @@ export const DrawerDescription = VaulDrawer.Description;
  */
 export function DrawerOverlay() {
   return (
-    <VaulDrawer.Overlay className="fixed inset-0 z-[var(--z-modal)] bg-[var(--scrim)]" />
+    <VaulDrawer.Overlay className="fixed inset-0 z-[var(--z-modal)] bg-scrim" />
   );
 }
 
@@ -64,7 +64,7 @@ export function DrawerContent({
         // what a native sheet does. Safe for every consumer: each sheet's body
         // is already its own overflow-y-auto region with a shrink-0 footer, so
         // the cap shortens the scroll area rather than clipping the actions.
-        className="fixed inset-x-0 bottom-0 z-[var(--z-modal)] mx-auto flex max-h-[88dvh] w-full max-w-2xl flex-col rounded-t-2xl border border-line bg-[var(--glass)] backdrop-blur-[12px] shadow-[var(--shadow-card)] outline-none pb-[env(safe-area-inset-bottom)]"
+        className="fixed inset-x-0 bottom-0 z-[var(--z-modal)] mx-auto flex max-h-[88dvh] w-full max-w-2xl flex-col rounded-t-2xl border border-line bg-glass backdrop-blur-[12px] shadow-[var(--shadow-card)] outline-none pb-[env(safe-area-inset-bottom)]"
       >
         {/* Drag handle — always visible per §6. */}
         <div aria-hidden className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-line-strong" />

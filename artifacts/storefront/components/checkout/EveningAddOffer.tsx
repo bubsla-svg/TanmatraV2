@@ -65,7 +65,7 @@ export function EveningAddOffer({
         <span className="tabular text-sm font-semibold text-ink">{formatPaise(pricePaise)}/wk</span>
       </div>
       <p className="text-sm text-ink-muted">An evening meal each weekday. Cancel anytime.</p>
-      {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
+      {error && <p role="alert" className="text-xs font-medium text-danger">{error}</p>}
       <button
         type="button"
         disabled={state === "busy"}

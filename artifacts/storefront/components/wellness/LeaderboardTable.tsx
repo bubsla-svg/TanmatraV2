@@ -1,6 +1,5 @@
 "use client";
 import React from 'react';
-import { motion, useReducedMotion } from 'motion/react';
 import { Trophy, Plus, Flame, Trash2 } from 'lucide-react';
 import { type FamilyMember } from '@/lib/wellnessApi';
 
@@ -22,7 +21,6 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
   // keep the opacity fade: the criterion targets movement, and a cross-fade is
   // the sanctioned non-motion substitute — so rows still resolve in, they just
   // no longer travel.
-  const shouldReduceMotion = useReducedMotion();
   return (
     <div className="bg-surface rounded-2xl p-6 sm:p-8 border border-line space-y-6">
       <div className="flex items-center justify-between border-b border-line pb-4">
@@ -38,7 +36,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
 
         <button
           onClick={onOpenAddModal}
-          className="px-4 py-2 rounded-xl bg-gold hover:brightness-110 text-[var(--gold-ink)] text-xs font-bold shadow-md transition-all flex items-center gap-1.5"
+          className="px-4 py-2 rounded-xl bg-gold hover:brightness-110 text-gold-ink text-xs font-bold shadow-md transition-all flex items-center gap-1.5"
         >
           <Plus className="w-4 h-4" /> Add Member
         </button>
@@ -47,11 +45,15 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
       {/* Members Rank List */}
       <div className="space-y-4">
         {sortedMembers.map((member, idx) => (
-          <motion.div
+          // `animate-rise-in` is the same fade-and-lift, in CSS. It used to be a
+          // motion.div, which pulled the whole animation runtime into this
+          // chunk for one entrance with no gesture, layout animation or
+          // orchestration behind it — and the reduced-motion branch is already
+          // handled globally by the prefers-reduced-motion block in
+          // globals.css, so the hook went too.
+          <div
             key={member.id}
-            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`p-4 sm:p-5 rounded-2xl border-2 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+            className={`animate-rise-in p-4 sm:p-5 rounded-2xl border-2 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
               idx === 0 
                 ? 'border-gold bg-primary/10'
                 : 'border-line bg-secondary'
@@ -91,12 +93,12 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
               </div>
 
               {member.id !== '1' && (
-                <button onClick={() => onRemoveMember(member.id)} className="text-ink-faint hover:text-[var(--danger)]">
+                <button onClick={() => onRemoveMember(member.id)} className="text-ink-faint hover:text-danger">
                   <Trash2 className="w-4 h-4" />
                 </button>
               )}
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>

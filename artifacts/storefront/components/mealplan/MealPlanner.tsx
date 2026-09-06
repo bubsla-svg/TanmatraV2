@@ -53,7 +53,7 @@ export function MealPlanner() {
 
   return (
     <div className="flex flex-col gap-6">
-      {mp.error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{mp.error}</p>}
+      {mp.error && <p role="alert" className="text-xs font-medium text-danger">{mp.error}</p>}
 
       <div className="flex flex-col gap-1">
         <WeekCalendarStrip calendar={mp.weekCalendar} onCycle={mp.cycleDay} />
@@ -84,11 +84,11 @@ export function MealPlanner() {
             <p
               role="status"
               aria-live="polite"
-              className="flex items-start gap-2 rounded-2xl border border-[var(--warning)] bg-surface px-4 py-3 text-sm leading-relaxed text-ink"
+              className="flex items-start gap-2 rounded-2xl border border-warning bg-surface px-4 py-3 text-sm leading-relaxed text-ink"
             >
               <span
                 aria-hidden
-                className="mt-[0.4rem] h-2 w-2 shrink-0 rounded-full bg-[var(--warning)]"
+                className="mt-[0.4rem] h-2 w-2 shrink-0 rounded-full bg-warning"
               />
               {mp.macroWarning}
             </p>
@@ -109,7 +109,7 @@ export function MealPlanner() {
 
       {/* Plan bar — the screen's single gold primary lives here: Accept &
           schedule while a draft exists, Generate/Regenerate otherwise. */}
-      <div className="sticky bottom-16 z-10 -mx-4 border-t border-line bg-[var(--glass)] px-4 pb-3 pt-3 backdrop-blur-xl md:bottom-0">
+      <div className="sticky bottom-16 z-10 -mx-4 border-t border-line bg-glass px-4 pb-3 pt-3 backdrop-blur-xl md:bottom-0">
         {plan?.status === "draft" ? (
           <div className="flex items-center gap-3">
             <button

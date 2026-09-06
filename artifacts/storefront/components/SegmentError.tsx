@@ -32,7 +32,7 @@ export default function SegmentError({
 
   return (
     <section className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-24 text-center">
-      <p className="text-2xs font-bold uppercase tracking-widest text-[var(--danger)]">
+      <p className="text-2xs font-bold uppercase tracking-widest text-danger">
         Something went wrong
       </p>
       <h1 className="text-2xl font-semibold tracking-tight text-ink">This page hit a snag</h1>
@@ -47,7 +47,7 @@ export default function SegmentError({
         <button
           type="button"
           onClick={reset}
-          className="touch-target-min rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)]"
+          className="touch-target-min rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-gold-ink"
         >
           Try again
         </button>

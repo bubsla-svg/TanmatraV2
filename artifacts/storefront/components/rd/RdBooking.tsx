@@ -141,7 +141,7 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
         </p>
       )}
 
-      {error && <p role="alert" className="mt-3 text-xs font-medium text-[var(--danger)]">{error}</p>}
+      {error && <p role="alert" className="mt-3 text-xs font-medium text-danger">{error}</p>}
 
       <Button type="button" onClick={() => void run()} disabled={busy || (!pending && !sel)}
         aria-busy={busy} aria-live="polite"

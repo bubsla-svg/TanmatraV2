@@ -46,7 +46,7 @@ export function LogMealDialog({ onClose, onLogged }: { onClose: () => void; onLo
       <Dialog.Portal>
         {/* Scrim: --scrim, never data-stitch — see the invariant on
             components/ui/drawer.tsx's DrawerOverlay. */}
-        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-[var(--scrim)] backdrop-blur-sm" />
+        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-scrim backdrop-blur-sm" />
         {/* Mobile: bottom sheet (slide up). Desktop (sm+): centered dialog.
             One keyframe can't serve both correctly (a bottom-anchored slide
             reads wrong once the panel re-anchors to viewport-center), so the
@@ -63,7 +63,7 @@ export function LogMealDialog({ onClose, onLogged }: { onClose: () => void; onLo
               </label>
             ))}
           </div>
-          {error && <p role="alert" className="mt-2 text-xs font-medium text-[var(--danger)]">{error}</p>}
+          {error && <p role="alert" className="mt-2 text-xs font-medium text-danger">{error}</p>}
           <div className="mt-5 flex justify-end gap-3">
             <Dialog.Close className="rounded-lg px-4 py-2 text-sm font-medium text-ink-muted hover:brightness-110">Cancel</Dialog.Close>
             <Button type="button" onClick={save} disabled={busy} aria-busy={busy} aria-live="polite" shape="pill" size="fluid" className="px-4 py-2 font-semibold disabled:opacity-60">{busy ? "Saving…" : "Save log"}</Button>

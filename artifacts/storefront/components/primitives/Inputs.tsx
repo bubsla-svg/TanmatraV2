@@ -18,13 +18,13 @@ export const TextInput: React.FC<TextInputProps> = ({ label, error, className = 
         <span className="text-sm font-medium text-ink">{label}</span>
         <input
           className={`w-full bg-surface border border-line rounded-xl px-4 py-3 text-ink placeholder:text-ink-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:border-transparent transition-all ${
-            error ? "border-[var(--danger)] focus-visible:ring-[var(--danger)]" : ""
+            error ? "border-danger focus-visible:ring-danger" : ""
           } ${className}`}
           aria-invalid={error ? true : undefined}
           {...props}
         />
       </label>
-      {error && <span className="text-xs text-[var(--danger)] mt-1">{error}</span>}
+      {error && <span className="text-xs text-danger mt-1">{error}</span>}
     </div>
   );
 };
@@ -49,14 +49,14 @@ export const SearchInput: React.FC<Omit<TextInputProps, 'label'> & { label?: str
         </svg>
         <input
           className={`w-full bg-surface border border-line rounded-full pl-11 pr-4 py-3 text-ink placeholder:text-ink-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:border-transparent transition-all ${
-            error ? "border-[var(--danger)]" : ""
+            error ? "border-danger" : ""
           } ${className}`}
           type="search"
           placeholder="Search..."
           {...props}
         />
       </label>
-      {error && <span className="text-xs text-[var(--danger)] mt-1">{error}</span>}
+      {error && <span className="text-xs text-danger mt-1">{error}</span>}
     </div>
   );
 };

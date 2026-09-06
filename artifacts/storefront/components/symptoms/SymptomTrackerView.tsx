@@ -68,7 +68,7 @@ export function SymptomTrackerView() {
           </div>
         )}
         {recordMutation.isError && (
-          <div role="alert" className="rounded-2xl bg-secondary p-3 text-xs font-semibold text-[var(--danger)]">
+          <div role="alert" className="rounded-2xl bg-secondary p-3 text-xs font-semibold text-danger">
             Couldn&rsquo;t save this entry. Please try again.
           </div>
         )}
@@ -148,7 +148,7 @@ export function SymptomTrackerView() {
           <SymptomHistorySkeleton />
         ) : logsQuery.isError ? (
           <div className="rounded-2xl border border-line bg-surface p-8 text-center flex flex-col gap-3">
-            <p className="text-xs font-semibold text-[var(--danger)]">Couldn&rsquo;t load your symptom history</p>
+            <p className="text-xs font-semibold text-danger">Couldn&rsquo;t load your symptom history</p>
             <button type="button" onClick={() => void logsQuery.refetch()} className="mx-auto rounded-full border border-line px-5 py-2 text-xs font-semibold text-primary transition-opacity hover:opacity-80">Try again</button>
           </div>
         ) : logsQuery.data.length === 0 ? (

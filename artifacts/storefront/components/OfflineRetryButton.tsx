@@ -10,7 +10,7 @@ export default function OfflineRetryButton() {
     <button
       type="button"
       onClick={() => window.location.reload()}
-      className="touch-target-min rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)]"
+      className="touch-target-min rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-gold-ink"
     >
       Try again
     </button>

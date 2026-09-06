@@ -70,7 +70,7 @@ export function PlanIdentityGate({
         </>
       ) : (
         <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
-          <p role="alert" className="text-sm font-medium text-[var(--danger)]">
+          <p role="alert" className="text-sm font-medium text-danger">
             Plan sign-in is temporarily unavailable. You can order individual dishes from the menu meanwhile.
           </p>
           <Button asChild shape="pill" size="fluid" className="self-start px-5 py-3 font-semibold">

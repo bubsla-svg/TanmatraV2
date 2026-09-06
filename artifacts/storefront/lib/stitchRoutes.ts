@@ -46,11 +46,15 @@
  * in lib/themes/tanmatraTheme.ts (Stone light / Stitch dark canvas). Lives
  * here rather than in app/ because scripts/lint-tokens.ts forbids raw colour
  * literals under {components,app} and the Next metadata API needs a literal.
- * If the canvas token moves, move these with it.
+ * If the canvas token moves, move these with it. It moved and these did not:
+ * they held Stone's #f3f3f5 and Stitch's #0a0a0a long after the canvas became
+ * cream and deep green, so the browser chrome painted a grey or a black bar
+ * against a page that is neither — most visible as a hard seam under the
+ * status bar on iOS.
  */
 export const THEME_COLOR = {
-  light: "#f3f3f5",
-  dark: "#0a0a0a",
+  light: "#f6f1e9",
+  dark: "#172622",
 } as const;
 
 /**

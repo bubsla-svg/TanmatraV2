@@ -73,7 +73,7 @@ export function ReorderButton({ items }: { items: OrderLineItem[] }) {
       >
         {busy ? "Adding…" : "Reorder"}
       </button>
-      {error && <span role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</span>}
+      {error && <span role="alert" className="text-xs font-medium text-danger">{error}</span>}
     </span>
   );
 }

@@ -115,7 +115,7 @@ export function CommunityQaForum() {
               </p>
             </div>
             {submitError && (
-              <p role="alert" className="rounded-xl border border-[color-mix(in_srgb,var(--danger)_35%,transparent)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] px-3.5 py-2.5 text-xs font-semibold text-[var(--danger)]">
+              <p role="alert" className="rounded-xl border border-[color-mix(in_srgb,var(--danger)_35%,transparent)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] px-3.5 py-2.5 text-xs font-semibold text-danger">
                 {submitError}
               </p>
             )}
@@ -157,7 +157,7 @@ export function CommunityQaForum() {
             </label>
 
             {submitError && (
-              <p role="alert" className="rounded-xl border border-[color-mix(in_srgb,var(--danger)_35%,transparent)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] px-3.5 py-2.5 text-xs font-semibold text-[var(--danger)]">
+              <p role="alert" className="rounded-xl border border-[color-mix(in_srgb,var(--danger)_35%,transparent)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] px-3.5 py-2.5 text-xs font-semibold text-danger">
                 {submitError}
               </p>
             )}

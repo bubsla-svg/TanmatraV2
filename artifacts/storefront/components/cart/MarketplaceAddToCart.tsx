@@ -42,7 +42,7 @@ export function MarketplaceAddToCart({
         className={
           variant === "card"
             ? "min-h-11 w-full rounded-lg border border-gold bg-surface px-4 py-2 text-sm font-bold text-gold-text transition-transform active:scale-[0.98]"
-            : "min-h-11 rounded-full bg-gold px-6 py-2 text-sm font-bold tracking-tight text-[var(--gold-ink)] hover:bg-gold/90 transition-transform active:scale-[0.98]"
+            : "min-h-11 rounded-full bg-gold px-6 py-2 text-sm font-bold tracking-tight text-gold-ink hover:bg-gold/90 transition-transform active:scale-[0.98]"
         }
       >
         {variant === "card" ? "Add" : "Add to Order"}

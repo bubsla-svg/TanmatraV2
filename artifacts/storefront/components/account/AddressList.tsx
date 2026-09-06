@@ -46,7 +46,7 @@ export function AddressList({
               {!a.isDefault && (
                 <button type="button" disabled={busy} onClick={() => onSetDefault(a.id)} className="inline-flex min-h-11 items-center font-semibold text-ink-muted underline-offset-4 hover:underline disabled:opacity-40">Set default</button>
               )}
-              <button type="button" disabled={busy} onClick={() => onDelete(a.id)} className="inline-flex min-h-11 items-center font-semibold text-[var(--danger)] underline-offset-4 hover:underline disabled:opacity-40">Delete</button>
+              <button type="button" disabled={busy} onClick={() => onDelete(a.id)} className="inline-flex min-h-11 items-center font-semibold text-danger underline-offset-4 hover:underline disabled:opacity-40">Delete</button>
             </div>
           </li>
         );

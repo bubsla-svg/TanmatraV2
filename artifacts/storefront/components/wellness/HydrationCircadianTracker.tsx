@@ -139,7 +139,7 @@ export const HydrationCircadianTracker: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-3 bg-surface-raised p-4 rounded-2xl border border-line backdrop-blur-md shrink-0">
+          <div className="flex items-center gap-3 bg-surface-raised p-4 rounded-2xl border border-line shrink-0">
             <Droplets className="w-8 h-8 text-primary animate-bounce" />
             <div>
               <strong className="font-data text-2xl font-bold text-primary block">{totalWaterLoggedMl} <span className="text-xs text-primary">/ {dailyGoalMl} mL</span></strong>

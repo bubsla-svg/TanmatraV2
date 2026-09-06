@@ -52,7 +52,7 @@ export function CheckoutPay({
           server-quoted total verbatim. Anchored bottom-0, not the bottom-16
           tab-bar band: /checkout lives in the (focus) shell (app/(focus)/) — the
           global tab bar never renders here. */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-glass pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
         <div className="mx-auto max-w-md px-4 py-3">
           <Button
             type="button"

@@ -116,7 +116,7 @@ export function PreferencesForm({
         </div>
       </div>
 
-      {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
+      {error && <p role="alert" className="text-xs font-medium text-danger">{error}</p>}
 
       <div className="flex flex-col items-center gap-3">
         <Button

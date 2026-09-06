@@ -26,7 +26,7 @@ export function MealHistoryDashboard() {
   if (historyQuery.isError) {
     return (
       <div className="rounded-2xl border border-line bg-surface p-8 text-center flex flex-col gap-3">
-        <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load your nutrition history</p>
+        <p className="text-sm font-semibold text-danger">Couldn&rsquo;t load your nutrition history</p>
         <p className="mx-auto max-w-xs text-xs leading-relaxed text-ink-faint">
           {historyQuery.error instanceof ApiError ? historyQuery.error.message : "Something went wrong on our end — this usually clears up on retry."}
         </p>

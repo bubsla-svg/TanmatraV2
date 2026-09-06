@@ -78,7 +78,7 @@ export function ManageDeliverySheet({
   return (
     <Dialog.Root open onOpenChange={(o) => { if (!o) onClose(); }}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-[var(--scrim)] backdrop-blur-sm" />
+        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-scrim backdrop-blur-sm" />
         <Dialog.Content data-ui-generation="stitch-74" data-screen-id="9.2" data-screen-state="manage-delivery-open"
           aria-describedby={undefined}
           className="fixed inset-x-0 bottom-0 z-[var(--z-modal)] max-h-[85vh] animate-dialog-in overflow-y-auto rounded-t-2xl border-t border-line bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-[var(--shadow-raised)] sm:inset-x-auto sm:left-1/2 sm:top-20 sm:bottom-auto sm:w-[92vw] sm:max-w-md sm:-translate-x-1/2 sm:rounded-2xl sm:border sm:pb-5"
@@ -159,7 +159,7 @@ export function ManageDeliverySheet({
 
               {errorMessage && (
                 <div role="alert" className="flex flex-col gap-1">
-                  <p className="text-xs font-medium text-[var(--danger)]">{errorMessage}</p>
+                  <p className="text-xs font-medium text-danger">{errorMessage}</p>
                   {errorReasons?.map((r) => (
                     <p key={r} className="text-xs text-ink-muted">
                       &bull; {r}
@@ -217,7 +217,7 @@ function DishPicker({
         )}
         {menuQuery.isError && (
           <div className="flex flex-col items-center gap-2 p-4 text-center">
-            <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load the menu</p>
+            <p className="text-sm font-semibold text-danger">Couldn&rsquo;t load the menu</p>
             <button type="button" onClick={() => void menuQuery.refetch()} className="inline-flex min-h-11 items-center justify-center rounded-full border border-line-strong bg-surface px-4 text-sm font-bold text-ink transition-colors hover:bg-surface-raised">
               Try again
             </button>

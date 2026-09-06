@@ -32,10 +32,16 @@ export const DailyQuestsCard: React.FC<DailyQuestsCardProps> = ({ quests, onTogg
 
       <div className="space-y-3">
         {quests.map(quest => (
-          <div
+          // A quest row is a toggle, so it is a <button aria-pressed>, not a
+          // <div onClick>: the div took no keyboard focus, announced no role
+          // and no pressed state, so the whole list was invisible and
+          // inoperable to a keyboard or a screen reader.
+          <button
             key={quest.id}
+            type="button"
+            aria-pressed={quest.completed}
             onClick={() => onToggleQuest(quest.id)}
-            className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between gap-4 ${
+            className={`w-full p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between gap-4 text-left ${
               quest.completed 
                 ? 'border-sage/50 bg-sage-soft'
                 : 'border-line bg-secondary hover:border-sage/30'
@@ -43,7 +49,7 @@ export const DailyQuestsCard: React.FC<DailyQuestsCardProps> = ({ quests, onTogg
           >
             <div className="flex items-center gap-3">
               <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${
-                quest.completed ? 'bg-sage text-[var(--sage-ink)]' : 'bg-surface-raised text-ink-faint'
+                quest.completed ? 'bg-sage text-sage-ink' : 'bg-surface-raised text-ink-faint'
               }`}>
                 <CheckCircle2 className="w-4 h-4" />
               </div>
@@ -55,7 +61,7 @@ export const DailyQuestsCard: React.FC<DailyQuestsCardProps> = ({ quests, onTogg
             <span className="px-3 py-1 rounded-full bg-secondary text-primary text-xs font-data font-bold shrink-0">
               +{quest.points} Pts
             </span>
-          </div>
+          </button>
         ))}
       </div>
     </div>

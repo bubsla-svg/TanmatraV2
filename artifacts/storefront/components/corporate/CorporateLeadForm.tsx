@@ -210,7 +210,7 @@ export function CorporateLeadForm({
         rows={3}
         isOptional
       />
-      {error && <p role="alert" className="text-sm font-medium text-[var(--danger)]">{error}</p>}
+      {error && <p role="alert" className="text-sm font-medium text-danger">{error}</p>}
       {blockedReason !== null && !busy && (
         <p role="status" className="text-xs font-medium text-ink-muted">{blockedReason}</p>
       )}

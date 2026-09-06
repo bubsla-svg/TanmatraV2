@@ -47,7 +47,7 @@ export const BloodReportOCR: React.FC = () => {
       <div className="bg-surface rounded-2xl p-6 sm:p-8 border border-line space-y-4">
         <div className="flex items-center gap-3 border-b border-line pb-4">
           <div className="w-10 h-10 rounded-2xl bg-gold/10 text-gold-text flex items-center justify-center font-bold">
-            <Activity className="w-5 h-5 text-[var(--danger)]" />
+            <Activity className="w-5 h-5 text-danger" />
           </div>
           <div>
             <h3 className="font-display text-lg font-semibold leading-tight text-primary">Blood Report Biomarker AI OCR</h3>
@@ -74,7 +74,7 @@ export const BloodReportOCR: React.FC = () => {
         )}
 
         {error && (
-          <div className="p-4 rounded-2xl bg-[var(--danger)]/10 border border-[var(--danger)]/30 text-[var(--danger)] text-xs font-bold">
+          <div className="p-4 rounded-2xl bg-danger/10 border border-danger/30 text-danger text-xs font-bold">
             {error}
           </div>
         )}
@@ -90,7 +90,7 @@ export const BloodReportOCR: React.FC = () => {
             </div>
 
             {activeRecord.flaggedCount > 0 ? (
-              <span className="px-3.5 py-1.5 rounded-full bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/20 text-xs font-extrabold flex items-center gap-1.5 self-start">
+              <span className="px-3.5 py-1.5 rounded-full bg-danger/10 text-danger border border-danger/20 text-xs font-extrabold flex items-center gap-1.5 self-start">
                 <AlertTriangle className="w-4 h-4" /> {activeRecord.flaggedCount} Flagged Abnormalities
               </span>
             ) : (
@@ -119,7 +119,7 @@ export const BloodReportOCR: React.FC = () => {
                   key={idx}
                   className={`p-4 rounded-2xl border transition-all ${
                     b.isAbnormal
-                      ? "bg-[var(--danger)]/5 border-[var(--danger)]/30"
+                      ? "bg-danger/5 border-danger/30"
                       : "bg-surface-subtle border-line"
                   }`}
                 >
@@ -134,7 +134,7 @@ export const BloodReportOCR: React.FC = () => {
                   <div className="flex items-baseline justify-between">
                     <strong
                       className={`text-lg font-data font-bold ${
-                        b.isAbnormal ? "text-[var(--danger)]" : "text-primary"
+                        b.isAbnormal ? "text-danger" : "text-primary"
                       }`}
                     >
                       {b.value} <span className="text-xs font-normal text-ink-muted">{b.unit}</span>

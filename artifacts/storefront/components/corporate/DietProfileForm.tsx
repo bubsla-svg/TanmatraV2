@@ -80,7 +80,7 @@ export function DietProfileForm({ initial, busy, saved, error, onSubmit }: {
               <li key={a}>
                 <button type="button" aria-pressed={on}
                   onClick={() => setAllergens((p) => (on ? p.filter((x) => x !== a) : [...p, a]))}
-                  className={`rounded-full px-4 py-2 text-xs font-medium capitalize transition-colors ${on ? "bg-gold text-[var(--gold-ink)]" : "border border-line text-ink-muted hover:border-line-strong hover:text-ink"}`}>
+                  className={`rounded-full px-4 py-2 text-xs font-medium capitalize transition-colors ${on ? "bg-gold text-gold-ink" : "border border-line text-ink-muted hover:border-line-strong hover:text-ink"}`}>
                   {allergenLabel(a)}
                 </button>
               </li>
@@ -102,7 +102,7 @@ export function DietProfileForm({ initial, busy, saved, error, onSubmit }: {
         placeholder="Anything else the planner should respect…"
         onChange={(v) => setNotes(v.slice(0, 1000))} isOptional />
 
-      {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
+      {error && <p role="alert" className="text-xs font-medium text-danger">{error}</p>}
       <div className="flex flex-col gap-3 border-t border-line pt-5">
         <Button type="button" disabled={busy} aria-busy={busy} aria-live="polite" onClick={submit} shape="pill" size="fluid" className="w-full px-5 py-3.5 font-semibold disabled:opacity-40">
           {busy ? "Saving…" : "Save team profile"}

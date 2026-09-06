@@ -17,7 +17,7 @@ export function DishAllergens({ dish }: { dish: DishData }) {
   return (
     <section
       className={`mt-6 rounded-2xl border bg-surface p-5 ${
-        warn ? "border-[var(--danger)]" : "border-line"
+        warn ? "border-danger" : "border-line"
       }`}
     >
       <h2 className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">

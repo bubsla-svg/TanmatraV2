@@ -167,7 +167,7 @@ export const PrecisionPlanResults: React.FC<PrecisionPlanResultsProps> = ({ plan
           disabled={addingToCart}
           aria-busy={addingToCart}
           aria-live="polite"
-          className="px-6 py-3 rounded-2xl bg-gold text-[var(--gold-ink)] font-semibold text-xs uppercase tracking-wider hover:brightness-110 transition-all shrink-0 flex items-center gap-2 disabled:opacity-60"
+          className="px-6 py-3 rounded-2xl bg-gold text-gold-ink font-semibold text-xs uppercase tracking-wider hover:brightness-110 transition-all shrink-0 flex items-center gap-2 disabled:opacity-60"
         >
           <ShoppingBag className="w-4 h-4" />
           <span>{addingToCart ? "Adding to cart…" : `Checkout 7-Day Plan (₹${Math.round(plan.totalPlanPricePaise / 100)})`}</span>

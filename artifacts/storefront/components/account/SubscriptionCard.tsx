@@ -12,7 +12,7 @@ export type SubAction = "pause" | "resume" | "cancel" | "reactivate-billing";
 const STATUS_STYLE: Record<SubscriptionStatus, string> = {
   active: "bg-sage-soft text-sage-text",
   paused: "border border-line text-ink-muted",
-  halted: "text-[var(--danger)] border border-[var(--danger)]",
+  halted: "text-danger border border-danger",
   cancelled: "border border-line text-ink-faint",
 };
 const STATUS_LABEL: Record<SubscriptionStatus, string> = {
@@ -100,7 +100,7 @@ export function SubscriptionCard({
               type="button"
               disabled={busy}
               onClick={() => onAction(a)}
-              className={`inline-flex min-h-11 items-center underline-offset-4 hover:underline disabled:opacity-40 ${a === "cancel" ? "text-[var(--danger)]" : "text-primary"}`}
+              className={`inline-flex min-h-11 items-center underline-offset-4 hover:underline disabled:opacity-40 ${a === "cancel" ? "text-danger" : "text-primary"}`}
             >
               {ACTION_LABEL[a]}
             </button>

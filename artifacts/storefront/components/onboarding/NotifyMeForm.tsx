@@ -118,7 +118,7 @@ export function NotifyMeForm({ pincode, onReset }: NotifyMeFormProps) {
           className="w-full min-h-[50px] rounded-2xl border border-line bg-bg px-4 py-3 text-base text-ink outline-none placeholder:text-ink-faint focus-visible:border-primary disabled:opacity-50"
         />
       </div>
-      {err && <p role="alert" className="mt-1 block text-xs font-medium text-[var(--danger)]">{err}</p>}
+      {err && <p role="alert" className="mt-1 block text-xs font-medium text-danger">{err}</p>}
       <Button
         type="submit"
         disabled={busy || phone.trim().length < 10}

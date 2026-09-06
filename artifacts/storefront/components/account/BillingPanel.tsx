@@ -52,7 +52,7 @@ export function BillingPanel() {
     }
     return (
       <div className="rounded-2xl border border-line bg-surface p-5 text-center">
-        <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load your billing</p>
+        <p className="text-sm font-semibold text-danger">Couldn&rsquo;t load your billing</p>
         <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-ink-faint">
           Something went wrong on our end — this usually clears up on retry.
         </p>

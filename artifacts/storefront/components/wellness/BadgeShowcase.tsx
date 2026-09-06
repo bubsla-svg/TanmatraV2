@@ -15,7 +15,7 @@ export const BADGES_CATALOG: Badge[] = [
   { id: 'b1', title: 'Hydration Master', icon: '💧', description: 'Logged 3.0L water for 7 consecutive days', unlocked: true, color: 'from-[var(--blue)] to-[var(--blue)]/60' },
   { id: 'b2', title: 'Streak Titan 🔥', icon: '🔥', description: 'Maintained a 14-day daily habit streak', unlocked: true, color: 'from-[var(--gold)] to-[var(--gold)]/60' },
   { id: 'b3', title: 'Clean Eating Champion', icon: '🥗', description: '100% ICMR balanced meal plate assembly', unlocked: true, color: 'from-[var(--sage)] to-[var(--sage)]/60' },
-  { id: 'b4', title: 'Biomarker Hero', icon: '🩸', description: 'Uploaded blood diagnostic report for OCR analysis', unlocked: true, color: 'from-[var(--danger)] to-[var(--danger)]/60' },
+  { id: 'b4', title: 'Biomarker Hero', icon: '🩸', description: 'Uploaded blood diagnostic report for OCR analysis', unlocked: true, color: 'from-danger to-danger/60' },
   { id: 'b5', title: 'Telehealth Pioneer', icon: '👨‍⚕️', description: 'Consulted verified clinical doctor online', unlocked: false, color: 'from-[var(--blue)] to-[var(--blue)]/60' },
   { id: 'b6', title: 'Pantry Master', icon: '🛒', description: 'Scanned refrigerator & pantry for recipe swaps', unlocked: false, color: 'from-[var(--gold)] to-[var(--gold)]/60' }
 ];
@@ -70,7 +70,7 @@ export const BadgeShowcase: React.FC = () => {
           <p className="text-2xs text-ink-faint font-medium">Earn 550 more points to unlock Free Doctor Consultation Pass!</p>
         </div>
 
-        <button className="w-full py-2.5 rounded-xl bg-gold hover:brightness-110 text-[var(--gold-ink)] font-black text-xs uppercase tracking-wider shadow-md transition-all">
+        <button className="w-full py-2.5 rounded-xl bg-gold hover:brightness-110 text-gold-ink font-black text-xs uppercase tracking-wider shadow-md transition-all">
           Claim Family Rewards Pass
         </button>
       </div>

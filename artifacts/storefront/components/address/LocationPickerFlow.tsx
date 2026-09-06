@@ -203,7 +203,7 @@ export function LocationPickerFlow({
           <div className="pointer-events-none absolute inset-x-0 top-3 z-[600] flex justify-center px-4">
             <p
               role="status"
-              className="max-w-sm rounded-2xl border border-[var(--warning)]/40 bg-surface px-4 py-2.5 text-center text-xs font-semibold text-ink shadow-[var(--shadow-raised)]"
+              className="max-w-sm rounded-2xl border border-warning/40 bg-surface px-4 py-2.5 text-center text-xs font-semibold text-ink shadow-[var(--shadow-raised)]"
             >
               {gpsConfidence === "weak"
                 ? "Weak GPS signal. Drag the pin to your exact building so the morning drop reaches the right door."

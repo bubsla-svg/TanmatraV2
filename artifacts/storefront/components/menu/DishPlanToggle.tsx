@@ -69,7 +69,7 @@ export function DishPlanToggle({
             aria-pressed={mode === id}
             onClick={() => choose(id)}
             className={`inline-flex min-h-11 items-center rounded-full px-4 text-sm font-medium transition-colors active:scale-[0.98] ${
-              mode === id ? "bg-gold text-[var(--gold-ink)]" : "text-ink-muted hover:text-ink"
+              mode === id ? "bg-gold text-gold-ink" : "text-ink-muted hover:text-ink"
             }`}
           >
             {label}

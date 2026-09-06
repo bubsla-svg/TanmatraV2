@@ -118,7 +118,7 @@ export function PlanServiceabilityGate({
         </Button>
       </div>
 
-      {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
+      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
 
       {state.verdict === "unserviceable" && (
         // Not a dead end (Laws 9, 10): an unserved PIN ends in notify-me, and

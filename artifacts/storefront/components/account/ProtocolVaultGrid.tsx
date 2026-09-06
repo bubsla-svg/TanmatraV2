@@ -59,7 +59,7 @@ export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
     }
     return (
       <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5 text-center">
-        <p className="text-sm font-semibold text-[var(--danger)]">
+        <p className="text-sm font-semibold text-danger">
           {vaultQuery.error instanceof ApiError ? vaultQuery.error.message : "Couldn't load your Protocol Vault."}
         </p>
         <button
@@ -111,7 +111,7 @@ export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
                 disabled={removing}
                 aria-busy={removing}
                 aria-live="polite"
-                className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-ink-muted underline-offset-4 hover:text-[var(--danger)] hover:underline disabled:opacity-50"
+                className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-ink-muted underline-offset-4 hover:text-danger hover:underline disabled:opacity-50"
                 title="Remove from Vault"
               >
                 {removing ? "Removing…" : "Remove"}
@@ -120,7 +120,7 @@ export function ProtocolVaultGrid({ dishes }: { dishes: DishData[] }) {
             </div>
 
             {removeFailed && (
-              <p role="alert" className="px-5 text-xs font-medium text-[var(--danger)]">
+              <p role="alert" className="px-5 text-xs font-medium text-danger">
                 Couldn&rsquo;t remove this item. Try again.
               </p>
             )}

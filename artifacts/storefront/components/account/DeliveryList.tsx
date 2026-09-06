@@ -99,7 +99,7 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
   if (isError) {
     return (
       <div className="mt-3 flex flex-col items-start gap-2 border-t border-line pt-4">
-        <p role="alert" className="text-xs font-medium text-[var(--danger)]">
+        <p role="alert" className="text-xs font-medium text-danger">
           {error instanceof ApiError ? error.message : "Couldn't load the delivery schedule."}
         </p>
         <button
@@ -124,7 +124,7 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
           UPI Autopay active — you&rsquo;ll be notified at least {SKIP_SWAP_CUTOFF_HOURS}h before each charge.
         </p>
       )}
-      {mutationError && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{mutationError}</p>}
+      {mutationError && <p role="alert" className="text-xs font-medium text-danger">{mutationError}</p>}
       {rows.length === 0 ? (
         <p className="text-xs text-ink-muted">No upcoming deliveries on the schedule.</p>
       ) : (

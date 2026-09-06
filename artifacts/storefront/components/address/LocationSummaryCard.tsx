@@ -36,11 +36,11 @@ export function LocationSummaryCard({
 
   return (
     <div className="flex flex-col gap-4 border-t border-line bg-surface p-4 shadow-[var(--shadow-raised)] sm:rounded-t-2xl sm:p-6">
-      <h2 className={`text-[10px] font-bold uppercase tracking-[.16em] ${outOfZone ? "text-[var(--danger)]" : "text-ink-muted"}`}>
+      <h2 className={`text-[10px] font-bold uppercase tracking-[.16em] ${outOfZone ? "text-danger" : "text-ink-muted"}`}>
         {heading}
       </h2>
 
-      <div className={`flex items-center justify-between gap-3 rounded-2xl border bg-bg p-3.5 shadow-xs ${outOfZone ? "border-[var(--danger)]/40" : "border-line"}`}>
+      <div className={`flex items-center justify-between gap-3 rounded-2xl border bg-bg p-3.5 shadow-xs ${outOfZone ? "border-danger/40" : "border-line"}`}>
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-line bg-surface text-ink shadow-xs">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>

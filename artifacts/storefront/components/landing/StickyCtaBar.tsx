@@ -81,7 +81,7 @@ export function StickyCtaBar({
       className={cn("z-40 px-4 py-3 md:px-6", cart.lines.length > 0 ? LIFTED : RESTING)}
     >
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
-        <div className="hidden flex-1 truncate sm:block">
+        <div className="hidden min-w-0 flex-1 truncate sm:block">
           {title && <p className="truncate text-sm font-semibold text-ink">{title}</p>}
           {subtitle && <p className="truncate text-xs text-ink-muted">{subtitle}</p>}
         </div>

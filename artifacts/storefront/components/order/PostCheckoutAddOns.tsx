@@ -59,7 +59,7 @@ export function PostCheckoutAddOns({ subscriptionId }: { subscriptionId: number 
         Attach instant dietary boosts to your active plan before the first wave ships.
       </p>
 
-      {error && <p className="mt-2 text-xs font-semibold text-[var(--danger)]">{error}</p>}
+      {error && <p role="alert" className="mt-2 text-xs font-semibold text-danger">{error}</p>}
 
       <div className="mt-3 flex flex-col gap-3">
         {AVAILABLE_ADDONS.map((item) => {
@@ -86,7 +86,7 @@ export function PostCheckoutAddOns({ subscriptionId }: { subscriptionId: number 
                 className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
                   isAttached
                     ? "bg-sage-soft text-sage-text cursor-default"
-                    : "bg-gold text-[var(--gold-ink)] hover:opacity-90 active:scale-95"
+                    : "bg-gold text-gold-ink hover:opacity-90 active:scale-95"
                 }`}
               >
                 {isLoading ? "Updating..." : isAttached ? "✓ Attached" : "+ Attach Add-on"}

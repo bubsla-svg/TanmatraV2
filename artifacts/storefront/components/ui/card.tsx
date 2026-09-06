@@ -5,13 +5,19 @@ import { cn } from "@/lib/utils";
 /**
  * Card (TNM-UIF-01 §4.1). Elevation via the surface-tier token (`bg-card`),
  * not shadow-only. Token-only; no `dark:` forks.
+ *
+ * The border and shadow used to be `border-white/5` + `shadow-black/40` —
+ * literal white and literal black, which are not theme colours and do not
+ * flip. On the 50-odd light routes that meant an invisible hairline under a
+ * shadow tuned for a near-black canvas: a dark-mode card painted on cream.
+ * --line and --shadow-card are the two-armed tokens for exactly this.
  */
 function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card"
       className={cn(
-        "flex flex-col gap-6 rounded-3xl border border-white/5 bg-surface py-6 text-card-foreground shadow-sm shadow-black/40",
+        "flex flex-col gap-6 rounded-3xl border border-line bg-surface py-6 text-card-foreground shadow-[var(--shadow-card)]",
         className,
       )}
       {...props}

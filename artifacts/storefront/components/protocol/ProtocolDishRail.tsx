@@ -86,7 +86,7 @@ export function ProtocolDishRail({
                     {badge(d, filter)}
                   </span>
                   {d.rdVerified && (
-                    <span className="rounded-full bg-sage-soft px-2.5 py-1 text-2xs font-bold text-sage-text backdrop-blur-sm">
+                    <span className="rounded-full bg-sage-soft px-2.5 py-1 text-2xs font-bold text-sage-text">
                       Nutrition checked
                     </span>
                   )}

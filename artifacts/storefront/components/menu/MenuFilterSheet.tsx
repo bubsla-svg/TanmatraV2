@@ -106,7 +106,7 @@ export function MenuFilterSheet({
               onOpenChange(false);
             }}
             data-testid="menu-filter-apply"
-            className="min-h-[48px] flex-1 rounded-full bg-gold px-5 text-sm font-bold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+            className="min-h-[48px] flex-1 rounded-full bg-gold px-5 text-sm font-bold text-gold-ink transition-transform active:scale-[0.98]"
           >
             {count === 0 ? "No meals match" : `Show ${count} ${count === 1 ? "meal" : "meals"}`}
           </button>

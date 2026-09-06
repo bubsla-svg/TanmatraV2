@@ -46,7 +46,10 @@ export const CardSection: React.FC<CardSectionProps> = ({
       {(title || subtitle) && (
         <div className="mb-4 flex items-end justify-between">
           <div>
-            {title && <h3 className="font-display text-xl font-semibold leading-tight text-primary">{title}</h3>}
+            {/* h2, not h3: both callers are TOP-LEVEL sections of /care, sitting
+                directly under the page h1, so an h3 skipped a level and left the
+                page with no h2 at all. */}
+            {title && <h2 className="font-display text-xl font-semibold leading-tight text-primary">{title}</h2>}
             {subtitle && <p className="mt-1 text-sm leading-relaxed text-ink-muted">{subtitle}</p>}
           </div>
         </div>

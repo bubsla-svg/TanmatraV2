@@ -40,7 +40,7 @@ export function PlanCard({ id }: { id: PlanId }) {
           <span className="tabular text-xs text-ink-muted">{formatPaise(q.cycleTotalPaise)}/mo</span>
         </span>
         {q.launchable ? (
-          <span className="shrink-0 rounded-full bg-gold px-6 py-2.5 text-sm font-semibold text-[var(--gold-ink)]">
+          <span className="shrink-0 rounded-full bg-gold px-6 py-2.5 text-sm font-semibold text-gold-ink">
             Select
           </span>
         ) : (

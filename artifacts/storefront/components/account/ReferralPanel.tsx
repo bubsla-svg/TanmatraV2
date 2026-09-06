@@ -95,7 +95,7 @@ export function ReferralPanel({ data }: { data: ReferralMe }) {
             Code applied — your credit lands after your first order.
           </p>
         )}
-        {error && <p role="alert" className="mt-3 text-xs font-medium text-[var(--danger)]">{error}</p>}
+        {error && <p role="alert" className="mt-3 text-xs font-medium text-danger">{error}</p>}
       </div>
 
       {data.redemptions.length > 0 && (

@@ -61,12 +61,12 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
       <Dialog.Portal>
         {/* Scrim: --scrim, never data-stitch — see the invariant on
             components/ui/drawer.tsx's DrawerOverlay. */}
-        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-[var(--scrim)] backdrop-blur-sm" />
+        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-scrim backdrop-blur-sm" />
         <Dialog.Content aria-describedby={undefined} className="fixed left-1/2 top-24 z-[var(--z-modal)] w-[92vw] max-w-sm -translate-x-1/2 animate-dialog-in rounded-2xl border border-line bg-surface p-5 shadow-[var(--shadow-raised)]">
           <Dialog.Title className="font-display text-xl font-semibold leading-tight text-primary">Meal planner settings</Dialog.Title>
           {settingsQuery.isError && (
             <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-secondary px-4 py-3">
-              <p className="text-xs font-medium text-[var(--danger)]">Couldn&rsquo;t load your current settings.</p>
+              <p className="text-xs font-medium text-danger">Couldn&rsquo;t load your current settings.</p>
               <button type="button" onClick={() => void settingsQuery.refetch()} className="-my-2 inline-flex min-h-11 shrink-0 items-center text-xs font-semibold text-ink underline underline-offset-4 hover:text-ink-muted">Try again</button>
             </div>
           )}
@@ -81,7 +81,7 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
             <label className="text-sm text-ink-muted">Max repetitions per dish (per week)
               <input type="number" min="1" max="7" value={maxReps} onChange={(e) => setMaxReps(e.target.value)} className={`mt-2 ${input}`} />
             </label>
-            {errorText && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{errorText}</p>}
+            {errorText && <p role="alert" className="text-xs font-medium text-danger">{errorText}</p>}
           </div>
           <div className="mt-5 flex justify-end gap-3">
             <Dialog.Close className="inline-flex min-h-11 items-center rounded-full px-4 py-2 text-sm font-medium text-ink-muted hover:text-ink">Cancel</Dialog.Close>

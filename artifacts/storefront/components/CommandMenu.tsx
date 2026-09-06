@@ -109,7 +109,7 @@ export function CommandMenu({ dishes = [] }: { dishes?: DishSearchEntry[] }) {
       <Dialog.Portal>
         {/* Scrim: --scrim, never data-stitch — see the invariant on
             components/ui/drawer.tsx's DrawerOverlay. */}
-        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-[var(--scrim)] backdrop-blur-sm" />
+        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-scrim backdrop-blur-sm" />
         <Dialog.Content
           aria-describedby={undefined}
           className="fixed left-1/2 top-20 z-[var(--z-modal)] w-[92vw] max-w-lg -translate-x-1/2 animate-dialog-in overflow-hidden rounded-xl border border-line bg-surface shadow-lg"

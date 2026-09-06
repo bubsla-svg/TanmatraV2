@@ -1,59 +1,77 @@
 "use client";
-import React, { useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
-
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger, useGSAP);
-}
+// GSAP is loaded LAZILY, in an effect, and never as a static import.
+//
+// This component wraps the hero image on `/` — the LCP element. A static
+// `import gsap` put gsap + ScrollTrigger + @gsap/react into the entry chunk
+// the browser must parse before it can hydrate anything, all to run a
+// decorative scrub. The image itself is server-rendered children and needs
+// none of it, so the paint no longer waits on the library: the wrapper renders
+// at its settled scale/opacity and the animation attaches whenever the code
+// lands. It also makes the reduced-motion branch free — it downloads nothing.
+import React, { useEffect, useRef } from "react";
 
 export function GsapScrollImage({ children, className }: { children: React.ReactNode; className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  
-  useGSAP(() => {
-    // WCAG 2.3.3 (Animation from Interactions). The cross-reference here used
-    // to point at ScrubbingText.tsx, which was deleted as dead code — it hung
-    // off Section03AgitationPanel, which no route renders. This one
-    // matters more: the entrance scrubs `scale`, which is exactly the
-    // "motion triggered by interaction" the criterion names. Gating both
-    // timelines behind no-preference leaves the wrapper at its natural
+
+  useEffect(() => {
+    // WCAG 2.3.3 (Animation from Interactions). The entrance scrubs `scale`,
+    // which is exactly the "motion triggered by interaction" the criterion
+    // names. Bailing out before the import leaves the wrapper at its natural
     // scale: 1 / opacity: 1, so a reduced-motion visitor gets the settled
     // image rather than one frozen at 0.8 scale or 0.2 opacity.
-    const mm = gsap.matchMedia();
-    mm.add("(prefers-reduced-motion: no-preference)", () => {
-      if (!wrapperRef.current) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-      // Start small and grow as it scrolls into view
-      gsap.fromTo(wrapperRef.current,
-        { scale: 0.8, opacity: 0.5 },
-        {
-          scale: 1,
-          opacity: 1,
-          ease: "power2.out",
+    let ctx: { revert: () => void } | undefined;
+    let cancelled = false;
+
+    void (async () => {
+      const [{ default: gsap }, { ScrollTrigger }] = await Promise.all([
+        import("gsap"),
+        import("gsap/ScrollTrigger"),
+      ]);
+      if (cancelled || !wrapperRef.current) return;
+      gsap.registerPlugin(ScrollTrigger);
+
+      // A context scoped to the container does what useGSAP's `scope` did:
+      // every tween and ScrollTrigger created inside reverts together.
+      ctx = gsap.context(() => {
+        // Start small and grow as it scrolls into view.
+        gsap.fromTo(
+          wrapperRef.current,
+          { scale: 0.8, opacity: 0.5 },
+          {
+            scale: 1,
+            opacity: 1,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: containerRef.current,
+              start: "top 95%",
+              end: "top 50%",
+              scrub: 1,
+            },
+          },
+        );
+
+        // Fade out as it scrolls out of view.
+        gsap.to(wrapperRef.current, {
+          opacity: 0.2,
+          ease: "none",
           scrollTrigger: {
             trigger: containerRef.current,
-            start: "top 95%",
-            end: "top 50%",
-            scrub: 1,
-          }
-        }
-      );
+            start: "bottom 30%",
+            end: "bottom top",
+            scrub: true,
+          },
+        });
+      }, containerRef);
+    })();
 
-      // Fade out as it scrolls out of view
-      gsap.to(wrapperRef.current, {
-        opacity: 0.2,
-        ease: "none",
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "bottom 30%",
-          end: "bottom top",
-          scrub: true,
-        }
-      });
-    });
-  }, { scope: containerRef });
+    return () => {
+      cancelled = true;
+      ctx?.revert();
+    };
+  }, []);
 
   return (
     <div ref={containerRef} className={className}>

@@ -75,7 +75,7 @@ export function CoachChat() {
     return (
       <div className="flex flex-col gap-4">
         <p className="text-sm text-ink-muted">Sign in to chat with your nutrition coach.</p>
-        {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
+        {error && <p role="alert" className="text-xs font-medium text-danger">{error}</p>}
         <PhoneAuth startExpanded onVerified={() => void userQuery.refetch()} />
       </div>
     );
@@ -95,7 +95,7 @@ export function CoachChat() {
               <p
                 className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm ${
                   m.role === "user"
-                    ? "rounded-br-sm bg-gold text-[var(--gold-ink)]"
+                    ? "rounded-br-sm bg-gold text-gold-ink"
                     : "rounded-bl-sm bg-surface text-ink"
                 }`}
               >
@@ -107,7 +107,7 @@ export function CoachChat() {
             </div>
           </div>
         ))}
-        {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
+        {error && <p role="alert" className="text-xs font-medium text-danger">{error}</p>}
         <div ref={endRef} />
       </div>
       {/* The composer sticks to the SCROLLPORT bottom, and on mobile
@@ -125,7 +125,7 @@ export function CoachChat() {
           disabled={streaming}
           aria-label="Message the coach"
           placeholder="Ask your coach…"
-          className="flex-1 rounded-full border border-line bg-surface px-5 py-3 text-sm text-ink outline-none focus-visible:border-line-strong"
+          className="flex-1 rounded-full border border-line bg-surface px-5 py-3 text-base text-ink outline-none focus-visible:border-line-strong"
         />
         <Button type="submit" disabled={streaming || !input.trim()} shape="pill" size="fluid" className="px-5 py-3 font-semibold disabled:opacity-40">
           {streaming ? "…" : "Send"}

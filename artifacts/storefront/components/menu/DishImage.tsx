@@ -52,6 +52,7 @@ export function DishImage({
   className,
   imgClassName,
   priority = false,
+  sizes,
   alt,
 }: {
   src: string;
@@ -61,6 +62,9 @@ export function DishImage({
   className?: string;
   imgClassName?: string;
   priority?: boolean;
+  /** Passed straight to SafeImage — declare it wherever this frame is a fixed
+   *  box, so a thumbnail stops downloading the full-width file. */
+  sizes?: string;
   /**
    * Defaults to empty (decorative), which is right wherever the dish name is
    * already adjacent in text — the common case, and repeating it would make a
@@ -76,6 +80,7 @@ export function DishImage({
       className={className}
       imgClassName={imgClassName}
       priority={priority}
+      sizes={sizes}
       fallback={<DishFallbackTile name={name} className="h-full w-full" />}
     />
   );

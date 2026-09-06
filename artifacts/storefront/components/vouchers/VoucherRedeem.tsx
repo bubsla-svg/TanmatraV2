@@ -89,7 +89,7 @@ export function VoucherRedeem() {
         <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Wallet balance</p>
         {loadFailed ? (
           <div className="mt-1.5 flex items-center gap-3">
-            <p className="text-sm font-medium text-[var(--danger)]">Couldn&rsquo;t load your wallet.</p>
+            <p className="text-sm font-medium text-danger">Couldn&rsquo;t load your wallet.</p>
             <button type="button" onClick={() => void refetch()} className="text-xs font-semibold text-primary hover:underline">
               Try again
             </button>
@@ -114,7 +114,7 @@ export function VoucherRedeem() {
             <p className="text-xs font-medium text-sage-text">{msg}</p>
           </div>
         )}
-        {redeemError && <p role="alert" className="mt-3 text-xs font-medium text-[var(--danger)]">{redeemError}</p>}
+        {redeemError && <p role="alert" className="mt-3 text-xs font-medium text-danger">{redeemError}</p>}
       </div>
 
       {wallet && wallet.redeemed.length > 0 && (
@@ -149,7 +149,7 @@ export function VoucherRedeem() {
           exists, MiniCartBar owns the bottom edge. The Enter key on the code
           field still submits, so the input keeps its own path to doRedeem. */}
       {cart.lines.length === 0 && (
-        <div className="fixed inset-x-0 bottom-16 z-30 border-t border-line bg-[var(--glass)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
+        <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-line bg-glass pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
           <div className="mx-auto max-w-md px-4 py-3">
             <Button
               type="button" onClick={doRedeem} disabled={redeemMutation.isPending || !code.trim()}
