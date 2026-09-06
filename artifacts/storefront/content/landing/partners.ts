@@ -106,7 +106,7 @@ export const GYM_MODELS: GymModel[] = [
     body: "Include Tanmatra subscription plans in your premium-tier packages (e.g. a “VIP Transformation Membership”). We invoice the gym monthly at wholesale rates.",
     points: [
       "Wholesale discounting (up to 20% off)",
-      "1-on-1 private dietitian sessions for VIPs",
+      "Priority scheduling for VIP members",
       "Dedicated local dispatch for bulk gym delivery",
     ],
   },
@@ -145,7 +145,7 @@ export const GYMS_LANDING = {
     title: "Training is half the result.",
     accent: "Own the other half.",
     subtitle:
-      "Integrate Tanmatra’s dietitian-designed, macro-calibrated meals directly into your memberships. Increase client retention, accelerate their fat-loss or muscle-gain results, and add a new revenue line.",
+      "Integrate Tanmatra’s macro-calibrated meals directly into your memberships. Increase client retention, accelerate their fat-loss or muscle-gain results, and add a new revenue line.",
     trust: [
       { icon: "check", label: "Zero inventory or setup costs" },
       { icon: "check", label: "Custom co-branded portal" },
@@ -167,7 +167,7 @@ export const GYMS_LANDING = {
     {
       icon: "smartphone",
       title: "Digital co-branded portal",
-      body: "Give members a customised interface where your logo stands alongside Tanmatra’s dietitian console, prescribing meals that match your trainers’ recommendations.",
+      body: "Give members a customised interface where your logo stands alongside Tanmatra’s menu, matching meals to your trainers’ recommendations.",
     },
   ] satisfies LandingBenefit[],
   form: {
@@ -183,13 +183,13 @@ export const GYMS_LANDING = {
 export const FITNESS_LANDING = {
   metaTitle: "Morning fitness & running clubs | Tanmatra",
   metaDescription:
-    "Post-workout breakfast drop-offs for running, cycling, and morning bootcamps. Dietitian-designed recovery meals delivered warm to your meetup spots.",
+    "Post-workout breakfast drop-offs for running, cycling, and morning bootcamps. Macro-calibrated recovery meals delivered warm to your meetup spots.",
   hero: {
     eyebrow: "Morning running & cycling clubs",
     title: "Post-workout recovery,",
     accent: "delivered to your finish line.",
     subtitle:
-      "Ditch the sugary tea-stall stops. Coordinate fresh, dietitian-approved post-workout breakfasts delivered warm directly to your meetup, park, or trail finish line.",
+      "Ditch the sugary tea-stall stops. Coordinate fresh, macro-calibrated post-workout breakfasts delivered warm directly to your meetup, park, or trail finish line.",
     trust: [
       { icon: "clock", label: "Scheduled with your club" },
       { icon: "map-pin", label: "NCR parks & meetup spots" },

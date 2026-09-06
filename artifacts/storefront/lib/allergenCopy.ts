@@ -63,7 +63,7 @@ export function allergenView(dish: AllergenFields): AllergenView {
       tone: "neutral",
       heading: "No declared allergens",
       items: [],
-      note: "RD-reviewed disclosure.",
+      note: "Checked against the recipe.",
       affirmativeNone: true,
     };
   }
@@ -71,7 +71,7 @@ export function allergenView(dish: AllergenFields): AllergenView {
     tone: "neutral",
     heading: "Contains",
     items: disclosure.allergens,
-    note: "RD-reviewed disclosure.",
+    note: "Checked against the recipe.",
     affirmativeNone: false,
   };
 }

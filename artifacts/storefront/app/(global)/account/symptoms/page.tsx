@@ -4,7 +4,7 @@ import { SymptomTrackerView } from "@/components/symptoms/SymptomTrackerView";
 
 export const metadata: Metadata = {
   title: "Health Symptom & Reaction Tracker",
-  description: "Tell us how a meal left you feeling, so your dietitian can adjust what comes next.",
+  description: "Tell us how a meal left you feeling, so we can adjust what comes next.",
 };
 
 export default function SymptomTrackerPage() {
@@ -24,7 +24,7 @@ export default function SymptomTrackerPage() {
           Health Symptom &amp; Reaction Tracker
         </h1>
         <p className="text-sm leading-relaxed text-ink-muted max-w-2xl">
-          Note how you felt after a meal — digestion, energy, how full it kept you. Your dietitian reads these and changes what we cook for you next.
+          Note how you felt after a meal — digestion, energy, how full it kept you. We read these and change what we cook for you next.
         </p>
       </div>
 

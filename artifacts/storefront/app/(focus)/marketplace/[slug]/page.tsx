@@ -39,7 +39,7 @@ export default async function MarketplaceItemPage({ params }: { params: Promise<
             </span>
             {item.rdVerified && (
               <span className="rounded-full bg-sage-soft px-2.5 py-1 text-xs font-bold uppercase tracking-[.12em] text-sage-text">
-                RD Verified
+                Nutrition checked
               </span>
             )}
           </div>

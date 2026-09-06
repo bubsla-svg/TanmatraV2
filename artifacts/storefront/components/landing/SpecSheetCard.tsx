@@ -108,7 +108,7 @@ export function SpecSheetCard({ spec, onFlipBack }: SpecSheetCardProps) {
         {showRdBlock && (
           <div className="flex flex-col gap-1 rounded-md border border-line bg-secondary p-2">
             <div className="flex items-center gap-1.5">
-              <span className="text-2xs font-semibold text-ink">RD Protocol Verification</span>
+              <span className="text-2xs font-semibold text-ink">Nutrition check</span>
               {spec.rdVerified === true && (
                 <span className="rounded border border-line bg-surface px-1.5 py-0.5 text-2xs font-semibold text-ink-muted">
                   Verified

@@ -24,7 +24,7 @@ export default function MealHistoryPage() {
           Meal History Dashboard
         </h1>
         <p className="text-sm leading-relaxed text-ink-muted max-w-2xl">
-          Every meal you have had from us, with the day's calories and protein totalled up and set against the targets your dietitian agreed with you.
+          Every meal you have had from us, with the day's calories and protein totalled up and set against the targets you set.
         </p>
       </div>
 

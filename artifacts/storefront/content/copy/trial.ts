@@ -5,7 +5,7 @@ export const trialCopy = {
   },
   benefits: {
     item1: "Full access to personalized protocol meals",
-    item2: "Dedicated dietitian guidance and initial assessment",
+    item2: "A first week planned around your goals",
     item3: "No long-term commitment — pause or stop anytime",
   },
   cta: "Claim Trial",

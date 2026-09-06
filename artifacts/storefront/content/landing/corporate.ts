@@ -74,7 +74,7 @@ export const DIFFERENTIATORS: LandingBenefit[] = [
   {
     icon: "shield-check",
     title: "Allergen-gated, per person",
-    body: "Every employee gets their own allergen- and preference-gated menu, with a published nutrition label on each dish — designed by registered dietitians and cooked in an ISO 22000:2018 kitchen (FSSAI Reg. 22725926001018).",
+    body: "Every employee gets their own allergen- and preference-gated menu, with a published nutrition label on each dish, cooked in an ISO 22000:2018 kitchen (FSSAI Reg. 22725926001018).",
   },
   {
     icon: "clipboard",

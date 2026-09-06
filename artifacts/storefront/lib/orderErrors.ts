@@ -21,9 +21,9 @@ function describeBlockReason(reason: WireBlockReason): string | null {
   if (typeof reason === "string") return reason;
   switch (reason?.code) {
     case "unchecked_allergens":
-      return "a dish's allergen information hasn't been verified by our dietitian team yet, so we can't safely sell it";
+      return "a dish's allergen information hasn't been checked yet, so we can't safely sell it";
     case "unreviewed_dish":
-      return "a dish is still awaiting dietitian review";
+      return "a dish is still awaiting its allergen check";
     case "allergen_block":
       return reason.allergens && reason.allergens.length > 0
         ? `a dish contains ${reason.allergens.join(", ")} — an allergen on your profile`

@@ -82,7 +82,7 @@ export function CheckoutPay({
 
       <p className="text-center text-xs text-ink-muted">{futureLine}</p>
       <p className="text-center text-2xs text-ink-faint">
-        UPI · FSSAI registered · RD-reviewed kitchen
+        UPI · FSSAI registered · ISO 22000 kitchen
       </p>
     </div>
   );

@@ -56,7 +56,7 @@ export function SymptomTrackerView() {
           <span className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">Physiological Telemetry</span>
           <h3 className="mt-1 font-display text-lg font-semibold leading-tight text-primary">Log Post-Meal Symptom</h3>
           <p className="text-xs text-ink-muted mt-1 leading-relaxed">
-            Record GI comfort, blood sugar stability, or satiety responses to inform your dietitian prescriptions.
+            Record GI comfort, blood sugar stability, or satiety responses so we can tune what we send you.
           </p>
         </div>
 
