@@ -20,7 +20,7 @@ export function ChangePlanPanel(
         Plan changes are temporarily unavailable while we fix a pricing issue.
       </p>
       <p className="text-xs leading-relaxed text-ink-muted">
-        Your current plan and billing are unaffected. Contact support if you need to change your plan now.
+        Your current plan and billing are unaffected. Message us on WhatsApp if you need to change your plan now.
       </p>
     </div>
   );

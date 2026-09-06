@@ -40,9 +40,9 @@ export function UnresolvedPaymentPanel({
         {checking ? "Checking…" : "Check payment status"}
       </Button>
       <p className="text-xs text-ink-muted">
-        Still stuck after a few tries? Contact support with the phone number on
-        this order — we can look it up on our end, and you will never be charged
-        twice for it.
+        Still stuck after a few tries? Message us on WhatsApp with the phone
+        number on this order — we can look it up on our end, and you will never
+        be charged twice for it.
       </p>
     </div>
   );

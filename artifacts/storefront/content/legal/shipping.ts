@@ -57,7 +57,7 @@ export const shippingDoc: LegalDoc = {
     {
       heading: "8. Contact",
       body: [
-        `Questions about a delivery? Contact ${C.supportEmail} or ${C.supportPhone}.`,
+        `Questions about a delivery? Message us on WhatsApp at ${C.supportPhone}, or email ${C.supportEmail}.`,
       ],
     },
   ],

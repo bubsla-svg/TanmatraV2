@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { FAQS } from "@/content/faq";
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
-import { COMPANY } from "@/content/legal/company";
+import { SUPPORT_WHATSAPP_URL } from "@/content/legal/company";
 
 export const metadata: Metadata = {
   title: "FAQ",
@@ -43,14 +42,17 @@ export default function FaqPage() {
       <div className="mt-10 flex items-center gap-4 rounded-2xl border border-line bg-surface p-6">
         <div className="flex-1">
           <p className="text-sm font-semibold text-ink">Still have questions?</p>
-          <p className="mt-0.5 text-xs text-ink-muted">Email us and we&rsquo;ll help.</p>
+          <p className="mt-0.5 text-xs text-ink-muted">Message us on WhatsApp and we&rsquo;ll help.</p>
         </div>
-        <Link
-          href={`mailto:${COMPANY.supportEmail}`}
+        {/* External, so a raw anchor is correct — see scripts/lint-client-nav.ts. */}
+        <a
+          href={SUPPORT_WHATSAPP_URL}
+          target="_blank"
+          rel="noopener noreferrer"
           className="shrink-0 rounded-full border border-line px-6 py-2.5 text-sm font-semibold text-primary transition-opacity hover:opacity-80"
         >
-          Email support
-        </Link>
+          WhatsApp us
+        </a>
       </div>
     </section>
   );

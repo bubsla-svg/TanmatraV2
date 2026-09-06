@@ -87,7 +87,9 @@ test("every refusal names a next step", () => {
   for (const code of REFUSALS) {
     const copy = claimRefusalCopy(code);
     assert.ok(copy.length > 40, `${code} needs a sentence, not a label`);
-    assert.match(copy, /sign in|support|confirmation message/i, code);
+    // "WhatsApp" is a next step because it is now THE support channel
+    // (owner, 2026-09-06); "support" stays for refusals that still say it.
+    assert.match(copy, /sign in|support|WhatsApp|confirmation message/i, code);
   }
 });
 

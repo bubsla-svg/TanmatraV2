@@ -44,10 +44,10 @@ export const FAQS: FaqItem[] = [
   },
   {
     q: "What is your refund and cancellation policy?",
-    a: "Orders can be cancelled within 30 minutes of placement for a full refund. After that, cancellations are assessed case-by-case. Meals that arrive damaged or incorrect are replaced or refunded — contact us via the Support tab within 2 hours of delivery.",
+    a: "Orders can be cancelled within 30 minutes of placement for a full refund. After that, cancellations are assessed case-by-case. Meals that arrive damaged or incorrect are replaced or refunded — message us on WhatsApp within 2 hours of delivery.",
   },
   {
     q: "Are the meals suitable for vegans / vegetarians?",
-    a: "The menu is clearly tagged: Vegan, Vegetarian, Egg, Poultry, Seafood, and Meat. You can filter by dietary preference on the Menu page. All meals are prepared in a shared kitchen, so cross-contact between ingredients is possible — we flag allergens on every dish so you can make an informed choice. If you have a severe allergy, please contact support before ordering.",
+    a: "The menu is clearly tagged: Vegan, Vegetarian, Egg, Poultry, Seafood, and Meat. You can filter by dietary preference on the Menu page. All meals are prepared in a shared kitchen, so cross-contact between ingredients is possible — we flag allergens on every dish so you can make an informed choice. If you have a severe allergy, please message us on WhatsApp before ordering.",
   },
 ];

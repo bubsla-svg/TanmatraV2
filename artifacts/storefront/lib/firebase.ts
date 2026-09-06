@@ -43,9 +43,9 @@ export function friendlyFirebaseError(err: unknown): string {
   switch (code) {
     case "auth/configuration-not-found":
     case "auth/operation-not-allowed":
-      return "Phone sign-in isn't enabled on the verification service yet. Please contact support.";
+      return "Phone sign-in isn't enabled on the verification service yet. Please message us on WhatsApp.";
     case "auth/unauthorized-domain":
-      return "This domain isn't authorised for sign-in yet. Please contact support.";
+      return "This domain isn't authorised for sign-in yet. Please message us on WhatsApp.";
     case "auth/invalid-phone-number":
       return "That phone number doesn't look valid. Please check and try again.";
     case "auth/too-many-requests":
