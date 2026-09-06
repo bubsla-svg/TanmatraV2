@@ -14,8 +14,7 @@ import {
   Drawer,
   DrawerContent,
   DrawerTitle,
-  DrawerDescription,
-} from "@/components/ui/drawer";
+  DrawerDescription, DrawerClose } from "@/components/ui/drawer";
 import { DishRationale } from "./DishRationale";
 import { DishSpec } from "./DishSpec";
 import { DishAllergens } from "./DishAllergens";
@@ -37,10 +36,10 @@ export function DishDrawer({ dish }: { dish: DishData }) {
   // unit; energy used to render as a bare "135" under a "kcal" label while
   // protein rendered "3 g" under a "P" label, in the same four-up row.
   const macros: Array<[string, string]> = [
-    ["Energy", formatKcal(dish.macros.calories, dish.macrosEstimated)],
-    ["Protein", formatGrams(dish.macros.protein, dish.macrosEstimated)],
-    ["Carbs", formatGrams(dish.macros.carbs, dish.macrosEstimated)],
-    ["Fat", formatGrams(dish.macros.fat, dish.macrosEstimated)],
+    ["Energy", formatKcal(dish.macros.calories, dish.macrosEstimated, dish.macrosProvisional)],
+    ["Protein", formatGrams(dish.macros.protein, dish.macrosEstimated, dish.macrosProvisional)],
+    ["Carbs", formatGrams(dish.macros.carbs, dish.macrosEstimated, dish.macrosProvisional)],
+    ["Fat", formatGrams(dish.macros.fat, dish.macrosEstimated, dish.macrosProvisional)],
   ];
 
   return (
@@ -67,9 +66,19 @@ export function DishDrawer({ dish }: { dish: DishData }) {
             <DrawerTitle className="font-display text-2xl font-semibold leading-tight text-primary">
               {dish.name}
             </DrawerTitle>
-            <span className="font-data shrink-0 text-lg font-bold text-primary">
-              {formatPaise(dish.price)}
-            </span>
+            <div className="flex shrink-0 items-center gap-1">
+              <span className="font-data text-lg font-bold text-primary">
+                {formatPaise(dish.price)}
+              </span>
+              {/* T-01, the same 44px close the cart drawer carries: this sheet
+                  offered only the drag handle, the scrim and Escape. */}
+              <DrawerClose
+                aria-label="Close"
+                className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-ink transition-transform active:scale-95"
+              >
+                <span aria-hidden className="text-xl leading-none">✕</span>
+              </DrawerClose>
+            </div>
           </div>
 
           <DrawerDescription className="mt-2 text-sm leading-6 text-ink-muted">

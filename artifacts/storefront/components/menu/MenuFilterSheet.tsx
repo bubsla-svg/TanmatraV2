@@ -6,8 +6,8 @@ import {
   Drawer,
   DrawerContent,
   DrawerTitle,
-  DrawerDescription,
-} from "@/components/ui/drawer";
+  DrawerDescription, DrawerClose } from "@/components/ui/drawer";
+import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 import {
   ALLERGEN_OPTIONS,
   DIETARY_OPTIONS,
@@ -58,6 +58,10 @@ export function MenuFilterSheet({
     if (open) setDraft(filters);
   }, [open, filters]);
 
+  // Android/iOS Back closes the sheet, not the page — the same contract the
+  // cart drawer and the address switcher already keep.
+  useOverlayHistory(open, () => onOpenChange(false));
+
   const count = matchCount(draft);
   const activeCount = countActiveFilters(draft);
 
@@ -70,9 +74,17 @@ export function MenuFilterSheet({
         data-testid="menu-filter-sheet"
       >
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-4 pt-3">
-          <DrawerTitle className="font-display text-2xl font-semibold leading-tight text-primary">
-            Filter meals
-          </DrawerTitle>
+          <div className="flex items-start justify-between gap-3">
+            <DrawerTitle className="font-display text-2xl font-semibold leading-tight text-primary">
+              Filter meals
+            </DrawerTitle>
+            <DrawerClose
+              aria-label="Close filters"
+              className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink transition-transform active:scale-95"
+            >
+              <span aria-hidden className="text-xl leading-none">✕</span>
+            </DrawerClose>
+          </div>
           <DrawerDescription className="mt-1 text-xs text-ink-muted">
             Narrows what you see. Allergen handling in the kitchen follows our published
             preparation policy.
@@ -91,22 +103,30 @@ export function MenuFilterSheet({
         {/* Footer is a sibling of the scroll area, not its last child, so the
             Apply CTA never scrolls out of reach — same contract DishDrawer keeps. */}
         <div className="flex shrink-0 items-center gap-3 border-t border-line bg-surface px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3">
+          {/* Hidden, not disabled, at zero: a greyed "Clear filters" with
+              nothing to clear is a dead button in the footer. */}
+          {activeCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setDraft(EMPTY_FILTERS)}
+              className="min-h-[44px] shrink-0 rounded-full border border-line bg-surface-raised px-5 text-sm font-semibold text-ink transition-transform active:scale-95"
+            >
+              Clear filters
+            </button>
+          )}
+          {/* A zero-result apply is never allowed through: the button says
+              "No meals match" and stops there rather than emptying the grid. */}
           <button
             type="button"
-            onClick={() => setDraft(EMPTY_FILTERS)}
-            disabled={activeCount === 0}
-            className="min-h-[44px] shrink-0 rounded-full border border-line bg-surface-raised px-5 text-sm font-semibold text-ink transition-transform active:scale-95 disabled:opacity-40"
-          >
-            Clear filters
-          </button>
-          <button
-            type="button"
+            disabled={count === 0}
+            aria-disabled={count === 0}
             onClick={() => {
+              if (count === 0) return;
               onApply(draft);
               onOpenChange(false);
             }}
             data-testid="menu-filter-apply"
-            className="min-h-[48px] flex-1 rounded-full bg-gold px-5 text-sm font-bold text-gold-ink transition-transform active:scale-[0.98]"
+            className="min-h-[48px] flex-1 rounded-full bg-gold px-5 text-sm font-bold text-gold-ink transition-transform active:scale-[0.98] disabled:opacity-60"
           >
             {count === 0 ? "No meals match" : `Show ${count} ${count === 1 ? "meal" : "meals"}`}
           </button>

@@ -11,15 +11,15 @@ import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const SECTIONS = [
-  { href: "/account/subscriptions", label: "Plans", sub: "Your active metabolic protocols" },
-  { href: "/account/orders", label: "Orders", sub: "History and clinical summaries" },
+  { href: "/account/subscriptions", label: "Plans", sub: "Your lunch plans — pause, skip or swap" },
+  { href: "/account/orders", label: "Orders", sub: "Past orders and reorders" },
   { href: "/account/appointments", label: "Consults", sub: "Video and chat sessions" },
   { href: "/account/addresses", label: "Addresses", sub: "Delivery locations" },
   { href: "/account/billing", label: "Billing", sub: "Credit ledger and wallet balance" },
-  { href: "/account/preferences", label: "Preferences", sub: "Dietary and clinical filters" },
+  { href: "/account/preferences", label: "Preferences", sub: "Diet, allergies and what to avoid" },
   { href: "/account/symptoms", label: "Symptoms", sub: "Post-meal reaction log" },
   { href: "/account/history", label: "History", sub: "Macro intake vs. your targets" },
-  { href: "/account/loyalty", label: "Rewards", sub: "Loyalty points and clinical credits" },
+  { href: "/account/loyalty", label: "Rewards", sub: "Points, referrals and credits" },
 ] as const;
 
 const LEGAL = [
@@ -201,7 +201,7 @@ export function AccountHub() {
         ))}
       </nav>
 
-      <div className="flex justify-center gap-6 pt-2 pb-4 text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">
+      <div className="flex justify-center gap-6 pt-2 pb-4 text-xs font-semibold text-ink-muted">
         {LEGAL.map((l) => (
           <Link key={l.href} href={l.href} className="inline-flex min-h-11 items-center transition-colors hover:text-primary">
             {l.label}

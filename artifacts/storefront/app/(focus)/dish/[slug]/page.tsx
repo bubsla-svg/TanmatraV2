@@ -164,9 +164,9 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
 
           {/* The revision's three-up macro strip, ruled top and bottom. */}
           <div className="grid grid-cols-3 gap-4 border-y border-line py-5">
-            <Macro label="Calories" value={formatKcal(dish.macros.calories, dish.macrosEstimated)} />
-            <Macro label="Protein" value={formatGrams(dish.macros.protein, dish.macrosEstimated)} />
-            <Macro label="Carbs" value={formatGrams(dish.macros.carbs, dish.macrosEstimated)} />
+            <Macro label="Calories" value={formatKcal(dish.macros.calories, dish.macrosEstimated, dish.macrosProvisional)} />
+            <Macro label="Protein" value={formatGrams(dish.macros.protein, dish.macrosEstimated, dish.macrosProvisional)} />
+            <Macro label="Carbs" value={formatGrams(dish.macros.carbs, dish.macrosEstimated, dish.macrosProvisional)} />
           </div>
 
           {/* PR-11e (brief CUJ 3 §3): the shared Disclosure — one row open at a
@@ -184,11 +184,11 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
                     {/* Genuinely every macro — this section used to be labelled
                         "Full macronutrient breakdown" while listing only the two
                         the summary row above omits. */}
-                    <NutritionRow label="Energy" value={formatKcal(dish.macros.calories, dish.macrosEstimated)} />
-                    <NutritionRow label="Protein" value={formatGrams(dish.macros.protein, dish.macrosEstimated)} />
-                    <NutritionRow label="Carbohydrate" value={formatGrams(dish.macros.carbs, dish.macrosEstimated)} />
-                    <NutritionRow label="Total fat" value={formatGrams(dish.macros.fat, dish.macrosEstimated)} />
-                    <NutritionRow label="Fibre" value={formatGrams(dish.macros.fiber, dish.macrosEstimated)} />
+                    <NutritionRow label="Energy" value={formatKcal(dish.macros.calories, dish.macrosEstimated, dish.macrosProvisional)} />
+                    <NutritionRow label="Protein" value={formatGrams(dish.macros.protein, dish.macrosEstimated, dish.macrosProvisional)} />
+                    <NutritionRow label="Carbohydrate" value={formatGrams(dish.macros.carbs, dish.macrosEstimated, dish.macrosProvisional)} />
+                    <NutritionRow label="Total fat" value={formatGrams(dish.macros.fat, dish.macrosEstimated, dish.macrosProvisional)} />
+                    <NutritionRow label="Fibre" value={formatGrams(dish.macros.fiber, dish.macrosEstimated, dish.macrosProvisional)} />
                     {dish.sugarPerServing && <NutritionRow label="Sugar" value={dish.sugarPerServing} />}
                   </VStack>
                 ),

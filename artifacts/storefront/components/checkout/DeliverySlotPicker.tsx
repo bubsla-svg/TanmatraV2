@@ -30,12 +30,13 @@ export function DeliverySlotPicker({
   slots,
   value,
   onChange,
-  now = new Date(),
-}: {
+  now = new Date(), describedBy }: {
   slots: DeliverySlot[];
   value: DeliverySlot | null;
   onChange: (slot: DeliverySlot | null) => void;
   now?: Date;
+  /** id of the parent's error line, so the select is described by it. */
+  describedBy?: string;
 }) {
   const groups = useMemo(() => groupSlots(slots, now), [slots, now]);
   const [day, setDay] = useState<DayChoice | null>(() => defaultDayChoice(groups));
@@ -106,6 +107,8 @@ export function DeliverySlotPicker({
       <label className="flex flex-col gap-1.5 text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">
         Window · {dayChoice === "later" && laterDay ? dayLabel(laterDay.date, now) : dayChoice === "today" ? "Today" : "Tomorrow"}
         <select
+          aria-describedby={describedBy}
+          aria-invalid={describedBy ? true : undefined}
           value={value && options.some((s) => s.id === value.id) ? String(value.id) : ""}
           onChange={(e) => onChange(options.find((s) => String(s.id) === e.target.value) ?? null)}
           data-testid="alc-slot"

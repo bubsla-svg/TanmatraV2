@@ -44,6 +44,9 @@ export interface PlanQuoteView {
   cycleTotalPaise: number;
   perMealPaise: number | null;
   mealsPerCycle: number;
+  /** The cycle the total is billed on — PlanCard captioned every total "/mo"
+   *  regardless of cycle (2026-09-06 audit). */
+  cycle: string;
 }
 
 export function planQuoteView(id: PlanId): PlanQuoteView {
@@ -56,6 +59,7 @@ export function planQuoteView(id: PlanId): PlanQuoteView {
     cycleTotalPaise: quote.cycleTotalPaise,
     perMealPaise: cfg.pricePerMealPaise,
     mealsPerCycle: cfg.mealsPerCycle,
+    cycle: cfg.cycle,
   };
 }
 

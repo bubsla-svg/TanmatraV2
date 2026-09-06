@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { formatGrams, formatKcal, formatMacroLine, formatPaise } from "./format";
+import { formatGrams, formatKcal, formatMacroLine, formatPaise, MACROS_PENDING_LABEL } from "./format";
 
 test("formatPaise renders whole rupees with en-IN grouping", () => {
   assert.equal(formatPaise(18900), "₹189");
@@ -39,4 +39,20 @@ test("the dense-list line is one spelling for card and cart alike", () => {
 test("zero is a real value, not an absence", () => {
   assert.equal(formatGrams(0), "0\u00a0g");
   assert.equal(formatMacroLine({ calories: 0, protein: 0 }), "0\u00a0kcal · 0\u00a0g\u00a0P");
+});
+
+// ── provisional macros gate the DETAIL surfaces too ─────────────────────────
+// formatMacroLine (the card) honoured `provisional`; formatKcal/formatGrams
+// (the PDP and the dish drawer) did not, so a dish reading "Nutrition coming
+// soon" on its card asserted "460 kcal" one tap later (2026-09-06 audit).
+
+test("formatKcal withholds a provisional figure, like the card does", () => {
+  assert.equal(formatKcal(460, false, true), MACROS_PENDING_LABEL);
+  assert.equal(formatGrams(22, false, true), MACROS_PENDING_LABEL);
+});
+
+test("provisional outranks estimated, and neither flag changes a real figure", () => {
+  assert.equal(formatKcal(460, true, true), MACROS_PENDING_LABEL);
+  assert.equal(formatKcal(460), "460\u00a0kcal");
+  assert.equal(formatGrams(22), "22\u00a0g");
 });

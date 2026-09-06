@@ -2,7 +2,7 @@
 // Client: controlled food-preferences editor (taste/goal core). The server
 // (routes/preferences.ts) owns validation and lowercases the free-text lists,
 // so this only gathers input; the parent re-seeds it from the saved response.
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Grid } from "@astryxdesign/core/Grid";
 import { Selector } from "@astryxdesign/core/Selector";
 import { Button } from "@/components/ui/button";
@@ -67,11 +67,33 @@ export function PreferencesForm({
   const [disliked, setDisliked] = useState<string[]>(initial?.dislikedIngredients ?? []);
   const [cuisines, setCuisines] = useState<string[]>(initial?.cuisines ?? []);
 
+  // Dirty tracking: Save was always enabled, "Saved" was a silent 12px span,
+  // and navigating away discarded edits without a word (2026-09-06 audit).
+  const sameList = (a: string[], b: string[]) => a.length === b.length && a.every((x, i) => x === b[i]);
+  const dirty =
+    dietaryStyle !== (initial?.dietaryStyle ?? "omnivore") ||
+    goal !== (initial?.goal ?? "general_wellness") ||
+    activityLevel !== (initial?.activityLevel ?? "moderate") ||
+    spiceLevel !== (initial?.spiceLevel ?? "medium") ||
+    !sameList(allergens, initial?.allergens ?? []) ||
+    !sameList(disliked, initial?.dislikedIngredients ?? []) ||
+    !sameList(cuisines, initial?.cuisines ?? []);
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
+  // size="lg" on every Astryx control here: at the default md the combobox
+  // measured a 24px hit area inside a 40px shell, and 14px text trips iOS
+  // zoom-on-focus, beside 50px/16px native inputs (2026-09-06 audit).
   return (
     <div className="flex flex-col gap-5">
       <Grid gap={4} columns={{ minWidth: 260 }}>
         <div className={CARD}>
           <Selector
+            size="lg"
             label="Dietary style"
             value={dietaryStyle}
             onChange={(v) => setDietaryStyle(v as DietaryStyle)}
@@ -80,6 +102,7 @@ export function PreferencesForm({
         </div>
         <div className={CARD}>
           <Selector
+            size="lg"
             label="Primary goal"
             value={goal}
             onChange={(v) => setGoal(v as WellnessGoal)}
@@ -88,6 +111,7 @@ export function PreferencesForm({
         </div>
         <div className={CARD}>
           <Selector
+            size="lg"
             label="Activity level"
             value={activityLevel}
             onChange={(v) => setActivityLevel(v as ActivityLevel)}
@@ -96,6 +120,7 @@ export function PreferencesForm({
         </div>
         <div className={CARD}>
           <Selector
+            size="lg"
             label="Spice tolerance"
             value={spiceLevel}
             onChange={(v) => setSpiceLevel(v as SpiceLevel)}
@@ -121,15 +146,16 @@ export function PreferencesForm({
       <div className="flex flex-col items-center gap-3">
         <Button
           type="button"
-          disabled={busy}
+          disabled={busy || !dirty}
           aria-busy={busy}
-          aria-live="polite"
           onClick={() => onSubmit({ dietaryStyle, goal, activityLevel, spiceLevel, allergens, dislikedIngredients: disliked, cuisines })}
           shape="pill" size="fluid" className="min-h-12 w-full px-8 py-3.5 text-center font-semibold disabled:opacity-40"
         >
           {busy ? "Saving…" : "Save preferences"}
         </Button>
-        {saved && <span className="text-xs font-medium text-sage-text">Saved</span>}
+        <p role="status" aria-live="polite" className="text-xs font-medium text-sage-text">
+          {saved ? "Preferences saved." : dirty ? "You have unsaved changes." : ""}
+        </p>
       </div>
     </div>
   );

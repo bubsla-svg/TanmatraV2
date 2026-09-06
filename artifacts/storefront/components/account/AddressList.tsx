@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 // Client: presentational list of saved addresses with row actions.
 import type { Address } from "@/lib/api";
 
@@ -21,8 +22,15 @@ export function AddressList({
   onDelete: (id: string) => void;
   onSetDefault: (id: string) => void;
 }) {
+  // Two-tap delete: one tap used to remove an address for good, while the
+  // far less destructive plan cancel asked first (2026-09-06 audit).
+  const [confirmId, setConfirmId] = useState<string | null>(null);
   if (addresses.length === 0) {
-    return <p className="rounded-2xl bg-secondary px-4 py-3 text-xs text-ink-muted">No saved addresses yet.</p>;
+    return (
+      <p className="rounded-2xl bg-secondary px-4 py-3 text-xs text-ink-muted">
+        No saved addresses yet. Add one above, or it will be saved the first time you check out.
+      </p>
+    );
   }
   return (
     <ul className="flex flex-col gap-3">
@@ -46,7 +54,15 @@ export function AddressList({
               {!a.isDefault && (
                 <button type="button" disabled={busy} onClick={() => onSetDefault(a.id)} className="inline-flex min-h-11 items-center font-semibold text-ink-muted underline-offset-4 hover:underline disabled:opacity-40">Set default</button>
               )}
-              <button type="button" disabled={busy} onClick={() => onDelete(a.id)} className="inline-flex min-h-11 items-center font-semibold text-danger underline-offset-4 hover:underline disabled:opacity-40">Delete</button>
+              {confirmId === a.id ? (
+                <span role="group" aria-label={`Delete ${a.label}?`} className="inline-flex items-center gap-3">
+                  <span className="text-ink-muted">Delete {a.label}?</span>
+                  <button type="button" disabled={busy} onClick={() => { setConfirmId(null); onDelete(a.id); }} className="inline-flex min-h-11 items-center font-semibold text-danger underline-offset-4 hover:underline disabled:opacity-40">Yes, delete</button>
+                  <button type="button" onClick={() => setConfirmId(null)} className="inline-flex min-h-11 items-center font-semibold text-ink-muted underline-offset-4 hover:underline">Keep</button>
+                </span>
+              ) : (
+                <button type="button" disabled={busy} onClick={() => setConfirmId(a.id)} className="inline-flex min-h-11 items-center font-semibold text-danger underline-offset-4 hover:underline disabled:opacity-40">Delete</button>
+              )}
             </div>
           </li>
         );

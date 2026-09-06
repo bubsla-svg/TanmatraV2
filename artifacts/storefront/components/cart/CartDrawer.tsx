@@ -40,6 +40,7 @@ export function CartDrawer({
   // Back gesture closes the drawer, not the page (Vaul owns the slide;
   // history ownership lives here).
   useOverlayHistory(open, () => onOpenChange(false));
+  const [quoteFailed, setQuoteFailed] = useState(false);
 
   // N5.2 — the ₹50→₹112 ambush. Checkout renders "Add ₹X more for free
   // delivery" from the server quote, but the CART never did: a customer
@@ -77,10 +78,12 @@ export function CartDrawer({
         })),
       )
         .then((q) => {
-          if (seq === quoteSeq.current) setQuote(q);
+          if (seq === quoteSeq.current) { setQuote(q); setQuoteFailed(false); }
         })
         .catch(() => {
-          if (seq === quoteSeq.current) setQuote(null);
+          // Not silent: the delivery-fee line vanishing is the ₹50→₹112 ambush
+          // this quote exists to prevent, so a failed quote says so.
+          if (seq === quoteSeq.current) { setQuote(null); setQuoteFailed(true); }
         });
     }, 350);
     return () => clearTimeout(id);
@@ -289,13 +292,18 @@ export function CartDrawer({
                 </div>
               </div>
             )}
+            {quoteFailed && !quote && cart.lines.length > 0 && (
+              <p role="status" className="mb-3 rounded-xl bg-secondary px-3 py-2.5 text-center text-xs font-medium text-ink-muted">
+                Couldn&rsquo;t fetch the delivery fee — it&rsquo;s shown at checkout.
+              </p>
+            )}
             {quote && quote.deliveryFeePaise === 0 && cart.lines.length > 0 && (
               <p className="mb-3 rounded-xl bg-sage-soft px-3 py-2.5 text-center text-xs font-medium text-sage-text">
                 Free delivery unlocked
               </p>
             )}
-            <div className="mb-3 flex items-center justify-between gap-3 text-sm">
-              <span className="text-[11px] font-bold uppercase tracking-[.18em] text-ink-muted">Subtotal (before delivery &amp; GST)</span>
+            <div aria-live="polite" aria-atomic="true" className="mb-3 flex items-center justify-between gap-3 text-sm">
+              <span className="text-sm text-ink-muted">Subtotal (before delivery &amp; GST)</span>
               <span className="font-data text-lg font-bold text-primary">{formatPaise(subtotalPaise(cart))}</span>
             </div>
             {footer}

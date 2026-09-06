@@ -49,7 +49,7 @@ export function ChipInput({
                 type="button"
                 aria-label={`Remove ${v}`}
                 onClick={() => onChange(values.filter((x) => x !== v))}
-                className="-mr-1 inline-flex size-6 items-center justify-center rounded-full leading-none text-ink-muted hover:text-ink"
+                className="-mr-2 inline-flex size-11 items-center justify-center rounded-full leading-none text-ink-muted hover:text-ink"
               >
                 &times;
               </button>
@@ -66,7 +66,9 @@ export function ChipInput({
             add();
           }
         }}
-        onBlur={add}
+        /* No commit on blur: tabbing out of a half-typed allergen used to
+           save it silently, on the field the kitchen screens against. Enter
+           and comma commit; blur leaves the draft visible. */
         placeholder={placeholder}
         className="w-full min-h-[50px] rounded-2xl border border-line bg-bg px-4 py-3 text-base font-normal text-ink outline-none placeholder:text-ink-faint focus-visible:border-primary"
       />

@@ -64,7 +64,9 @@ export const tanmatraTheme = defineTheme({
     // sage stop that passes AS TEXT (5.4:1 on cream); the chip fill lives in
     // tanmatraBridge.css as --sage-soft. Warning is the amber at text weight
     // (31 61% 37%, 4.6:1) — the README rules the 53% amber decorative-only.
-    '--color-sage': ['#556845', '#b9c9a6'],
+    // Dark arm lifted #b9c9a6 → #cbd8bb (2026-09-06 audit): as text on the
+    // --sage-soft chip fill it measured 4.31:1; now 5.07:1, 6.3:1 on raised.
+    '--color-sage': ['#556845', '#cbd8bb'],
     '--color-success': ['#556845', '#b9c9a6'],
     '--color-warning': ['#986025', '#f2a85a'],
     // Dark arm was #b0655a — 4.14:1 on --color-background-surface, below AA's

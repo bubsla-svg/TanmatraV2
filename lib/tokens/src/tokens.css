@@ -52,7 +52,7 @@
   /* Sage at signal strength for chip/badge fills. Derived from --sage via
      color-mix (NOT a new base colour) and left semi-transparent so it
      composites over whatever surface it lands on. */
-  --sage-soft: #d2ddc6; /* the revision's chip sage (88 25% 82%), opaque */
+  --sage-soft: #dbe4d1; /* chip sage, lifted so --sage-text clears 4.5:1 on it */
 
   /* Recessed surface for panels and chips sitting INSIDE a --surface card, so
      they read as inset wells rather than more raised cards. Aliases the page
@@ -173,12 +173,12 @@
      --surface-raised below — under AA. See tanmatraBridge.css for the full
      note; that file is what renders, this is the no-bridge fallback. */
   --gold-text: #f2a85a;
-  --sage-text: #b9c9a6;
+  --sage-text: #cbd8bb;
   /* Slightly stronger mix so the tint stays legible against dark surfaces. */
   --sage-soft: #49593b;
   --gold: #f2a85a;
   --gold-ink: #172622;
-  --sage: #b9c9a6;
+  --sage: #cbd8bb;
   --sage-ink: #e9efe1;
   --success: #b9c9a6;
   --warning: #f2a85a;

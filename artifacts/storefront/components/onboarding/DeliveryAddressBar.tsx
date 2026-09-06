@@ -1,5 +1,5 @@
 "use client"; // Justification: reads the session-scoped address list, holds the active-address choice, and owns the switcher sheet.
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getAddresses, type Address } from "@/lib/api";
@@ -206,6 +206,16 @@ function AddressSwitcherSheet({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  // Focus moves INTO the dialog on open and back to whatever opened it on
+  // close. Role and aria-modal were already here; without this the chip that
+  // opened the sheet kept focus behind the scrim (2026-09-06 audit).
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
+    dialogRef.current?.focus();
+    return () => opener?.focus?.();
+  }, []);
+
   return (
     <div className="fixed inset-0 z-[var(--z-modal)] flex items-end sm:items-center sm:justify-center">
       <button
@@ -215,10 +225,12 @@ function AddressSwitcherSheet({
         className="absolute inset-0 animate-fade-in bg-[var(--ink)]/40"
       />
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label="Choose a delivery address"
-        className="relative w-full animate-sheet-in rounded-t-2xl border border-line bg-surface p-5 shadow-[var(--shadow-raised)] sm:max-w-md sm:animate-dialog-in sm:rounded-2xl"
+        className="relative w-full outline-none animate-sheet-in rounded-t-2xl border border-line bg-surface p-5 shadow-[var(--shadow-raised)] sm:max-w-md sm:animate-dialog-in sm:rounded-2xl"
       >
         <h2 className="text-base font-bold text-ink">Deliver to</h2>
 

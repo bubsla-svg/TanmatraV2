@@ -126,7 +126,9 @@ export function DeliveryList({ subscriptionId }: { subscriptionId: number }) {
       )}
       {mutationError && <p role="alert" className="text-xs font-medium text-danger">{mutationError}</p>}
       {rows.length === 0 ? (
-        <p className="text-xs text-ink-muted">No upcoming deliveries on the schedule.</p>
+        <p className="text-xs text-ink-muted">
+          No upcoming deliveries on the schedule. If the plan is paused, resume it above; otherwise the next cycle appears here once it is billed.
+        </p>
       ) : (
         <ul className="flex flex-col gap-1.5">
           {rows.map((d) => {

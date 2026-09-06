@@ -88,10 +88,13 @@ test("the trial checkout does not ask for medical conditions", () => {
   // path a trial never takes. It was collected, encrypted as clinical data at
   // rest, and read by nothing.
   const intake = read("checkout", "plan", "MemberIntake.tsx");
+  // Keyed on the field's id, not on its label markup: the fields gained VISIBLE
+  // labels (2026-09-06 audit) and an aria-label regex pinned the old shape
+  // while asserting nothing about the gate this test is actually about.
   assert.match(
     intake,
-    /\{!minimal && \(\s*<input aria-label="Medical conditions"/,
-    "the conditions input must be behind the minimal gate",
+    /\{!minimal && \([\s\S]{0,240}?\$\{uid\}-conditions/,
+    "the conditions field must be behind the minimal gate",
   );
   const checkout = read("checkout", "plan", "PlanCheckout.tsx");
   assert.match(checkout, /minimalIntake=\{planId === "trial_3day"\}/);
@@ -102,12 +105,13 @@ test("allergens are asked for on every path, trial included", () => {
   // refusing: they are safety information about food someone is about to eat,
   // and the cost of not having them lands on the customer.
   const intake = read("checkout", "plan", "MemberIntake.tsx");
-  const allergenInput = /<input aria-label="Allergens"/;
-  assert.match(intake, allergenInput);
+  // Same id-keyed form as the conditions assertion above, and the same reason.
+  assert.match(intake, /\$\{uid\}-allergens/);
+  assert.match(intake, /label="Allergies[^"]*"/, "and it must carry a visible label");
   // Not wrapped in a minimal gate the way conditions and diet are.
   assert.doesNotMatch(
     intake,
-    /\{!minimal && \([\s\S]{0,80}?<input aria-label="Allergens"/,
+    /\{!minimal && \([\s\S]{0,240}?\$\{uid\}-allergens/,
     "allergens must never be gated off",
   );
 });

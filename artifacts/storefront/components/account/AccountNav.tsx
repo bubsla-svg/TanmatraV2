@@ -38,7 +38,10 @@ export function AccountNav({ active }: { active: Tab }) {
       {link("/account/billing", "billing", "Billing")}
       {link("/account/addresses", "addresses", "Addresses")}
       {link("/account/preferences", "preferences", "Preferences")}
-      {link("/account/health-information", "health", "Health")}
+      {/* "Health" pointed at /account/health-information, a route with no page —
+          HTTP 404 from every account child (2026-09-06 ghost sweep). The health
+          fields live on Preferences. */}
+      {link("/account/preferences#health", "health", "Health")}
       {link("/account/connections", "connections", "Connections")}
       {link("/account/loyalty", "loyalty", "Rewards")}
       {link("/account/symptoms", "symptoms", "Symptoms")}

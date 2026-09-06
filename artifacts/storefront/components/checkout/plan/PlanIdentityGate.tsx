@@ -32,10 +32,15 @@ export function PlanIdentityGate({
   planName,
   recap,
   onVerified,
+  sessionChecked = true,
 }: {
   planName: string;
   recap?: { mealsPerCycle: number; cycleTotalPaise: number; cadence: string };
   onVerified: (user: AuthUser) => void;
+  /** False while the session probe is still in flight — the fail-loud
+   *  fallback below must not accuse the provider before we know whether the
+   *  customer is already signed in (2026-09-06 audit). */
+  sessionChecked?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -63,7 +68,9 @@ export function PlanIdentityGate({
           </p>
         </div>
       )}
-      {firebaseConfigured() ? (
+      {!sessionChecked ? (
+        <p role="status" className="text-sm text-ink-muted">Checking your session…</p>
+      ) : firebaseConfigured() ? (
         <>
           <p className="text-sm text-ink-muted">Sign in to set up delivery — a code by SMS, no passwords.</p>
           <PhoneAuth startExpanded onVerified={onVerified} />

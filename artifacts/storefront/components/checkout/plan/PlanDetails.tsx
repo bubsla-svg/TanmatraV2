@@ -1,6 +1,7 @@
 "use client";
 // Client: the plan details step — track, eater profile, address, consent.
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import type { DietTrack, MemberInput } from "@/lib/api";
 import { formatPaise } from "@/lib/format";
@@ -97,6 +98,17 @@ export function PlanDetails({
   const [manualMode, setManualMode] = useState(false);
   const prefilled = useRef(false);
   const touched = useRef(false);
+  const [attempted, setAttempted] = useState(false);
+  // The controls the CTA takes the customer to when it is blocked (T-09).
+  const intakeRef = useRef<HTMLDivElement>(null);
+  const addressRef = useRef<HTMLDivElement>(null);
+  const consentRef = useRef<HTMLInputElement>(null);
+  // D-22: the same synchronous guard the à-la-carte leg carries — the server's
+  // idempotency key is the money backstop, this stops the duplicate request.
+  const submitLockRef = useRef(false);
+  useEffect(() => {
+    if (!busy) submitLockRef.current = false;
+  }, [busy]);
 
   // Seed the address from what arrives on `initialAddress`, in two moments: the
   // serviceability gate's PIN seed is there from the first render, and the
@@ -120,11 +132,51 @@ export function PlanDetails({
   }, [initialAddress, line1, city, pincode]);
 
   const pinValid = pincode.replace(/\D/g, "").length === 6;
+
+  // PR-09 / sweep rule, ported verbatim from the à-la-carte leg: a blocked
+  // money CTA must say WHY, in the order the customer should fix things, and
+  // stay tappable whenever the fix is a field they can reach. This screen used
+  // to render an inert gold pill at opacity-40 with no explanation — the
+  // consent checkbox sits below the fold under the sticky bar, so the most
+  // likely blocker was also the least visible (2026-09-06 audit).
   // Gate on a landed quote too: the CTA must never submit while a track change
   // is re-quoting (else the new track pairs with the old meals-per-delivery).
-  const valid =
-    quoteTotalPaise !== null &&
-    member.name.trim().length > 0 && line1.trim().length > 2 && city.trim().length > 1 && pinValid && consent;
+  type Blocker = { reason: string; field: React.RefObject<HTMLElement | null> | null };
+  const blocker: Blocker | null =
+    member.name.trim().length === 0
+      ? { reason: "Tell us who's eating", field: intakeRef }
+      : line1.trim().length <= 2 || city.trim().length <= 1
+        ? { reason: "Complete the delivery address", field: addressRef }
+        : !pinValid
+          ? { reason: "Enter a 6-digit PIN code", field: addressRef }
+          : !consent
+            ? { reason: "Accept the order-processing consent to continue", field: consentRef }
+            : quoteLoading || quoteTotalPaise === null
+              ? { reason: "Pricing your plan…", field: null }
+              : null;
+  const valid = blocker === null;
+  const ctaEnabled = valid || blocker.field !== null;
+
+  function goTo(ref: React.RefObject<HTMLElement | null>) {
+    const el = ref.current;
+    if (!el) return;
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    el.focus({ preventScroll: true });
+  }
+
+  function handleSubmit() {
+    if (!valid) {
+      setAttempted(true);
+      if (blocker.field) goTo(blocker.field);
+      return;
+    }
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
+    onSubmit({
+      member: draftToMember(submittedMember),
+      address: { line1: line1.trim(), city: city.trim(), pincode: pincode.replace(/\D/g, "") },
+    });
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -142,9 +194,11 @@ export function PlanDetails({
         </div>
       </div>
 
-      <MemberIntake value={member} onChange={setMember} minimal={minimalIntake} />
+      <div ref={intakeRef} tabIndex={-1} className="outline-none">
+        <MemberIntake value={member} onChange={setMember} minimal={minimalIntake} />
+      </div>
 
-      <div className="flex flex-col gap-3">
+      <div ref={addressRef} tabIndex={-1} className="flex flex-col gap-3 outline-none">
         <span className="font-display text-xl font-semibold leading-tight text-primary">Where should we deliver?</span>
         {!manualMode ? (
           <button
@@ -163,11 +217,44 @@ export function PlanDetails({
           </button>
         ) : (
           <div className="flex flex-col gap-3">
-            <input aria-label="Flat / house · street" value={line1} onChange={(e) => { touched.current = true; setLine1(e.target.value); }} placeholder="Flat 3B, Sector 62" className={inputCls} />
+            {/* Visible labels, not placeholder-only: the label used to vanish on
+                the first keystroke, on the highest-value screen in the app. */}
+            <label className="flex flex-col gap-1.5 text-xs font-semibold text-ink-muted">
+              Flat / house · street
+              <input
+                name="address-line1" autoComplete="address-line1" autoCapitalize="words" required
+                value={line1} onChange={(e) => { touched.current = true; setLine1(e.target.value); }}
+                placeholder="Flat 3B, Sector 62"
+                aria-invalid={attempted && line1.trim().length <= 2}
+                className={inputCls}
+              />
+            </label>
             <div className="grid grid-cols-2 gap-3">
-              <input aria-label="City" value={city} onChange={(e) => { touched.current = true; setCity(e.target.value); }} placeholder="Noida" className={inputCls} />
-              <input aria-label="PIN code" inputMode="numeric" value={pincode} onChange={(e) => { touched.current = true; setPincode(e.target.value); }} placeholder="201301" aria-invalid={pincode.length > 0 && !pinValid} className={inputCls} />
+              <label className="flex flex-col gap-1.5 text-xs font-semibold text-ink-muted">
+                City
+                <input
+                  name="address-level2" autoComplete="address-level2" autoCapitalize="words" required
+                  value={city} onChange={(e) => { touched.current = true; setCity(e.target.value); }}
+                  placeholder="Noida"
+                  aria-invalid={attempted && city.trim().length <= 1}
+                  className={inputCls}
+                />
+              </label>
+              <label className="flex flex-col gap-1.5 text-xs font-semibold text-ink-muted">
+                PIN code
+                <input
+                  name="postal-code" autoComplete="postal-code" inputMode="numeric" maxLength={6} required
+                  value={pincode} onChange={(e) => { touched.current = true; setPincode(e.target.value); }}
+                  placeholder="201301"
+                  aria-invalid={(pincode.length > 0 || attempted) && !pinValid}
+                  aria-describedby={attempted && !pinValid ? "plan-pin-err" : undefined}
+                  className={inputCls}
+                />
+              </label>
             </div>
+            {attempted && !pinValid && (
+              <span id="plan-pin-err" role="alert" className="text-xs font-medium text-danger">Enter a 6-digit PIN code.</span>
+            )}
             <button type="button" onClick={() => setManualMode(false)} className="self-start text-xs font-medium text-ink-muted underline hover:text-ink">
               Use map instead
             </button>
@@ -195,10 +282,17 @@ export function PlanDetails({
       {/* T-10: a 48px row where the whole label toggles and the box is 24px. */}
       <label className="flex min-h-12 w-full cursor-pointer items-start gap-3 rounded-2xl border border-line bg-surface p-3 text-sm text-ink-muted">
         <input
+          ref={consentRef}
           type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)}
+          aria-invalid={attempted && !consent}
           className="mt-0.5 size-6 shrink-0 cursor-pointer accent-[var(--gold)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]"
         />
-        <span>{DPDP_CONSENT_COPY}</span>
+        <span>
+          {DPDP_CONSENT_COPY}
+          {attempted && !consent && (
+            <span role="alert" className="mt-1 block text-xs font-medium text-danger">Tick this to continue — we can&rsquo;t cook without it.</span>
+          )}
+        </span>
       </label>
 
       <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-5">
@@ -211,8 +305,8 @@ export function PlanDetails({
         )}
         <div className="flex items-baseline justify-between gap-3">
           <span className="text-sm text-ink-muted">{billedLabel} (incl. GST)</span>
-          <span className="font-data text-2xl font-bold text-primary">
-            {quoteLoading || quoteTotalPaise === null ? "…" : formatPaise(quoteTotalPaise)}
+          <span aria-busy={quoteLoading || undefined} className={`font-data text-2xl font-bold text-primary${quoteLoading ? " opacity-60" : ""}`}>
+            {quoteTotalPaise === null ? "Pricing…" : formatPaise(quoteTotalPaise)}
           </span>
         </div>
         {quoteError && (
@@ -250,19 +344,30 @@ export function PlanDetails({
           Anchored bottom-0, not the bottom-16 tab-bar band: /checkout is a
           (focus)-shell route (app/(focus)/) — the global tab bar never renders
           here. T-12: accepted methods above the CTA, amount on the button. */}
+      {/* Terms at the point of commitment, not from the account hub after it. */}
+      <p className="text-center text-xs text-ink-faint">
+        By paying you accept our <Link href="/legal/terms" className="underline underline-offset-2 hover:text-ink">terms</Link> and{" "}
+        <Link href="/legal/refunds" className="underline underline-offset-2 hover:text-ink">refund policy</Link>.
+      </p>
+
       <StickyAction className="bottom-0 z-30">
         <div className="mx-auto max-w-md px-4 py-3">
+          {blocker && (
+            <p role="status" className="mb-1.5 text-center text-xs font-medium text-ink-muted">{blocker.reason}</p>
+          )}
           <PaymentMethodsRow className="mb-1.5" />
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 flex-col">
-              <span className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">{billedLabel}</span>
-              <span className="font-data text-xl font-bold leading-none text-primary">
-                {quoteLoading || quoteTotalPaise === null ? "…" : formatPaise(quoteTotalPaise)}
+              <span className="text-xs text-ink-muted">{billedLabel}</span>
+              {/* The last known amount stays put while a track change re-quotes:
+                  an ellipsis where the price belongs read as the price vanishing. */}
+              <span aria-busy={quoteLoading || undefined} className={`font-data text-xl font-bold leading-none text-primary${quoteLoading ? " opacity-60" : ""}`}>
+                {quoteTotalPaise === null ? "Pricing…" : formatPaise(quoteTotalPaise)}
               </span>
             </div>
             <Button
-              type="button" disabled={!valid || busy}
-              onClick={() => onSubmit({ member: draftToMember(submittedMember), address: { line1: line1.trim(), city: city.trim(), pincode: pincode.replace(/\D/g, "") } })}
+              type="button" disabled={!ctaEnabled || busy}
+              onClick={handleSubmit}
               aria-busy={verifying || busy} aria-live="polite"
               shape="pill" size="fluid" className="min-h-12 px-8 py-3.5 text-center font-semibold disabled:opacity-40"
             >

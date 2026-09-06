@@ -15,6 +15,14 @@ import type { PlanId } from "@workspace/subscription-rules";
  * brief's "PROTOCOL 01" style badge is bound to the plan's real RD-reviewed
  * flag rather than inventing a tier label.
  */
+const CYCLE_SUFFIX: Record<string, string> = {
+  weekly: "per week",
+  fortnightly: "per fortnight",
+  monthly: "per month",
+  quarterly: "per quarter",
+  one_off: "one-off",
+};
+
 export function PlanCard({ id }: { id: PlanId }) {
   const d = planDisplay(id);
   const q = planQuoteView(id);
@@ -37,7 +45,9 @@ export function PlanCard({ id }: { id: PlanId }) {
               <span className="text-xs font-normal text-ink-muted">/meal</span>
             </span>
           )}
-          <span className="tabular text-xs text-ink-muted">{formatPaise(q.cycleTotalPaise)}/mo</span>
+          {/* The cadence the plan actually bills on — this said "/mo" for
+              weekly and quarterly plans too (2026-09-06 audit). */}
+          <span className="tabular text-xs text-ink-muted">{formatPaise(q.cycleTotalPaise)} {CYCLE_SUFFIX[q.cycle] ?? "per cycle"}</span>
         </span>
         {q.launchable ? (
           <span className="shrink-0 rounded-full bg-gold px-6 py-2.5 text-sm font-semibold text-gold-ink">

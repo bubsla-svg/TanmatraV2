@@ -20,6 +20,15 @@ const STATUS_LABEL: Record<SubscriptionStatus, string> = {
 };
 
 /** The transitions the server allows from each status (it 409s anything else). */
+/** The headline used to print the raw cadence enum ("monthly · 12 meals /
+ *  delivery") on the card that owns pause and cancel. */
+const CADENCE_TITLE: Record<string, string> = {
+  weekly: "Weekly",
+  fortnightly: "Fortnightly",
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+};
+
 function actionsFor(status: SubscriptionStatus): SubAction[] {
   if (status === "active") return ["pause", "cancel"];
   if (status === "paused") return ["resume", "cancel"];
@@ -50,11 +59,14 @@ export function SubscriptionCard({
   // card costs no request either way.
   const [showDeliveries, setShowDeliveries] = useState(false);
   const [showChangePlan, setShowChangePlan] = useState(false);
+  // Replaces window.confirm (invisible to assistive tech, and silent about the
+  // remainder of a paid cycle) — 2026-09-06 audit.
+  const [confirmCancel, setConfirmCancel] = useState(false);
   return (
     <li className="rounded-2xl border border-line bg-surface p-5">
       <div className="flex items-start justify-between gap-3">
         <span className="font-display text-lg font-semibold leading-tight text-primary">
-          {sub.cadence} · {sub.mealsPerDelivery} meals / delivery
+          {CADENCE_TITLE[sub.cadence] ?? sub.cadence} plan · {sub.mealsPerDelivery} meals a delivery
         </span>
         <span
           className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[.16em] ${STATUS_STYLE[sub.status]}`}
@@ -92,19 +104,47 @@ export function SubscriptionCard({
           </p>
         </div>
       )}
+      {confirmCancel && (
+        <div role="group" aria-label="Confirm cancellation" className="mt-4 flex flex-col gap-3 rounded-2xl border border-danger/40 bg-surface-raised p-4">
+          <p className="text-sm text-ink">
+            Cancel this plan? Upcoming deliveries stop and billing ends. Deliveries already paid for in this cycle still arrive; skipped meals stay as credit.
+          </p>
+          <div className="flex flex-wrap items-center gap-4 text-sm font-semibold">
+            <button type="button" disabled={busy} onClick={() => { setConfirmCancel(false); onAction("cancel"); }} className="inline-flex min-h-11 items-center text-danger underline-offset-4 hover:underline disabled:opacity-40">
+              Yes, cancel the plan
+            </button>
+            <button type="button" onClick={() => setConfirmCancel(false)} className="inline-flex min-h-11 items-center text-ink-muted underline-offset-4 hover:underline">
+              Keep it
+            </button>
+          </div>
+        </div>
+      )}
+
       {(actionsFor(sub.status).length > 0 || sub.status !== "cancelled") && (
         <div className="mt-4 flex flex-wrap items-center gap-x-5 border-t border-line pt-1 text-sm font-semibold">
-          {actionsFor(sub.status).map((a) => (
-            <button
-              key={a}
-              type="button"
-              disabled={busy}
-              onClick={() => onAction(a)}
-              className={`inline-flex min-h-11 items-center underline-offset-4 hover:underline disabled:opacity-40 ${a === "cancel" ? "text-danger" : "text-primary"}`}
-            >
-              {ACTION_LABEL[a]}
-            </button>
-          ))}
+          {actionsFor(sub.status).map((a) =>
+            a === "cancel" ? (
+              <button
+                key={a}
+                type="button"
+                disabled={busy}
+                onClick={() => setConfirmCancel(true)}
+                className="inline-flex min-h-11 items-center text-danger underline-offset-4 hover:underline disabled:opacity-40"
+              >
+                {ACTION_LABEL[a]}
+              </button>
+            ) : (
+              <button
+                key={a}
+                type="button"
+                disabled={busy}
+                onClick={() => onAction(a)}
+                className="inline-flex min-h-11 items-center font-semibold text-primary underline-offset-4 hover:underline disabled:opacity-40"
+              >
+                {ACTION_LABEL[a]}
+              </button>
+            ),
+          )}
           {sub.status === "active" && !showChangePlan && (
             <button type="button" onClick={() => setShowChangePlan(true)} className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline">
               Change plan

@@ -91,7 +91,9 @@ export function MiniCartBar() {
         }`}
       >
         <div className="pointer-events-auto mx-auto flex max-w-md items-center justify-between gap-3 rounded-full border border-line bg-glass py-1.5 pl-5 pr-1.5 shadow-lg backdrop-blur">
-          <p className="tabular text-sm text-ink">
+          {/* Live: adding announced only the stepper's "1" — the count and the
+              money changed silently for a screen reader (2026-09-06 audit). */}
+          <p aria-live="polite" aria-atomic="true" className="tabular text-sm text-ink">
             <span className="font-semibold">{count}</span>{" "}
             {count === 1 ? "item" : "items"}{" "}
             <span aria-hidden className="text-ink-faint">·</span>{" "}

@@ -36,12 +36,14 @@ const approx = (estimated?: boolean): string => (estimated ? "≈" : "");
 const NBSP = "\u00a0";
 
 /** `≈686 kcal` — energy, always with its unit. */
-export function formatKcal(calories: number, estimated?: boolean): string {
+export function formatKcal(calories: number, estimated?: boolean, provisional?: boolean): string {
+  if (provisional) return MACROS_PENDING_LABEL;
   return `${approx(estimated)}${Math.round(calories)}${NBSP}kcal`;
 }
 
 /** `≈42 g` — a macro weight. */
-export function formatGrams(grams: number, estimated?: boolean): string {
+export function formatGrams(grams: number, estimated?: boolean, provisional?: boolean): string {
+  if (provisional) return MACROS_PENDING_LABEL;
   return `${approx(estimated)}${Math.round(grams)}${NBSP}g`;
 }
 
