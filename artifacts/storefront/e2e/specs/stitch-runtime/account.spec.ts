@@ -177,7 +177,7 @@ test.describe("stitch-runtime §10 — account hub sections", () => {
     ).toBeVisible();
     // The studio island is client-local (no session gate) — its default tab
     // proves the hub mounted.
-    await expect(page.getByRole("button", { name: "ICMR Precision Planner" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "ICMR Precision Planner" })).toBeVisible();
     await expect(marker(page, "10.5", "default")).toBeVisible();
     await evidenceShot(page, "10.5");
   });
@@ -213,7 +213,7 @@ test.describe("stitch-runtime §10 — account hub sections", () => {
     );
 
     await page.goto("/account/wellness");
-    await page.getByRole("button", { name: "Pantry Vision Scanner" }).click();
+    await page.getByRole("tab", { name: "Pantry Vision Scanner" }).click();
 
     await page
       .locator('input[type="file"]')

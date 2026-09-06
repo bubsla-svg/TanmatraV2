@@ -20,17 +20,17 @@ test("exactly three tap-first viewports, one question each — no typing anywher
 
   await expect(page.getByText(/step 1 of 3/i)).toBeVisible();
   await expect(page.getByRole("heading", { name: /what.s your goal/i })).toBeVisible();
-  await page.getByRole("button", { name: /fat loss & metabolic reset/i }).click();
+  await page.getByRole("radio", { name: /fat loss & metabolic reset/i }).click();
   await page.getByRole("button", { name: /continue/i }).click();
 
   await expect(page.getByText(/step 2 of 3/i)).toBeVisible();
-  await expect(page.getByRole("heading", { name: /dietary style/i })).toBeVisible();
-  await page.getByRole("button", { name: /omnivore/i }).click();
+  await expect(page.getByRole("heading", { name: /what do you eat/i })).toBeVisible();
+  await page.getByRole("radio", { name: /omnivore/i }).click();
   await page.getByRole("button", { name: /continue/i }).click();
 
   await expect(page.getByText(/step 3 of 3/i)).toBeVisible();
-  await expect(page.getByRole("heading", { name: /allergens our kitchen must strictly omit/i })).toBeVisible();
-  await page.getByRole("button", { name: /dairy/i }).click();
+  await expect(page.getByRole("heading", { name: /must leave out/i })).toBeVisible();
+  await page.getByRole("checkbox", { name: /dairy/i }).click();
 
   // No fourth viewport — "See my plan" is the step-3 primary action, and it
   // is a deterministic exit, not a results screen.
@@ -40,16 +40,16 @@ test("exactly three tap-first viewports, one question each — no typing anywher
 
 test("back preserves the prior answer; refresh preserves the in-progress draft", async ({ page }) => {
   await page.goto("/quick-setup");
-  await page.getByRole("button", { name: /lean muscle hypertrophy/i }).click();
+  await page.getByRole("radio", { name: /lean muscle hypertrophy/i }).click();
   await page.getByRole("button", { name: /continue/i }).click();
 
-  await page.getByRole("button", { name: /strictly vegetarian/i }).click();
+  await page.getByRole("radio", { name: /strictly vegetarian/i }).click();
 
   // Refresh mid-wizard: the draft survives (sessionStorage), step 2 stays
   // current with the vegetarian pick intact.
   await page.reload();
   await expect(page.getByText(/step 2 of 3/i)).toBeVisible();
-  await expect(page.getByRole("button", { name: /strictly vegetarian/i })).toHaveClass(/border-gold/);
+  await expect(page.getByRole("radio", { name: /strictly vegetarian/i })).toHaveClass(/border-gold/);
 
   // Back to step 1: the muscle-gain goal picked before is still selected.
   // Scoped to the wizard: the route now carries a FocusHeader whose own
@@ -58,14 +58,14 @@ test("back preserves the prior answer; refresh preserves the in-progress draft",
   // "Back", so the selector has to say which one it means.
   await page.locator("section").getByRole("button", { name: "Back" }).click();
   await expect(page.getByText(/step 1 of 3/i)).toBeVisible();
-  await expect(page.getByRole("button", { name: /lean muscle hypertrophy/i })).toHaveClass(/border-gold/);
+  await expect(page.getByRole("radio", { name: /lean muscle hypertrophy/i })).toHaveClass(/border-gold/);
 });
 
 test("?condition=pcos exits to the mapped plan with condition/goal/acquisitionContextId intact", async ({ page }) => {
   await page.goto("/quick-setup?condition=pcos");
-  await page.getByRole("button", { name: /holistic longevity care/i }).click();
+  await page.getByRole("radio", { name: /holistic longevity care/i }).click();
   await page.getByRole("button", { name: /continue/i }).click();
-  await page.getByRole("button", { name: /omnivore/i }).click();
+  await page.getByRole("radio", { name: /omnivore/i }).click();
   await page.getByRole("button", { name: /continue/i }).click();
   await page.getByRole("button", { name: /see my plan/i }).click();
 
@@ -79,9 +79,9 @@ test("?condition=pcos exits to the mapped plan with condition/goal/acquisitionCo
 
 test("no condition exits to /trial with goal/acquisitionContextId intact", async ({ page }) => {
   await page.goto("/quick-setup");
-  await page.getByRole("button", { name: /fat loss & metabolic reset/i }).click();
+  await page.getByRole("radio", { name: /fat loss & metabolic reset/i }).click();
   await page.getByRole("button", { name: /continue/i }).click();
-  await page.getByRole("button", { name: /omnivore/i }).click();
+  await page.getByRole("radio", { name: /omnivore/i }).click();
   await page.getByRole("button", { name: /continue/i }).click();
   await page.getByRole("button", { name: /see my plan/i }).click();
 
@@ -94,9 +94,9 @@ test("no condition exits to /trial with goal/acquisitionContextId intact", async
 
 test("an unmapped condition still exits to /trial — never a dead end", async ({ page }) => {
   await page.goto("/quick-setup?condition=some-unmapped-condition");
-  await page.getByRole("button", { name: /fat loss & metabolic reset/i }).click();
+  await page.getByRole("radio", { name: /fat loss & metabolic reset/i }).click();
   await page.getByRole("button", { name: /continue/i }).click();
-  await page.getByRole("button", { name: /omnivore/i }).click();
+  await page.getByRole("radio", { name: /omnivore/i }).click();
   await page.getByRole("button", { name: /continue/i }).click();
   await page.getByRole("button", { name: /see my plan/i }).click();
 
