@@ -232,7 +232,7 @@ function genericRationale(dish: DishData): {
       MAX_RATIONALE_CHARS,
     ),
     expanded: clampLine(
-      `${dish.name} brings ${protein}g protein, ${dish.macros.carbs}g carbs, ${dish.macros.fat}g fat at ${cal} kcal. ${dish.rdVerified ? "RD-verified recipe." : ""}`.trim(),
+      `${dish.name} brings ${protein}g protein, ${dish.macros.carbs}g carbs, ${dish.macros.fat}g fat at ${cal} kcal. ${dish.rdVerified ? "Nutrition checked." : ""}`.trim(),
       MAX_EXPANDED_CHARS,
     ),
   };
