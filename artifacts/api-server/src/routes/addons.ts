@@ -82,7 +82,7 @@ const SEED_ADDONS: Array<Omit<Addon, "id">> = [
     slug: "magnesium-glycinate",
     name: "Magnesium Glycinate (30 capsules)",
     description:
-      "300mg/serving, RD-formulated for sleep and muscle recovery. One bottle ships once.",
+      "300mg/serving, for sleep and muscle recovery. One bottle ships once.",
     category: "supplement",
     pricePaise: 49900,
     image:

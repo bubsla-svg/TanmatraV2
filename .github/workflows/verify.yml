@@ -181,7 +181,8 @@ jobs:
           node --test --import tsx \
             ./src/lib/menuCatalogV2Plan.test.ts \
             ./src/lib/menuOptionGroups.test.ts \
-            ./src/lib/dishDataFloorPlan.test.ts
+            ./src/lib/dishDataFloorPlan.test.ts \
+            ./src/lib/honestClaimsPlan.test.ts
 
       # The step above predates the storefront and covers only the legacy SPA,
       # so the money path that is actually live — a-la-carte checkout, plan
