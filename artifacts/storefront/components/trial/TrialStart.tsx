@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { StickyAction } from "@/components/primitives/StickyAction";
 import { emitFunnel } from "@/lib/funnel";
 import { formatMacroLine, formatPaise } from "@/lib/format";
-import { PLAN_DELIVERY_DAYS_SENTENCE, PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
+import { PLAN_DELIVERY_DAYS_SENTENCE } from "@/lib/planCheckout";
 import { TRIAL_COPY } from "@/lib/trial";
 import type { TrialTrack, TrioDish } from "@/lib/trialTrio";
 import { KitchenSafetyChip } from "@/components/trust/KitchenSafetySheet";
@@ -118,7 +118,7 @@ export function TrialStart({
           discovered after paying. Same constants the create call books the
           delivery with, so this cannot drift from what is actually scheduled. */}
       <p className="text-center text-xs text-ink-muted">
-        Delivered {PLAN_DELIVERY_DAYS_SENTENCE}, {PLAN_DELIVERY_WINDOW_LABEL}.
+        Delivered {PLAN_DELIVERY_DAYS_SENTENCE}.
       </p>
 
       {/* T-07: the reassurance lines used to live INSIDE the fixed bar, which

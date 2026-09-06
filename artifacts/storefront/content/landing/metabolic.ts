@@ -24,13 +24,13 @@ import type { FaqItem } from "@/content/faq";
 export const METABOLIC_META = {
   title: "Metabolic Meal Programs — Fat Loss & Lean Muscle | Tanmatra",
   description:
-    "RD-reviewed fat-loss and muscle-gain meal programs for Noida professionals. Published macros on every dish, fired after you order, delivered hot in 40–45 minutes.",
+    "RD-reviewed fat-loss and muscle-gain meal programs for Noida professionals. Published macros on every dish, fired after you order and delivered hot.",
 };
 
 export const METABOLIC_HERO = {
-  eyebrow: "Noida tech corridor · fresh-fired · 40–45 min",
+  eyebrow: "Noida tech corridor · fresh-fired",
   title: "Your macros, engineered.",
-  accent: "Your lunch, in 45 minutes.",
+  accent: "Your lunch, fired to order.",
   subtitle:
     "Two RD-reviewed programs — low-GI Steady and high-protein Protein Build — designed by dietitians and fired in our ISO 22000:2018 kitchen only after you order.",
 };
@@ -106,6 +106,6 @@ export const METABOLIC_FAQ: FaqItem[] = [
   },
   {
     q: "When do meals arrive?",
-    a: "Fired in our Sector 104 kitchen only after you order, sealed hot, and delivered in about 40–45 minutes inside our Noida service zones — never a morning cold-drop.",
+    a: "Fired in our Sector 104 kitchen only after you order, sealed hot, and brought straight to you inside our Noida service zones — never a morning cold-drop.",
   },
 ];

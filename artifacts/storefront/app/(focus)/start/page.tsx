@@ -4,7 +4,7 @@ import { fetchMenu } from "@/lib/catalog";
 import { buildSharedMacroKeys } from "@/lib/dishTrust";
 import { formatPaise } from "@/lib/format";
 import { fetchReferralOffer, type ReferralOffer } from "@/lib/referralOfferApi";
-import { PLAN_DELIVERY_DAYS_SENTENCE, PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
+import { PLAN_DELIVERY_DAYS_SENTENCE } from "@/lib/planCheckout";
 import { normalizeReferralCode } from "@/lib/qrPlacement";
 import { TRIAL_PRICE_PAISE } from "@/lib/trial";
 import { resolveTrio } from "@/lib/trialTrio";
@@ -82,7 +82,7 @@ export default async function StartPage({
             constants are the ones `buildSubscriptionInput` books the delivery
             with, so this cannot drift from what is actually scheduled. */}
         <p className="text-center text-xs text-ink-muted">
-          Delivered {PLAN_DELIVERY_DAYS_SENTENCE}, {PLAN_DELIVERY_WINDOW_LABEL}.
+          Delivered {PLAN_DELIVERY_DAYS_SENTENCE}.
         </p>
 
         <QrStart pricePaise={TRIAL_PRICE_PAISE} />

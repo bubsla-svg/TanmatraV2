@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { screensForUser, type CheckoutUser } from "@/lib/checkout";
 import { emitFunnel } from "@/lib/funnel";
 import { formatPaise } from "@/lib/format";
-import { PLAN_DELIVERY_WINDOW_LABEL } from "@/lib/planCheckout";
 import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
 import { CheckoutIdentity } from "./CheckoutIdentity";
 import { CheckoutAddress } from "./CheckoutAddress";
@@ -84,7 +83,7 @@ export function CheckoutFlow({
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <h1 className="tabular text-2xl font-semibold text-ink">{formatPaise(totalPaise)} paid.</h1>
-          <p className="text-sm text-ink-muted">First lunch next weekday, {PLAN_DELIVERY_WINDOW_LABEL}. {futureLine}</p>
+          <p className="text-sm text-ink-muted">First lunch next weekday. {futureLine}</p>
         </div>
         {eveningAddPaise != null && <EveningAddOffer pricePaise={eveningAddPaise} />}
         <Link href="/plans" className="-m-2 self-start p-2 text-sm font-medium text-gold-text">

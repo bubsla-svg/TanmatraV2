@@ -189,9 +189,9 @@ export const FITNESS_LANDING = {
     title: "Post-workout recovery,",
     accent: "delivered to your finish line.",
     subtitle:
-      "Ditch the sugary tea-stall stops. Coordinate fresh, dietitian-approved post-workout breakfasts delivered warm directly to your meetup, park, or trail finish line by 7:00 AM.",
+      "Ditch the sugary tea-stall stops. Coordinate fresh, dietitian-approved post-workout breakfasts delivered warm directly to your meetup, park, or trail finish line.",
     trust: [
-      { icon: "clock", label: "Delivered by 7:00 AM" },
+      { icon: "clock", label: "Scheduled with your club" },
       { icon: "map-pin", label: "NCR parks & meetup spots" },
     ],
   } satisfies LandingHero,
@@ -200,8 +200,8 @@ export const FITNESS_LANDING = {
   benefits: [
     {
       icon: "clock",
-      title: "7:00 AM delivery guarantee",
-      body: "We schedule dispatch to meet you right after your cooldown. No late deliveries, no cold food — kept warm in insulated carrier boxes.",
+      title: "Scheduled around your run",
+      body: "We agree a drop with your organiser and dispatch to meet you after the cooldown — kept warm in insulated carrier boxes.",
     },
     {
       icon: "coffee",

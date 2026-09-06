@@ -27,8 +27,8 @@ export const FAQS: FaqItem[] = [
     a: "Enter your pincode on the home or checkout page. Delivery is currently available across Noida; we are expanding regularly. If your area is not yet served, you can join the waitlist.",
   },
   {
-    q: "What are the delivery timings?",
-    a: "Meals are cooked after you order and delivered the same day. The exact delivery window is shown at checkout, based on your address.",
+    q: "When will my order arrive?",
+    a: "Meals are cooked after you order, not batched in the morning. You choose your delivery window at checkout, for the address you give us.",
   },
   {
     q: "How do plans and billing work?",

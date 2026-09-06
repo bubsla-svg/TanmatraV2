@@ -62,7 +62,7 @@ export function deriveHeroContent(refCookie?: string): HeroContent {
 
   return {
     eyebrow: "Fresh lunch, Noida",
-    headline: "Lunch you look forward to. Cooked after you order, at your desk by one.",
+    headline: "Lunch you look forward to. Cooked after you order, not hours before.",
     blurb: `Home-style plates, never reheated from a tray. Real ghee, real portions, and you still feel light at 4 pm. From ${basePrice} a meal.`,
     badge: null,
   };

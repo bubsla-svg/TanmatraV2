@@ -17,7 +17,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { DISHES } from "@workspace/menu-catalog";
 import { TRIAL_TRIO } from "./trial";
-import { memberDietForTrack, PLAN_DELIVERY_WINDOW_LABEL } from "./planCheckout";
+import { memberDietForTrack } from "./planCheckout";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const COMPONENTS = path.join(HERE, "..", "components");
@@ -67,7 +67,7 @@ test("a placeholder-macro dish would be omitted, never rendered as a figure", ()
   }
 });
 
-test("the trial says when the food arrives", () => {
+test("the trial says which days the food arrives", () => {
   // Law 1. It stated a price and a promise and left the buyer to find out the
   // rest after paying.
   const src = read("trial", "TrialStart.tsx");
@@ -76,8 +76,10 @@ test("the trial says when the food arrives", () => {
   // The _SENTENCE variant exists because rendering _LABEL.toLowerCase() mid-
   // sentence lowercased "Monday to Friday" too (F-9).
   assert.match(src, /PLAN_DELIVERY_DAYS_(LABEL|SENTENCE)/);
-  assert.match(src, /PLAN_DELIVERY_WINDOW_LABEL/);
-  assert.match(PLAN_DELIVERY_WINDOW_LABEL, /\d/, "the label must carry a real time");
+  // The DAYS are the whole promise now. A clock time used to ride alongside
+  // them ("…, 12:30–1:30 pm"); the storefront no longer states one anywhere
+  // (owner, 2026-09-06), and planOffer.test.ts guards that across all surfaces.
+  assert.doesNotMatch(src, /PLAN_DELIVERY_WINDOW/, "the trial must not state a delivery time");
 });
 
 test("the trial checkout does not ask for medical conditions", () => {
