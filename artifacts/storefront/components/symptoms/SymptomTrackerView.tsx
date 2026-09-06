@@ -1,6 +1,6 @@
 "use client";
 // Client: interactive physiological symptom logger correlating post-meal reactions against macro intake.
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/apiClient";
 import { getMySymptomLogs, recordSymptomLog } from "@/lib/ecosystemApi";
@@ -13,6 +13,8 @@ export function SymptomTrackerView() {
   const queryClient = useQueryClient();
   const logsQuery = useQuery({ queryKey: ["wellness", "symptoms"], queryFn: () => getMySymptomLogs() });
 
+  // Stable id prefix so each visible <label> actually names its control.
+  const uid = useId();
   const [symptom, setSymptom] = useState("bloating");
   const [severity, setSeverity] = useState(2);
   const [notes, setNotes] = useState("");
@@ -72,8 +74,8 @@ export function SymptomTrackerView() {
         )}
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Symptom Classification</label>
-          <select
+          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted" htmlFor={`${uid}-symptom-classification`}>Symptom Classification</label>
+          <select id={`${uid}-symptom-classification`}
             value={symptom}
             onChange={(e) => setSymptom(e.target.value)}
             className="min-h-[50px] rounded-2xl border border-line bg-surface px-4 py-3 font-medium text-ink placeholder:text-ink-faint focus-visible:border-primary outline-none"
@@ -92,6 +94,7 @@ export function SymptomTrackerView() {
           </div>
           <input
             type="range"
+            aria-label="Reaction severity, 1 to 5"
             min={1}
             max={5}
             value={severity}
@@ -105,8 +108,8 @@ export function SymptomTrackerView() {
         </div>
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Related Dish or Meal (Optional)</label>
-          <input
+          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted" htmlFor={`${uid}-related-dish-or-meal-opt`}>Related Dish or Meal (Optional)</label>
+          <input id={`${uid}-related-dish-or-meal-opt`}
             type="text"
             value={dishSlug}
             onChange={(e) => setDishSlug(e.target.value)}
@@ -116,8 +119,8 @@ export function SymptomTrackerView() {
         </div>
 
         <div className="flex flex-col gap-1.5 text-xs">
-          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Clinical Annotations</label>
-          <textarea
+          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted" htmlFor={`${uid}-clinical-annotations`}>Clinical Annotations</label>
+          <textarea id={`${uid}-clinical-annotations`}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}

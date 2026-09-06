@@ -53,10 +53,18 @@
   /* Gold / Accent — deliberately NOT Stone's neutral accent. Gold is the only
      action colour (DS-0's surviving caveat), and these are the values
      tanmatra.css already serves to Astryx's own components, so all three files
-     now agree. AA as both fill and text in both modes (dark: 9.42:1 as text on
-     the canvas, 8.84:1 label-on-fill). Stitch specified the same pair. */
-  --gold: light-dark(#2e5c4f, #d08a3e);
-  --gold-text: light-dark(#2e5c4f, #d08a3e);
+     now agree. Stitch specified the same light arm.
+
+     AA as both fill and text in both modes, and the binding ground is the one
+     that used to be missed: --surface-raised, not the canvas. The dark arm was
+     #d08a3e until 2026-09-06, which reads 5.5:1 on --bg but only 3.32:1 on
+     --surface-raised — and `text-primary` (467 sites) resolves to --gold, so
+     every gold label on a raised dark card was below AA. Lifted at the same
+     hue to 31 85% 65%. Worst case is now 4.7:1 on raised; 6.8:1 on --surface,
+     7.9:1 on --bg, 7.9:1 for --gold-ink on the fill. Edit tanmatraTheme.ts
+     first — astryxBridge.test.ts pins --gold/--gold-text to --color-accent. */
+  --gold: light-dark(#2e5c4f, #f2a85a);
+  --gold-text: light-dark(#2e5c4f, #f2a85a);
   --gold-ink: light-dark(#f6f1e9, #172622);
 
   /* Signals — never interactive. Dark arms are Stitch's. */
@@ -72,18 +80,23 @@
 
   --blue: light-dark(#506072, #99adc6);
   --success: light-dark(#556845, #b9c9a6);
-  --warning: light-dark(#986025, #d08a3e);
+  --warning: light-dark(#986025, #f2a85a);
   --danger: light-dark(#b94131, #d97c70);
   /* PR-11a — the revision's amber accent. At 53% lightness it is 2.5:1 under
-     cream, so --amber is DECORATIVE ONLY (underline, icon fill, focus ring);
-     any amber that carries text or a filled control uses --amber-deep
-     (31 61% 37%, 4.6:1) with --amber-ink on it. Dark arms share the 53%
-     amber, which passes there (5.5:1). The focus ring is the README's
-     164 33% 31% in light and the amber in dark. */
+     cream, so --amber is DECORATIVE ONLY (underline, icon fill, mark); it is
+     never text, so 53% survives in BOTH arms and 3.3:1 on --surface-raised
+     still clears WCAG 1.4.11's 3:1 for a non-text mark.
+
+     Anything that CARRIES text or a filled control uses --amber-deep with
+     --amber-ink on it — `text-accent` (80 sites) resolves here. Its dark arm
+     shared the decorative 53% amber and inherited that stop's 3.32:1 on
+     --surface-raised, so it is now the lifted 31 85% 65% (4.7:1 there), in
+     step with --gold. The focus ring follows the action colour by definition
+     (globals.css §3.1), so it moves with it. */
   --amber: light-dark(#d08a3e, #d08a3e);
-  --amber-deep: light-dark(#986025, #d08a3e);
+  --amber-deep: light-dark(#986025, #f2a85a);
   --amber-ink: light-dark(#f6f1e9, #172622);
-  --focus-ring: light-dark(#35695b, #d08a3e);
+  --focus-ring: light-dark(#35695b, #f2a85a);
 
   /* Translucent chrome for the sticky bars that float over content — the buy
      bars, the mini-cart, the planner footer (all `bg-[var(--glass)]` +

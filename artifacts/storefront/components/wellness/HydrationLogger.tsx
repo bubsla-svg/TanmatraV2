@@ -116,8 +116,9 @@ export const HydrationLogger: React.FC<HydrationLoggerProps> = ({
 
       {/* Custom Water Form */}
       <form onSubmit={handleCustomAddWater} className="flex items-center gap-2">
-        <input 
+        <input
           type="number"
+          aria-label="Custom amount in millilitres"
           value={customMlInput}
           onChange={(e) => setCustomMlInput(e.target.value)}
           placeholder="Enter custom mL (e.g., 350)..."

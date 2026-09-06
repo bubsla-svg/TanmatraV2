@@ -110,7 +110,15 @@ export function CoachChat() {
         {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
         <div ref={endRef} />
       </div>
-      <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="sticky bottom-2 flex gap-2 border-t border-line bg-bg pt-3">
+      {/* The composer sticks to the SCROLLPORT bottom, and on mobile
+          MobileBottomNav is fixed over the last 4rem of it (plus the safe
+          area) — so `bottom-2` alone parked the input and Send button behind
+          the tab bar, unreachable on every phone. Same offset idiom as
+          StickyCtaBar; the nav is md:hidden, so md and up goes back to 2. */}
+      <form
+        onSubmit={(e) => { e.preventDefault(); void send(); }}
+        className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] flex gap-2 border-t border-line bg-bg pt-3 md:bottom-2"
+      >
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useId, useState, useEffect } from 'react';
 import { Trophy, Flame } from 'lucide-react';
 
 import { getFamilyLeaderboard, type FamilyMember } from '@/lib/wellnessApi';
@@ -92,6 +92,8 @@ export const FamilyLeaderboardView: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   // Form State
+  // Stable id prefix so each visible <label> actually names its control.
+  const uid = useId();
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberRelation, setNewMemberRelation] = useState('Family Member');
   const [newMemberAvatar, setNewMemberAvatar] = useState('🧑');
@@ -206,8 +208,8 @@ export const FamilyLeaderboardView: React.FC = () => {
             
             <form onSubmit={handleAddMember} className="space-y-3">
               <div>
-                <label className="text-xs font-bold text-ink-muted block mb-1">Member Name</label>
-                <input
+                <label className="text-xs font-bold text-ink-muted block mb-1" htmlFor={`${uid}-member-name`}>Member Name</label>
+                <input id={`${uid}-member-name`}
                   type="text"
                   required
                   value={newMemberName}
@@ -218,8 +220,8 @@ export const FamilyLeaderboardView: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-ink-muted block mb-1">Relationship</label>
-                <select
+                <label className="text-xs font-bold text-ink-muted block mb-1" htmlFor={`${uid}-relationship`}>Relationship</label>
+                <select id={`${uid}-relationship`}
                   value={newMemberRelation}
                   onChange={(e) => setNewMemberRelation(e.target.value)}
                   className="w-full bg-secondary border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus-visible:border-gold"

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { Activity, Sparkles, Scale, Heart, ShieldAlert } from 'lucide-react';
 import { type PrecisionPlannerInput } from '@/lib/wellnessApi';
 
@@ -12,6 +12,8 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
   onGenerate,
   loading,
 }) => {
+  // Stable id prefix so each visible <label> actually names its control.
+  const uid = useId();
   const [age, setAge] = useState<number>(30);
   const [gender, setGender] = useState<"male" | "female" | "other">("male");
   const [heightCm, setHeightCm] = useState<number>(170);
@@ -58,8 +60,8 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
       {/* Grid 1: Biometrics */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1">Age (Years)</label>
-          <input
+          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1" htmlFor={`${uid}-age-years`}>Age (Years)</label>
+          <input id={`${uid}-age-years`}
             type="number"
             min={12}
             max={120}
@@ -70,8 +72,8 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
         </div>
 
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1">Gender</label>
-          <select
+          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1" htmlFor={`${uid}-gender`}>Gender</label>
+          <select id={`${uid}-gender`}
             value={gender}
             onChange={(e) => setGender(e.target.value as any)}
             className="w-full min-h-[50px] bg-surface border border-line rounded-2xl px-4 py-3 text-xs text-ink outline-none focus-visible:border-primary"
@@ -83,8 +85,8 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
         </div>
 
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1">Height (cm)</label>
-          <input
+          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1" htmlFor={`${uid}-height-cm`}>Height (cm)</label>
+          <input id={`${uid}-height-cm`}
             type="number"
             min={100}
             max={250}
@@ -95,8 +97,8 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
         </div>
 
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1">Weight (kg)</label>
-          <input
+          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1" htmlFor={`${uid}-weight-kg`}>Weight (kg)</label>
+          <input id={`${uid}-weight-kg`}
             type="number"
             min={30}
             max={300}
@@ -110,8 +112,8 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
       {/* Grid 2: Activity & Health Goal */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1">Activity Multiplier</label>
-          <select
+          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1" htmlFor={`${uid}-activity-multiplier`}>Activity Multiplier</label>
+          <select id={`${uid}-activity-multiplier`}
             value={activityLevel}
             onChange={(e) => setActivityLevel(e.target.value as any)}
             className="w-full min-h-[50px] bg-surface border border-line rounded-2xl px-4 py-3 text-xs text-ink outline-none focus-visible:border-primary"
@@ -125,8 +127,8 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
         </div>
 
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1">Primary Clinical Goal</label>
-          <select
+          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1" htmlFor={`${uid}-primary-clinical-goal`}>Primary Clinical Goal</label>
+          <select id={`${uid}-primary-clinical-goal`}
             value={goal}
             onChange={(e) => setGoal(e.target.value as any)}
             className="w-full min-h-[50px] bg-surface border border-line rounded-2xl px-4 py-3 text-xs text-ink outline-none focus-visible:border-primary"

@@ -22,6 +22,13 @@ export function Section07ProofKitchen() {
   ];
 
   return (
+    // Headings inside this inverted section MUST name their colour. They do
+    // not inherit it: lib/themes/tanmatra.css (generated) carries
+    // `:where(h1,h2,h3,h4,h5,h6){color:var(--color-text-primary)}`, and a
+    // zero-specificity rule that MATCHES the element still beats a colour
+    // inherited from an ancestor. So the h3/h4 below rendered cream ink on
+    // the gold fill — 2.53:1, measured 2026-09-06 — while every span in the
+    // same block, carrying text-primary-foreground itself, was correct.
     <section className="bg-primary text-primary-foreground">
       {/* No ambient kitchen photo here, deliberately. This section's whole
           claim is that OUR kitchen is auditable — FSSAI, ISO 22000, daily swab
@@ -35,7 +42,7 @@ export function Section07ProofKitchen() {
           <span className="text-[11px] font-bold uppercase tracking-[.2em] text-primary-foreground/80">
             Our kitchen
           </span>
-          <h3 className="mt-4 max-w-md font-display text-4xl leading-[.98] sm:text-5xl">Where your lunch is actually cooked</h3>
+          <h3 className="mt-4 max-w-md font-display text-4xl leading-[.98] text-primary-foreground sm:text-5xl">Where your lunch is actually cooked</h3>
           <span className="mt-6 inline-block rounded-full border border-primary-foreground/20 px-3 py-1 text-xs font-bold text-primary-foreground">
             Sector 104, Noida
           </span>
@@ -48,7 +55,7 @@ export function Section07ProofKitchen() {
                 <span className="font-data text-xs text-primary-foreground/80">
                   0{idx + 1}
                 </span>
-                <h4 className="mt-4 font-display text-xl">{item.title}</h4>
+                <h4 className="mt-4 font-display text-xl text-primary-foreground">{item.title}</h4>
                 <p className="mt-2 text-sm leading-5 text-primary-foreground/65">{item.desc}</p>
               </div>
             </div>

@@ -120,6 +120,7 @@ export function CommandMenu({ dishes = [] }: { dishes?: DishSearchEntry[] }) {
               return key; autocorrect off so "aglio" stays "aglio". */}
           <input
             autoFocus
+            aria-label="Search pages and dishes"
             type="search"
             enterKeyHint="search"
             autoCorrect="off"

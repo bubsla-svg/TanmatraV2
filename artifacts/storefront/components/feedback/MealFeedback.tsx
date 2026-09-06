@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 // Lucide is the storefront's icon system (21 other files). These five icons
 // replaced `material-symbols-outlined` ligature spans — a font this app never
 // loaded, so every one of them rendered its ligature name as literal text
@@ -46,6 +46,8 @@ export default function MealFeedback({
 }: MealFeedbackProps) {
     const [rating, setRating] = useState<RatingValue | null>(null);
     const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
+    // Stable id prefix so each visible <label> actually names its control.
+    const uid = useId();
     const [comments, setComments] = useState('');
     const [submitted, setSubmitted] = useState(false);
 
@@ -184,10 +186,10 @@ export default function MealFeedback({
                         {/* Additional Notes */}
                         {rating && (
                             <div className="space-y-2">
-                                <label className="font-bold text-xs text-ink-muted uppercase tracking-wider block">
+                                <label className="font-bold text-xs text-ink-muted uppercase tracking-wider block" htmlFor={`${uid}-additional-details-optio`}>
                                     Additional details (Optional)
                                 </label>
-                                <textarea
+                                <textarea id={`${uid}-additional-details-optio`}
                                     value={comments}
                                     onChange={(e) => setComments(e.target.value)}
                                     placeholder="Add any specific culinary or clinical notes..."
