@@ -101,7 +101,7 @@ export function MetabolicExplorer({ dishes }: { dishes: MetabolicDish[] }) {
                 <DishImage src={d.image} name={d.name} className="h-full w-full" />
                 <span
                   className={`absolute right-3 top-3 rounded-full border border-line px-2 py-0.5 text-[10px] font-bold uppercase tracking-[.16em] backdrop-blur-md ${
-                    d.isVeg ? "bg-sage-soft text-sage-text" : "bg-bg/80 text-[var(--danger)]"
+                    d.isVeg ? "bg-sage-soft text-sage-text" : "bg-bg/80 text-danger"
                   }`}
                 >
                   {d.isVeg ? "Veg" : "Non-veg"}

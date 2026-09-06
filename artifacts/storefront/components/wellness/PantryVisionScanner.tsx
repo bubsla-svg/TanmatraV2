@@ -83,7 +83,7 @@ export const PantryVisionScanner: React.FC = () => {
         )}
 
         {error && (
-          <div className="p-4 rounded-2xl bg-[var(--danger)]/10 border border-[var(--danger)]/30 text-[var(--danger)] text-xs font-bold">
+          <div className="p-4 rounded-2xl bg-danger/10 border border-danger/30 text-danger text-xs font-bold">
             {error}
           </div>
         )}
@@ -125,7 +125,7 @@ export const PantryVisionScanner: React.FC = () => {
                     type="button"
                     onClick={() => handleAddToCart(addon)}
                     disabled={addedIds.has(addon.id)}
-                    className="w-full py-2 rounded-xl bg-gold hover:brightness-110 disabled:opacity-70 disabled:hover:brightness-110 text-[var(--gold-ink)] text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                    className="w-full py-2 rounded-xl bg-gold hover:brightness-110 disabled:opacity-70 disabled:hover:brightness-110 text-gold-ink text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
                   >
                     {addedIds.has(addon.id) ? (
                       <>

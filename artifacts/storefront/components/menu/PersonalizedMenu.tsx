@@ -208,7 +208,16 @@ export function PersonalizedMenu({
           strip now pins just below the header while the header is revealed
           and takes the top edge only while the header has retreated — read
           off the same scroll stream (`useScrollHide`) the header and the
-          tab bar already share, so the three move together. */}
+          tab bar already share, so the three move together.
+
+          `transition-[top]` animates a layout property, which is normally the
+          wrong choice — but a transform cannot substitute here. `top` on a
+          sticky element has NO effect until the element actually sticks, which
+          is exactly the semantics this needs; `translateY` applies always, and
+          useScrollHide flips after 12px of scroll, long before the strip is
+          stuck. Swapping in a transform would shove the strip 63px out of
+          place while it is still in flow. Kept deliberately, and it fires on a
+          state flip rather than per frame. */}
       <div
         ref={stickyRef}
         className={`sticky z-[var(--z-chrome)] -mx-4 flex min-h-16 flex-col justify-center gap-1.5 bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-4 py-2 backdrop-blur transition-[top] duration-200 motion-reduce:transition-none ${
@@ -267,7 +276,7 @@ export function PersonalizedMenu({
               type="button"
               onClick={() => setFilters(EMPTY_FILTERS)}
               data-testid="menu-no-match-clear"
-              className="min-h-[48px] rounded-full bg-gold px-6 text-sm font-bold text-[var(--gold-ink)] transition-transform active:scale-[0.98]"
+              className="min-h-[48px] rounded-full bg-gold px-6 text-sm font-bold text-gold-ink transition-transform active:scale-[0.98]"
             >
               Clear all
             </button>

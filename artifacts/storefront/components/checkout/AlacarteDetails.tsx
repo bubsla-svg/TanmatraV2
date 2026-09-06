@@ -38,7 +38,7 @@ export interface AlacarteExtras {
 
 const inputCls =
   "w-full min-h-[50px] rounded-2xl border border-line bg-surface px-4 py-3 text-base text-ink outline-none placeholder:text-ink-faint focus-visible:border-primary";
-const errCls = "mt-1 block text-xs font-medium text-[var(--danger)]";
+const errCls = "mt-1 block text-xs font-medium text-danger";
 
 /**
  * À-la-carte details (SF-05). Form FIRST, order summary as a disclosure above
@@ -319,7 +319,7 @@ export function AlacarteDetails({
       </Field>
 
       {pinValid && quote?.serviceability && (
-        <p role="status" className={`text-xs font-medium ${unserviceable ? "text-[var(--danger)]" : "text-ink-muted"}`}>
+        <p role="status" className={`text-xs font-medium ${unserviceable ? "text-danger" : "text-ink-muted"}`}>
           {unserviceable
             ? `We don't deliver to ${quote.serviceability.pincode} yet — currently serving Noida sectors only.`
             : slot
@@ -360,7 +360,7 @@ export function AlacarteDetails({
         )}
       </div>
 
-      {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
+      {error && <p role="alert" className="text-xs font-medium text-danger">{error}</p>}
 
       {/* T-20: the kitchen's credentials one tap away at the money moment —
           replaces an 11px "UPI · FSSAI registered" line nobody could tap. */}

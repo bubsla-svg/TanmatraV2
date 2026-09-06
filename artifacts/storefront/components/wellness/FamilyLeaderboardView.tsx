@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useId, useState, useEffect } from 'react';
+import { Dialog } from "radix-ui";
 import { Trophy, Flame } from 'lucide-react';
 
 import { getFamilyLeaderboard, type FamilyMember } from '@/lib/wellnessApi';
@@ -92,6 +93,8 @@ export const FamilyLeaderboardView: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   // Form State
+  // Stable id prefix so each visible <label> actually names its control.
+  const uid = useId();
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberRelation, setNewMemberRelation] = useState('Family Member');
   const [newMemberAvatar, setNewMemberAvatar] = useState('🧑');
@@ -167,7 +170,7 @@ export const FamilyLeaderboardView: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-4 bg-surface-raised p-4 rounded-2xl border border-line backdrop-blur-md shrink-0">
+          <div className="flex items-center gap-4 bg-surface-raised p-4 rounded-2xl border border-line shrink-0">
             <Flame className="w-8 h-8 text-gold-text animate-pulse" />
             <div>
               <strong className="font-data text-2xl font-bold text-primary block">{sortedMembers[0]?.streakDays || 14} Days 🔥</strong>
@@ -196,33 +199,41 @@ export const FamilyLeaderboardView: React.FC = () => {
         </div>
       </div>
 
-      {/* Add Member Modal */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div onClick={() => setIsAddModalOpen(false)} className="fixed inset-0 bg-surface/80 backdrop-blur-md z-[99]" />
-          
-          <div className="relative z-[100] bg-surface rounded-2xl max-w-sm w-full p-6 shadow-[var(--shadow-raised)] border border-line space-y-4">
-            <h3 className="font-display text-lg font-semibold leading-tight text-primary">Add Family Member</h3>
+      {/* Add Member Modal. Radix, not a hand-rolled fixed div: the div had no
+          role and no aria-modal, took no focus when it opened and trapped
+          none, could not be dismissed with Escape, and left the page behind it
+          fully reachable by a screen reader — a form nobody could complete
+          without a mouse. Dialog.Title is the same visible heading, now also
+          the dialog's accessible name. The hand-picked z-[99]/z-[100] pair go
+          with it; --z-modal is the named step. */}
+      <Dialog.Root open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] bg-surface/80 backdrop-blur-md" />
+          <Dialog.Content
+            aria-describedby={undefined}
+            className="fixed left-1/2 top-1/2 z-[var(--z-modal)] w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 space-y-4 rounded-2xl border border-line bg-surface p-6 shadow-[var(--shadow-raised)] outline-none"
+          >
+            <Dialog.Title className="font-display text-lg font-semibold leading-tight text-primary">Add Family Member</Dialog.Title>
             
             <form onSubmit={handleAddMember} className="space-y-3">
               <div>
-                <label className="text-xs font-bold text-ink-muted block mb-1">Member Name</label>
-                <input
+                <label className="text-xs font-bold text-ink-muted block mb-1" htmlFor={`${uid}-member-name`}>Member Name</label>
+                <input id={`${uid}-member-name`}
                   type="text"
                   required
                   value={newMemberName}
                   onChange={(e) => setNewMemberName(e.target.value)}
                   placeholder="e.g. Rahul Sharma"
-                  className="w-full bg-secondary border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus-visible:border-gold"
+                  className="w-full bg-secondary border border-line rounded-xl px-3 py-2 text-base text-ink focus:outline-none focus-visible:border-gold"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-ink-muted block mb-1">Relationship</label>
-                <select
+                <label className="text-xs font-bold text-ink-muted block mb-1" htmlFor={`${uid}-relationship`}>Relationship</label>
+                <select id={`${uid}-relationship`}
                   value={newMemberRelation}
                   onChange={(e) => setNewMemberRelation(e.target.value)}
-                  className="w-full bg-secondary border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus-visible:border-gold"
+                  className="w-full bg-secondary border border-line rounded-xl px-3 py-2 text-base text-ink focus:outline-none focus-visible:border-gold"
                 >
                   <option value="Spouse">Spouse</option>
                   <option value="Sister">Sister</option>
@@ -252,24 +263,20 @@ export const FamilyLeaderboardView: React.FC = () => {
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-secondary text-ink-muted text-xs font-bold"
-                >
+                <Dialog.Close className="px-4 py-2 rounded-xl bg-secondary text-ink-muted text-xs font-bold">
                   Cancel
-                </button>
+                </Dialog.Close>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-gold text-[var(--gold-ink)] text-xs font-bold shadow-md"
+                  className="px-4 py-2 rounded-xl bg-gold text-gold-ink text-xs font-bold shadow-md"
                 >
                   Save Member
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 };

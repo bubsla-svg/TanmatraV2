@@ -101,7 +101,7 @@ export function CompanyInvite({ token }: { token: string }) {
         <p className="mt-1 text-sm text-ink">{invite.email}</p>
       </div>
 
-      {error && <p role="alert" className="mt-4 text-xs font-medium text-[var(--danger)]">{error}</p>}
+      {error && <p role="alert" className="mt-4 text-xs font-medium text-danger">{error}</p>}
 
       <Button
         type="button"

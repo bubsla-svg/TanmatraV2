@@ -242,8 +242,11 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
         />
       )}
 
-      {/* Sticky bottom CTA bar — Stitch plan-config design (route-05). Classes only. */}
-      <div className="sticky bottom-16 z-40 flex flex-col gap-2 rounded-xl border border-line bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] p-3 backdrop-blur-xl md:bottom-4">
+      {/* Sticky bottom CTA bar — Stitch plan-config design (route-05).
+          `bottom-16` is the tab bar's 4rem box, but MobileBottomNav also pads
+          `env(safe-area-inset-bottom)` beneath it, so on a notched phone this
+          bar overlapped that strip. Same calc StickyCtaBar uses. */}
+      <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 flex flex-col gap-2 rounded-xl border border-line bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] p-3 backdrop-blur-xl md:bottom-4">
         <Button
           type="button"
           onClick={confirm}

@@ -36,6 +36,7 @@ export function ChallengeCard({ challenge: c }: { challenge: Challenge }) {
         {c.image && (
           <SafeImage
             src={c.image}
+            alt=""
             className="h-full w-full"
             imgClassName="transition-transform duration-300 group-hover:scale-105"
           />

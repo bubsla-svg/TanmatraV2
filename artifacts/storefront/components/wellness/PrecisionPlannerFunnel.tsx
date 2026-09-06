@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { Activity, Sparkles, Scale, Heart, ShieldAlert } from 'lucide-react';
 import { type PrecisionPlannerInput } from '@/lib/wellnessApi';
 
@@ -12,6 +12,8 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
   onGenerate,
   loading,
 }) => {
+  // Stable id prefix so each visible <label> actually names its control.
+  const uid = useId();
   const [age, setAge] = useState<number>(30);
   const [gender, setGender] = useState<"male" | "female" | "other">("male");
   const [heightCm, setHeightCm] = useState<number>(170);
@@ -58,23 +60,23 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
       {/* Grid 1: Biometrics */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1">Age (Years)</label>
-          <input
+          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1" htmlFor={`${uid}-age-years`}>Age (Years)</label>
+          <input id={`${uid}-age-years`}
             type="number"
             min={12}
             max={120}
             value={age}
             onChange={(e) => setAge(parseInt(e.target.value) || 30)}
-            className="w-full min-h-[50px] bg-surface border border-line rounded-2xl px-4 py-3 text-xs text-ink outline-none focus-visible:border-primary"
+            className="w-full min-h-[50px] bg-surface border border-line rounded-2xl px-4 py-3 text-base text-ink outline-none focus-visible:border-primary"
           />
         </div>
 
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1">Gender</label>
-          <select
+          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1" htmlFor={`${uid}-gender`}>Gender</label>
+          <select id={`${uid}-gender`}
             value={gender}
             onChange={(e) => setGender(e.target.value as any)}
-            className="w-full min-h-[50px] bg-surface border border-line rounded-2xl px-4 py-3 text-xs text-ink outline-none focus-visible:border-primary"
+            className="w-full min-h-[50px] bg-surface border border-line rounded-2xl px-4 py-3 text-base text-ink outline-none focus-visible:border-primary"
           >
             <option value="male">Male</option>
             <option value="female">Female</option>
@@ -83,26 +85,26 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
         </div>
 
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1">Height (cm)</label>
-          <input
+          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1" htmlFor={`${uid}-height-cm`}>Height (cm)</label>
+          <input id={`${uid}-height-cm`}
             type="number"
             min={100}
             max={250}
             value={heightCm}
             onChange={(e) => setHeightCm(parseInt(e.target.value) || 170)}
-            className="w-full min-h-[50px] bg-surface border border-line rounded-2xl px-4 py-3 text-xs text-ink outline-none focus-visible:border-primary"
+            className="w-full min-h-[50px] bg-surface border border-line rounded-2xl px-4 py-3 text-base text-ink outline-none focus-visible:border-primary"
           />
         </div>
 
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1">Weight (kg)</label>
-          <input
+          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1" htmlFor={`${uid}-weight-kg`}>Weight (kg)</label>
+          <input id={`${uid}-weight-kg`}
             type="number"
             min={30}
             max={300}
             value={weightKg}
             onChange={(e) => setWeightKg(parseInt(e.target.value) || 70)}
-            className="w-full min-h-[50px] bg-surface border border-line rounded-2xl px-4 py-3 text-xs text-ink outline-none focus-visible:border-primary"
+            className="w-full min-h-[50px] bg-surface border border-line rounded-2xl px-4 py-3 text-base text-ink outline-none focus-visible:border-primary"
           />
         </div>
       </div>
@@ -110,11 +112,11 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
       {/* Grid 2: Activity & Health Goal */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1">Activity Multiplier</label>
-          <select
+          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1" htmlFor={`${uid}-activity-multiplier`}>Activity Multiplier</label>
+          <select id={`${uid}-activity-multiplier`}
             value={activityLevel}
             onChange={(e) => setActivityLevel(e.target.value as any)}
-            className="w-full min-h-[50px] bg-surface border border-line rounded-2xl px-4 py-3 text-xs text-ink outline-none focus-visible:border-primary"
+            className="w-full min-h-[50px] bg-surface border border-line rounded-2xl px-4 py-3 text-base text-ink outline-none focus-visible:border-primary"
           >
             <option value="sedentary">Sedentary (Desk Job)</option>
             <option value="light">Lightly Active (1-3 days/wk)</option>
@@ -125,11 +127,11 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
         </div>
 
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1">Primary Clinical Goal</label>
-          <select
+          <label className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted block mb-1" htmlFor={`${uid}-primary-clinical-goal`}>Primary Clinical Goal</label>
+          <select id={`${uid}-primary-clinical-goal`}
             value={goal}
             onChange={(e) => setGoal(e.target.value as any)}
-            className="w-full min-h-[50px] bg-surface border border-line rounded-2xl px-4 py-3 text-xs text-ink outline-none focus-visible:border-primary"
+            className="w-full min-h-[50px] bg-surface border border-line rounded-2xl px-4 py-3 text-base text-ink outline-none focus-visible:border-primary"
           >
             <option value="fat_loss">Fat Loss (-500 kcal Deficit)</option>
             <option value="muscle_gain">Muscle Build (+15% Surplus)</option>
@@ -178,8 +180,8 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
                   onClick={() => toggleAllergen(alg)}
                   className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${
                     active
-                      ? 'border-[var(--danger)]/40 bg-[var(--danger)]/10 text-[var(--danger)]'
-                      : 'border-transparent bg-secondary text-ink-muted hover:text-[var(--danger)]'
+                      ? 'border-danger/40 bg-danger/10 text-danger'
+                      : 'border-transparent bg-secondary text-ink-muted hover:text-danger'
                   }`}
                 >
                   {active ? `✓ No ${alg}` : `+ ${alg}`}
@@ -193,7 +195,7 @@ export const PrecisionPlannerFunnel: React.FC<PrecisionPlannerFunnelProps> = ({
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-3 rounded-2xl bg-gold hover:brightness-110 disabled:opacity-50 text-[var(--gold-ink)] text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+        className="w-full py-3 rounded-2xl bg-gold hover:brightness-110 disabled:opacity-50 text-gold-ink text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-2"
       >
         <Sparkles className="w-4 h-4" />
         <span>{loading ? "Calculating ICMR Precision Plan..." : "Generate 7-Day Precision Thali Plan"}</span>

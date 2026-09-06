@@ -13,7 +13,7 @@ import { ReferralShare } from "@/components/order/ReferralShare";
 const TONE_TEXT = {
   live: "text-sage-text",
   settled: "text-ink-muted",
-  failed: "text-[var(--danger)]",
+  failed: "text-danger",
 } as const;
 
 export const metadata: Metadata = {
@@ -119,7 +119,7 @@ export default async function ConfirmedPage({
             </p>
           )}
           {tone === "failed" && (
-            <p className="mt-3 text-sm font-semibold text-[var(--danger)]">
+            <p className="mt-3 text-sm font-semibold text-danger">
               This order did not complete — you have not been charged for it. Your cart is
               still saved, so you can head back to the menu and try again.
             </p>

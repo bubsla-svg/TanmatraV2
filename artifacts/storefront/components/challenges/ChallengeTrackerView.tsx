@@ -57,7 +57,7 @@ export function ChallengeTrackerView() {
   if (isError) {
     return (
       <div className="rounded-2xl border border-line bg-surface p-8 text-center">
-        <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load your challenge progress just now.</p>
+        <p className="text-sm font-semibold text-danger">Couldn&rsquo;t load your challenge progress just now.</p>
         <button type="button" onClick={() => void refetch()} className="mt-4 rounded-full border border-line px-5 py-2 text-xs font-semibold text-primary transition-colors hover:border-line-strong">
           Try again
         </button>

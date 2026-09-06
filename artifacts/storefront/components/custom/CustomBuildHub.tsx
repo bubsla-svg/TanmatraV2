@@ -60,7 +60,7 @@ const DishPickRow = memo(function DishPickRow({
         active ? "border-gold bg-gold/5 shadow-[var(--shadow-card)]" : "border-line bg-surface hover:border-line-strong"
       }`}
     >
-      <DishImage src={dish.image} name={dish.name} className="h-16 w-16 shrink-0 rounded-xl border border-line" />
+      <DishImage src={dish.image} name={dish.name} sizes="64px" className="h-16 w-16 shrink-0 rounded-xl border border-line" />
       <div className="flex flex-1 flex-col gap-1.5">
         <div className="flex items-center justify-between gap-2">
           <span className={`text-sm font-semibold ${active ? "text-gold-text" : "text-ink"}`}>
@@ -178,7 +178,7 @@ export function CustomBuildHub({ dishes }: { dishes: DishData[] }) {
                             aria-pressed={active}
                             className={`flex items-center justify-between gap-2 rounded-full border px-4 py-3 text-sm font-medium transition-all active:scale-[0.98] ${
                               active
-                                ? "border-gold bg-gold text-[var(--gold-ink)] shadow-[var(--shadow-card)]"
+                                ? "border-gold bg-gold text-gold-ink shadow-[var(--shadow-card)]"
                                 : "border-line bg-surface text-ink hover:border-line-strong"
                             }`}
                           >
@@ -202,7 +202,7 @@ export function CustomBuildHub({ dishes }: { dishes: DishData[] }) {
                             aria-pressed={active}
                             className={`flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-all active:scale-[0.98] ${
                               active
-                                ? "border-gold bg-gold text-[var(--gold-ink)] shadow-[var(--shadow-card)]"
+                                ? "border-gold bg-gold text-gold-ink shadow-[var(--shadow-card)]"
                                 : "border-line bg-surface text-ink hover:border-line-strong"
                             }`}
                           >

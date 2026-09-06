@@ -35,7 +35,7 @@ export function DishFitBadge({ dishId }: { dishId: number }) {
   if (!fit) return null;
   if (fit.band === "conflict" && fit.conflictLabel) {
     return (
-      <Text type="supporting" weight="bold" className="text-[var(--danger)]">
+      <Text type="supporting" weight="bold" className="text-danger">
         {fit.conflictLabel}
       </Text>
     );

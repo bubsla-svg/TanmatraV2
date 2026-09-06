@@ -30,11 +30,11 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
   }, [lastScrollY]);
 
   return (
-    <header className={`sticky top-0 z-40 bg-[var(--glass)] backdrop-blur-xl border-b border-line transition-transform duration-300 ${isVisible ? "translate-y-0" : "-translate-y-full"}`}>
+    <header className={`sticky top-0 z-40 bg-glass backdrop-blur-xl border-b border-line transition-transform duration-300 ${isVisible ? "translate-y-0" : "-translate-y-full"}`}>
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Brand */}
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate?.("/")}>
-          <div className="w-9 h-9 rounded-xl bg-gold flex items-center justify-center font-black text-[var(--gold-ink)] text-xl shadow-lg shadow-[var(--gold)]/20">
+          <div className="w-9 h-9 rounded-xl bg-gold flex items-center justify-center font-black text-gold-ink text-xl shadow-lg shadow-[var(--gold)]/20">
             T
           </div>
           <div>

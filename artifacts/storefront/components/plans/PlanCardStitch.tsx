@@ -53,7 +53,7 @@ export function PlanCardStitch({ id }: { id: PlanId }) {
       </div>
 
       {q.launchable ? (
-        <span className="inline-flex items-center justify-center rounded-full bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)]">
+        <span className="inline-flex items-center justify-center rounded-full bg-gold px-5 py-3 text-sm font-semibold text-gold-ink">
           Select plan
         </span>
       ) : (

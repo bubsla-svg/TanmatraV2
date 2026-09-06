@@ -149,8 +149,8 @@ export const FastingClock: React.FC<FastingClockProps> = ({
             }}
             className={`px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all ${
               isFastingActive 
-                ? 'bg-gold hover:brightness-110 text-[var(--gold-ink)]'
-                : 'bg-sage hover:brightness-110 text-[var(--sage-ink)]'
+                ? 'bg-gold hover:brightness-110 text-gold-ink'
+                : 'bg-sage hover:brightness-110 text-sage-ink'
             }`}
           >
             {isFastingActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}

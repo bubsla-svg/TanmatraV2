@@ -156,7 +156,7 @@ export function PlanDetails({
               <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <span className="flex-1 truncate font-semibold text-ink-muted">
+            <span className="min-w-0 flex-1 truncate font-semibold text-ink-muted">
               {line1 ? `${line1} ${city} ${pincode}` : "Select your location"}
             </span>
             <span className="shrink-0 text-xs font-bold text-gold">MAP</span>
@@ -216,12 +216,12 @@ export function PlanDetails({
           </span>
         </div>
         {quoteError && (
-          <p role="alert" className="flex items-center justify-between gap-3 text-xs font-medium text-[var(--danger)]">
+          <p role="alert" className="flex items-center justify-between gap-3 text-xs font-medium text-danger">
             <span>Couldn&rsquo;t fetch the price.</span>
             <button
               type="button"
               onClick={onRetryQuote}
-              className="shrink-0 rounded-lg border border-[var(--danger)]/40 px-2.5 py-1 font-semibold underline-offset-2 hover:underline"
+              className="touch-target-min shrink-0 rounded-lg border border-danger/40 px-2.5 py-1 font-semibold underline-offset-2 hover:underline"
             >
               Retry
             </button>
@@ -237,7 +237,7 @@ export function PlanDetails({
         </div>
       )}
 
-      {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
+      {error && <p role="alert" className="text-xs font-medium text-danger">{error}</p>}
 
       {/* T-20: the kitchen's credentials one tap away at the money moment. */}
       <div className="flex justify-center">

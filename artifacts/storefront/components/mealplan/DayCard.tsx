@@ -39,7 +39,7 @@ export const DayCard = memo(function DayCard({ day, dayIndex, editable, onSwap, 
           return (
             <li key={slot} className="flex items-center gap-4">
               {entry ? (
-                <DishImage src={entry.image} name={entry.name} className="h-16 w-16 shrink-0 rounded-xl" />
+                <DishImage src={entry.image} name={entry.name} sizes="64px" className="h-16 w-16 shrink-0 rounded-xl" />
               ) : (
                 <div aria-hidden className="h-16 w-16 shrink-0 rounded-xl border border-dashed border-line bg-surface-raised" />
               )}

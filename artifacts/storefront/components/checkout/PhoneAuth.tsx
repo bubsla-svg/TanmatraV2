@@ -295,7 +295,7 @@ export function PhoneAuth({
         </>
       )}
       {notice && <p role="status" className="text-xs text-ink-muted">{notice}</p>}
-      {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
+      {error && <p role="alert" className="text-xs font-medium text-danger">{error}</p>}
       <div ref={recaptcha} />
     </Card>
   );

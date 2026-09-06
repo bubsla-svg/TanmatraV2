@@ -191,7 +191,7 @@ export function PartnerLeadForm({
         />
       </Field>
       {phoneErr && (
-        <p role="alert" className="text-2xs font-medium text-[var(--danger)]">
+        <p role="alert" className="text-2xs font-medium text-danger">
           {phoneErr}
         </p>
       )}
@@ -206,7 +206,7 @@ export function PartnerLeadForm({
       />
 
       {error && (
-        <p role="alert" className="text-xs font-medium text-[var(--danger)]">
+        <p role="alert" className="text-xs font-medium text-danger">
           {error}
         </p>
       )}

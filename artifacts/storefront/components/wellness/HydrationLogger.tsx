@@ -44,7 +44,7 @@ export const HydrationLogger: React.FC<HydrationLoggerProps> = ({
         {waterLogs.length > 0 && (
           <button 
             onClick={handleResetWater}
-            className="text-xs font-bold text-ink-faint hover:text-[var(--danger)] transition-colors flex items-center gap-1"
+            className="text-xs font-bold text-ink-faint hover:text-danger transition-colors flex items-center gap-1"
           >
             <Trash2 className="w-3.5 h-3.5" /> Reset
           </button>
@@ -116,17 +116,18 @@ export const HydrationLogger: React.FC<HydrationLoggerProps> = ({
 
       {/* Custom Water Form */}
       <form onSubmit={handleCustomAddWater} className="flex items-center gap-2">
-        <input 
+        <input
           type="number"
+          aria-label="Custom amount in millilitres"
           value={customMlInput}
           onChange={(e) => setCustomMlInput(e.target.value)}
           placeholder="Enter custom mL (e.g., 350)..."
-          className="min-h-[50px] flex-1 rounded-2xl border border-line bg-surface px-4 py-3 text-xs text-ink focus:outline-none focus-visible:border-primary"
+          className="min-h-[50px] flex-1 rounded-2xl border border-line bg-surface px-4 py-3 text-base text-ink focus:outline-none focus-visible:border-primary"
         />
         <button
           type="submit"
           disabled={!customMlInput}
-          className="min-h-[50px] px-4 py-3 rounded-2xl bg-gold hover:brightness-110 disabled:opacity-50 text-[var(--gold-ink)] text-xs font-bold transition-all flex items-center gap-1"
+          className="min-h-[50px] px-4 py-3 rounded-2xl bg-gold hover:brightness-110 disabled:opacity-50 text-gold-ink text-xs font-bold transition-all flex items-center gap-1"
         >
           <Plus className="w-3.5 h-3.5" /> Log
         </button>
@@ -147,7 +148,7 @@ export const HydrationLogger: React.FC<HydrationLoggerProps> = ({
                   <span className="font-data text-2xs text-ink-faint font-medium">
                     {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
-                  <button onClick={() => handleRemoveLog(log.id)} className="text-ink-faint hover:text-[var(--danger)]">
+                  <button onClick={() => handleRemoveLog(log.id)} className="text-ink-faint hover:text-danger">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>

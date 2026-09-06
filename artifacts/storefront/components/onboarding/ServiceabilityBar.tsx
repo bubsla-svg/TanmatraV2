@@ -185,7 +185,7 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
             value={inputVal}
             onChange={(e) => setInputVal(e.target.value)}
             disabled={busy}
-            className="w-44 min-w-0 min-h-[50px] rounded-2xl border border-line bg-surface px-4 py-2.5 text-sm text-ink outline-none focus-visible:border-primary disabled:opacity-50"
+            className="w-44 min-w-0 min-h-[50px] rounded-2xl border border-line bg-surface px-4 py-2.5 text-base text-ink outline-none focus-visible:border-primary disabled:opacity-50"
           />
           <Button
             type="submit"
@@ -209,7 +209,7 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
             Cancel
           </button>
         </div>
-        {err && <p role="alert" className="text-xs font-medium text-[var(--danger)] w-full">{err}</p>}
+        {err && <p role="alert" className="text-xs font-medium text-danger w-full">{err}</p>}
       </form>
     );
   }
@@ -253,7 +253,7 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
               tighter trio buys 10px, so the label clears its box with room
               rather than by a hair. Re-measure if any of them changes; the
               9rem cap itself is fixed by the wordmark and must not move. */}
-          <span className="font-semibold text-ink-muted flex-1 truncate">
+          <span className="min-w-0 font-semibold text-ink-muted flex-1 truncate">
             {busy ? (
               "Checking…"
             ) : (
@@ -266,7 +266,7 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
           {!busy && <span className="hidden sm:inline text-xs font-bold text-accent shrink-0">MAP</span>}
         </button>
       </div>
-      {err && <p role="alert" className="text-xs font-medium text-[var(--danger)] w-full">{err}</p>}
+      {err && <p role="alert" className="text-xs font-medium text-danger w-full">{err}</p>}
       
       {pickingLocation && (
         <LocationPickerFlow

@@ -48,7 +48,7 @@ export default function GlobalError({
         <button
           type="button"
           onClick={reset}
-          className="touch-target-min mt-2 rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-[var(--gold-ink)]"
+          className="touch-target-min mt-2 rounded-xl bg-gold px-6 py-3 text-sm font-semibold text-gold-ink"
         >
           Reload
         </button>

@@ -118,8 +118,8 @@ export function LunchPlanner({ slug }: { slug: string }) {
             {generateMutation.isPending ? "Generating…" : proposal ? "Regenerate" : "Generate plan"}
           </Button>
         </div>
-        {generateErrorFinal && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{generateErrorFinal}</p>}
-        {scheduleError && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{scheduleError}</p>}
+        {generateErrorFinal && <p role="alert" className="text-xs font-medium text-danger">{generateErrorFinal}</p>}
+        {scheduleError && <p role="alert" className="text-xs font-medium text-danger">{scheduleError}</p>}
         <LunchPlanPreview proposal={proposal} onSchedule={schedule} scheduling={scheduleMutation.isPending} perEmployeePaise={PER_EMPLOYEE_PAISE} scheduledHour={SCHEDULED_HOUR} />
       </section>
     </div>

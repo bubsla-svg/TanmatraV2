@@ -99,7 +99,7 @@ export default function HowItWorksPage() {
             )}
             <Link
               href={`/plan/${plan.planId}`}
-              className="mt-3 inline-block text-sm font-medium text-primary underline-offset-4 hover:underline"
+              className="mt-3 inline-block py-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
             >
               See {plan.name}
             </Link>

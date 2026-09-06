@@ -90,7 +90,7 @@ export function MiniCartBar() {
             : "translate-y-0 pb-1.5"
         }`}
       >
-        <div className="pointer-events-auto mx-auto flex max-w-md items-center justify-between gap-3 rounded-full border border-line bg-[var(--glass)] py-1.5 pl-5 pr-1.5 shadow-lg backdrop-blur">
+        <div className="pointer-events-auto mx-auto flex max-w-md items-center justify-between gap-3 rounded-full border border-line bg-glass py-1.5 pl-5 pr-1.5 shadow-lg backdrop-blur">
           <p className="tabular text-sm text-ink">
             <span className="font-semibold">{count}</span>{" "}
             {count === 1 ? "item" : "items"}{" "}

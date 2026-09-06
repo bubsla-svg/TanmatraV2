@@ -180,6 +180,24 @@
   --color-amber-deep: var(--amber-deep);
   --color-amber-ink: var(--amber-ink);
 
+  /* The app's OWN semantic names, registered so they are usable as plain
+     utilities. They were real custom properties that this block had simply
+     never been told about, and Tailwind v4 emits nothing for a name it does
+     not know — so 283 call sites had to reach for `text-[var(--danger)]`
+     bracket syntax to get at a token the design system already owned, and
+     `text-gold-ink` (the obvious spelling) compiled to nothing at all and
+     shipped unstyled. See scripts/lint-unregistered-color-utility.ts, which
+     documents exactly that failure and is what makes registration the fix
+     rather than a convenience. `destructive` stays as shadcn's alias for
+     --danger; `danger` is what this codebase calls it. */
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-gold-ink: var(--gold-ink);
+  --color-sage-ink: var(--sage-ink);
+  --color-scrim: var(--scrim);
+  --color-glass: var(--glass);
+
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);

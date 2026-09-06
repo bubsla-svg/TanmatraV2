@@ -163,7 +163,7 @@
     --color-syntax-property: light-dark(#4e6357, #94b2a0);
     --color-syntax-punctuation: light-dark(#5e5e5e, #ababb0);
     --color-syntax-background: light-dark(#f3f3f5, #171719);
-    --color-accent: light-dark(#2e5c4f, #d08a3e);
+    --color-accent: light-dark(#2e5c4f, #f2a85a);
     --color-accent-muted: light-dark(#25252a14, #f3f3f520);
     --color-neutral: light-dark(#25252a0f, #f3f3f51a);
     --color-background-surface: light-dark(#fbf8f4, #20322d);
@@ -193,7 +193,7 @@
     --color-success-muted: light-dark(#d0e9ce, #b4cdb2);
     --color-error: light-dark(#58413e, #dcc0bc);
     --color-error-muted: light-dark(#f9dcd7, #dcc0bc);
-    --color-warning: light-dark(#986025, #d08a3e);
+    --color-warning: light-dark(#986025, #f2a85a);
     --color-warning-muted: light-dark(#f4e1b7, #d7c59c);
     --color-border: light-dark(#ddd3c6, #364a45);
     --color-border-emphasized: light-dark(#83838a, #5e5e61);

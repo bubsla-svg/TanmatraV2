@@ -8,14 +8,23 @@ interface TextInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 export const TextInput: React.FC<TextInputProps> = ({ label, error, className = "", ...props }) => {
   return (
     <div className="flex flex-col gap-1.5 w-full">
-      <label className="text-sm font-medium text-ink">{label}</label>
-      <input
-        className={`w-full bg-surface border border-line rounded-xl px-4 py-3 text-ink placeholder:text-ink-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:border-transparent transition-all ${
-          error ? "border-[var(--danger)] focus-visible:ring-[var(--danger)]" : ""
-        } ${className}`}
-        {...props}
-      />
-      {error && <span className="text-xs text-[var(--danger)] mt-1">{error}</span>}
+      {/* The label WRAPS the control. It used to be a sibling with neither
+          htmlFor nor an id on the input, so it was visible text that named
+          nothing — every consumer of this primitive shipped an unnamed field.
+          Wrapping associates it implicitly, needs no generated id, and keeps
+          this primitive renderable on the server (useId would not). The
+          flex-col/gap here reproduces the old stacking exactly. */}
+      <label className="flex w-full flex-col gap-1.5">
+        <span className="text-sm font-medium text-ink">{label}</span>
+        <input
+          className={`w-full bg-surface border border-line rounded-xl px-4 py-3 text-ink placeholder:text-ink-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:border-transparent transition-all ${
+            error ? "border-danger focus-visible:ring-danger" : ""
+          } ${className}`}
+          aria-invalid={error ? true : undefined}
+          {...props}
+        />
+      </label>
+      {error && <span className="text-xs text-danger mt-1">{error}</span>}
     </div>
   );
 };
@@ -28,8 +37,8 @@ export const SearchInput: React.FC<Omit<TextInputProps, 'label'> & { label?: str
 }) => {
   return (
     <div className="flex flex-col gap-1.5 w-full">
-      <label className="sr-only">{label}</label>
-      <div className="relative">
+      <label className="relative block">
+        <span className="sr-only">{label}</span>
         <svg
           className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-muted"
           fill="none"
@@ -40,14 +49,14 @@ export const SearchInput: React.FC<Omit<TextInputProps, 'label'> & { label?: str
         </svg>
         <input
           className={`w-full bg-surface border border-line rounded-full pl-11 pr-4 py-3 text-ink placeholder:text-ink-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:border-transparent transition-all ${
-            error ? "border-[var(--danger)]" : ""
+            error ? "border-danger" : ""
           } ${className}`}
           type="search"
           placeholder="Search..."
           {...props}
         />
-      </div>
-      {error && <span className="text-xs text-[var(--danger)] mt-1">{error}</span>}
+      </label>
+      {error && <span className="text-xs text-danger mt-1">{error}</span>}
     </div>
   );
 };

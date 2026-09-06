@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 // Lucide is the storefront's icon system (21 other files). These five icons
 // replaced `material-symbols-outlined` ligature spans — a font this app never
 // loaded, so every one of them rendered its ligature name as literal text
@@ -46,6 +46,8 @@ export default function MealFeedback({
 }: MealFeedbackProps) {
     const [rating, setRating] = useState<RatingValue | null>(null);
     const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
+    // Stable id prefix so each visible <label> actually names its control.
+    const uid = useId();
     const [comments, setComments] = useState('');
     const [submitted, setSubmitted] = useState(false);
 
@@ -87,7 +89,7 @@ export default function MealFeedback({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--scrim)] backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-scrim backdrop-blur-sm">
             <div className="bg-surface border border-line rounded-3xl p-6 max-w-md w-full text-ink shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
                 {/* aria-label is load-bearing now: the ligature span this
                     replaced rendered the literal word "close", which was at
@@ -150,7 +152,7 @@ export default function MealFeedback({
                             <button
                                 type="button"
                                 onClick={() => setRating('not-for-me')}
-                                className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all ${rating === 'not-for-me' ? 'border-[var(--danger)] bg-[var(--danger)]/10 text-[var(--danger)]' : 'border-line bg-surface text-ink-muted hover:text-ink'}`}
+                                className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all ${rating === 'not-for-me' ? 'border-danger bg-danger/10 text-danger' : 'border-line bg-surface text-ink-muted hover:text-ink'}`}
                             >
                                 <ThumbsDown aria-hidden className="h-6 w-6 mb-1" />
                                 <span className="font-body-sm text-xs font-medium">Not for me</span>
@@ -171,7 +173,7 @@ export default function MealFeedback({
                                                 key={reason}
                                                 type="button"
                                                 onClick={() => toggleReason(reason)}
-                                                className={`px-3 py-1.5 rounded-full font-body-sm text-xs transition-all border ${active ? 'border-gold bg-gold text-[var(--gold-ink)] font-semibold' : 'border-line bg-surface text-ink hover:bg-surface'}`}
+                                                className={`px-3 py-1.5 rounded-full font-body-sm text-xs transition-all border ${active ? 'border-gold bg-gold text-gold-ink font-semibold' : 'border-line bg-surface text-ink hover:bg-surface'}`}
                                             >
                                                 {reason}
                                             </button>
@@ -184,15 +186,15 @@ export default function MealFeedback({
                         {/* Additional Notes */}
                         {rating && (
                             <div className="space-y-2">
-                                <label className="font-bold text-xs text-ink-muted uppercase tracking-wider block">
+                                <label className="font-bold text-xs text-ink-muted uppercase tracking-wider block" htmlFor={`${uid}-additional-details-optio`}>
                                     Additional details (Optional)
                                 </label>
-                                <textarea
+                                <textarea id={`${uid}-additional-details-optio`}
                                     value={comments}
                                     onChange={(e) => setComments(e.target.value)}
                                     placeholder="Add any specific culinary or clinical notes..."
                                     rows={2}
-                                    className="w-full bg-bg border border-line rounded-xl p-3 text-xs text-ink placeholder-ink-muted focus:outline-none focus-visible:border-gold transition-colors resize-none"
+                                    className="w-full bg-bg border border-line rounded-xl p-3 text-base text-ink placeholder-ink-muted focus:outline-none focus-visible:border-gold transition-colors resize-none"
                                 />
                             </div>
                         )}
@@ -200,7 +202,7 @@ export default function MealFeedback({
                         <button
                             type="submit"
                             disabled={!rating}
-                            className="w-full bg-gold text-[var(--gold-ink)] font-bold text-xs uppercase tracking-widest font-bold py-3.5 rounded-full hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="w-full bg-gold text-gold-ink font-bold text-xs uppercase tracking-widest font-bold py-3.5 rounded-full hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             Submit Feedback
                         </button>

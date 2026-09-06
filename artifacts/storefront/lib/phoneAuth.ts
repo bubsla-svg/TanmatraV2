@@ -1,8 +1,4 @@
-import {
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
-  type ConfirmationResult,
-} from "firebase/auth";
+import type { ConfirmationResult } from "firebase/auth";
 import { getFirebaseAuth } from "./firebase";
 
 /**
@@ -39,7 +35,13 @@ export async function sendPhoneOtp(
   phoneE164: string,
   container: HTMLElement,
 ): Promise<PhoneVerification> {
-  const auth = getFirebaseAuth();
+  // Loaded here, not at module scope: this module is reachable from every
+  // auth-gated island, and none of them need the SDK until someone actually
+  // asks for an SMS. toE164 above is pure and stays free of it.
+  const [{ RecaptchaVerifier, signInWithPhoneNumber }, auth] = await Promise.all([
+    import("firebase/auth"),
+    getFirebaseAuth(),
+  ]);
   const verifier = new RecaptchaVerifier(auth, container, { size: "invisible" });
   try {
     const confirmation: ConfirmationResult = await signInWithPhoneNumber(

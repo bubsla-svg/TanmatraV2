@@ -28,8 +28,10 @@
  * lib/razorpayAdapter.ts (money path, frozen for the restyle series) imports
  * it by this name. This is the value for third-party LIGHT UIs: Razorpay's
  * modal is a light sheet that sets white text over `theme.color`; white on
- * this green measures 7.4:1. The dark arm (the revision's amber, #d08a3e)
- * measures ~2.5:1 under white text — never hand it to a surface that renders
- * white on top of it.
+ * this green measures 7.4:1. The dark arm (the revision's amber, #f2a85a)
+ * measures ~1.8:1 under white text — never hand it to a surface that renders
+ * white on top of it. It carries --color-accent-ink (#172622, 7.9:1), and it
+ * got lighter on 2026-09-06 (was #d08a3e) to clear AA as text on
+ * --surface-raised, so the gap under white text is wider now, not narrower.
  */
 export const ACCENT_GOLD_LIGHT = "#2e5c4f";

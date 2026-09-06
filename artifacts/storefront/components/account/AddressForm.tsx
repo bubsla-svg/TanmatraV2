@@ -179,7 +179,7 @@ export function AddressForm({
           className={nativeInputCls}
         />
       </Field>
-      {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
+      {error && <p role="alert" className="text-xs font-medium text-danger">{error}</p>}
       {blockedReason !== null && !busy && (
         <p role="status" className="text-xs font-medium text-ink-muted">{blockedReason}</p>
       )}

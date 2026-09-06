@@ -54,9 +54,17 @@ export async function Footer() {
                           {l.section}
                         </p>
                       )}
+                      {/* 20px of text is under WCAG 2.5.8's 24x24 floor. The tap
+                          area grows through a transparent ::before rather than
+                          padding, because padding would grow the footer's BOX —
+                          and the footer's box is a committed VRT baseline
+                          (e2e/specs/layout-vrt.spec.ts-snapshots), which can
+                          only be regenerated on a CI runner. 4px each side lands
+                          the hit area at 28px and stops exactly at the 8px gap,
+                          so no two links overlap. */}
                       <Link
                         href={l.href}
-                        className="text-sm text-ink-muted transition-colors hover:text-ink"
+                        className="relative block text-sm text-ink-muted transition-colors before:absolute before:inset-x-0 before:-top-1 before:-bottom-1 before:content-[''] hover:text-ink"
                       >
                         {l.label}
                       </Link>

@@ -45,7 +45,16 @@ export const tanmatraTheme = defineTheme({
     // modal theme.color. astryxBridge.test.ts parses this file for literal
     // tuples, so the tuple stays literal; razorpayAdapter.test.ts pins the
     // brand.ts restatement against this line the same source-parsing way.
-    '--color-accent': ['#2e5c4f', '#d08a3e'],
+    // Dark arm was #d08a3e (31 61% 53%). It measured 3.32:1 as TEXT on
+    // --color-background-raised (#364a45) — below AA — which is what
+    // `text-primary`/`text-accent` resolve to on every raised card in dark
+    // mode (measured on / and /dish/*, 2026-09-06). Lifted at the SAME hue
+    // to 31 85% 65%: saturation goes up with lightness so it stays the
+    // revision's amber rather than going pale. Now 4.7:1 on raised, 6.8:1
+    // on surface, 7.9:1 on the canvas, and 7.9:1 for --color-accent-ink on
+    // the fill — AA as both fill and text against every dark ground.
+    // Same remedy as --color-danger below, for the same reason.
+    '--color-accent': ['#2e5c4f', '#f2a85a'],
     '--color-accent-ink': ['#f6f1e9', '#172622'],
     '--color-blue': ['#506072', '#99adc6'],
     // Signals, never interactive. The dark stops are Stitch's, i.e. the values
@@ -57,7 +66,7 @@ export const tanmatraTheme = defineTheme({
     // (31 61% 37%, 4.6:1) — the README rules the 53% amber decorative-only.
     '--color-sage': ['#556845', '#b9c9a6'],
     '--color-success': ['#556845', '#b9c9a6'],
-    '--color-warning': ['#986025', '#d08a3e'],
+    '--color-warning': ['#986025', '#f2a85a'],
     // Dark arm was #b0655a — 4.14:1 on --color-background-surface, below AA's
     // 4.5:1 (2026-08-13 audit). Lightened/saturated slightly at the same hue
     // (~8° red, was washed out at L 52%) to 5.1-6.2:1 across bg/surface/raised,

@@ -89,7 +89,7 @@ export function Waitlist({ planId, planName, reason }: { planId: string; planNam
         </Button>
       </div>
       {error && (
-        <p id="waitlist-error" role="alert" className="mt-2 text-xs font-medium text-[var(--danger)]">
+        <p id="waitlist-error" role="alert" className="mt-2 text-xs font-medium text-danger">
           {error}
         </p>
       )}

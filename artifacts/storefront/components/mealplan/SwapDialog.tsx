@@ -35,7 +35,7 @@ export function SwapDialog({ planId, target, onClose, onPick }: {
       <Dialog.Portal>
         {/* Scrim: --scrim, never data-stitch — see the invariant on
             components/ui/drawer.tsx's DrawerOverlay. */}
-        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-[var(--scrim)] backdrop-blur-sm" />
+        <Dialog.Overlay className="fixed inset-0 z-[var(--z-modal)] animate-fade-in bg-scrim backdrop-blur-sm" />
         <Dialog.Content
           aria-describedby={undefined}
           className="fixed left-1/2 top-20 z-[var(--z-modal)] w-[92vw] max-w-md -translate-x-1/2 animate-dialog-in overflow-hidden rounded-2xl border border-line bg-surface shadow-[var(--shadow-raised)]"
@@ -53,7 +53,7 @@ export function SwapDialog({ planId, target, onClose, onPick }: {
             )}
             {suggestionsQuery.isError && (
               <div className="flex flex-col items-center gap-2 p-4 text-center">
-                <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load alternatives</p>
+                <p className="text-sm font-semibold text-danger">Couldn&rsquo;t load alternatives</p>
                 <button type="button" onClick={() => void suggestionsQuery.refetch()} className="inline-flex min-h-11 items-center rounded-full border border-line px-4 text-xs font-semibold text-ink transition-colors hover:border-line-strong">Try again</button>
               </div>
             )}

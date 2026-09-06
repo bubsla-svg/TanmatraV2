@@ -46,6 +46,10 @@ testem.log
 # are baked into the static bundle anyway. Safe to commit.
 !.env.production
 key.json
+# Row snapshots written by the plan-then-apply scripts (draft-thin-dishes,
+# backfill-honest-claims) before they touch the database. Restore material,
+# not source — a `git add -A` after a run must not commit 69 rows of copy.
+scripts/*-backup-*.json
 
 # System Files
 .DS_Store

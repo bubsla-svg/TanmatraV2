@@ -97,7 +97,7 @@ export function GroupOrderView({ code }: { code: string }) {
   if (isError || !group) {
     return (
       <div className="rounded-2xl border border-line bg-surface px-6 py-10 text-center">
-        <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load this group order</p>
+        <p className="text-sm font-semibold text-danger">Couldn&rsquo;t load this group order</p>
         <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-ink-faint">Something went wrong on our end — this usually clears up on retry.</p>
         <button type="button" onClick={() => void refetch()} disabled={isFetching} aria-busy={isFetching} aria-live="polite" className="mt-4 rounded-lg border border-line px-5 py-2 text-xs font-semibold text-gold-text transition-opacity hover:opacity-80 disabled:opacity-50">
           {isFetching ? "Retrying…" : "Try again"}
@@ -118,7 +118,7 @@ export function GroupOrderView({ code }: { code: string }) {
         <p className="mx-auto mt-3 max-w-xs text-xs leading-relaxed text-ink-faint">Share code <span className="font-semibold text-ink-muted">{group.code}</span>. Anyone with the link can add their own items — the host closes the order and pays for everyone.</p>
       </div>
 
-      {error && <p role="alert" className="rounded-xl border border-line bg-surface px-4 py-2.5 text-xs font-medium text-[var(--danger)]">{error}</p>}
+      {error && <p role="alert" className="rounded-xl border border-line bg-surface px-4 py-2.5 text-xs font-medium text-danger">{error}</p>}
 
       {group.items.length === 0 ? (
         <div className="rounded-xl border border-dashed border-line px-4 py-8 text-center">
@@ -132,7 +132,7 @@ export function GroupOrderView({ code }: { code: string }) {
                 <p className="truncate text-sm font-medium text-ink">{l.name}</p>
                 <p className="mt-0.5 text-xs text-ink-faint">Added by {l.addedByName} · Qty {l.quantity}</p>
                 {!closed && (isHost || l.addedBy === userId) && (
-                  <button type="button" onClick={() => remove(l.lineId)} disabled={busy} aria-label="Remove" className="mt-1.5 text-xs font-medium text-ink-faint hover:text-[var(--danger)] disabled:opacity-50">Remove</button>
+                  <button type="button" onClick={() => remove(l.lineId)} disabled={busy} aria-label="Remove" className="mt-1.5 text-xs font-medium text-ink-faint hover:text-danger disabled:opacity-50">Remove</button>
                 )}
               </div>
               <span className="tabular shrink-0 pt-0.5 text-sm font-medium text-ink">{formatPaise(l.unitPrice * l.quantity)}</span>

@@ -19,7 +19,7 @@ function sectionId(index: number): string {
 function withPlaceholders(text: string) {
   return text.split(/(\[[^\]]*\])/g).map((part, i) =>
     /^\[[^\]]*\]$/.test(part) ? (
-      <span key={i} className="rounded bg-gold px-1 text-[var(--gold-ink)]">
+      <span key={i} className="rounded bg-gold px-1 text-gold-ink">
         {part}
       </span>
     ) : (
@@ -51,12 +51,12 @@ export function LegalArticle({ doc }: { doc: LegalDoc }) {
               <li key={s.heading}>
                 <a
                   href={`#${sectionId(i)}`}
-                  className="flex items-baseline gap-2 text-sm text-ink-muted hover:text-primary"
+                  className="-my-0.5 flex items-baseline gap-2 py-1 text-sm text-ink-muted hover:text-primary"
                 >
                   <span className="font-data shrink-0 text-xs text-ink-faint">
                     {String(i + 1).padStart(2, "0")}
                   </span>
-                  <span className="truncate">{s.heading}</span>
+                  <span className="min-w-0 truncate">{s.heading}</span>
                 </a>
               </li>
             ))}

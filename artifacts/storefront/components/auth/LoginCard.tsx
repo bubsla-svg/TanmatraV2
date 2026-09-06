@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { firebaseConfigured, getFirebaseAuth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
 import { getAuthUser, verifyOtp } from "@/lib/api";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 import { Button } from "@/components/ui/button";
@@ -48,7 +47,13 @@ export function LoginCard({ next, initialStep }: { next: string; initialStep?: A
         }
 
         if (firebaseConfigured()) {
-          const auth = getFirebaseAuth();
+          // Same reason getFirebaseAuth is async: keep the SDK out of the
+          // chunk and fetch it when a session is actually being established.
+          const [{ onAuthStateChanged }, auth] = await Promise.all([
+            import("firebase/auth"),
+            getFirebaseAuth(),
+          ]);
+          if (!live) return;
           unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
             if (!live) return;
             if (fbUser) {
@@ -99,7 +104,7 @@ export function LoginCard({ next, initialStep }: { next: string; initialStep?: A
         </>
       ) : (
         <>
-          <p role="alert" className="text-sm font-medium text-[var(--danger)]">
+          <p role="alert" className="text-sm font-medium text-danger">
             Sign-in is temporarily unavailable. You can order individual dishes from the menu meanwhile.
           </p>
           <Button asChild shape="pill" size="fluid" className="min-h-12 self-start px-5 py-3 font-semibold">

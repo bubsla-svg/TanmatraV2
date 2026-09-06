@@ -201,7 +201,7 @@ export function QrStart({ pricePaise }: { pricePaise: number }) {
         </Button>
       </div>
 
-      {error && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{error}</p>}
+      {error && <p role="alert" className="text-xs font-medium text-danger">{error}</p>}
 
       {state.verdict === "unserviceable" && (
         // Never a dead end (Law 10): an unserved PIN ends in a captured lead

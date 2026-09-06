@@ -25,7 +25,7 @@ export default function NotFound() {
           <div className="mt-2 flex flex-wrap justify-center gap-3">
             <Link
               href="/menu"
-              className="rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-[var(--gold-ink)]"
+              className="rounded-xl bg-gold px-5 py-3 text-sm font-semibold text-gold-ink"
             >
               Browse the menu
             </Link>

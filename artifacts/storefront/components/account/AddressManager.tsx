@@ -136,7 +136,7 @@ export function AddressManager() {
     }
     return (
       <div className="rounded-2xl border border-line bg-surface p-5 text-center">
-        <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load your addresses</p>
+        <p className="text-sm font-semibold text-danger">Couldn&rsquo;t load your addresses</p>
         <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-ink-faint">
           Something went wrong on our end — this usually clears up on retry.
         </p>
@@ -153,7 +153,7 @@ export function AddressManager() {
 
   return (
     <div className="flex flex-col gap-4">
-      {mutationError && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{mutationError}</p>}
+      {mutationError && <p role="alert" className="text-xs font-medium text-danger">{mutationError}</p>}
       <AddressList
         addresses={addresses}
         busyId={busyId}

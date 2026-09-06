@@ -27,21 +27,34 @@ import { ImgWithFallback } from "./ImgWithFallback";
  */
 export function SafeImage({
   src,
-  alt = "",
+  alt,
   className,
   imgClassName,
   priority = false,
+  sizes,
   fallback,
 }: {
   src: string;
-  /** Empty for decorative photos (the common case for dish shots beside
-   *  their own text); pass real alt when the image carries information. */
-  alt?: string;
+  /**
+   * REQUIRED, and `""` is a valid answer — the common case for a dish shot
+   * sitting beside its own name, where repeating it makes a screen reader say
+   * the name twice. It used to default to `""`, which meant "decorative" was
+   * what you got by saying nothing: an author who simply forgot got a silently
+   * unlabelled image and no signal anywhere. Making it explicit costs one
+   * `alt=""` and turns the decision into one somebody actually made.
+   */
+  alt: string;
   /** Frame classes — MUST size the box (an aspect-* or explicit h/w). */
   className?: string;
   /** Extra classes for the img itself (hover scale, transitions, …). */
   imgClassName?: string;
   priority?: boolean;
+  /** The rendered width of this frame, as an `<img sizes>` list (e.g.
+   *  `"(min-width: 768px) 320px, 50vw"`). Declaring it lets a resizable
+   *  upstream serve a narrower file; omitting it keeps today's single-file
+   *  behaviour. The frame already owns the geometry — this just tells the
+   *  browser what that geometry is. */
+  sizes?: string;
   /** Branded stand-in shown instead of the generic glyph when the photo
    *  fails to load (M-5 §3.5). Fills the same frame, so no layout shift. */
   fallback?: React.ReactNode;
@@ -52,6 +65,7 @@ export function SafeImage({
         src={src}
         alt={alt}
         priority={priority}
+        sizes={sizes}
         className={`h-full w-full object-cover ${imgClassName ?? ""}`}
         fallback={fallback}
       />

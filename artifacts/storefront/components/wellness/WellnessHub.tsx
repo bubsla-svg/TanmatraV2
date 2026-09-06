@@ -39,7 +39,7 @@ export function WellnessHub() {
               : "border border-transparent bg-secondary text-ink-muted hover:text-primary"
           }`}
         >
-          <Activity className="w-4 h-4 text-[var(--danger)]" />
+          <Activity className="w-4 h-4 text-danger" />
           <span>Blood Report AI OCR</span>
         </button>
 

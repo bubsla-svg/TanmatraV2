@@ -132,7 +132,7 @@ export function MarketplaceBuyNow({ item }: { item: MarketplaceItem }) {
   return (
     <div className="flex flex-col items-end gap-1.5">
       {error && (
-        <p role="alert" className="text-xs font-medium text-[var(--danger)]">
+        <p role="alert" className="text-xs font-medium text-danger">
           {error}
         </p>
       )}

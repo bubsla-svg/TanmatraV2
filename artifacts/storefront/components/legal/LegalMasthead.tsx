@@ -28,7 +28,7 @@ export function LegalMasthead({
       {backHref && (
         <Link
           href={backHref}
-          className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink"
+          className="inline-flex items-center gap-1.5 py-1 text-sm text-ink-muted hover:text-ink"
         >
           <ArrowLeft aria-hidden className="h-4 w-4" />
           {backLabel}

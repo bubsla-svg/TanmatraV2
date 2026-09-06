@@ -122,7 +122,7 @@ export function DishCard({
             className="aspect-[1.12] w-full bg-surface-raised"
             imgClassName="transition-transform duration-500 group-hover:scale-[1.03]"
           />
-          <span className="absolute left-4 top-4 z-10 flex items-center rounded-full bg-[var(--glass)] px-1.5 py-1 backdrop-blur-md">
+          <span className="absolute left-4 top-4 z-10 flex items-center rounded-full bg-glass px-1.5 py-1 backdrop-blur-md">
             <VegMark vegClass={vegClass} />
           </span>
           {dish.badge && (

@@ -1,5 +1,5 @@
-import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
+import type { FirebaseApp } from "firebase/app";
+import type { Auth } from "firebase/auth";
 
 /**
  * Client Firebase init for phone-auth (SF-03). Config comes from the public
@@ -26,11 +26,25 @@ export function firebaseConfigured(): boolean {
 
 let cachedAuth: Auth | null = null;
 
-/** The client Auth instance. Throws if the build shipped no Firebase config —
- *  callers gate on firebaseConfigured() / LIVE_CHECKOUT_ENABLED first. */
-export function getFirebaseAuth(): Auth {
+/**
+ * The client Auth instance. Throws if the build shipped no Firebase config —
+ * callers gate on firebaseConfigured() / LIVE_CHECKOUT_ENABLED first.
+ *
+ * ASYNC because the SDK is imported here rather than at module scope. The two
+ * static imports this replaces put ~150 KB of firebase/app + firebase/auth into
+ * the chunk of every module that touches this file — including PhoneAuth and
+ * PlanIdentityGate, which only ever call the two PURE helpers above and never
+ * sign anyone in. Those surfaces now ship none of it, and the SDK arrives on
+ * the first real sign-in instead. Only the type imports remain static; they
+ * erase.
+ */
+export async function getFirebaseAuth(): Promise<Auth> {
   if (!firebaseConfigured()) throw new Error("firebase_not_configured");
   if (cachedAuth) return cachedAuth;
+  const [{ initializeApp, getApps }, { getAuth }] = await Promise.all([
+    import("firebase/app"),
+    import("firebase/auth"),
+  ]);
   const app: FirebaseApp = getApps()[0] ?? initializeApp(readConfig());
   cachedAuth = getAuth(app);
   return cachedAuth;

@@ -116,7 +116,7 @@ export function ChallengeRoom({ slug }: { slug: string }) {
           type="button"
           onClick={() => void toggleJoin()}
           disabled={busy}
-          className={`rounded-full px-6 py-2.5 text-sm font-semibold transition-colors disabled:opacity-40 ${joined ? "border border-line text-ink hover:bg-secondary" : "bg-gold text-[var(--gold-ink)] hover:opacity-90"}`}
+          className={`rounded-full px-6 py-2.5 text-sm font-semibold transition-colors disabled:opacity-40 ${joined ? "border border-line text-ink hover:bg-secondary" : "bg-gold text-gold-ink hover:opacity-90"}`}
         >
           {joined ? "Leave challenge" : "Join challenge"}
         </button>
@@ -127,7 +127,7 @@ export function ChallengeRoom({ slug }: { slug: string }) {
         )}
       </div>
       {error && (
-        <p role="alert" className="mt-3 text-sm font-medium text-[var(--danger)]">
+        <p role="alert" className="mt-3 text-sm font-medium text-danger">
           {error}
         </p>
       )}
@@ -172,7 +172,7 @@ export function ChallengeRoom({ slug }: { slug: string }) {
               maxLength={1000}
               aria-label="Write a post"
               placeholder="Share a win, a question, or your day-1 check-in…"
-              className="w-full resize-none bg-transparent text-sm text-ink placeholder:text-ink-faint outline-none"
+              className="w-full resize-none bg-transparent text-base text-ink placeholder:text-ink-faint outline-none"
             />
             <Button
               type="submit"

@@ -35,7 +35,7 @@ export function AppointmentsList() {
     }
     return (
       <div className="rounded-2xl border border-line bg-surface p-5 text-center">
-        <p className="text-sm font-semibold text-[var(--danger)]">
+        <p className="text-sm font-semibold text-danger">
           {error instanceof ApiError ? error.message : "Couldn't load consultations."}
         </p>
         <button

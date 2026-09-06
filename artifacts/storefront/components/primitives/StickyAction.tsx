@@ -35,7 +35,7 @@ export function StickyAction({ chrome = "glass", safeArea = true, className, ref
       ref={ref}
       className={cn(
         "fixed inset-x-0",
-        chrome === "glass" && "border-t border-line bg-[var(--glass)] backdrop-blur-md",
+        chrome === "glass" && "border-t border-line bg-glass backdrop-blur-md",
         chrome === "surface" && "border-t border-line bg-surface/95 backdrop-blur-md",
         safeArea && "pb-[env(safe-area-inset-bottom)]",
         className,

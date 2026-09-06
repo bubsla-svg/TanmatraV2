@@ -10,6 +10,7 @@
 // this needs no special-casing for that disguise.
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ImageOff } from "lucide-react";
+import { responsiveSrcSet } from "@/lib/imageSrcSet";
 
 /** How long a photo may hang before it degrades to the fallback. Past any
  *  reasonable render, short of the customer deciding the page is broken. */
@@ -20,12 +21,17 @@ export function ImgWithFallback({
   alt,
   className,
   priority,
+  sizes,
   fallback,
 }: {
   src: string;
   alt: string;
   className: string;
   priority: boolean;
+  /** The rendered box, as a `sizes` list. Without it the browser assumes
+   *  100vw and takes the widest candidate, so the srcSet below buys nothing —
+   *  which is why srcSet is only emitted when the caller declares this. */
+  sizes?: string;
   /**
    * Branded replacement for the generic broken-image glyph (M-5 §3.5).
    * Menu surfaces pass a `DishFallbackTile`; anything that doesn't pass one
@@ -102,10 +108,14 @@ export function ImgWithFallback({
     );
   }
 
+  // Only offered when the caller has declared its box; see `sizes` above.
+  const srcSet = sizes ? responsiveSrcSet(src) : null;
+
   return (
     <img
       ref={imgRef}
       src={src}
+      {...(srcSet ? { srcSet, sizes } : {})}
       alt={alt}
       loading={priority ? "eager" : "lazy"}
       decoding={priority ? "sync" : "async"}

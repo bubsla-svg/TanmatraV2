@@ -190,7 +190,7 @@ export function Section01ClinicalHero({
         {/* Photo column — beside the copy from lg, below it before. */}
         <GsapScrollImage className="relative mx-auto w-full max-w-[560px] animate-rise-in stagger-2 lg:mt-4">
           {hero.badge && (
-            <span className="absolute left-4 top-4 z-10 rounded-full border border-primary/30 bg-[var(--glass)] px-3 py-1 text-xs font-bold text-gold-text backdrop-blur-md">
+            <span className="absolute left-4 top-4 z-10 rounded-full border border-primary/30 bg-glass px-3 py-1 text-xs font-bold text-gold-text backdrop-blur-md">
               {hero.badge}
             </span>
           )}
@@ -213,7 +213,7 @@ export function Section01ClinicalHero({
                   the bar measured nothing. It also spoke in macros to someone
                   who is, at this point, simply deciding whether the food looks
                   good. What earns the space is the invitation. */}
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between gap-3 rounded-2xl border border-line bg-[var(--glass)] p-4 backdrop-blur-md shadow-[var(--shadow-card)]">
+              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between gap-3 rounded-2xl border border-line bg-glass p-4 backdrop-blur-md shadow-[var(--shadow-card)]">
                 <p className="font-display text-lg font-semibold leading-tight text-primary">Today&apos;s menu is up.</p>
                 {/* min-h-11 (T-22): this chip measured 50×38. */}
                 <Button asChild variant="outline" shape="pill" size="fluid" className="min-h-11 shrink-0 border-primary/20 bg-transparent px-4 text-xs font-bold text-primary hover:bg-surface">

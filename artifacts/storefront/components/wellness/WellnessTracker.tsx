@@ -57,7 +57,7 @@ export function WellnessTracker() {
   if (todayQuery.isError) {
     return (
       <div className="rounded-2xl border border-line bg-surface px-6 py-10 text-center">
-        <p className="text-sm font-semibold text-[var(--danger)]">Couldn&rsquo;t load your tracker</p>
+        <p className="text-sm font-semibold text-danger">Couldn&rsquo;t load your tracker</p>
         <p className="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-ink-faint">Something went wrong on our end — this usually clears up on retry.</p>
         <button type="button" onClick={() => void todayQuery.refetch()} className="mt-4 rounded-lg border border-line px-5 py-2 text-xs font-semibold text-primary transition-opacity hover:opacity-80">Try again</button>
       </div>
@@ -69,7 +69,7 @@ export function WellnessTracker() {
   return (
     <div className="flex flex-col gap-12">
       {actionError && (
-        <p role="alert" className="text-xs font-medium text-[var(--danger)]">
+        <p role="alert" className="text-xs font-medium text-danger">
           {actionError instanceof ApiError ? actionError.message : "Something went wrong. Please try again."}
         </p>
       )}
@@ -81,8 +81,12 @@ export function WellnessTracker() {
         <NutritionRing label="Water" value={totals.waterMl} target={targets.waterTargetMl} unit="ml" done={pctOf(totals.waterMl, targets.waterTargetMl)} />
       </div>
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex shrink-0 gap-2">
+      {/* Both children were shrink-0 in a fixed-width row: four water presets
+          (~300px) plus "Log meal" (~140px) cannot fit a 320px phone, so the
+          row overflowed rather than shrinking. Wrapping is the honest answer —
+          nothing here is truncatable and a scroll strip would hide the CTA. */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-wrap gap-2">
           {WATER_PRESETS.map((ml) => (
             <button key={ml} type="button" onClick={() => logWaterMutation.mutate(ml)} disabled={busy} className="font-data rounded-full border border-transparent bg-secondary px-4 py-2 text-xs text-ink-muted transition-colors hover:brightness-110 disabled:opacity-50">+{ml} ml</button>
           ))}
@@ -166,7 +170,7 @@ function Entry({ log, onRemove, busy }: { log: NutritionLog; onRemove: () => voi
           {SOURCE_LABEL[log.source] ?? "Manual"} · {meta}
         </p>
       </div>
-      <button type="button" onClick={onRemove} disabled={busy} aria-label="Delete entry" className="shrink-0 text-xs text-ink-faint hover:text-[var(--danger)] disabled:opacity-50">Delete</button>
+      <button type="button" onClick={onRemove} disabled={busy} aria-label="Delete entry" className="shrink-0 text-xs text-ink-faint hover:text-danger disabled:opacity-50">Delete</button>
     </li>
   );
 }

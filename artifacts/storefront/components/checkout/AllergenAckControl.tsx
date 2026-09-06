@@ -44,7 +44,7 @@ export function AllergenAckControl({
         </span>{" "}
         in {flagged.dishes.map((d) => d.name).join(", ")}. I&rsquo;ve reviewed the allergen information for this order.
         {touched && !checked && (
-          <span id="allergen-ack-error" role="alert" className="mt-1 block text-xs font-medium text-[var(--danger)]">
+          <span id="allergen-ack-error" role="alert" className="mt-1 block text-xs font-medium text-danger">
             Please confirm you&rsquo;ve reviewed the allergen information for this order.
           </span>
         )}

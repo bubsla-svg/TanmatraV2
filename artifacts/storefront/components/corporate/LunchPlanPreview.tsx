@@ -52,7 +52,7 @@ export function LunchPlanPreview({ proposal, onSchedule, scheduling, perEmployee
             {d.warnings.length > 0 && (
               <ul className="mt-1 flex flex-col gap-1 rounded-lg border border-[color-mix(in_srgb,var(--danger)_35%,transparent)] bg-[color-mix(in_srgb,var(--danger)_6%,transparent)] px-3 py-2">
                 {d.warnings.map((w) => (
-                  <li key={w} className="flex items-start gap-1.5 text-xs font-medium text-[var(--danger)]">
+                  <li key={w} className="flex items-start gap-1.5 text-xs font-medium text-danger">
                     <span aria-hidden="true">⚠</span><span>{w}</span>
                   </li>
                 ))}

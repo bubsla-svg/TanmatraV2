@@ -169,20 +169,23 @@
   --line-strong: #5c7a72;
   /* Dark arms of the theme tuples (tanmatraTheme.ts): the action colour is
      the revision's amber in dark; sage is its dark sage-deep. */
-  --gold-text: #d08a3e;
+  /* The lifted amber (31 85% 65%). The old 53% stop read 3.32:1 as text on
+     --surface-raised below — under AA. See tanmatraBridge.css for the full
+     note; that file is what renders, this is the no-bridge fallback. */
+  --gold-text: #f2a85a;
   --sage-text: #b9c9a6;
   /* Slightly stronger mix so the tint stays legible against dark surfaces. */
   --sage-soft: #49593b;
-  --gold: #d08a3e;
+  --gold: #f2a85a;
   --gold-ink: #172622;
   --sage: #b9c9a6;
   --sage-ink: #e9efe1;
   --success: #b9c9a6;
-  --warning: #d08a3e;
+  --warning: #f2a85a;
   --danger: #d97c70;
-  --amber-deep: #d08a3e;
+  --amber-deep: #f2a85a;
   --amber-ink: #172622;
-  --focus-ring: #d08a3e;
+  --focus-ring: #f2a85a;
 
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-raised: 0 8px 28px rgba(0, 0, 0, 0.5);

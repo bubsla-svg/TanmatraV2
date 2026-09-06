@@ -139,7 +139,7 @@ export function SubscriptionManager() {
   if (subsQuery.isError) {
     return (
       <div className="rounded-2xl border border-line bg-surface p-5 text-center">
-        <p className="text-sm font-semibold text-[var(--danger)]">
+        <p className="text-sm font-semibold text-danger">
           {subsQuery.error instanceof ApiError ? subsQuery.error.message : "Couldn't load your plans."}
         </p>
         <button
@@ -163,7 +163,7 @@ export function SubscriptionManager() {
           {creditBalance} meal credit{creditBalance === 1 ? "" : "s"} — skipped deliveries come back as credits
         </p>
       )}
-      {actionError && <p role="alert" className="text-xs font-medium text-[var(--danger)]">{actionError}</p>}
+      {actionError && <p role="alert" className="text-xs font-medium text-danger">{actionError}</p>}
       {subs.length === 0 ? (
         <p className="text-sm text-ink-muted">
           You don&rsquo;t have any plans yet.{" "}
