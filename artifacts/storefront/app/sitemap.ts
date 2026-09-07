@@ -95,18 +95,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
 
-  // Dish detail pages. fetchMenu() is build-safe — it falls back to the static
-  // catalog package when the API is cold — so even a no-network build emits a
-  // complete sitemap rather than dropping every dish URL.
+  // Dish detail pages — emitted ONLY when the catalog came from the live API.
+  //
+  // fetchMenu() is build-safe: on a cold API it returns the static
+  // @workspace/menu-catalog fallback. That is right for a PAGE (the menu grid
+  // never blanks) and wrong for a SITEMAP. This route is PRERENDERED at
+  // `next build`, and API_BASE_URL is a Cloud Run runtime variable — the
+  // storefront Dockerfile declares no such ARG and deploy.yml sets it only on
+  // `gcloud run deploy` — so the build-time fetch to localhost:3000 always
+  // fails and the fallback always wins. The baked artifact then advertised all
+  // 116 fallback slugs, 32 of which the live API does not serve: each answers
+  // HTTP 200 with `<title>Not Found</title>` and `robots: noindex`, i.e. a
+  // soft-404 we asked the crawler to fetch, while 11 orderable dishes were
+  // missing entirely. Emitting nothing is the honest failure — an absent URL is
+  // still crawlable and still indexable, a soft-404 is a defect we published —
+  // and it is exactly what getRecipes/getChallenges/getTeamProfiles/getRds
+  // already do ([] on a cold API). The real dish URLs appear at the first
+  // revalidation on the running server, where API_BASE_URL is set.
   let dishEntries: MetadataRoute.Sitemap = [];
   try {
-    const { dishes } = await fetchMenu();
-    dishEntries = dishes.map((d) => ({
-      url: `${SITE_URL}/dish/${d.slug}`,
-      lastModified: now,
-      changeFrequency: "weekly" as const,
-      priority: 0.6,
-    }));
+    const { dishes, source } = await fetchMenu();
+    if (source === "api") {
+      dishEntries = dishes.map((d) => ({
+        url: `${SITE_URL}/dish/${d.slug}`,
+        lastModified: now,
+        changeFrequency: "weekly" as const,
+        priority: 0.6,
+      }));
+    }
   } catch {
     // fetchMenu already catches internally; this is a last-resort guard so the
     // sitemap is always emitted even if enumeration itself throws.
