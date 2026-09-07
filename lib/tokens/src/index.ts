@@ -21,7 +21,7 @@ export const ACCENTS = {
 export const STATUS = {
   success: "#556845",
   warning: "#986025",
-  danger: "#b94131",
+  danger: "#a93b2d",
 } as const;
 
 /** Motion tokens — mirror `--duration-*` / `--ease-*` for JS-driven animation. */

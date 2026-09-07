@@ -71,13 +71,31 @@ export const tanmatraTheme = defineTheme({
     '--color-warning': ['#986025', '#f2a85a'],
     // Dark arm was #b0655a — 4.14:1 on --color-background-surface, below AA's
     // 4.5:1 (2026-08-13 audit). Lightened/saturated slightly at the same hue
-    // (~8° red, was washed out at L 52%) to 5.1-6.2:1 across bg/surface/raised,
-    // matching --color-success and --color-warning's dark-arm contrast range.
-    // Light is the revision's --destructive (7 58% 46%). Its dark stop
-    // (7 58% 52%) measures 3.5:1 as text on the dark canvas, so the dark arm
-    // is lifted at the same hue to the first lightness that clears 4.5:1 on
-    // both dark canvases.
-    '--color-danger': ['#b94131', '#d97c70'],
+    // (~8° red, was washed out at L 52%) to 5.3:1 on bg and 4.5:1 on surface,
+    // just clearing AA on both. But --color-background-RAISED was never
+    // measured, and raised is where this token renders: the dark arm sat at
+    // 3.18:1 on it, the light arm at 4.14:1. Six live sites paint text-danger
+    // on a raised ground and every one is a Stitch dark route, so the failing
+    // arm is the default one: "Yes, cancel the plan" (/account/subscriptions),
+    // the allergen-ack error (/checkout, /plan/[planId]), the save-failed
+    // alert (/account/symptoms), the settings-load error (/meal-planner), and
+    // the allergen chip plus the "Delete" hover (/account/wellness). Two of
+    // them carry role="alert".
+    // Lifted at the same hue to 7 80% 79%, saturation up with lightness the
+    // way the accent's dark arm was, so it stays a danger red instead of
+    // going pink: 4.96:1 on raised, 7.09 on surface, 8.25 on the canvas. The
+    // light arm drops 7 58% 46% -> 42%: 4.78 / 5.92 / 5.57.
+    // There was no fill/ink pair to re-derive, contrary to the note this
+    // replaces: nothing paints a separate ink on a solid danger fill today.
+    // VegMark, the veg dots and PartnerWizard's rule are all self-coloured;
+    // the bg-danger/10 chips use the token as their own ink, so they move
+    // with it (2.86 -> 4.14 on raised, still the weakest spot and still owed
+    // a --danger-soft/--danger-ink pair like sage's); and button.tsx's
+    // `destructive` variant, the one true fill+white-ink pair, has zero call
+    // sites -- it was already 2.97:1 in dark before this change and is 1.91:1
+    // after, so --destructive-foreground is left one-armed rather than
+    // re-derived for a variant nothing renders.
+    '--color-danger': ['#a93b2d', '#f4a99f'],
 
     /* ── Background & Surface Ramp ───────────────────────────────────────── */
     // Light: Stone. Dark: Stitch's canvas / surface / container ramp.
