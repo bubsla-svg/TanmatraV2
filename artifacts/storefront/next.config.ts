@@ -20,6 +20,66 @@ const nextConfig: NextConfig = {
     "@workspace/subscription-rules",
   ],
   reactStrictMode: true,
+  // Security response headers. Until now this service emitted none: the only
+  // header on a tanmatra.food document was the HSTS Google Frontend adds at
+  // the edge — no clickjacking defence, no MIME-sniffing defence, no referrer
+  // policy, nothing.
+  //
+  // This set is deliberately the subset that CANNOT break a working page. It
+  // constrains who may FRAME us and what plugin / base-tag markup may run, and
+  // it says nothing about where scripts, styles, images or fetches may come
+  // from. There is no default-src, no script-src, no img-src, no connect-src
+  // and no frame-src, so Unsplash photography, checkout.razorpay.com, Sentry
+  // ingest and the /images proxy below are all untouched. A script-src worth
+  // having on an App Router app needs a per-request nonce, which needs
+  // middleware — a separate change with a real hydration blast radius, and
+  // 'unsafe-inline' instead would be theatre.
+  //
+  // frame-ancestors 'none' + X-Frame-Options: DENY is safe because nothing
+  // frames this site and this site frames nothing: no <iframe>, <object> or
+  // <embed> anywhere under app/ or components/, and no embed/oEmbed route.
+  // Razorpay looks like a counter-example and is not one — lib/razorpayAdapter
+  // injects checkout.js into OUR document and the gateway mounts ITS OWN
+  // iframe as our child. These headers govern who may embed us, never who we
+  // may embed (that is frame-src, which is absent here). The same values
+  // already ride on every /images/* response this app proxies, from
+  // artifacts/tanmatra/server/static-server.mjs.
+  //
+  // Permissions-Policy names only what this app actually touches.
+  // geolocation=(self): components/address/LocationPickerFlow.tsx reads
+  // navigator.permissions/geolocation, and geolocation=() would deny it with
+  // no prompt. payment=(self): Razorpay's sheet uses the Payment Request API;
+  // (self) is also the browser default, so the entry changes nothing and only
+  // stops a future silent tightening. camera=()/microphone=(): there is no
+  // getUserMedia in this codebase, and the two image inputs
+  // (PantryVisionScanner, BloodReportOCR) are plain <input type="file"> with
+  // no `capture` — the platform file picker serves those, and
+  // Permissions-Policy does not govern it.
+  async headers() {
+    return [
+      {
+        // Every path. Header rules are evaluated BEFORE redirects and rewrites
+        // and carry no destination, so this cannot shadow the /api/* or
+        // /images/* rewrites below — both still proxy exactly as today, and
+        // their upstreams already send these same headers (stricter) on the
+        // proxied response.
+        source: "/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(self), payment=(self)",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: "frame-ancestors 'none'; object-src 'none'; base-uri 'self'",
+          },
+        ],
+      },
+    ];
+  },
   // Same-origin /api proxy to the api-server (set API_UPSTREAM at runtime). The
   // browser calls same-origin `/api/*` (NEXT_PUBLIC_API_BASE=""), so the session
   // cookie stays first-party — the cross-site topology (storefront → api on a

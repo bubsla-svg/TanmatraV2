@@ -90,37 +90,53 @@ export function MetabolicExplorer({ dishes }: { dishes: MetabolicDish[] }) {
       </div>
 
       {preview.length > 0 && (
-        <Rail snap="center" className="mt-4 gap-4 pb-2">
-          {preview.map((d) => (
-            <Link
-              key={d.slug}
-              href={`/dish/${d.slug}`}
-              className="w-64 shrink-0 snap-center overflow-hidden rounded-2xl border border-line bg-surface transition-colors hover:border-line-strong"
-            >
-              <div className="relative h-40 bg-surface-raised">
-                <DishImage src={d.image} name={d.name} className="h-full w-full" />
-                <span
-                  className={`absolute right-3 top-3 rounded-full border border-line px-2 py-0.5 text-[10px] font-bold uppercase tracking-[.16em] backdrop-blur-md ${
-                    d.isVeg ? "bg-sage-soft text-sage-text" : "bg-bg/80 text-danger"
-                  }`}
-                >
-                  {d.isVeg ? "Veg" : "Non-veg"}
-                </span>
-              </div>
-              <div className="flex flex-col gap-3 p-5">
-                <h3 className="line-clamp-2 font-display text-lg font-semibold leading-tight text-primary">{d.name}</h3>
-                <div className="flex flex-wrap gap-2">
-                  <span className={chipCls}>{Math.round(d.protein)}g protein</span>
-                  <span className={chipCls}>{Math.round(d.fiber)}g fibre</span>
-                  <span className={chipCls}>
-                    GI {d.gi}
+        <>
+          {/* WCAG 1.3.1 (heading-order): these cards title themselves with h3s
+              and they are the FIRST headings after the page h1 — the hero is a
+              two-column grid and this explorer is its second column, so they
+              precede the page's own h2s ("Why people switch", ...) in document
+              order. Measured live: h1 -> h3 x6 -> h2. This heading is the
+              missing level.
+
+              sr-only, matching the house pattern at
+              app/(global)/menu/page.tsx:116 (an sr-only h2 directly above the
+              dish grid): the rail's geometry is unchanged and no new visible
+              copy ships on a live marketing hero. Inside the preview.length
+              guard on purpose — with no cards there are no h3s, so there is no
+              skip to fix and no heading left standing over an empty rail. */}
+          <h2 className="sr-only">Dishes that fit this goal</h2>
+          <Rail snap="center" className="mt-4 gap-4 pb-2">
+            {preview.map((d) => (
+              <Link
+                key={d.slug}
+                href={`/dish/${d.slug}`}
+                className="w-64 shrink-0 snap-center overflow-hidden rounded-2xl border border-line bg-surface transition-colors hover:border-line-strong"
+              >
+                <div className="relative h-40 bg-surface-raised">
+                  <DishImage src={d.image} name={d.name} className="h-full w-full" />
+                  <span
+                    className={`absolute right-3 top-3 rounded-full border border-line px-2 py-0.5 text-[10px] font-bold uppercase tracking-[.16em] backdrop-blur-md ${
+                      d.isVeg ? "bg-sage-soft text-sage-text" : "bg-bg/80 text-danger"
+                    }`}
+                  >
+                    {d.isVeg ? "Veg" : "Non-veg"}
                   </span>
-                  <span className={chipCls}>{Math.round(d.calories)} kcal</span>
                 </div>
-              </div>
-            </Link>
-          ))}
-        </Rail>
+                <div className="flex flex-col gap-3 p-5">
+                  <h3 className="line-clamp-2 font-display text-lg font-semibold leading-tight text-primary">{d.name}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    <span className={chipCls}>{Math.round(d.protein)}g protein</span>
+                    <span className={chipCls}>{Math.round(d.fiber)}g fibre</span>
+                    <span className={chipCls}>
+                      GI {d.gi}
+                    </span>
+                    <span className={chipCls}>{Math.round(d.calories)} kcal</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </Rail>
+        </>
       )}
     </div>
   );

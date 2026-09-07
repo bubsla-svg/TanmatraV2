@@ -1,6 +1,9 @@
 // schema.org JSON-LD. Server components — no client JS. No fabricated fields
-// (no social `sameAs`, no `logo`, no OG image) until real brand assets exist;
-// everything here is derived from data the site already ships.
+// (no social `sameAs`, no `logo`) until real brand assets exist; everything
+// here is derived from data the site already ships. The OG image this used to
+// disclaim now exists — public/brand/storefront.jpg, declared once in
+// app/layout.tsx — but it is a share card, not an Organization logo, so it is
+// deliberately not repeated here.
 import type { DishData } from "@workspace/menu-catalog";
 import { SITE_URL, absoluteUrl } from "@/lib/siteUrl";
 
