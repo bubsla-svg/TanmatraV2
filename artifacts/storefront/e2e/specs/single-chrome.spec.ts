@@ -25,7 +25,12 @@ import { test, expect } from "@playwright/test";
  * clusters showing at once.
  */
 async function expectOneVisibleAppNav(page: import("@playwright/test").Page) {
-  const desktopLinks = page.getByRole("link", { name: "Account" });
+  // Scoped to the header (2026-09-07). The mobile Account tab used to be a
+  // <button>, so an unscoped link query could only ever match the header's
+  // desktop-only cluster. It is a <Link> now — one tap to /account instead of
+  // opening a sheet — so an unscoped query matches the mobile tab too and
+  // counts the bottom bar twice: once as itself, once as a "desktop" cluster.
+  const desktopLinks = page.locator("header").getByRole("link", { name: "Account" });
   const mobileNav = page.getByRole("navigation", { name: "Native Mobile Navigation" });
   await expect(desktopLinks.or(mobileNav).first()).toBeVisible();
   const visible =

@@ -22,12 +22,6 @@ const SECTIONS = [
   { href: "/account/loyalty", label: "Rewards", sub: "Points, referrals and credits" },
 ] as const;
 
-const LEGAL = [
-  { href: "/legal/privacy", label: "Privacy" },
-  { href: "/legal/terms", label: "Terms" },
-  { href: "/faq", label: "Support" },
-] as const;
-
 const ME_KEY = ["account", "me"] as const;
 const ACTIVE_ORDER_KEY = ["account", "me", "activeOrder"] as const;
 
@@ -200,14 +194,6 @@ export function AccountHub() {
           </Link>
         ))}
       </nav>
-
-      <div className="flex justify-center gap-6 pt-2 pb-4 text-xs font-semibold text-ink-muted">
-        {LEGAL.map((l) => (
-          <Link key={l.href} href={l.href} className="inline-flex min-h-11 items-center transition-colors hover:text-primary">
-            {l.label}
-          </Link>
-        ))}
-      </div>
     </div>
   );
 }
