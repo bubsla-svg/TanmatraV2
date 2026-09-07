@@ -142,8 +142,11 @@ test("the cart's checkout button goes through the router, and prefetches", () =>
   // it renders in an open cart drawer with items in it. Everywhere else the
   // default is right — a menu of ~100 dishes would fire one full RSC render per
   // visible card if each one prefetched eagerly.
+  // The URL itself is no longer hand-written here — every money CTA in the app
+  // now builds its link through lib/checkoutIntent (see checkoutHosting.test.ts),
+  // so what this pins is the <Link> + eager prefetch, not the query string.
   const src = fs.readFileSync(path.join(STOREFRONT, "components/cart/CartDrawer.tsx"), "utf8");
-  assert.match(src, /<Link href="\/checkout\?mode=alacarte" prefetch>/);
+  assert.match(src, /<Link href=\{checkoutHref\(\{ mode: "alacarte" \}\)\} prefetch>/);
 });
 
 test("no other link opts into eager prefetch without saying why", () => {

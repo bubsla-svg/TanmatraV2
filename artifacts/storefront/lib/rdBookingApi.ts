@@ -82,20 +82,13 @@ export async function verifyAppointment(
   return data.appointment;
 }
 
-/**
- * The PAID flow, in the verified order: server order → Razorpay modal → server
- * verify. `razorpay` is injectable so the sequence is testable with a fake and
- * no real gateway. Returns the verified (paid) appointment.
- */
-export async function payForAppointment(
-  id: number,
-  razorpay: RazorpayAdapter,
-  fetchImpl?: FetchImpl,
-): Promise<Appointment> {
-  const order = await checkoutAppointment(id, fetchImpl);
-  const paid = await razorpay.open(order);
-  return verifyAppointment(id, paid, fetchImpl);
-}
+// The one-call `payForAppointment(id, razorpay)` wrapper that used to live
+// here is gone — same reason as premiumApi's: a single naked verify attempt,
+// no recovery for a captured-but-unverified payment, and a caller that opened
+// the modal on the RD's own page. Consults now settle on the shared checkout
+// (lib/purchaseSteps.ts#consultSteps + components/checkout/PurchaseRunner.tsx),
+// which composes checkoutAppointment → modal → verifyAppointment with the
+// bounded retry and reads the appointment back to confirm.
 
 /** Fetch all RD appointments for the authenticated user. Throws ApiError on
  *  failure (401 → sign in) — callers branch on it, most recently

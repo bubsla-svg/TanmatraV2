@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   PLAN_CATALOG,
@@ -22,6 +23,11 @@ import { FocusHeader } from "@/components/FocusHeader";
 import { PlanCheckout } from "@/components/checkout/plan/PlanCheckout";
 import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
 import { asBuilderCycle } from "@/lib/checkoutCycle";
+import { parseCheckoutIntent } from "@/lib/checkoutIntent";
+import { fetchMarketplaceItemServer } from "@/lib/marketplaceApi";
+import { MarketplacePurchase } from "@/components/checkout/modes/MarketplacePurchase";
+import { PremiumPurchase } from "@/components/checkout/modes/PremiumPurchase";
+import { ConsultPurchase } from "@/components/checkout/modes/ConsultPurchase";
 
 export const metadata: Metadata = { title: "Checkout", robots: { index: false } };
 
@@ -38,6 +44,9 @@ type Props = {
     credit?: string;
     bump?: string;
     mode?: string;
+    item?: string;
+    qty?: string;
+    appointment?: string;
   }>;
 };
 
@@ -49,12 +58,34 @@ type Props = {
  * comes off the first bill; `bump=1` = the RD add-on accepted at plan review.
  */
 export default async function CheckoutPage({ searchParams }: Props) {
-  const { plan, track, cycle, returning, credit, bump, mode } = await searchParams;
+  const params = await searchParams;
+  const { plan, track, cycle, returning, credit, bump, mode } = params;
+
+  // Every money path in the storefront now ends here. lib/checkoutIntent is the
+  // one place a /checkout query string is validated; a string that names no
+  // completable purchase parses to null and falls through to the à-la-carte
+  // leg, the one mode with a designed empty state.
+  const intent = parseCheckoutIntent(params);
+
+  if (intent?.mode === "premium" || intent?.mode === "consult" || intent?.mode === "marketplace") {
+    return (
+      <div data-ui-generation="stitch-74" data-screen-id="8.1" data-screen-state="quote-active" className="min-h-dvh">
+        <section className="mx-auto max-w-md px-4 pt-6 pb-44">
+          <FocusHeader title="Checkout" backLabel="Back" trustSignal="Secure UPI checkout" />
+          {intent.mode === "premium" && <PremiumPurchase />}
+          {intent.mode === "consult" && <ConsultPurchase appointmentId={intent.appointmentId} />}
+          {intent.mode === "marketplace" && (
+            <MarketplaceSection slug={intent.itemSlug} qty={intent.qty} />
+          )}
+        </section>
+      </div>
+    );
+  }
 
   // À-la-carte (SF-05 / CUJ-01): the guest money path — no plan, no session.
   // The cart lives client-side, so this leg is a client island; the server owns
   // pricing at POST /orders. Reached from the cart drawer's Checkout CTA.
-  if (mode === "alacarte") {
+  if (mode === "alacarte" || !intent) {
     return (
       <div
         data-ui-generation="stitch-74"
@@ -69,12 +100,11 @@ export default async function CheckoutPage({ searchParams }: Props) {
     );
   }
 
+  // An unknown ?plan= is not a plan this app can sell. The à-la-carte leg is
+  // the one mode with a designed empty state and, being a client island, can
+  // reflect a real cart if one exists — so a bad plan link lands there rather
+  // than stranding the customer.
   const id = plan && plan in PLAN_CATALOG ? (plan as PlanId) : null;
-  // A bare /checkout (no ?plan, and already past the mode==="alacarte" branch
-  // above) used to bounce to /plans — but the à-la-carte leg above is the one
-  // that actually has a designed empty-cart state and, being a client island,
-  // can reflect a real cart if one exists. /plans can't do either; it just
-  // strands a customer who followed a bookmark or a bare link.
   if (!id) redirect("/checkout?mode=alacarte");
   if (!planIsSelfServiceLaunchable(id)) redirect(`/plan/${id}?waitlist=1`);
 
@@ -246,4 +276,31 @@ export default async function CheckoutPage({ searchParams }: Props) {
       </section>
     </div>
   );
+}
+
+/**
+ * The pantry leg's server half: resolve the slug to a real catalog item before
+ * anything renders as buyable. A query string is not evidence that an item
+ * exists — and the price shown is the catalog's, never one carried in the URL,
+ * which is why no amount is accepted as a parameter here.
+ */
+async function MarketplaceSection({ slug, qty }: { slug: string; qty: number }) {
+  const item = await fetchMarketplaceItemServer(slug);
+  if (!item) {
+    return (
+      <div className="rounded-2xl border border-line bg-surface p-5">
+        <h1 className="font-display text-2xl font-semibold leading-tight text-primary">
+          We couldn&rsquo;t find that item
+        </h1>
+        <p className="mt-2 text-sm text-ink-muted">
+          It may have sold out or been retired.{" "}
+          <Link href="/marketplace" className="font-semibold text-primary hover:underline">
+            Browse the pantry
+          </Link>
+          .
+        </p>
+      </div>
+    );
+  }
+  return <MarketplacePurchase item={item} qty={qty} />;
 }

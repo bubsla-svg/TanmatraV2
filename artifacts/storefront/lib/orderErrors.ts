@@ -120,6 +120,35 @@ export function humanizeOrderError(e: unknown): string {
   return "Something went wrong on our side — your order was not placed and your cart is safe. Try again in a moment.";
 }
 
+/**
+ * The same machine-string guard, for a purchase that is NOT a cart: a
+ * membership, a pantry item bought on its own, a paid consult.
+ *
+ * humanizeOrderError's copy is cart-shaped throughout ("your cart is safe",
+ * "We couldn't price this order", "Adjust the items below") and every one of
+ * those sentences is a lie on a Premium screen. The rule it enforces is not
+ * cart-shaped at all, so it is the rule that is shared here and the copy that
+ * is not.
+ *
+ * "You have not been charged" is safe to state because the only caller
+ * (components/checkout/PurchaseRunner.tsx) reaches this exclusively BEFORE the
+ * gateway modal resolves — once money is captured it diverts to the recovery
+ * panel instead, which says the opposite.
+ */
+export function humanizePurchaseError(e: unknown): string {
+  if (e instanceof ApiError) {
+    const detail = isCustomerReadable(e.message)
+      ? e.message.trim()
+      : "We couldn't complete that payment just now.";
+    const next =
+      e.status >= 500 || e.status === 429
+        ? "Try again in a moment."
+        : "Try again, or use a different payment method.";
+    return `${detail} ${next}`;
+  }
+  return "Something went wrong on our side — you have not been charged. Try again in a moment.";
+}
+
 /** True when retrying the identical request could plausibly succeed (network
  *  blip, cold API, expired quote) — false for deterministic 4xx refusals,
  *  where the only fix is changing the cart. The checkout UI uses this to

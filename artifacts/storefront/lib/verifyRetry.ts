@@ -50,13 +50,26 @@ export function isRetryableVerifyError(e: unknown): boolean {
   return e instanceof ApiError ? e.status >= 500 : true;
 }
 
-/** Run the verify call with bounded in-place retry. Exported for tests;
- *  `sleep` is injectable so backoff is testable without real waits. */
-export async function verifyWithRetry(
-  verify: typeof verifyPayment,
-  input: PaidFacts,
+/**
+ * The retry loop itself, over ANY verify call. The meal paths verify at the
+ * shared `/payments/razorpay/verify`; Premium and RD consults verify at their
+ * own endpoints, which answer a different shape — but the window they run in,
+ * and therefore the rule for retrying it, is identical. Generic so those two
+ * get the same bounded in-place retry instead of the single naked attempt they
+ * each used to make.
+ *
+ * Retrying is safe at every one of them for the same reason: the request
+ * carries only ids, so a retry can never charge anything. The endpoints that
+ * bind on a pending→paid guard answer a replay of an ALREADY-applied payment
+ * with 409 — a 4xx, so this stops immediately and hands the caller a terminal
+ * failure, which is exactly right: the recovery from there is to read the
+ * authoritative state (PurchaseSteps.settled), never to pay again.
+ */
+export async function withVerifyRetry<I, T>(
+  verify: (input: I) => Promise<T>,
+  input: I,
   sleep: Sleep = realSleep,
-): ReturnType<typeof verifyPayment> {
+): Promise<T> {
   let lastErr: unknown;
   for (let attempt = 1; attempt <= VERIFY_ATTEMPTS; attempt++) {
     try {
@@ -68,6 +81,17 @@ export async function verifyWithRetry(
     }
   }
   throw lastErr; // Unreachable — the loop always returns or throws.
+}
+
+/** Run the shared `/payments/razorpay/verify` call with bounded in-place
+ *  retry. Exported for tests; `sleep` is injectable so backoff is testable
+ *  without real waits. */
+export function verifyWithRetry(
+  verify: typeof verifyPayment,
+  input: PaidFacts,
+  sleep: Sleep = realSleep,
+): ReturnType<typeof verifyPayment> {
+  return withVerifyRetry(verify, input, sleep);
 }
 
 /**

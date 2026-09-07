@@ -15,6 +15,8 @@ import { RD_SERVICES_ENABLED } from "@/lib/flags";
 import type { PlanId, DietTrack, PlanCycle } from "@workspace/subscription-rules";
 import type { PlanBuilderData } from "@/lib/plans";
 import { Leaf, Egg, Bone, Check } from "lucide-react";
+import { checkoutHref } from "@/lib/checkoutIntent";
+import { asBuilderCycle } from "@/lib/checkoutCycle";
 
 const TRACK_LABEL: Record<DietTrack, string> = { veg: "Veg", egg: "Egg", nonveg: "Non-veg" };
 
@@ -101,7 +103,23 @@ export function PlanBuilder({ planId, defaultTrack, builderData }: { planId: Pla
   function confirm() {
     emitFunnel("cuj_builder_confirm", { planId, track, cycle, bump });
     emitFunnel("cuj_checkout_start", { planId, track, cycle, bump });
-    router.push(`/checkout?plan=${planId}&track=${track}&cycle=${cycle}${bump ? "&bump=1" : ""}`);
+    // `cycle` is a PlanCycle — wider than the three cadences this builder's UI
+    // can offer, because a plan's quote table may carry "one_off" (the trial).
+    // asBuilderCycle drops anything outside that set, which is what the
+    // checkout has always done on receipt; doing it HERE makes the drop visible
+    // at the source instead of silently on the far side of a query string. An
+    // absent cycle makes the checkout quote the plan's OWN cadence, which is
+    // the right answer for a one-off — never a guessed "monthly".
+    const builderCycle = asBuilderCycle(cycle);
+    router.push(
+      checkoutHref({
+        mode: "plan",
+        planId,
+        track,
+        ...(builderCycle ? { cycle: builderCycle } : {}),
+        ...(bump ? { bump: true } : {}),
+      }),
+    );
   }
 
   // Same "never a dead end" contract PlanCard applies to a blocked plan: a

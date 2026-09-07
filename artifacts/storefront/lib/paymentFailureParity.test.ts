@@ -33,6 +33,11 @@ function read(rel: string): string {
 
 const PLAN = read("plan/PlanCheckout.tsx");
 const ALACARTE = read("AlacarteCheckout.tsx");
+// The third path: one runner shared by Premium, the pantry and paid consults,
+// each of which used to run its own inline checkout. Its state machine is a
+// `phase` union rather than the two booleans the meal legs carry, so the
+// assertions below are on the same PROPERTIES, not the same identifiers.
+const RUNNER = read("PurchaseRunner.tsx");
 
 /** The catch block that handles a failed pay attempt. */
 function payCatch(src: string): string {
@@ -113,5 +118,67 @@ test("the summary is not unmounted while payment is in flight", () => {
     ALACARTE,
     /if \(verifying\) \{\s*return/,
     "an early return on `verifying` would unmount the summary behind the sheet",
+  );
+});
+
+// ── The third money path (components/checkout/PurchaseRunner.tsx) ────────────
+//
+// Same laws, checked against its own idiom. This is where the drift would
+// reappear: three surfaces were folded into this runner precisely because each
+// had invented its own answer to a failed payment, and two of them had no
+// captured-but-unverified state at all.
+
+test("the shared runner humanizes a payment failure too", () => {
+  assert.match(
+    RUNNER,
+    /setError\(\s*e instanceof RazorpayDismissed[\s\S]{0,200}?humanizePurchaseError\(e\)/,
+    "PurchaseRunner must route payment failures through the machine-string guard",
+  );
+  assert.doesNotMatch(
+    RUNNER,
+    /setError\((?:[^)]*\b)?e\.message/,
+    "PurchaseRunner must not surface e.message directly",
+  );
+});
+
+test("the shared runner says the customer was not charged on a dismissal", () => {
+  assert.match(RUNNER, /haven't been charged/);
+  assert.match(RUNNER, /try again/i);
+});
+
+test("the shared runner re-enables its CTA after a recoverable failure", () => {
+  // Law 9's other half: `idle` is the phase where the pay CTA is live again.
+  assert.match(
+    RUNNER,
+    /setPhase\("idle"\)/,
+    "a failed attempt must return to the phase where the CTA is usable",
+  );
+});
+
+test("a captured-but-unverified payment goes to the recovery panel on the runner too", () => {
+  // The dangerous case: money is captured, so re-enabling the CTA could create
+  // a second real charge. The flag must be checked BEFORE the auth and error
+  // branches, or a 401 arriving after capture would route to the sign-in gate
+  // and back to a live pay button.
+  const guard = RUNNER.indexOf('if (capturedAtAllRef.current) {');
+  const auth = RUNNER.indexOf('e instanceof ApiError && e.status === 401');
+  assert.notEqual(guard, -1, "the runner must have a captured-payment guard");
+  assert.notEqual(auth, -1, "the runner must have an auth branch");
+  assert.ok(guard < auth, "the captured guard must precede every other failure branch");
+  assert.match(
+    RUNNER.slice(guard, guard + 400),
+    /setPhase\("unresolved"\)/,
+    "a captured-but-unverified payment must divert to the recovery panel",
+  );
+});
+
+test("the runner never re-creates a purchase on a retry", () => {
+  // Every one of the three paths this runner replaced could mint a second
+  // order, stock decrement or charge on a retry. `create()` is reachable only
+  // when no handle has been stored.
+  assert.match(
+    RUNNER,
+    /handleRef\.current \?\? \(await steps\.create\(\)\)/,
+    "create must run only when no handle from a prior attempt exists",
   );
 });

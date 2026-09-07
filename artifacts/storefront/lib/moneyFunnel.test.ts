@@ -25,24 +25,30 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const COMPONENTS = path.join(HERE, "..", "components");
 const read = (...p: string[]) => fs.readFileSync(path.join(COMPONENTS, ...p), "utf8");
 
+// The third entry is the runner shared by Premium, the pantry and paid
+// consults. Those three used to take money from their own product pages —
+// where, exactly like the two above before this file existed, they reported
+// nothing at all. Folding them onto /checkout is what made one shared set of
+// events possible; this list is what keeps it that way.
 const LIVE_PATHS: [label: string, file: string[]][] = [
   ["à-la-carte", ["checkout", "AlacarteCheckout.tsx"]],
   ["plan", ["checkout", "plan", "PlanCheckout.tsx"]],
+  ["shared runner", ["checkout", "PurchaseRunner.tsx"]],
 ];
 
-test("both live money paths report a completed purchase", () => {
+test("every live money path reports a completed purchase", () => {
   for (const [label, file] of LIVE_PATHS) {
     assert.match(read(...file), /emitFunnel\("checkout_complete"/, `${label} must report completion`);
   }
 });
 
-test("both live money paths report an opened payment", () => {
+test("every live money path reports an opened payment", () => {
   for (const [label, file] of LIVE_PATHS) {
     assert.match(read(...file), /emitFunnel\("payment_opened"/, `${label} must report the attempt`);
   }
 });
 
-test("both live money paths report a failure", () => {
+test("every live money path reports a failure", () => {
   // Without this the funnel shows attempts and successes and calls the
   // difference "drop-off", hiding a broken payment rail inside it.
   for (const [label, file] of LIVE_PATHS) {
@@ -50,7 +56,7 @@ test("both live money paths report a failure", () => {
   }
 });
 
-test("both live money paths report entering checkout", () => {
+test("every live money path reports entering checkout", () => {
   for (const [label, file] of LIVE_PATHS) {
     assert.match(read(...file), /emitFunnel\("begin_checkout"/, `${label} needs a denominator`);
   }
@@ -63,6 +69,23 @@ test("a dismissal is not counted as a payment failure", () => {
   for (const [, file] of LIVE_PATHS) {
     assert.match(read(...file), /RazorpayDismissed \? "dismissed"/);
   }
+});
+
+test("the shared runner distinguishes its three money paths", () => {
+  // Premium, pantry and consults share one runner and therefore one event
+  // stream. Without `kind` they collapse into a single bucket and the funnel
+  // cannot tell a membership drop-off from a pantry one.
+  const runner = read("checkout", "PurchaseRunner.tsx");
+  for (const event of ["begin_checkout", "payment_opened", "payment_failed", "checkout_complete"]) {
+    const at = runner.indexOf(`emitFunnel("${event}"`);
+    assert.notEqual(at, -1, `${event} must be emitted`);
+    assert.match(runner.slice(at, at + 220), /\bkind\b/, `${event} must carry its kind`);
+  }
+});
+
+test("the shared runner never claims a subscription was created", () => {
+  // None of its three paths starts a meal subscription.
+  assert.doesNotMatch(read("checkout", "PurchaseRunner.tsx"), /subscription_created/);
 });
 
 test("only the plan path claims a subscription was created", () => {
