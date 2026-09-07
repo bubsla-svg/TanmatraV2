@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  getSlots, bookAppointment, checkoutAppointment, verifyAppointment, payForAppointment,
+  getSlots, bookAppointment, checkoutAppointment, verifyAppointment,
   type Appointment,
 } from "./rdBookingApi";
 import type { RazorpayAdapter } from "./moneyPath";
@@ -61,25 +61,7 @@ test("verifyAppointment: POSTs the signature payload to /:id/verify", async () =
   assert.equal(appt.paymentStatus, "paid");
 });
 
-test("payForAppointment: checkout → adapter.open(order) → verify, in order", async () => {
-  const order = { razorpayOrderId: "order_x", amount: 120000, currency: "INR", keyId: "key_x" };
-  const { impl, calls } = fakeFetch((url) =>
-    url.includes("/checkout") ? jsonRes(order) : jsonRes({ appointment: { ...APPT, paymentStatus: "paid" } }),
-  );
-  let seenOrder: unknown;
-  const razorpay: RazorpayAdapter = {
-    async open(o) {
-      seenOrder = o;
-      return { razorpayPaymentId: "pay_1", razorpayOrderId: o.razorpayOrderId, razorpaySignature: "sig_1" };
-    },
-  };
-  const appt = await payForAppointment(7, razorpay, impl);
-  // the adapter received the SERVER order (client authored nothing)
-  assert.deepEqual(seenOrder, order);
-  // verify was called with the adapter's payment result
-  const verifyCall = calls.find((c) => c.url.includes("/verify"));
-  assert.deepEqual(verifyCall!.body, { razorpayPaymentId: "pay_1", razorpayOrderId: "order_x", razorpaySignature: "sig_1" });
-  assert.equal(appt.paymentStatus, "paid");
-  // order: checkout before verify
-  assert.ok(calls.findIndex((c) => c.url.includes("/checkout")) < calls.findIndex((c) => c.url.includes("/verify")));
-});
+// The `payForAppointment` sequencing test that lived here is gone with the
+// wrapper it covered. The same checkout → open → verify order — plus the
+// bounded verify retry and the appointment read-back the wrapper never had —
+// is pinned on the shared path in lib/purchaseSteps.test.ts.

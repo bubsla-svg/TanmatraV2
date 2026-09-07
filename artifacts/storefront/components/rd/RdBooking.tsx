@@ -1,21 +1,26 @@
 "use client";
-// Client island: RD consult booking (Wave D money path). Pick a session + slot,
-// book (auth-gated), and — for paid consults — settle via Razorpay. The client
-// NEVER authors a price: booking is server-priced, the Razorpay order comes from
-// the server, and /verify flips the status. Free 15-min intros skip payment.
+// Client island: RD consult booking. Pick a session + slot and book it
+// (auth-gated). Booking RESERVES TIME, not money, so it stays here; the payment
+// leg moved to /checkout?mode=consult, where every purchase in the app settles.
+// It used to open Razorpay right here, with a single naked verify call and no
+// captured-but-unverified state — a blip surfaced as an ordinary error over a
+// real charge. The client NEVER authors a price: booking is server-priced, the
+// gateway order comes from the server, and /verify flips the status. Free
+// 15-min intros skip payment entirely and confirm on the spot.
 // Slot loading is a useQuery for the shared cache/retry infra — key extends the
 // ["rd","booking"] convention with rd.slug + kind (both required for a correct
 // cache entry: a static key would serve stale slots across RDs/session kinds).
 // getSlots' own error handling is untouched: any failure still resolves to []
 // ("No open slots… check back soon"), matching its pre-migration behavior.
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/apiClient";
 import { formatPaise } from "@/lib/format";
-import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter";
+import { checkoutHref } from "@/lib/checkoutIntent";
 import {
-  getSlots, bookAppointment, payForAppointment,
+  getSlots, bookAppointment,
   type Slot, type SessionKind, type Appointment,
 } from "@/lib/rdBookingApi";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
@@ -32,6 +37,7 @@ const fmt = (iso: string) =>
   });
 
 export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: RdPricing; bookable: boolean } }) {
+  const router = useRouter();
   const [kind, setKind] = useState<SessionKind>("intro_15m");
   const [sel, setSel] = useState<Slot | null>(null);
   const [booked, setBooked] = useState<Appointment | null>(null);
@@ -50,22 +56,33 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
   // mirrors the old loadSlots()'s explicit setSel(null) on every reload.
   useEffect(() => setSel(null), [rd.slug, kind]);
 
-  const razorpay = createRazorpayAdapter({ name: "Tanmatra", description: `Consult · ${rd.name}` });
   const pending = booked?.paymentStatus === "pending" ? booked : null;
 
   async function run() {
-    if (busy || (!pending && !sel)) return;
+    if (busy) return;
+    // A slot already held just needs paying for — never re-book it, which would
+    // 409 against the customer's OWN hold and read as "slot just taken".
+    if (pending) {
+      router.push(checkoutHref({ mode: "consult", appointmentId: pending.id }));
+      return;
+    }
+    if (!sel) return;
     setBusy(true); setError(null);
     try {
-      const appt = pending ?? (await bookAppointment({ rdSlug: rd.slug, kind, startAt: sel!.startAt, endAt: sel!.endAt }));
+      const appt = await bookAppointment({ rdSlug: rd.slug, kind, startAt: sel.startAt, endAt: sel.endAt });
       setBooked(appt);
-      if (appt.paymentStatus !== "free") setBooked(await payForAppointment(appt.id, razorpay));
+      // Paid consults settle on the shared checkout. `busy` stays true across
+      // the push so the CTA cannot be tapped twice into a second booking.
+      if (appt.paymentStatus !== "free") {
+        router.push(checkoutHref({ mode: "consult", appointmentId: appt.id }));
+        return;
+      }
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) setNeedsAuth(true);
-      else if (e instanceof RazorpayDismissed) setError("Payment cancelled — your slot is held; tap Pay to finish.");
       else if (e instanceof ApiError && e.status === 409) { setError("That slot was just taken — pick another."); void reloadSlots(); }
       else setError(e instanceof ApiError ? e.message : "Couldn't complete that — please try again.");
-    } finally { setBusy(false); }
+    }
+    setBusy(false);
   }
 
   if (!rd.bookable) {
@@ -146,7 +163,7 @@ export function RdBooking({ rd }: { rd: { slug: string; name: string; pricing: R
       <Button type="button" onClick={() => void run()} disabled={busy || (!pending && !sel)}
         aria-busy={busy} aria-live="polite"
         shape="pill" size="fluid" className="mt-5 min-h-12 w-full px-5 text-sm font-bold disabled:opacity-40">
-        {busy ? "Working…" : pending ? `Pay ${formatPaise(price)}` : price === 0 ? "Book free intro" : `Book & pay ${formatPaise(price)}`}
+        {busy ? "Working…" : pending ? `Continue to payment · ${formatPaise(price)}` : price === 0 ? "Book free intro" : `Book & pay ${formatPaise(price)}`}
       </Button>
     </div>
   );

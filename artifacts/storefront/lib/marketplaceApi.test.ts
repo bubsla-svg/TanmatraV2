@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { RazorpayAdapter } from "./moneyPath";
-import { listItems, checkout, payForMarketplace, finishMarketplacePayment, fetchMarketplaceItemsServer } from "./marketplaceApi";
+import { listItems, checkout, finishMarketplacePayment, fetchMarketplaceItemsServer } from "./marketplaceApi";
 
 const jsonRes = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -64,7 +64,14 @@ test("checkout sends the Idempotency-Key header and no key in the body", async (
   assert.deepEqual(seen!.body.items, [{ itemId: 5, qty: 2 }]);
 });
 
-test("payForMarketplace: checkout → razorpay order → open → verify, in order", async () => {
+// The one-call `payForMarketplace` wrapper these two tests covered is gone: it
+// minted a fresh idempotency key per call, so a retried create was a second
+// order, stock decrement and charge. The pantry now composes `checkout` +
+// `finishMarketplacePayment` on the shared /checkout page, holding ONE key for
+// the whole attempt (lib/purchaseSteps.ts) — so the sequencing is pinned here
+// on the two calls that remain, and the key reuse in lib/purchaseSteps.test.ts.
+
+test("the pantry money path runs checkout → razorpay order → open → verify, in order", async () => {
   const seq: string[] = [];
   const impl = (async (u: string) => {
     const url = String(u);
@@ -76,32 +83,33 @@ test("payForMarketplace: checkout → razorpay order → open → verify, in ord
   const razorpay: RazorpayAdapter = {
     open: async (o) => { seq.push("open"); assert.equal(o.razorpayOrderId, "order_9"); return { razorpayPaymentId: "pay", razorpayOrderId: o.razorpayOrderId, razorpaySignature: "sig" }; },
   };
-  const order = await payForMarketplace([{ itemId: 5, qty: 1 }], razorpay, {}, impl);
+  const { order } = await checkout({ idempotencyKey: "idem-9", items: [{ itemId: 5, qty: 1 }] }, impl);
+  const paid = await finishMarketplacePayment(order, razorpay, {}, impl);
   assert.deepEqual(seq, ["checkout", "order", "open", "verify"]);
-  assert.equal(order.externalOrderId, "mkt-9");
+  assert.equal(paid.externalOrderId, "mkt-9");
 });
 
-test("payForMarketplace bundle mode passes deliveryMode + bundleWithOrderId to checkout", async () => {
-  let body: any = null;
-  const impl = (async (u: string, init?: RequestInit) => {
-    const url = String(u);
-    if (url.endsWith("/marketplace/checkout")) { body = JSON.parse(String(init?.body)); return jsonRes({ order: { id: 1, externalOrderId: "mkt-b", status: "placed", totalPaise: 34000 } }); }
-    if (url.endsWith("/payments/razorpay/order")) return jsonRes({ razorpayOrderId: "o", amount: 34000, currency: "INR", keyId: "k" });
-    return jsonRes({ ok: true, orderId: "mkt-b", status: "preparing" });
+test("bundle mode passes deliveryMode + bundleWithOrderId to checkout", async () => {
+  let body: Record<string, unknown> | null = null;
+  const impl = (async (_u: string, init?: RequestInit) => {
+    body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    return jsonRes({ order: { id: 1, externalOrderId: "mkt-b", status: "placed", totalPaise: 34000 } });
   }) as unknown as typeof fetch;
-  const razorpay: RazorpayAdapter = { open: async (o) => ({ razorpayPaymentId: "p", razorpayOrderId: o.razorpayOrderId, razorpaySignature: "s" }) };
-  await payForMarketplace([{ itemId: 5, qty: 1 }], razorpay, { deliveryMode: "bundle_with_meal", bundleWithOrderId: 77 }, impl);
-  assert.equal(body.deliveryMode, "bundle_with_meal");
-  assert.equal(body.bundleWithOrderId, 77);
+  await checkout(
+    { idempotencyKey: "idem-b", items: [{ itemId: 5, qty: 1 }], deliveryMode: "bundle_with_meal", bundleWithOrderId: 77 },
+    impl,
+  );
+  assert.equal(body!["deliveryMode"], "bundle_with_meal");
+  assert.equal(body!["bundleWithOrderId"], 77);
 });
 
 // ── Robustness parity with the meal money paths (revenue-path audit fixes) ───
 
 test("a 5xx verify is retried in place — checkout and the modal never re-run", async () => {
-  // The regression this pins: payForMarketplace used a single bare
-  // verifyPayment, so a transient 5xx after CAPTURE surfaced as a failure,
-  // the Buy button re-enabled, and a re-tap minted a fresh idempotency key —
-  // a second order, stock decrement, and charge.
+  // The regression this pins: the pantry path used a single bare verifyPayment,
+  // so a transient 5xx after CAPTURE surfaced as a failure, the Buy button
+  // re-enabled, and a re-tap minted a fresh idempotency key — a second order,
+  // stock decrement, and charge.
   const seq: string[] = [];
   let verifyCalls = 0;
   const impl = (async (u: string) => {
@@ -119,7 +127,8 @@ test("a 5xx verify is retried in place — checkout and the modal never re-run",
   const razorpay: RazorpayAdapter = {
     open: async (o) => { seq.push("open"); return { razorpayPaymentId: "p", razorpayOrderId: o.razorpayOrderId, razorpaySignature: "s" }; },
   };
-  const order = await payForMarketplace([{ itemId: 5, qty: 1 }], razorpay, {}, impl);
+  const { order: created } = await checkout({ idempotencyKey: "idem-r", items: [{ itemId: 5, qty: 1 }] }, impl);
+  const order = await finishMarketplacePayment(created, razorpay, {}, impl);
   assert.equal(order.externalOrderId, "mkt-r");
   assert.deepEqual(seq, ["checkout", "order", "open", "verify", "verify"]);
 });
@@ -146,25 +155,25 @@ test("finishMarketplacePayment resumes an existing order — no second checkout 
   assert.deepEqual(seq, ["order", "open", "verify"]);
 });
 
-test("onCreated fires before any payment step; onCaptured carries the verify facts", async () => {
-  const seq: string[] = [];
+test("onCaptured carries the exact facts a verify-only retry needs", async () => {
+  // These are what the runner keeps so an exhausted verify can be re-asked
+  // WITHOUT re-opening the modal over an already-captured payment.
   let captured: unknown = null;
   const impl = (async (u: string) => {
     const url = String(u);
-    if (url.endsWith("/marketplace/checkout")) { seq.push("checkout"); return jsonRes({ order: { id: 1, externalOrderId: "mkt-h", status: "placed", totalPaise: 34000 } }); }
-    if (url.endsWith("/payments/razorpay/order")) { seq.push("order"); return jsonRes({ razorpayOrderId: "order_h", amount: 34000, currency: "INR", keyId: "k" }); }
-    if (url.endsWith("/payments/razorpay/verify")) { seq.push("verify"); return jsonRes({ ok: true, orderId: "mkt-h", status: "preparing" }); }
+    if (url.endsWith("/payments/razorpay/order")) return jsonRes({ razorpayOrderId: "order_h", amount: 34000, currency: "INR", keyId: "k" });
+    if (url.endsWith("/payments/razorpay/verify")) return jsonRes({ ok: true, orderId: "mkt-h", status: "preparing" });
     throw new Error(`unexpected ${url}`);
   }) as unknown as typeof fetch;
   const razorpay: RazorpayAdapter = {
     open: async (o) => ({ razorpayPaymentId: "pay_h", razorpayOrderId: o.razorpayOrderId, razorpaySignature: "sig_h" }),
   };
-  await payForMarketplace([{ itemId: 5, qty: 1 }], razorpay, {
-    onCreated: (o) => { seq.push(`created:${o.externalOrderId}`); },
-    onCaptured: (f) => { captured = f; },
-  }, impl);
-  assert.equal(seq[0], "checkout");
-  assert.equal(seq[1], "created:mkt-h", "onCreated must fire BEFORE the payment leg");
+  await finishMarketplacePayment(
+    { id: 1, externalOrderId: "mkt-h", status: "placed", totalPaise: 34000 },
+    razorpay,
+    { onCaptured: (f) => { captured = f; } },
+    impl,
+  );
   assert.deepEqual(captured, {
     orderId: "mkt-h",
     razorpayPaymentId: "pay_h",

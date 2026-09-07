@@ -1,5 +1,4 @@
 import { apiGet, apiPost, type FetchImpl } from "./apiClient";
-import type { RazorpayAdapter } from "./moneyPath";
 
 /**
  * Premium-membership client (route-parity — gated). The purchase is a real
@@ -64,13 +63,10 @@ export function resumePremium(
   return apiPost("/premium/subscribe", {}, fetchImpl);
 }
 
-/** The money path, in order: server order → Razorpay modal → server verify. */
-export async function payForPremium(
-  razorpay: RazorpayAdapter,
-  fetchImpl?: FetchImpl,
-): Promise<PremiumMembership> {
-  const order = await checkoutPremium(fetchImpl);
-  const paid = await razorpay.open(order);
-  const { membership } = await verifyPremium(paid, fetchImpl);
-  return membership;
-}
+// The one-call `payForPremium(razorpay)` wrapper that used to live here is
+// gone. It ran server order → modal → verify with a SINGLE naked verify
+// attempt and no way to recover a captured-but-unverified payment, and its
+// only caller opened the modal on /premium itself. Premium now settles on the
+// shared checkout: lib/purchaseSteps.ts#premiumSteps composes the same three
+// calls with the bounded verify retry and the authoritative /premium/me read
+// that recovery needs, and components/checkout/PurchaseRunner.tsx drives them.

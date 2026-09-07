@@ -20,6 +20,7 @@ import { CartUpsellRail } from "./CartUpsellRail";
 import { RAIL_GAP_PX, useUpsellRailFit } from "./useUpsellRailFit";
 import { listItems, type MarketplaceItem } from "@/lib/marketplaceApi";
 import { selectUpsellItems } from "@/lib/upsell";
+import { checkoutHref } from "@/lib/checkoutIntent";
 
 /**
  * Cart as a bottom sheet (§4.3). Line items with in-place steppers; the
@@ -129,7 +130,7 @@ export function CartDrawer({
             it. Everywhere else the default (the loading shell for a dynamic
             route) is right, because a menu of ~100 dishes would fire one
             full RSC render per visible card. */}
-        <Link href="/checkout?mode=alacarte" prefetch>Checkout</Link>
+        <Link href={checkoutHref({ mode: "alacarte" })} prefetch>Checkout</Link>
       </Button>
     );
   } else {

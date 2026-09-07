@@ -24,6 +24,7 @@ import { useCart } from "@/components/cart/CartProvider";
 import { Button } from "@/components/ui/button";
 import { getAuthUser } from "@/lib/api";
 import { getGroup, removeLine, closeGroup, groupSubtotalPaise } from "@/lib/groupOrdersApi";
+import { checkoutHref } from "@/lib/checkoutIntent";
 
 export function GroupOrderView({ code }: { code: string }) {
   const router = useRouter();
@@ -79,7 +80,7 @@ export function GroupOrderView({ code }: { code: string }) {
       // The plain /checkout route now defaults to the plan flow (redirects to
       // /plans without a `plan` id) — the guest dish-cart checkout needs the
       // explicit mode, same as CartDrawer's own Checkout link.
-      router.push("/checkout?mode=alacarte");
+      router.push(checkoutHref({ mode: "alacarte" }));
     } catch (e) { setError(e instanceof ApiError ? e.message : "Couldn't close the group."); setBusy(false); }
   }
 

@@ -1,13 +1,17 @@
 "use client";
-// Premium purchase + membership state. Session-gated (401 → PhoneAuth). Joining
-// is a real money-path: server order → Razorpay modal → server verify+activate
-// (payForPremium). Cancel/resume are free (period already paid).
+// Membership state + the free lifecycle actions. Session-gated (401 →
+// PhoneAuth). Joining is NOT run here any more: it is a real money path, and it
+// used to open Razorpay in place with no captured-but-unverified state at all —
+// a verify blip left the customer charged, un-activated, and looking at a Join
+// button that had re-enabled itself over a real charge. Join now links to
+// /checkout?mode=premium, where every purchase in the app settles.
+// Cancel/resume stay here: they move no money (the period is already paid).
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/apiClient";
 import { formatPaise } from "@/lib/format";
-import { createRazorpayAdapter } from "@/lib/razorpayAdapter";
-import { getPremium, payForPremium, cancelPremium, resumePremium } from "@/lib/premiumApi";
+import { checkoutHref } from "@/lib/checkoutIntent";
+import { getPremium, cancelPremium, resumePremium } from "@/lib/premiumApi";
 import { Button } from "@/components/ui/button";
 import { RD_SERVICES_ENABLED } from "@/lib/flags";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
@@ -24,11 +28,6 @@ export function PremiumMembership() {
   const invalidate = () => void queryClient.invalidateQueries({ queryKey: ["account", "premium"] });
   const onAuthError = (e: unknown) => { if (isAuthError(e)) void premiumQuery.refetch(); };
 
-  const joinMutation = useMutation({
-    mutationFn: () => payForPremium(createRazorpayAdapter()),
-    onSuccess: invalidate,
-    onError: (e) => onAuthError(e),
-  });
   const cancelMutation = useMutation({
     mutationFn: () => cancelPremium(),
     onSuccess: invalidate,
@@ -40,8 +39,8 @@ export function PremiumMembership() {
     onError: (e) => onAuthError(e),
   });
 
-  const busy = joinMutation.isPending || cancelMutation.isPending || resumeMutation.isPending;
-  const actionError = joinMutation.error ?? cancelMutation.error ?? resumeMutation.error;
+  const busy = cancelMutation.isPending || resumeMutation.isPending;
+  const actionError = cancelMutation.error ?? resumeMutation.error;
 
   if (isAuthError(premiumQuery.error)) {
     return (
@@ -100,8 +99,8 @@ export function PremiumMembership() {
         </div>
       ) : (
         <div className="mt-5 flex flex-col gap-3">
-          <Button type="button" onClick={() => joinMutation.mutate()} disabled={busy} aria-busy={joinMutation.isPending} aria-live="polite" shape="pill" size="fluid" className="px-6 py-3.5 font-semibold disabled:opacity-60">
-            {joinMutation.isPending ? "Opening payment…" : "Join Tanmatra Premium"}
+          <Button asChild shape="pill" size="fluid" className="px-6 py-3.5 text-center font-semibold">
+            <Link href={checkoutHref({ mode: "premium" })}>Join Tanmatra Premium</Link>
           </Button>
           <p className="text-center text-xs text-ink-faint">Cancel anytime.</p>
         </div>

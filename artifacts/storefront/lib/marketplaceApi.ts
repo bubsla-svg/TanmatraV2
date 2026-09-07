@@ -60,6 +60,25 @@ export async function fetchMarketplaceItemsServer(): Promise<MarketplaceItem[]> 
   }
 }
 
+/** One catalog item, server-side — same reasoning as fetchMarketplaceItemsServer
+ *  above (public data, so it is cacheable and must not go through apiGet, whose
+ *  client base is "" on the server). `null` when the slug names nothing
+ *  sellable; the caller renders a not-found state rather than a checkout for an
+ *  item that may not exist. */
+export async function fetchMarketplaceItemServer(slug: string): Promise<MarketplaceItem | null> {
+  try {
+    const res = await fetch(
+      `${SERVER_API_BASE}/api/marketplace/items/${encodeURIComponent(slug)}`,
+      { next: { revalidate: 3600 } },
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { item?: MarketplaceItem };
+    return data.item ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function listItems(category?: string, fetchImpl?: FetchImpl): Promise<{ items: MarketplaceItem[] }> {
   const q = category && category !== "all" ? `?category=${encodeURIComponent(category)}` : "";
   return apiGet(`/marketplace/items${q}`, fetchImpl);
@@ -96,46 +115,17 @@ export function checkout(
   });
 }
 
-/**
- * The money path, in order: server checkout (order `placed`) → shared Razorpay
- * order for its externalOrderId → modal → verify. The client authors no amount;
- * the server bills the order's own total.
- */
+/** How a pantry order reaches the customer: on its own, or riding along with a
+ *  meal order. Mirrors `checkout`'s own input union above. */
 export type DeliveryMode = "ship" | "bundle_with_meal";
 
-export async function payForMarketplace(
-  items: { itemId: number; qty: number }[],
-  razorpay: RazorpayAdapter,
-  opts: {
-    deliveryMode?: DeliveryMode;
-    bundleWithOrderId?: number | null;
-    /** Fired with the server order the instant it exists — BEFORE any payment
-     *  step — so the caller can RESUME payment on it after a dismissed modal
-     *  or failed verify via {@link finishMarketplacePayment}, instead of
-     *  re-running checkout. A re-run mints a fresh idempotency key, which is
-     *  a second order, a second stock decrement and a second charge — the
-     *  exact double-buy the meal paths already defend against. */
-    onCreated?: (order: MarketplaceOrder) => void;
-    /** Fired the instant the modal resolves — money is CAPTURED, verify is
-     *  starting. Keep the facts (e.g. in a ref): if verifyWithRetry exhausts
-     *  its bounded retries, the caller re-asks the idempotent verify endpoint
-     *  alone via retryVerifyPayment — never re-runs checkout or the modal. */
-    onCaptured?: (facts: PaidFacts) => void;
-  } = {},
-  fetchImpl?: FetchImpl,
-): Promise<MarketplaceOrder> {
-  const { order } = await checkout(
-    {
-      idempotencyKey: newIdempotencyKey(),
-      items,
-      deliveryMode: opts.deliveryMode ?? "ship",
-      bundleWithOrderId: opts.bundleWithOrderId ?? null,
-    },
-    fetchImpl,
-  );
-  opts.onCreated?.(order);
-  return finishMarketplacePayment(order, razorpay, { onCaptured: opts.onCaptured }, fetchImpl);
-}
+// `payForMarketplace(items, razorpay, …)` used to live here: checkout → the
+// leg below, in one call. It minted a FRESH idempotency key on every
+// invocation, so a create retried after a dropped connection was a second
+// order, a second stock decrement and a second charge — and its only caller
+// ran the modal on the product page. The pantry now settles on the shared
+// checkout, where lib/purchaseSteps.ts#marketplaceSteps holds ONE key for the
+// whole attempt and calls `checkout` and `finishMarketplacePayment` directly.
 
 /**
  * The payment leg for an ALREADY-created marketplace order: shared Razorpay
