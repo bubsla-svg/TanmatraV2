@@ -7,7 +7,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { ApiError } from "./apiClient";
-import { humanizeOrderError, isRetryableQuoteError } from "./orderErrors";
+import { humanizeOrderError, humanizePurchaseError, isRetryableQuoteError } from "./orderErrors";
 
 test("safety_block with the production unchecked_allergens reason gets real copy", () => {
   const e = new ApiError(422, "safety_block", "Safety block", [
@@ -139,4 +139,47 @@ test("every mapped branch ends with something the customer can do", () => {
   for (const e of cases) {
     assert.match(humanizeOrderError(e), ACTION, `no next action for ${e.code}`);
   }
+});
+
+// ── humanizePurchaseError: the same rule, off the cart ──────────────────────
+
+test("a purchase failure never shows the server's machine string", () => {
+  for (const machine of ["safety_block", "Safety block", "already_a_member", "conflict"]) {
+    const msg = humanizePurchaseError(new ApiError(409, "x", machine));
+    assert.doesNotMatch(msg, new RegExp(machine.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  }
+});
+
+test("genuine server prose survives, as it does on the cart path", () => {
+  const prose = "That membership is already active on this account.";
+  assert.match(humanizePurchaseError(new ApiError(409, "x", prose)), new RegExp(prose));
+});
+
+test("a purchase failure never mentions a cart, because these screens have none", () => {
+  // The whole reason this sibling exists: humanizeOrderError promises "your
+  // cart is safe" and tells the reader to "adjust the items below", both of
+  // which are lies on a Premium or consult checkout.
+  const cases: unknown[] = [
+    new ApiError(500, "boom", "boom"),
+    new ApiError(422, "nope", "nope"),
+    new TypeError("network down"),
+  ];
+  for (const e of cases) {
+    const msg = humanizePurchaseError(e);
+    assert.doesNotMatch(msg, /\bcart\b|\bitems below\b|\border\b/i, `cart vocabulary in: ${msg}`);
+    assert.match(msg, /\b(Try again|different payment method)\b/i, `no next action in: ${msg}`);
+  }
+});
+
+test("a transport failure states plainly that no charge was taken", () => {
+  // The runner only reaches this branch BEFORE the modal resolves, so the
+  // claim is true — and "something went wrong" on a payment screen otherwise
+  // reads as "did I just get charged?".
+  assert.match(humanizePurchaseError(new TypeError("offline")), /have not been charged/);
+});
+
+test("a retryable failure says wait; a deterministic one says change something", () => {
+  assert.match(humanizePurchaseError(new ApiError(503, "x", "x")), /Try again in a moment\./);
+  assert.match(humanizePurchaseError(new ApiError(429, "x", "x")), /Try again in a moment\./);
+  assert.match(humanizePurchaseError(new ApiError(402, "x", "x")), /different payment method/);
 });

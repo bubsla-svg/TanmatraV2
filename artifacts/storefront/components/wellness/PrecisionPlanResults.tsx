@@ -5,6 +5,7 @@ import { Sparkles, Utensils, CheckCircle2, ShoppingBag } from 'lucide-react';
 import { type PrecisionPlanResult } from '@/lib/wellnessApi';
 import { useCart } from '@/components/cart/CartProvider';
 import { addOrUpdateQty, type CartLine, type CartState } from '@/lib/cartStore';
+import { checkoutHref } from "@/lib/checkoutIntent";
 
 interface PrecisionPlanResultsProps {
   plan: PrecisionPlanResult;
@@ -67,7 +68,7 @@ export const PrecisionPlanResults: React.FC<PrecisionPlanResultsProps> = ({ plan
       cart,
     );
     setCart(withPlan);
-    router.push('/checkout?mode=alacarte');
+    router.push(checkoutHref({ mode: "alacarte" }));
   }
 
   return (

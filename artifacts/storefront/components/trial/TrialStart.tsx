@@ -14,6 +14,7 @@ import { PLAN_DELIVERY_DAYS_SENTENCE } from "@/lib/planCheckout";
 import { TRIAL_COPY } from "@/lib/trial";
 import type { TrialTrack, TrioDish } from "@/lib/trialTrio";
 import { KitchenSafetyChip } from "@/components/trust/KitchenSafetySheet";
+import { checkoutHref } from "@/lib/checkoutIntent";
 
 // The shape lives in lib/trialTrio.ts, where the resolver that BUILDS it also
 // lives — /trial and the QR landing both render this trio, and a second local
@@ -45,7 +46,7 @@ export function TrialStart({
 
   function start() {
     emitFunnel("cuj_checkout_start", { planId: "trial_3day", track });
-    router.push(`/checkout?plan=trial_3day&track=${track}`);
+    router.push(checkoutHref({ mode: "plan", planId: "trial_3day", track }));
   }
 
   return (

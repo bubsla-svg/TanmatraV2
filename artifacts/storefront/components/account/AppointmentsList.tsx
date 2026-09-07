@@ -5,6 +5,7 @@ import Link from "next/link";
 import { RD_SERVICES_ENABLED } from "@/lib/flags";
 import { ApiError } from "@/lib/apiClient";
 import { getMyAppointments } from "@/lib/rdBookingApi";
+import { checkoutHref } from "@/lib/checkoutIntent";
 import { formatPaise } from "@/lib/format";
 import { PhoneAuth } from "@/components/checkout/PhoneAuth";
 
@@ -98,6 +99,17 @@ export function AppointmentsList() {
               <span className="font-data text-sm font-bold text-primary">{formatPaise(a.pricePaise)}</span>
             )}
           </div>
+          {/* A booked-but-unpaid consult had no route to payment from anywhere
+              once the booking card unmounted — the held slot simply expired.
+              Now it points at the same checkout every other purchase uses. */}
+          {a.paymentStatus === "pending" && (
+            <Link
+              href={checkoutHref({ mode: "consult", appointmentId: a.id })}
+              className="mt-2 inline-flex min-h-11 items-center justify-center rounded-full border border-gold px-4 text-sm font-bold text-primary transition-colors hover:bg-primary/10"
+            >
+              Complete payment · {formatPaise(a.pricePaise)}
+            </Link>
+          )}
         </li>
       ))}
     </ul>

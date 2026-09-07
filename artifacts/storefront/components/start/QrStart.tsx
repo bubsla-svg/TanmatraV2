@@ -19,6 +19,7 @@ import {
 } from "@/lib/serviceabilityApi";
 import { TRIAL_COPY } from "@/lib/trial";
 import type { TrialTrack } from "@/lib/trialTrio";
+import { checkoutHref } from "@/lib/checkoutIntent";
 
 /**
  * The two-screen half of the scan-to-paid landing (screens 1 and 2).
@@ -87,7 +88,7 @@ export function QrStart({ pricePaise }: { pricePaise: number }) {
 
   function start() {
     emitFunnel("cuj_checkout_start", { planId: "trial_3day", track });
-    router.push(`/checkout?plan=trial_3day&track=${track}`);
+    router.push(checkoutHref({ mode: "plan", planId: "trial_3day", track }));
   }
 
   // NO HYDRATION GATE — deliberately the opposite of PlanServiceabilityGate,
