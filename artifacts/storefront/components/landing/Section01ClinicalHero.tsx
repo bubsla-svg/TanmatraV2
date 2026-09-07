@@ -216,8 +216,19 @@ export function Section01ClinicalHero({
               <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between gap-3 rounded-2xl border border-line bg-glass p-4 backdrop-blur-md shadow-[var(--shadow-card)]">
                 <p className="font-display text-lg font-semibold leading-tight text-primary">Today&apos;s menu is up.</p>
                 {/* min-h-11 (T-22): this chip measured 50×38. */}
+                {/* The link's whole accessible name used to be one word:
+                    "Order" — order what, and to where? The photo and the line
+                    beside it answer that for a sighted reader, but neither is
+                    an ancestor of the link, so neither reaches the accessible
+                    name: in a screen reader's link list this chip announced as
+                    a bare verb. The visible chip stays one word (it is the
+                    caption's other half); the destination is spelled out for
+                    anyone reading the link out of context, in the same
+                    `sr-only` utility the skip link in app/layout.tsx uses.
+                    Hidden text only — the chip's box, and the min-h-11 floor
+                    below, are untouched. */}
                 <Button asChild variant="outline" shape="pill" size="fluid" className="min-h-11 shrink-0 border-primary/20 bg-transparent px-4 text-xs font-bold text-primary hover:bg-surface">
-                  <Link href="/menu">Order</Link>
+                  <Link href="/menu">Order<span className="sr-only"> from today&apos;s menu</span></Link>
                 </Button>
               </div>
             </div>

@@ -76,6 +76,25 @@ const TITLE = "Tanmatra — fresh lunch, cooked after you order";
 const DESCRIPTION =
   "Fresh lunch, cooked after you order and delivered to your desk in Noida. Calories and protein on every dish.";
 
+/**
+ * The one real share asset this repo has: `public/brand/storefront.jpg`,
+ * 1213×682 (16:9), already shipped and already on screen as the landing hero
+ * (components/landing/Section01ClinicalHero.tsx). It carries the wordmark, so
+ * it still reads as Tanmatra at thumbnail size — which is the whole job of an
+ * og:image. Root-relative: Next absolutises it against `metadataBase`, and it
+ * is served straight out of public/, NOT through the /images/* rewrite, so it
+ * resolves with or without IMAGE_UPSTREAM.
+ *
+ * One object for both og:image and twitter:image — Next's OGImageDescriptor
+ * and TwitterImageDescriptor declare the same fields.
+ */
+const SHARE_IMAGE = {
+  url: "/brand/storefront.jpg",
+  width: 1213,
+  height: 682,
+  alt: "The Tanmatra shopfront, wordmark lit above an open door",
+};
+
 export const metadata: Metadata = {
   // Absolute base for canonical + OpenGraph URLs. Env-overridable once a real
   // marketing domain is in front of the service (see lib/siteUrl.ts).
@@ -86,18 +105,40 @@ export const metadata: Metadata = {
   },
   description: DESCRIPTION,
   applicationName: "Tanmatra",
+  // A self-referential canonical for EVERY route, from one declaration. Next
+  // resolves a "./" alternate against the REQUEST pathname (resolve-url.ts
+  // #resolveRelativeUrl → path.posix.resolve), and metadata is inherited by
+  // key: mergeMetadata clones the parent's already-resolved value and
+  // overwrites only the keys a child actually declares. So a page that exports
+  // no `alternates` of its own gets this one, already resolved to ITS path —
+  // "/" collapses to the bare origin. The seven pages that spell their
+  // canonical out (/clinical, /metabolic, /performance, /premium,
+  // /corporate-wellness, /partners/gyms, /partners/fitness-clubs) override it
+  // with the identical value.
+  alternates: { canonical: "./" },
   openGraph: {
     type: "website",
     siteName: "Tanmatra",
     locale: "en_IN",
-    url: SITE_URL,
+    // "./", not SITE_URL. An absolute string here is inherited VERBATIM by
+    // every child page, so og:url said "this is the homepage" on /clinical,
+    // /metabolic, /performance, /premium and /corporate-wellness — flatly
+    // contradicting the canonical those five pages declare. "./" resolves per
+    // route, so og:url and the canonical are the same URL by construction
+    // rather than by two people remembering to keep them in step.
+    url: "./",
     title: TITLE,
     description: DESCRIPTION,
+    images: [SHARE_IMAGE],
   },
   twitter: {
+    // Now true rather than aspirational: the card type below promises a large
+    // image and there is one. X falls back to og:image when twitter:image is
+    // absent, but naming it explicitly stops the two drifting apart later.
     card: "summary_large_image",
     title: TITLE,
     description: DESCRIPTION,
+    images: [SHARE_IMAGE],
   },
   // N1.1: "default" (opaque status bar, content below it), not
   // "black-translucent" — the latter draws content edge-to-edge UNDER a

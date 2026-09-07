@@ -137,7 +137,23 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
           </div>
           {/* T-22: ONE door per card. The per-card "Start 3-Day Trial" made the
               trial pitch four times on one page; the hero and the START HERE
-              band above already carry it. */}
+              band above already carry it.
+
+              WCAG 2.4.9 — and why all three cards carry the same two lines:
+              these three buttons read "See plan" and go to three DIFFERENT
+              plans, so a screen reader's link list offers one name three times
+              and none of them says which plan it opens. The visible label is
+              product copy and stays exactly as it is; the ACCESSIBLE name gains
+              the plan's own name in `sr-only` (the house utility — 1px,
+              clipped, absolutely positioned, so it is not a flex item of this
+              `gap-2` pill and the button is pixel-identical).
+
+              The name comes from `planDisplay(...)` — the same object the <h3>
+              above renders — not from a literal, so the button and the heading
+              cannot drift, and lib/planCopy.test.ts keeps a retyped name from
+              creeping back. The colon lives inside the span: JSX drops the
+              newline whitespace before the element, so the separator must not
+              depend on the browser inserting one. */}
           <div className="mt-7 flex flex-col gap-2">
             <Link
               href="/plan/desk_fuel"
@@ -145,6 +161,7 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
               className="flex h-12 min-h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-95"
             >
               See plan
+              <span className="sr-only">: {deskFuel.name}</span>
             </Link>
           </div>
         </div>
@@ -175,6 +192,7 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
               className="flex h-12 min-h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-95"
             >
               See plan
+              <span className="sr-only">: {steady.name}</span>
             </Link>
           </div>
         </div>
@@ -210,6 +228,7 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
               className="flex h-12 min-h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-95"
             >
               See plan
+              <span className="sr-only">: {proteinBuild.name}</span>
             </Link>
           </div>
         </div>

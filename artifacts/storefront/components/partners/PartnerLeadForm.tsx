@@ -23,10 +23,18 @@ import { Button } from "@/components/ui/button";
  * keeps aria-invalid + the visible message; the per-field role="alert" of the
  * old Field is accepted as lost (no spec targets it). The PHONE field stays a
  * native <input> inside Astryx Field: TextInput's type is text|password|email
- * only and its BaseProps deliberately omit inputMode/autoComplete, so a swap
- * would cost the tel keyboard + autofill — its error line stays hand-rolled
- * (role="alert", as before). htmlName carries autofill semantics for the
- * Astryx fields. The partnerLeadProblems/showErrors gate (submit reveals
+ * only, and TextInput applies `type` AFTER its ...rest spread, so nothing can
+ * deliver type="tel" — which is what raises the phone keypad. (inputMode is
+ * missing only from the PROP TYPE and would ride in as a rest prop; it is not
+ * worth doing without type="tel" beside it.) Its error line stays hand-rolled
+ * (role="alert", as before). The Astryx fields carry htmlName AND an
+ * autocomplete token: htmlName only feeds the browser's name/type heuristic,
+ * while WCAG 1.3.5 (Identify Input Purpose) asks for the autocomplete
+ * attribute itself. TextInputProps has no autoComplete slot — BaseProps
+ * extends React.HTMLAttributes, which never declares it (autoComplete lives
+ * on InputHTMLAttributes) — but TextInput spreads its rest props onto the
+ * <input> BEFORE its own attributes, so a JSX object spread delivers the
+ * token to the DOM. The partnerLeadProblems/showErrors gate (submit reveals
  * errors, button NOT disabled), submit(), 429 copy, lpEvents ordering, done
  * branch, form-level role="alert" and the wa.me link are untouched. */
 const phoneInputCls =
@@ -145,6 +153,7 @@ export function PartnerLeadForm({
         onChange={setName}
         placeholder="Your name"
         htmlName="name"
+        {...{ autoComplete: "name" }}
         status={errStatus(err("name"))}
       />
       <TextInput
@@ -154,6 +163,7 @@ export function PartnerLeadForm({
         onChange={setWorkEmail}
         placeholder="you@yourgym.com"
         htmlName="email"
+        {...{ autoComplete: "email" }}
         status={errStatus(emailErr)}
       />
       <TextInput
@@ -161,6 +171,7 @@ export function PartnerLeadForm({
         value={company}
         onChange={setCompany}
         placeholder="Iron Yard, Sector 62"
+        {...{ autoComplete: "organization" }}
         isOptional
         status={errStatus(err("company"))}
       />
