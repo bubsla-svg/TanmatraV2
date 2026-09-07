@@ -13,9 +13,19 @@ import { Button } from "@/components/ui/button";
  * <p id="waitlist-error" role="alert"> error line stays hand-rolled (Astryx
  * status messages carry no documented role) and is linked via aria-describedby.
  * Deliberately dropped: the old input's inputMode="tel" — the field accepts
- * phone OR email free text, so the tel keypad was wrong for half its inputs
- * and TextInput's BaseProps omit inputMode anyway. submit(), the funnel emit,
- * the done branch and all copy are untouched. */
+ * phone OR email free text, so the tel keypad was wrong for half its inputs.
+ * (That is a product call, not a capability limit: inputMode is absent from
+ * TextInputProps but would still ride in as a rest prop if we wanted it.)
+ * For the same dual-nature reason the autocomplete token is "username", not
+ * "email" or "tel": WHATWG's username is the token for an identifier a form
+ * takes as either, and it is the one value that cannot mislead autofill here.
+ * It rides in as a rest prop — TextInputProps has no autoComplete slot
+ * (BaseProps extends React.HTMLAttributes, which never declares it) but
+ * TextInput spreads its rest props onto the <input> before its own
+ * attributes. Nothing about phone entry changes: the field stays type="text"
+ * with no inputMode, so the token adds a suggestion source and never a
+ * keyboard. submit(), the funnel emit, the done branch and all copy are
+ * untouched. */
 
 /** D-11: Steady's waitlist body, verbatim (owner-supplied) — replaces the raw
  *  internal blocker string ("veg GI-low pool = 0; needs millets pasta import
@@ -75,6 +85,7 @@ export function Waitlist({ planId, planName, reason }: { planId: string; planNam
             value={contact}
             onChange={setContact}
             placeholder="Phone or email"
+            {...{ autoComplete: "username" }}
             width="100%"
             status={error ? { type: "error" } : undefined}
             aria-describedby={error ? "waitlist-error" : undefined}

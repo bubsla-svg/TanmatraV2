@@ -25,12 +25,22 @@ const KINDS: { id: CorporateLeadKind; label: string }[] = [
  * renders its own label + Field shell — never wrap them in Field again), and
  * the `flex-col md:flex-row` pair rows became the contact-form skeleton's
  * Grid columns={{minWidth}} idiom, which collapses responsively for free.
- * The PHONE field stays a native <input> inside Astryx Field: TextInput's
- * type is text|password|email only and its BaseProps deliberately omit
- * inputMode/autoComplete, so a swap would cost the tel keyboard + autofill.
- * htmlName carries autofill semantics for the Astryx fields (browsers key
- * autofill off name/type). Submission logic, validation gate, 429 copy,
- * lpEvents ordering and the role="alert" error line are untouched. */
+ * The PHONE field stays a native <input> inside Astryx Field, and the reason
+ * is `type`, not `inputMode`: TextInputType is text|password|email only, and
+ * TextInput destructures `type` and applies it AFTER its ...rest spread, so
+ * no prop can deliver type="tel" — which is what raises the phone keypad.
+ * (inputMode is missing only from the PROP TYPE and would in fact ride in as
+ * a rest prop; it is not worth doing without type="tel" beside it.)
+ * The Astryx fields carry htmlName AND an autocomplete token. htmlName alone
+ * only feeds the browser's name/type heuristic; WCAG 1.3.5 (Identify Input
+ * Purpose) asks for the autocomplete attribute itself, so the two are not
+ * interchangeable. TextInputProps has no autoComplete slot — BaseProps
+ * extends React.HTMLAttributes, which never declares it (autoComplete lives
+ * on InputHTMLAttributes) — but TextInput spreads its rest props onto the
+ * <input> BEFORE its own attributes, so a JSX object spread delivers the
+ * token to the DOM and nothing downstream can clobber it. Submission logic,
+ * validation gate, 429 copy, lpEvents ordering and the role="alert" error
+ * line are untouched. */
 const emailOk = (e: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e.trim());
 
 const phoneInputCls =
@@ -151,6 +161,7 @@ export function CorporateLeadForm({
           onChange={setName}
           placeholder="Priya Sharma"
           htmlName="name"
+          {...{ autoComplete: "name" }}
           isRequired
         />
         <TextInput
@@ -160,6 +171,7 @@ export function CorporateLeadForm({
           onChange={setWorkEmail}
           placeholder="you@company.com"
           htmlName="email"
+          {...{ autoComplete: "email" }}
           isRequired
         />
       </Grid>
@@ -170,6 +182,7 @@ export function CorporateLeadForm({
           onChange={setCompany}
           placeholder="Company / organisation"
           htmlName="organization"
+          {...{ autoComplete: "organization" }}
           isRequired
         />
         <Selector
