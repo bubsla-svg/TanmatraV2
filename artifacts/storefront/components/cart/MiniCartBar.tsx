@@ -84,6 +84,11 @@ export function MiniCartBar() {
         chrome="none"
         safeArea={false}
         data-stitch="dark"
+        // Read by app/globals.css: <main> reserves one bar-height by default
+        // and only widens to two when this pill is actually on screen. The
+        // pill returns null on an empty cart, so without this the reserve was
+        // permanently sized for the worst case — see the rule for the numbers.
+        data-minicart-present
         className={`pointer-events-none bottom-16 z-30 px-3 text-ink transition-transform duration-200 motion-reduce:transition-none md:bottom-0 md:px-4 md:pb-[max(env(safe-area-inset-bottom),1rem)] ${
           navRetreated
             ? "translate-y-14 pb-[max(env(safe-area-inset-bottom),0.375rem)] md:translate-y-0"

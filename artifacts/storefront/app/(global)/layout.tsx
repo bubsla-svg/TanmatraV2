@@ -29,7 +29,7 @@ export default function GlobalLayout({
       <Header />
       <main
         id="main"
-        className="pb-[calc(8rem+env(safe-area-inset-bottom))] md:pb-0"
+        className="pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0"
       >
         {children}
       </main>

@@ -494,3 +494,26 @@ textarea {
   font-size: 16px !important;
 }
 
+
+/* Trailing dead space under every mobile page (2026-09-07).
+ *
+ * <main> reserved `8rem` (128px) of bottom padding: 4rem for the global tab
+ * bar (h-16) plus 4rem for the mini-cart pill, which sits in the band above it
+ * at `bottom-16`. But MiniCartBar returns null on an empty cart — the default
+ * state on every route for anyone who has not added a dish — so 63px of the
+ * reserve was dead on every page, measured identically on /, /menu, /plans,
+ * /about, /account, /contact and /faq at 390x844.
+ *
+ * The reserve is now conditional: 4rem always, widened to 8rem only while the
+ * pill is really rendered. :has() on <body> because MiniCartBar is a sibling
+ * of <main> in app/(global)/layout.tsx, so no JS has to mirror cart state into
+ * a layout class — the DOM already knows.
+ *
+ * Scoped under md because both bars are `md:hidden` / `md:bottom-0`; desktop
+ * measured 0px dead and keeps `md:pb-0`.
+ */
+@media (width < 48rem) {
+  body:has([data-minicart-present]) #main {
+    padding-bottom: calc(8rem + env(safe-area-inset-bottom));
+  }
+}
