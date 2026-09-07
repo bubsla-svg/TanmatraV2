@@ -159,6 +159,11 @@ export const COMPANY_LINKS: NavLink[] = [
   { label: "How it works", href: "/how-it-works" },
   { label: "Corporate", href: "/corporate-wellness" },
   { label: "FAQ", href: "/faq" },
+  // The footer published the registered office and FSSAI number but no email
+  // and no phone, and /legal/grievance — which has both — was reachable only
+  // as "Complaints" under Legal. A customer looking for a way to reach us had
+  // to guess that a complaints page was the contact page.
+  { label: "Contact", href: "/contact" },
 ];
 
 /**

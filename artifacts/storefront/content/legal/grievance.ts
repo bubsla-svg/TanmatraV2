@@ -54,7 +54,8 @@ export const grievanceDoc: LegalDoc = {
         `Legal name: ${C.legalName}`,
         `Brand: ${C.brand}`,
         `FSSAI Registration No.: ${C.fssaiLicenseNo}`,
-        `CIN: ${C.cin}`,
+        // Rendered only when a CIN is actually on file — see company.ts.
+        ...(C.cin ? [`CIN: ${C.cin}`] : []),
         `Registered office: ${C.registeredOffice}`,
         `Support: ${C.supportEmail} · ${C.supportPhone}`,
       ],

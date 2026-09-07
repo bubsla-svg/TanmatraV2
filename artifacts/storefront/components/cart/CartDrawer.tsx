@@ -185,10 +185,20 @@ export function CartDrawer({
                   {l.customizations && l.customizations.length > 0 && (
                     <p className="line-clamp-2 text-xs text-ink-muted">{l.customizations.join(", ")}</p>
                   )}
-                  {/* N5.8: at qty 1 the unit price IS the line total on the
-                      right — printing ₹50 twice for one smoothie read as a
-                      glitch. The unit price earns its row only once it's
-                      arithmetic input (qty > 1). */}
+                  {/* The line total sits in the TEXT column, not the control
+                      cluster on the right (2026-09-07). The cluster was a
+                      constant 196px at every viewport — stepper 120 + gap 12 +
+                      price 64 — so the name got only what was left: 133px at
+                      375, where 39 of the 95 live dish names clipped. Moving
+                      just this span gives the name 209px and drops that to 7,
+                      with the row the same height, because the text column was
+                      already the taller of the two.
+                      N5.8 still holds: at qty 1 the unit price IS this total,
+                      so the "each" line below stays gated on qty > 1 rather
+                      than printing ₹50 twice for one smoothie. */}
+                  <p className="font-data mt-1 text-sm font-bold text-primary">
+                    {formatPaise(l.pricePaise * l.qty)}
+                  </p>
                   {l.qty > 1 && (
                     <p className="tabular text-xs text-ink-muted">{formatPaise(l.pricePaise)} each</p>
                   )}
@@ -202,7 +212,10 @@ export function CartDrawer({
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-3">
+                {/* Stepper only. Its 48px targets are the brief's money-path
+                    minimum and are untouched; what left this cluster is the
+                    price span, which moved into the text column above. */}
+                <div className="shrink-0">
                   <QuantityStepper
                     value={l.qty}
                     label={`${l.name} quantity`}
@@ -211,9 +224,6 @@ export function CartDrawer({
                     onDecrease={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) - 1, l.customizations))}
                     onIncrease={() => setCart(setQty(cart, l.dishId, l.kind, qtyOf(cart, l.dishId, l.kind, l.customizations) + 1, l.customizations))}
                   />
-                  <span className="font-data w-16 text-right text-sm font-bold text-primary">
-                    {formatPaise(l.pricePaise * l.qty)}
-                  </span>
                 </div>
               </li>
             ))}

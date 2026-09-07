@@ -45,8 +45,19 @@ export const COMPANY = {
   jurisdictionState: "Uttar Pradesh, India",
 
   // ── Still to confirm before publishing (loud placeholders) ────────────────
-  cin: "[Company CIN — to be inserted]",
-  grievanceOfficer: "[Grievance Officer name — to be inserted]",
+  // Deliberately empty (owner, 2026-09-07). The company publishes its FSSAI
+  // Registration No. as its statutory identifier; no CIN is disclosed. The
+  // FIELD is kept because it mirrors the `legal_company_profile` wire/DB
+  // column, and /legal/grievance renders the line only when it is non-empty —
+  // so a CIN supplied later by the CMS appears without a code change. It must
+  // never be filled with the FSSAI number: a CIN is an MCA identifier and an
+  // FSSAI Reg. No. is a food-safety one, and labelling either as the other is
+  // a false statutory declaration.
+  cin: "",
+  // Owner-confirmed (2026-09-07). Matches the FBO named on the FSSAI
+  // Registration Certificate on file, so the grievance contact and the
+  // food-business operator are the same declared person.
+  grievanceOfficer: "Anuradha",
 
   // Human "Last updated" stamp shown on every legal page.
   updated: "29 August 2026",
