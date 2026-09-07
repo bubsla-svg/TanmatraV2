@@ -65,43 +65,37 @@ test("bar stays revealed at the very top of the page regardless of small jitter"
   await expect(nav).toHaveClass(/translate-y-0/);
 });
 
-test("bar slides away while the account sheet is open, and does NOT inert itself", async ({ page }) => {
-  await page.goto("/");
-  // A raw attribute selector, not getByRole: the account sheet is a real
-  // Radix/Vaul modal dialog (components/ui/drawer.tsx), and a modal dialog
-  // correctly marks its background siblings aria-hidden="true" while open —
-  // exactly the accessibility improvement this bar's own `inert` prop always
-  // intended. getByRole("navigation", ...) legitimately stops matching once
-  // that lands, since an aria-hidden element is excluded from the
-  // accessibility tree by design; this test cares about the CSS/JS state of
-  // the DOM node itself, which a role query is the wrong tool for here.
+test("the Account tab is a link to /account — one tap, no sheet in between", async ({ page }) => {
+  // This replaces "bar slides away while the account sheet is open" (deleted
+  // 2026-09-07 with the sheet itself). That sheet opened an "Account &
+  // Information" dialog whose contents were 10/12 Company + Legal links, so
+  // the tab labelled Account delivered a menu that mostly was not about your
+  // account, and /account — the tab's own declared href — took two taps.
+  //
+  // Those links now live on /account itself, outside AccountHub's auth gate,
+  // and this bar is four links and nothing else.
+  await page.goto("/menu");
   const nav = page.locator('nav[aria-label="Native Mobile Navigation"]');
+
+  // A link, not a button: every other tab was one, and the button could not be
+  // long-pressed or opened in a new tab while still claiming aria-current.
+  const tab = nav.getByRole("link", { name: /^Account$/ });
+  await expect(tab).toHaveAttribute("href", "/account");
+  await tab.click();
+  await page.waitForURL("**/account");
+
+  // No dialog anywhere in the flow, and the bar never had to slide away for one.
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(nav).toHaveClass(/translate-y-0/);
-
-  const trigger = page.getByRole("button", { name: /^Account$/ });
-  await trigger.click();
-  await expect(page.getByText("Account & Information")).toBeVisible();
-  await expect(nav).toHaveClass(/translate-y-full/);
-
-  // This assertion INVERTED, deliberately. The bar used to inert itself here
-  // too, and the comment above already spotted why it should not: Radix marks
-  // the background hidden, so our `inert` was redundant. It was also harmful,
-  // because the Account trigger LIVES IN THIS BAR — inerting it inerted the
-  // element that still held focus, which Chrome refuses outright:
-  //
-  //   Blocked aria-hidden on an element because its descendant retained
-  //   focus. […] Ancestor with aria-hidden: <nav …>
-  //
-  // and which broke focus restore, asserted below. Sliding away is presentation
-  // and stays; inertness while a dialog is open belongs to the dialog.
   await expect(nav).toHaveJSProperty("inert", false);
 
-  // The reason it matters. Radix returns focus to the trigger on close; an
-  // inert trigger cannot receive it, so this used to land on <body> and a
-  // keyboard user lost their place in the tab bar entirely.
-  await page.keyboard.press("Escape");
-  await expect(page.getByText("Account & Information")).toBeHidden();
-  await expect(trigger).toBeFocused();
+  // The links the sheet used to carry are reachable, and reachable SIGNED OUT —
+  // the visitor most likely to want a refund policy or a way to complain is the
+  // one AccountHub returns <SignInOffer/> to.
+  const help = page.getByRole("navigation", { name: "Help and policies" });
+  await expect(help).toBeVisible();
+  await expect(help.getByRole("link", { name: "Contact us" })).toBeVisible();
+  await expect(help.getByRole("link", { name: "Legal & policies" })).toBeVisible();
 });
 
 test("scroll-hide still inerts the bar — nothing else is managing it there", async ({ page }) => {
