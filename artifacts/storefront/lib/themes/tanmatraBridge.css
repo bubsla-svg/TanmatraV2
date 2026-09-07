@@ -86,7 +86,20 @@
   --blue: light-dark(#506072, #99adc6);
   --success: light-dark(#556845, #b9c9a6);
   --warning: light-dark(#986025, #f2a85a);
-  --danger: light-dark(#b94131, #d97c70);
+  /* Lifted 2026-09-07. Measured as TEXT on --surface-raised the dark arm was
+     3.18:1 and the light arm 4.14:1, and six live sites paint text-danger on
+     a raised ground -- the cancel-plan action (/account/subscriptions), the
+     allergen-ack error (/checkout, /plan/[planId]), the save-failed alert
+     (/account/symptoms), the meal-planner settings error, and the allergen
+     chip plus the Delete hover (/account/wellness). Two carry role="alert",
+     and all six are Stitch dark routes, so the 3.18 arm was the default.
+     Same hue, saturation up with lightness the way the accent's dark arm was:
+     dark 7 80% 79% = 4.96:1 on raised / 7.09 surface / 8.25 canvas; light
+     7 58% 42% = 4.78 / 5.92 / 5.57. No fill/ink pair to re-derive -- VegMark
+     and the veg dots are self-coloured, the bg-danger/10 chips use the token
+     as their own ink, and button.tsx's `destructive` variant has no call
+     sites. Edit tanmatraTheme.ts first; astryxBridge.test.ts pins this. */
+  --danger: light-dark(#a93b2d, #f4a99f);
   /* PR-11a — the revision's amber accent. At 53% lightness it is 2.5:1 under
      cream, so --amber is DECORATIVE ONLY (underline, icon fill, mark); it is
      never text, so 53% survives in BOTH arms and 3.3:1 on --surface-raised

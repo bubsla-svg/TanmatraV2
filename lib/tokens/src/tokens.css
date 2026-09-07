@@ -64,7 +64,7 @@
   /* Semantic status (shared) */
   --success: #556845;
   --warning: #986025; /* amber at text weight (31 61% 37%) */
-  --danger: #b94131;
+  --danger: #a93b2d; /* 4.8:1 on --surface-raised (was #b94131, 4.1:1) */
   --amber: #d08a3e; /* decorative only — 2.5:1 under cream */
   --amber-deep: #986025; /* amber that carries text or a fill (4.6:1) */
   --amber-ink: #f6f1e9;
@@ -182,7 +182,7 @@
   --sage-ink: #e9efe1;
   --success: #b9c9a6;
   --warning: #f2a85a;
-  --danger: #d97c70;
+  --danger: #f4a99f; /* 5.0:1 on the dark --surface-raised (was #d97c70, 3.2:1) */
   --amber-deep: #f2a85a;
   --amber-ink: #172622;
   --focus-ring: #f2a85a;
