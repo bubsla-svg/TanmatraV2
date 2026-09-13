@@ -1,0 +1,94 @@
+sheet_row,name,slug,sheet_category,category,veg_class,is_veg,base_price_inr,base_price_paise,variant_group,image_slug,image_status,ingredients,allergens,macros,glycaemic_index,sugar_per_serving,rd_review_state,blocking_gaps
+2,Hot & Sour,hot-and-sour,Soup,soups,veg,true,99,9900,veg:+0; non-veg:+2100,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+3,Manchow,manchow,Soup,soups,veg,true,99,9900,veg:+0; non-veg:+3100,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+4,Pumkin Soup,pumkin-soup,Soup,soups,veg,true,180,18000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+5,Creamy Mushroom & Walnut,creamy-mushroom-and-walnut,Soup,soups,veg,true,180,18000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+6,Creamy Chicken,creamy-chicken,Soup,soups,non-veg,false,180,18000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+7,Fruity Sprout,fruity-sprout,Salads,salads,veg,true,240,24000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+8,Roasted Veggies Quinoa,roasted-veggies-quinoa,Salads,salads,veg,true,240,24000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+9,Falfal Green Garden,falfal-green-garden,Salads,salads,veg,true,240,24000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+10,Sweet Potato & Goat Cheese Salad,sweet-potato-and-goat-cheese-salad,Salads,salads,veg,true,320,32000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+11,"Corn,Cucumber & Edamame Salad",corn-cucumber-and-edamame-salad,Salads,salads,veg,true,280,28000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+12,Cranberry Salad(Chicken),cranberry-salad-chicken,Salads,salads,non-veg,false,280,28000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+13,Greek Salad,greek-salad,Salads,salads,veg,true,240,24000,veg:+0; non-veg:+4000,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+16,Mushroom White Sauce Pasta,mushroom-white-sauce-pasta,Pasta,pasta,veg,true,260,26000,veg:+0; non-veg:+6000; prawns:+9000,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+17,Arrabiata,arrabiata,Pasta,pasta,veg,true,280,28000,veg:+0; non-veg:+4000; prawns:+7000,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+18,Spaghetti Carbonara,spaghetti-carbonara,Pasta,pasta,non-veg,false,320,32000,non-veg:+0; prawns:+3000,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+19,Spaghetti Puniska,spaghetti-puniska,Pasta,pasta,veg,true,300,30000,veg:+0; non-veg:+4000; prawns:+5000,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+20,Creamy Pesto,creamy-pesto,Pasta,pasta,veg,true,280,28000,veg:+0; non-veg:+4000; prawns:+7000,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+21,Mama Rose Mix Sauce,mama-rose-mix-sauce,Pasta,pasta,veg,true,300,30000,veg:+0; non-veg:+4000; prawns:+5000,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+22,Spaghetti Agli Olia Pasta,spaghetti-agli-olia-pasta,Pasta,pasta,veg,true,260,26000,veg:+0; non-veg:+6000; prawns:+9000,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+23,Spinach & Corn,spinach-and-corn,Sandwiches,wraps,veg,true,199,19900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+24,Grilled Veggie(Ranch Yogurt),grilled-veggie-ranch-yogurt,Sandwiches,wraps,veg,true,180,18000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+25,Grilled Paneer(Ranch Yogurt),grilled-paneer-ranch-yogurt,Sandwiches,wraps,veg,true,199,19900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+26,Veg Club Sandwich,veg-club-sandwich,Sandwiches,wraps,veg,true,199,19900,veg:+0; non-veg:+4000,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+27,Smoked Chicken & Cheese Sandwich,smoked-chicken-and-cheese-sandwich,Sandwiches,wraps,non-veg,false,220,22000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+28,Spicy Chicken Ham Sandwich,spicy-chicken-ham-sandwich,Sandwiches,wraps,non-veg,false,200,20000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+29,Chicken Burger,chicken-burger,Burger,mains,non-veg,false,240,24000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+30,Mutton Burger,mutton-burger,Burger,mains,non-veg,false,280,28000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+31,Paneer Burger,paneer-burger,Burger,mains,veg,true,240,24000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+32,Veg Burger,veg-burger,Burger,mains,veg,true,200,20000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+33,Paneer Wrap,paneer-wrap,Wraps,wraps,veg,true,180,18000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+34,Falafel Hummus Wrap,falafel-hummus-wrap,Wraps,wraps,veg,true,180,18000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+35,Chicken Wrap,chicken-wrap,Wraps,wraps,non-veg,false,220,22000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+36,Hummus Pita Classic,hummus-pita-classic,Pita & Hummus,wraps,veg,true,199,19900,,hummus-pita-classic,present,,,,,,pending_review,ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+37,Hummus Pita With Falafel,hummus-pita-with-falafel,Pita & Hummus,wraps,veg,true,240,24000,,hummus-pita-with-falafel,present,,,,,,pending_review,ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+38,Chicken Pita Pocket,chicken-pita-pocket,Pita & Hummus,wraps,non-veg,false,280,28000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+39,Falafel Pita Pocket,falafel-pita-pocket,Pita & Hummus,wraps,veg,true,230,23000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+40,Paneer Bowl,paneer-bowl,Maxican Bowls,bowls,veg,true,249,24900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+41,Chicken Bowl,chicken-bowl,Maxican Bowls,bowls,non-veg,false,299,29900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+43,Cilbir Turkish Egg,cilbir-turkish-egg,Breakfast,breakfast,egg,false,249,24900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+44,Avacado Toast,avacado-toast,Breakfast,breakfast,veg,true,299,29900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+45,Avacado Sunny side up,avacado-sunny-side-up,Breakfast,breakfast,veg,true,350,35000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+46,Boiled Egg Sauted Veggies,boiled-egg-sauted-veggies,Breakfast,breakfast,egg,false,99,9900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+47,Make Your Breakfast,make-your-breakfast,Breakfast,breakfast,veg,true,299,29900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+53,Exotic Vegetable Poha,exotic-vegetable-poha,Breakfast,breakfast,veg,true,199,19900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+54,Moong Daal Chila,moong-daal-chila,Breakfast,breakfast,veg,true,180,18000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+55,Boiled Egg,boiled-egg,Breakfast,breakfast,egg,false,20,2000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+56,Dates Banana,dates-banana,Smoothies,beverages,veg,true,149,14900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+57,Apple Cinnamon,apple-cinnamon,Smoothies,beverages,veg,true,149,14900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+58,BlueBerry,blueberry,Smoothies,beverages,veg,true,170,17000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+59,Mix Berry,mix-berry,Smoothies,beverages,veg,true,170,17000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+60,Brownie,brownie,Desserts,snacks,veg,true,120,12000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+61,French Toast,french-toast,Desserts,snacks,veg,true,199,19900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+62,Pan Cake,pan-cake,Desserts,snacks,veg,true,199,19900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+63,Mint Lime Fizz,mint-lime-fizz,Drinks,beverages,veg,true,119,11900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+64,Mojito,mojito,Drinks,beverages,veg,true,119,11900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+65,Ice Tea(Peach/Lemon),ice-tea-peach-lemon,Drinks,beverages,veg,true,119,11900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+66,Pineapple Fizz,pineapple-fizz,Drinks,beverages,veg,true,119,11900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+67,Watermelon Juice,watermelon-juice,Drinks,beverages,veg,true,149,14900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+68,Kiwi Mint Cooler,kiwi-mint-cooler,Drinks,beverages,veg,true,119,11900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+69,Mango Mint,mango-mint,Drinks,beverages,veg,true,119,11900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+70,Guava Chilli Cooler,guava-chilli-cooler,Drinks,beverages,veg,true,119,11900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+72,Crispy Corn,crispy-corn,Chinese,mains,veg,true,139,13900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+73,Chilli Potato,chilli-potato,Chinese,mains,veg,true,149,14900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+74,Honey Chilli Potato,honey-chilli-potato,Chinese,mains,veg,true,149,14900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+75,Chilli Panner,chilli-panner,Chinese,mains,veg,true,249,24900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+76,Chilli Chicken,chilli-chicken,Chinese,mains,non-veg,false,269,26900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+77,Veg Manchurian(Dry),veg-manchurian-dry,Chinese,mains,veg,true,180,18000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+78,Chicken Manchurian(Dry),chicken-manchurian-dry,Chinese,mains,non-veg,false,249,24900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+79,Veg Spring Roll,veg-spring-roll,Chinese,mains,veg,true,119,11900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+80,Chicken Spring Roll,chicken-spring-roll,Chinese,mains,non-veg,false,159,15900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+81,Chicken Lollipop,chicken-lollipop,Chinese,mains,non-veg,false,229,22900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+82,Chicken Noodle,chicken-noodle,Chinese,mains,non-veg,false,220,22000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+83,Veg Noodle,veg-noodle,Chinese,mains,veg,true,170,17000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+84,Double Egg Chicken Noodle,double-egg-chicken-noodle,Chinese,mains,non-veg,false,249,24900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+85,Veg Chilli Garlic Noodle,veg-chilli-garlic-noodle,Chinese,mains,veg,true,119,11900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+86,Chicken Chilli Garlic Noodle,chicken-chilli-garlic-noodle,Chinese,mains,non-veg,false,229,22900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+87,Veg Haka Noodle,veg-haka-noodle,Chinese,mains,veg,true,199,19900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+88,Chicken Haka Noodle,chicken-haka-noodle,Chinese,mains,non-veg,false,239,23900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+89,Lemon Dry Chicken,lemon-dry-chicken,Chinese,mains,non-veg,false,229,22900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+90,Chicken 65,chicken-65,Chinese,mains,non-veg,false,229,22900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+91,Veg Fried Rice,veg-fried-rice,Chinese,mains,veg,true,179,17900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+92,Chicken Fried Rice,chicken-fried-rice,Chinese,mains,non-veg,false,199,19900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+93,Egg fried Rice,egg-fried-rice,Chinese,mains,egg,false,189,18900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+94,Chilli Garlic Fried Rice,chilli-garlic-fried-rice,Chinese,mains,veg,true,189,18900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+95,Chilli Garlic Chicken Fried Rice,chilli-garlic-chicken-fried-rice,Chinese,mains,non-veg,false,229,22900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+97,Paneer Box,paneer-box,Healthy Meals,bowls,veg,true,249,24900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+98,Veggie Box,veggie-box,Healthy Meals,bowls,veg,true,199,19900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+99,Chicken Box,chicken-box,Healthy Meals,bowls,non-veg,false,299,29900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+100,Loaded Nachos,loaded-nachos,Quick Bites,snacks,veg,true,180,18000,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
+101,Loaded Chicken Nachos,loaded-chicken-nachos,Quick Bites,snacks,non-veg,false,199,19900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+102,Buffalo Chicken wings,buffalo-chicken-wings,Quick Bites,snacks,non-veg,false,249,24900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+103,Chicken Cheese Pop-corn(6pcs),chicken-cheese-pop-corn-6pcs,Quick Bites,snacks,non-veg,false,199,19900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description|veg-column-conflict-resolved-from-name
+104,Cheese Corn Balls(6pcs),cheese-corn-balls-6pcs,Quick Bites,snacks,veg,true,179,17900,,,MISSING,,,,,,pending_review,image|ingredients|allergens|macros|glycaemic_index|sugar_per_serving|description
