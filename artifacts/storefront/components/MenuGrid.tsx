@@ -9,6 +9,10 @@ export interface MenuGridRow {
   /** TNM-MENU-01 §5 fixed section (1-13). Undefined sinks the row into a
    *  trailing "More dishes" bucket instead of being dropped. */
   sectionOrder?: number;
+  /** T4: the section's one photo-led DishCard; every other row is a compact
+   *  DishRow. The hero is pinned to the top of its section regardless of the
+   *  personalised `order` — the ticket keeps "one hero card per section top". */
+  hero?: boolean;
 }
 
 /**
@@ -86,7 +90,7 @@ export function MenuGrid({
   );
 
   return (
-    <div className="flex flex-col gap-12">
+    <div className="flex flex-col gap-8">
       {sections.map((section) => {
         // Section 13 never gets the personalization boost — see the file
         // header. Every other section applies `order` normally.
@@ -110,11 +114,21 @@ export function MenuGrid({
             </h2>
             {/* The revision's card grid: one column on a phone, two from sm,
                 three from lg. `order` still applies (grid honours it). */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" role="list">
-              {section.items.map(({ dishId, node }) => (
+            {/* T4 density: one column of compact rows separated by hairlines,
+                the hero card first and full-width. From `sm` the rows flow
+                into two/three columns; the hero keeps a card's width rather
+                than stretching a 1.12-aspect photo across the whole rail.
+                `order` still applies (grid honours it) — except on the hero,
+                which stays at the section top by design. */}
+            <div
+              className="grid grid-cols-1 gap-x-6 divide-y divide-line sm:grid-cols-2 sm:gap-y-2 sm:divide-y-0 lg:grid-cols-3"
+              role="list"
+            >
+              {section.items.map(({ dishId, node, hero }) => (
                 <div
                   key={dishId}
                   role="listitem"
+                  className={hero ? "pb-2 sm:col-span-full sm:max-w-md" : undefined}
                   // PR-11c: no `cv-auto-row` on the revision's card. The
                   // utility (N3.1) reserved 192px per row for the old list
                   // shape; the card is ~3× that, so the reservation would
@@ -123,7 +137,7 @@ export function MenuGrid({
                   // Chromium's lazy render then leaves most of the grid
                   // unlaid-out for seconds after load. `.cv-auto` stays on
                   // the horizontal rails, where item sizes are fixed.
-                  style={order && boosted ? { order: order.get(dishId) } : undefined}
+                  style={order && boosted && !hero ? { order: order.get(dishId) } : undefined}
                   hidden={visibleIds ? !visibleIds.has(dishId) : false}
                 >
                   {node}
