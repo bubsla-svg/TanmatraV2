@@ -590,6 +590,9 @@ router.get("/orders/:externalOrderId/status", async (req: Request, res: Response
     .select({
       status: ordersTable.status,
       createdAt: ordersTable.createdAt,
+      orderKind: ordersTable.orderKind,
+      orderChannel: ordersTable.orderChannel,
+      items: ordersTable.items,
       deliveryScheduledFor: subscriptionDeliveriesTable.scheduledFor,
       deliveryWindow: subscriptionDeliveriesTable.deliveryWindow,
       slotStartsAt: deliverySlotsTable.startsAt,
@@ -610,6 +613,12 @@ router.get("/orders/:externalOrderId/status", async (req: Request, res: Response
     return;
   }
 
+  // T8 (reorder in two taps): the confirmation page offers "Order this again",
+  // which needs the lines. Only OUR meal lines are replayable — the same two
+  // filters /orders/mine applies, because an aggregator row's items carry that
+  // POS's ids and prices, not our menu's. No PII: dish id, name, qty, price.
+  const items = row.orderKind === "meal" && row.orderChannel === "own_app" ? (row.items ?? []) : [];
+
   // An à-la-carte order that chose a window (T-08) is scheduled, not a
   // countdown — report the window it booked, same shape as a subscription
   // delivery so the tracking screen has one contract to read.
@@ -617,6 +626,7 @@ router.get("/orders/:externalOrderId/status", async (req: Request, res: Response
     res.json({
       orderId: externalOrderId,
       status: row.status,
+      items,
       timing: "scheduled",
       etaMinutes: null,
       scheduledFor: row.slotStartsAt.toISOString(),
@@ -629,6 +639,7 @@ router.get("/orders/:externalOrderId/status", async (req: Request, res: Response
     res.json({
       orderId: externalOrderId,
       status: row.status,
+      items,
       timing: "scheduled",
       etaMinutes: null,
       scheduledFor: row.deliveryScheduledFor.toISOString(),
@@ -641,6 +652,7 @@ router.get("/orders/:externalOrderId/status", async (req: Request, res: Response
     res.json({
       orderId: externalOrderId,
       status: row.status,
+      items,
       timing: "pending",
       etaMinutes: null,
       scheduledFor: null,
@@ -657,6 +669,7 @@ router.get("/orders/:externalOrderId/status", async (req: Request, res: Response
   res.json({
     orderId: externalOrderId,
     status: row.status,
+    items,
     timing: "on_demand",
     etaMinutes,
     scheduledFor: null,

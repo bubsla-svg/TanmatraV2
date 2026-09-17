@@ -112,3 +112,33 @@ test("fetchOrderStatus rejects an unrecognised timing value back to on_demand", 
     assert.equal(result.status.etaMinutes, 9);
   }
 });
+
+test("fetchOrderStatus carries the order's own lines and drops malformed ones (T8)", async () => {
+  const fetchImpl = (async () =>
+    new Response(
+      JSON.stringify({
+        orderId: "o-1",
+        status: "delivered",
+        timing: "on_demand",
+        etaMinutes: 0,
+        items: [
+          { id: 7, name: "Quinoa Khichdi", qty: 2, price: 19900 },
+          { id: "x", name: "Broken", qty: 1, price: 1 },
+          null,
+        ],
+      }),
+      { status: 200 },
+    )) as unknown as typeof fetch;
+  const r = await fetchOrderStatus("o-1", "http://api", fetchImpl);
+  assert.equal(r.kind, "ok");
+  if (r.kind !== "ok") return;
+  assert.deepEqual(r.status.items, [{ id: 7, name: "Quinoa Khichdi", qty: 2, price: 19900 }]);
+});
+
+test("fetchOrderStatus reads an empty line list from an api-server build without the field", async () => {
+  const fetchImpl = (async () =>
+    new Response(JSON.stringify({ orderId: "o-2", status: "placed", timing: "pending" }), { status: 200 })) as unknown as typeof fetch;
+  const r = await fetchOrderStatus("o-2", "http://api", fetchImpl);
+  assert.equal(r.kind, "ok");
+  if (r.kind === "ok") assert.deepEqual(r.status.items, []);
+});

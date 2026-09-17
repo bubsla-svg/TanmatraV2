@@ -96,7 +96,11 @@ export type FunnelEvent =
   // OTP was accepted, so the single largest drop-off in the funnel — people who
   // reach the sign-in wall and leave — was invisible between begin_checkout and
   // the payment events.
-  | "identity_verified";
+  | "identity_verified"
+  // T8: a past order re-seeded the cart. `added`/`dropped` are line counts;
+  // `source` is which surface offered it (order history or the confirmation
+  // page). Fires before the hand-off to /checkout, never on the pay itself.
+  | "reorder";
 
 /**
  * A stable, groupable cause for `payment_failed`.
