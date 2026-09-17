@@ -4610,6 +4610,1312 @@ export interface DishCustomOption {
       }
     ],
     "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 124,
+    "slug": "pumpkin-soup",
+    "name": "Pumpkin Soup",
+    "description": "Pumpkin, Onion, Garlic, and more.",
+    "longDescription": "Pumpkin – 200 g · Onion – 30 g · Garlic – 5 g · Fresh cream – 30 ml · Vegetable stock – 200 ml · Olive oil – 1 tsp",
+    "image": "/images/dishes/pumpkin-soup.jpg",
+    "price": 23900,
+    "kitchen": "continental",
+    "category": "soups",
+    "isVeg": true,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 4,
+      "carbs": 20,
+      "fat": 14,
+      "fiber": 2,
+      "calories": 215
+    },
+    "ingredients": [
+      "Pumpkin – 200 g",
+      "Onion – 30 g",
+      "Garlic – 5 g",
+      "Fresh cream – 30 ml",
+      "Vegetable stock – 200 ml",
+      "Olive oil – 1 tsp",
+      "Salt & pepper – to taste"
+    ],
+    "allergens": [
+      "Dairy"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "9g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 125,
+    "slug": "sweet-potato-and-goat-cheese-salad",
+    "name": "Sweet Potato & Goat Cheese Salad",
+    "description": "Sweet potato, Mixed greens, Goat cheese, and more.",
+    "longDescription": "Sweet potato – 120 g (roasted) · Mixed greens – 60 g · Goat cheese – 30 g · Walnuts – 15 g · Dried cranberries – 10 g · Vinaigrette – 2 tbsp",
+    "image": "/images/dishes/sweet-potato-and-goat-cheese-salad.jpg",
+    "price": 36900,
+    "kitchen": "continental",
+    "category": "salads",
+    "isVeg": true,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 12,
+      "carbs": 38,
+      "fat": 27,
+      "fiber": 7,
+      "calories": 430
+    },
+    "ingredients": [
+      "Sweet potato – 120 g (roasted)",
+      "Mixed greens – 60 g",
+      "Goat cheese – 30 g",
+      "Walnuts – 15 g",
+      "Dried cranberries – 10 g",
+      "Vinaigrette – 2 tbsp"
+    ],
+    "allergens": [
+      "Dairy",
+      "Tree Nuts",
+      "Mustard"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "16g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 126,
+    "slug": "corn-cucumber-and-edamame-salad",
+    "name": "Corn, Cucumber & Edamame Salad",
+    "description": "Sweet corn, Cucumber, Edamame, and more.",
+    "longDescription": "Sweet corn – 80 g · Cucumber – 80 g · Edamame – 60 g · Onion – 20 g · Coriander leaves – 5 g · Lemon juice – 1 tbsp · Olive oil – 1 tbsp",
+    "image": "/images/dishes/corn-cucumber-and-edamame-salad.jpg",
+    "price": 33000,
+    "kitchen": "continental",
+    "category": "salads",
+    "isVeg": true,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 11,
+      "carbs": 28,
+      "fat": 19,
+      "fiber": 6,
+      "calories": 306
+    },
+    "ingredients": [
+      "Sweet corn – 80 g",
+      "Cucumber – 80 g",
+      "Edamame – 60 g",
+      "Onion – 20 g",
+      "Coriander leaves – 5 g",
+      "Lemon juice – 1 tbsp",
+      "Olive oil – 1 tbsp",
+      "Salt & pepper – to taste"
+    ],
+    "allergens": [
+      "Soy"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "8g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 127,
+    "slug": "cranberry-chicken-salad",
+    "name": "Cranberry Chicken Salad",
+    "description": "Mixed greens, Grilled chicken breast, Dried cranberries, and more.",
+    "longDescription": "Mixed greens – 70 g · Grilled chicken breast – 100 g · Dried cranberries – 20 g · Walnuts – 15 g · Feta cheese – 20 g · Vinaigrette – 2 tbsp",
+    "image": "/images/dishes/cranberry-chicken-salad.jpg",
+    "price": 33000,
+    "kitchen": "continental",
+    "category": "salads",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 37,
+      "carbs": 23,
+      "fat": 26,
+      "fiber": 4,
+      "calories": 464
+    },
+    "ingredients": [
+      "Mixed greens – 70 g",
+      "Grilled chicken breast – 100 g",
+      "Dried cranberries – 20 g",
+      "Walnuts – 15 g",
+      "Feta cheese – 20 g",
+      "Vinaigrette – 2 tbsp"
+    ],
+    "allergens": [
+      "Tree Nuts",
+      "Dairy",
+      "Mustard"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "15g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // Indian-café carbonara (cream added)
+  {
+    "id": 128,
+    "slug": "spaghetti-carbonara-chicken",
+    "name": "Spaghetti Carbonara - Chicken",
+    "description": "Spaghetti pasta, Egg yolk, Parmesan cheese, and more.",
+    "longDescription": "Spaghetti pasta – 120 g (boiled) · Egg yolk – 20 g · Parmesan cheese – 20 g · Chicken bacon – 30 g · Grilled chicken breast – 80 g · Fresh cream – 50 ml · Olive oil – 1 tsp · Garlic – 5 g",
+    "image": "/images/dishes/spaghetti-carbonara-chicken.jpg",
+    "price": 39500,
+    "kitchen": "continental",
+    "category": "pasta",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 50,
+      "carbs": 42,
+      "fat": 40,
+      "fiber": 2,
+      "calories": 734
+    },
+    "ingredients": [
+      "Spaghetti pasta – 120 g (boiled)",
+      "Egg yolk – 20 g",
+      "Parmesan cheese – 20 g",
+      "Chicken bacon – 30 g",
+      "Grilled chicken breast – 80 g",
+      "Fresh cream – 50 ml",
+      "Olive oil – 1 tsp",
+      "Garlic – 5 g",
+      "Salt & black pepper – to taste"
+    ],
+    "allergens": [
+      "Gluten",
+      "Eggs",
+      "Dairy"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "3g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 129,
+    "slug": "spaghetti-carbonara-prawns",
+    "name": "Spaghetti Carbonara - Prawns",
+    "description": "Spaghetti pasta, Egg yolk, Parmesan cheese, and more.",
+    "longDescription": "Spaghetti pasta – 120 g (boiled) · Egg yolk – 20 g · Parmesan cheese – 20 g · Chicken bacon – 30 g · Prawns – 100 g · Fresh cream – 50 ml · Olive oil – 1 tsp · Garlic – 5 g",
+    "image": "/images/dishes/spaghetti-carbonara-prawns.jpg",
+    "price": 49000,
+    "kitchen": "continental",
+    "category": "pasta",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 46,
+      "carbs": 43,
+      "fat": 38,
+      "fiber": 2,
+      "calories": 701
+    },
+    "ingredients": [
+      "Spaghetti pasta – 120 g (boiled)",
+      "Egg yolk – 20 g",
+      "Parmesan cheese – 20 g",
+      "Chicken bacon – 30 g",
+      "Prawns – 100 g",
+      "Fresh cream – 50 ml",
+      "Olive oil – 1 tsp",
+      "Garlic – 5 g",
+      "Salt & black pepper – to taste"
+    ],
+    "allergens": [
+      "Gluten",
+      "Eggs",
+      "Dairy",
+      "Shellfish"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "3g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // rosé / pink sauce
+  {
+    "id": 130,
+    "slug": "mama-rose-pasta-veg",
+    "name": "Mama Rose Pasta - Veg",
+    "description": "Penne pasta, Tomato puree, Fresh cream, and more.",
+    "longDescription": "Penne pasta – 120 g (boiled) · Tomato puree – 60 g · Fresh cream – 50 ml · Garlic – 5 g · Olive oil – 1 tbsp · Parmesan cheese – 10 g · Mixed veggies – 60 g · Basil – 3 g",
+    "image": "/images/dishes/mama-rose-pasta-veg.jpg",
+    "price": 34900,
+    "kitchen": "continental",
+    "category": "pasta",
+    "isVeg": true,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 14,
+      "carbs": 50,
+      "fat": 34,
+      "fiber": 5,
+      "calories": 561
+    },
+    "ingredients": [
+      "Penne pasta – 120 g (boiled)",
+      "Tomato puree – 60 g",
+      "Fresh cream – 50 ml",
+      "Garlic – 5 g",
+      "Olive oil – 1 tbsp",
+      "Parmesan cheese – 10 g",
+      "Mixed veggies – 60 g",
+      "Basil – 3 g",
+      "Salt & pepper – to taste"
+    ],
+    "allergens": [
+      "Gluten",
+      "Dairy"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "8g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 131,
+    "slug": "mama-rose-pasta-chicken",
+    "name": "Mama Rose Pasta - Chicken",
+    "description": "Penne pasta, Tomato puree, Fresh cream, and more.",
+    "longDescription": "Penne pasta – 120 g (boiled) · Tomato puree – 60 g · Fresh cream – 50 ml · Garlic – 5 g · Olive oil – 1 tbsp · Parmesan cheese – 10 g · Grilled chicken breast – 100 g · Basil – 3 g",
+    "image": "/images/dishes/mama-rose-pasta-chicken.jpg",
+    "price": 34000,
+    "kitchen": "continental",
+    "category": "pasta",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 44,
+      "carbs": 46,
+      "fat": 37,
+      "fiber": 4,
+      "calories": 703
+    },
+    "ingredients": [
+      "Penne pasta – 120 g (boiled)",
+      "Tomato puree – 60 g",
+      "Fresh cream – 50 ml",
+      "Garlic – 5 g",
+      "Olive oil – 1 tbsp",
+      "Parmesan cheese – 10 g",
+      "Grilled chicken breast – 100 g",
+      "Basil – 3 g",
+      "Salt & pepper – to taste"
+    ],
+    "allergens": [
+      "Gluten",
+      "Dairy"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "6g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 132,
+    "slug": "mama-rose-pasta-prawns",
+    "name": "Mama Rose Pasta - Prawns",
+    "description": "Penne pasta, Tomato puree, Fresh cream, and more.",
+    "longDescription": "Penne pasta – 120 g (boiled) · Tomato puree – 60 g · Fresh cream – 50 ml · Garlic – 5 g · Olive oil – 1 tbsp · Parmesan cheese – 10 g · Prawns – 100 g · Basil – 3 g",
+    "image": "/images/dishes/mama-rose-pasta-prawns.jpg",
+    "price": 44900,
+    "kitchen": "continental",
+    "category": "pasta",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 34,
+      "carbs": 47,
+      "fat": 35,
+      "fiber": 4,
+      "calories": 637
+    },
+    "ingredients": [
+      "Penne pasta – 120 g (boiled)",
+      "Tomato puree – 60 g",
+      "Fresh cream – 50 ml",
+      "Garlic – 5 g",
+      "Olive oil – 1 tbsp",
+      "Parmesan cheese – 10 g",
+      "Prawns – 100 g",
+      "Basil – 3 g",
+      "Salt & pepper – to taste"
+    ],
+    "allergens": [
+      "Gluten",
+      "Dairy",
+      "Shellfish"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "6g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 133,
+    "slug": "spinach-and-corn-sandwich",
+    "name": "Spinach & Corn Sandwich",
+    "description": "Multigrain bread, Spinach, Sweet corn, and more.",
+    "longDescription": "Multigrain bread – 2 slices · Spinach – 50 g · Sweet corn – 50 g · Cheese – 30 g · Butter – 10 g · Fresh cream – 15 ml",
+    "image": "/images/dishes/spinach-and-corn-sandwich.jpg",
+    "price": 32500,
+    "kitchen": "continental",
+    "category": "wraps",
+    "isVeg": true,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 17,
+      "carbs": 38,
+      "fat": 26,
+      "fiber": 6,
+      "calories": 444
+    },
+    "ingredients": [
+      "Multigrain bread – 2 slices",
+      "Spinach – 50 g",
+      "Sweet corn – 50 g",
+      "Cheese – 30 g",
+      "Butter – 10 g",
+      "Fresh cream – 15 ml",
+      "Salt & pepper – to taste"
+    ],
+    "allergens": [
+      "Gluten",
+      "Dairy"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "5g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 134,
+    "slug": "smoked-chicken-and-cheese-sandwich",
+    "name": "Smoked Chicken & Cheese Sandwich",
+    "description": "Multigrain bread, Smoked chicken, Cheese, and more.",
+    "longDescription": "Multigrain bread – 2 slices · Smoked chicken – 80 g · Cheese – 30 g · Lettuce – 20 g · Tomato – 30 g · Mayo/yogurt dip – 1 tbsp · Butter – 5 g",
+    "image": "/images/dishes/smoked-chicken-and-cheese-sandwich.jpg",
+    "price": 27000,
+    "kitchen": "continental",
+    "category": "wraps",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 36,
+      "carbs": 29,
+      "fat": 25,
+      "fiber": 4,
+      "calories": 492
+    },
+    "ingredients": [
+      "Multigrain bread – 2 slices",
+      "Smoked chicken – 80 g",
+      "Cheese – 30 g",
+      "Lettuce – 20 g",
+      "Tomato – 30 g",
+      "Mayo/yogurt dip – 1 tbsp",
+      "Butter – 5 g"
+    ],
+    "allergens": [
+      "Gluten",
+      "Dairy"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "4g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 135,
+    "slug": "spicy-chicken-ham-sandwich",
+    "name": "Spicy Chicken Ham Sandwich",
+    "description": "Multigrain bread, Chicken ham, Cheese, and more.",
+    "longDescription": "Multigrain bread – 2 slices · Chicken ham – 60 g · Cheese – 20 g · Jalapeños – 15 g · Peri peri sauce – 1 tbsp · Lettuce – 20 g · Tomato – 30 g",
+    "image": "/images/dishes/spicy-chicken-ham-sandwich.jpg",
+    "price": 25000,
+    "kitchen": "continental",
+    "category": "wraps",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 22,
+      "carbs": 31,
+      "fat": 12,
+      "fiber": 5,
+      "calories": 328
+    },
+    "ingredients": [
+      "Multigrain bread – 2 slices",
+      "Chicken ham – 60 g",
+      "Cheese – 20 g",
+      "Jalapeños – 15 g",
+      "Peri peri sauce – 1 tbsp",
+      "Lettuce – 20 g",
+      "Tomato – 30 g"
+    ],
+    "allergens": [
+      "Gluten",
+      "Dairy"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "6g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 136,
+    "slug": "chicken-burger",
+    "name": "Chicken Burger",
+    "description": "Burger bun, Chicken patty, Cheese, and more.",
+    "longDescription": "Burger bun – 60 g · Chicken patty – 100 g · Cheese – 20 g · Lettuce – 20 g · Tomato – 30 g · Onion – 15 g · Mayo/yogurt dip – 1 tbsp",
+    "image": "/images/dishes/chicken-burger.jpg",
+    "price": 24900,
+    "kitchen": "continental",
+    "category": "wraps",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 35,
+      "carbs": 36,
+      "fat": 23,
+      "fiber": 2,
+      "calories": 497
+    },
+    "ingredients": [
+      "Burger bun – 60 g",
+      "Chicken patty – 100 g",
+      "Cheese – 20 g",
+      "Lettuce – 20 g",
+      "Tomato – 30 g",
+      "Onion – 15 g",
+      "Mayo/yogurt dip – 1 tbsp"
+    ],
+    "allergens": [
+      "Gluten",
+      "Dairy"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "6g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 137,
+    "slug": "mutton-burger",
+    "name": "Mutton Burger",
+    "description": "Burger bun, Mutton patty, Cheese, and more.",
+    "longDescription": "Burger bun – 60 g · Mutton patty – 100 g · Cheese – 20 g · Lettuce – 20 g · Tomato – 30 g · Onion – 15 g · Mayo/yogurt dip – 1 tbsp",
+    "image": "/images/dishes/mutton-burger.jpg",
+    "price": 33000,
+    "kitchen": "continental",
+    "category": "wraps",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 36,
+      "carbs": 34,
+      "fat": 29,
+      "fiber": 2,
+      "calories": 555
+    },
+    "ingredients": [
+      "Burger bun – 60 g",
+      "Mutton patty – 100 g",
+      "Cheese – 20 g",
+      "Lettuce – 20 g",
+      "Tomato – 30 g",
+      "Onion – 15 g",
+      "Mayo/yogurt dip – 1 tbsp"
+    ],
+    "allergens": [
+      "Gluten",
+      "Dairy"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "6g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 138,
+    "slug": "paneer-burger",
+    "name": "Paneer Burger",
+    "description": "Burger bun, Paneer, Cheese, and more.",
+    "longDescription": "Burger bun – 60 g · Paneer – 80 g (grilled) · Cheese – 20 g · Lettuce – 20 g · Tomato – 30 g · Onion – 15 g · Mint chutney – 1 tbsp · Mayo/yogurt dip – 1 tbsp",
+    "image": "/images/dishes/paneer-burger.jpg",
+    "price": 29000,
+    "kitchen": "continental",
+    "category": "wraps",
+    "isVeg": true,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 27,
+      "carbs": 37,
+      "fat": 33,
+      "fiber": 3,
+      "calories": 546
+    },
+    "ingredients": [
+      "Burger bun – 60 g",
+      "Paneer – 80 g (grilled)",
+      "Cheese – 20 g",
+      "Lettuce – 20 g",
+      "Tomato – 30 g",
+      "Onion – 15 g",
+      "Mint chutney – 1 tbsp",
+      "Mayo/yogurt dip – 1 tbsp"
+    ],
+    "allergens": [
+      "Gluten",
+      "Dairy"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "7g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 139,
+    "slug": "veg-burger",
+    "name": "Veg Burger",
+    "description": "Burger bun, Mashed potato, Mixed veggies, and more.",
+    "longDescription": "Burger bun – 60 g · Mashed potato – 70 g · Mixed veggies – 30 g · Breadcrumbs – 15 g · Oil – 1 tbsp (frying, absorbed) · Cheese – 15 g · Lettuce – 20 g · Tomato – 30 g · Onion – 15 g · Mayo/yogurt dip – 1 tbsp",
+    "image": "/images/dishes/veg-burger.jpg",
+    "price": 25000,
+    "kitchen": "continental",
+    "category": "wraps",
+    "isVeg": true,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 14,
+      "carbs": 59,
+      "fat": 30,
+      "fiber": 5,
+      "calories": 560
+    },
+    "ingredients": [
+      "Burger bun – 60 g",
+      "Mashed potato – 70 g",
+      "Mixed veggies – 30 g",
+      "Breadcrumbs – 15 g",
+      "Oil – 1 tbsp (frying, absorbed)",
+      "Cheese – 15 g",
+      "Lettuce – 20 g",
+      "Tomato – 30 g",
+      "Onion – 15 g",
+      "Mayo/yogurt dip – 1 tbsp"
+    ],
+    "allergens": [
+      "Gluten",
+      "Dairy"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "9g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // no price on the sheet
+  {
+    "id": 140,
+    "slug": "english-breakfast",
+    "name": "English Breakfast",
+    "description": "Eggs, Chicken sausage, Baked beans, and more.",
+    "longDescription": "Eggs – 2 medium · Chicken sausage – 60 g · Baked beans – 100 g · Bread slices – 2 slices · Hash brown – 60 g · Tomato – 60 g (grilled) · Mushrooms – 50 g · Butter – 10 g",
+    "image": "/images/dishes/english-breakfast.jpg",
+    "price": 0,
+    "kitchen": "continental",
+    "category": "breakfast",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 35,
+      "carbs": 72,
+      "fat": 38,
+      "fiber": 9,
+      "calories": 760
+    },
+    "ingredients": [
+      "Eggs – 2 medium",
+      "Chicken sausage – 60 g",
+      "Baked beans – 100 g",
+      "Bread slices – 2 slices",
+      "Hash brown – 60 g",
+      "Tomato – 60 g (grilled)",
+      "Mushrooms – 50 g",
+      "Butter – 10 g"
+    ],
+    "allergens": [
+      "Eggs",
+      "Gluten",
+      "Dairy"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "12g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 141,
+    "slug": "cilbir-turkish-egg",
+    "name": "Cilbir Turkish Egg",
+    "description": "Poached egg, Yogurt, Garlic, and more.",
+    "longDescription": "Poached egg – 2 medium · Yogurt – 120 g · Garlic – 3 g · Butter – 15 g · Chili flakes – 2 g · Pita bread – 1 · Fresh mint – 2 g",
+    "image": "/images/dishes/cilbir-turkish-egg.jpg",
+    "price": 31000,
+    "kitchen": "continental",
+    "category": "breakfast",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 19,
+      "carbs": 24,
+      "fat": 27,
+      "fiber": 1,
+      "calories": 410
+    },
+    "ingredients": [
+      "Poached egg – 2 medium",
+      "Yogurt – 120 g",
+      "Garlic – 3 g",
+      "Butter – 15 g",
+      "Chili flakes – 2 g",
+      "Pita bread – 1",
+      "Fresh mint – 2 g"
+    ],
+    "allergens": [
+      "Eggs",
+      "Dairy",
+      "Gluten"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "7g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 142,
+    "slug": "boiled-egg-sauteed-veggies",
+    "name": "Boiled Egg Sauteed Veggies",
+    "description": "Eggs, Mixed veggies, Olive oil, and more.",
+    "longDescription": "Eggs – 2 medium (boiled) · Mixed veggies – 120 g · Olive oil – 1 tsp",
+    "image": "/images/dishes/boiled-egg-sauteed-veggies.jpg",
+    "price": 15000,
+    "kitchen": "continental",
+    "category": "breakfast",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 15,
+      "carbs": 10,
+      "fat": 15,
+      "fiber": 4,
+      "calories": 233
+    },
+    "ingredients": [
+      "Eggs – 2 medium (boiled)",
+      "Mixed veggies – 120 g",
+      "Olive oil – 1 tsp",
+      "Salt & pepper – to taste"
+    ],
+    "allergens": [
+      "Eggs"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "5g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // builder — see option deltas
+  {
+    "id": 143,
+    "slug": "make-your-breakfast",
+    "name": "Make Your Breakfast",
+    "description": "Eggs, Butter, Mushrooms, and more.",
+    "longDescription": "Eggs – 2 medium · Butter – 10 g · Mushrooms – 40 g · Spinach – 30 g · Smoked chicken – 60 g · Hash brown – 70 g · Bread slices – 2 slices",
+    "image": "/images/dishes/make-your-breakfast.jpg",
+    "price": 37500,
+    "kitchen": "continental",
+    "category": "breakfast",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 39,
+      "carbs": 52,
+      "fat": 34,
+      "fiber": 4,
+      "calories": 674
+    },
+    "ingredients": [
+      "Eggs – 2 medium",
+      "Butter – 10 g",
+      "Mushrooms – 40 g",
+      "Spinach – 30 g",
+      "Smoked chicken – 60 g",
+      "Hash brown – 70 g",
+      "Bread slices – 2 slices"
+    ],
+    "allergens": [
+      "Eggs",
+      "Dairy",
+      "Gluten"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "4g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 144,
+    "slug": "french-toast",
+    "name": "French Toast",
+    "description": "White bread, Egg, Milk, and more.",
+    "longDescription": "White bread – 2 slices · Egg – 1 medium · Milk – 50 ml · Butter – 10 g · Sugar – 10 g · Maple syrup – 20 g · Cinnamon powder – 1 g",
+    "image": "/images/dishes/french-toast.jpg",
+    "price": 25000,
+    "kitchen": "continental",
+    "category": "snacks",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 13,
+      "carbs": 54,
+      "fat": 16,
+      "fiber": 2,
+      "calories": 416
+    },
+    "ingredients": [
+      "White bread – 2 slices",
+      "Egg – 1 medium",
+      "Milk – 50 ml",
+      "Butter – 10 g",
+      "Sugar – 10 g",
+      "Maple syrup – 20 g",
+      "Cinnamon powder – 1 g"
+    ],
+    "allergens": [
+      "Gluten",
+      "Eggs",
+      "Dairy"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "27g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 145,
+    "slug": "pancakes-2-pc",
+    "name": "Pancakes (2 pc)",
+    "description": "All-purpose flour, Milk, Egg, and more.",
+    "longDescription": "All-purpose flour – 60 g · Milk – 100 ml · Egg – 1 medium · Butter – 15 g · Sugar – 15 g · Baking powder – 3 g · Maple syrup – 30 g",
+    "image": "/images/dishes/pancakes-2-pc.jpg",
+    "price": 24900,
+    "kitchen": "continental",
+    "category": "snacks",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 10,
+      "carbs": 41,
+      "fat": 20,
+      "fiber": 0,
+      "calories": 379
+    },
+    "ingredients": [
+      "All-purpose flour – 60 g",
+      "Milk – 100 ml",
+      "Egg – 1 medium",
+      "Butter – 15 g",
+      "Sugar – 15 g",
+      "Baking powder – 3 g",
+      "Maple syrup – 30 g"
+    ],
+    "allergens": [
+      "Gluten",
+      "Dairy",
+      "Eggs"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "38g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 146,
+    "slug": "mint-lime-fizz",
+    "name": "Mint Lime Fizz",
+    "description": "Soda water, Lemon juice, Fresh mint, and more.",
+    "longDescription": "Soda water – 200 ml · Lemon juice – 20 ml · Fresh mint – 5 g · Sugar syrup – 30 ml",
+    "image": "/images/dishes/mint-lime-fizz.jpg",
+    "price": 17900,
+    "kitchen": "continental",
+    "category": "beverages",
+    "isVeg": true,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 0,
+      "carbs": 21,
+      "fat": 0,
+      "fiber": 0,
+      "calories": 85
+    },
+    "ingredients": [
+      "Soda water – 200 ml",
+      "Lemon juice – 20 ml",
+      "Fresh mint – 5 g",
+      "Sugar syrup – 30 ml"
+    ],
+    "allergens": [],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "20g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 147,
+    "slug": "pineapple-fizz",
+    "name": "Pineapple Fizz",
+    "description": "Pineapple, Soda water, Sugar syrup, and more.",
+    "longDescription": "Pineapple – 100 g · Soda water – 150 ml · Sugar syrup – 20 ml · Lemon juice – 10 ml",
+    "image": "/images/dishes/pineapple-fizz.jpg",
+    "price": 17900,
+    "kitchen": "continental",
+    "category": "beverages",
+    "isVeg": true,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 1,
+      "carbs": 27,
+      "fat": 0,
+      "fiber": 1,
+      "calories": 104
+    },
+    "ingredients": [
+      "Pineapple – 100 g",
+      "Soda water – 150 ml",
+      "Sugar syrup – 20 ml",
+      "Lemon juice – 10 ml"
+    ],
+    "allergens": [],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "23g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 148,
+    "slug": "kiwi-mint-cooler",
+    "name": "Kiwi Mint Cooler",
+    "description": "Kiwi, Fresh mint, Lemon juice, and more.",
+    "longDescription": "Kiwi – 100 g · Fresh mint – 5 g · Lemon juice – 15 ml · Sugar syrup – 20 ml · Soda water – 150 ml",
+    "image": "/images/dishes/kiwi-mint-cooler.jpg",
+    "price": 17900,
+    "kitchen": "continental",
+    "category": "beverages",
+    "isVeg": true,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 1,
+      "carbs": 29,
+      "fat": 1,
+      "fiber": 3,
+      "calories": 119
+    },
+    "ingredients": [
+      "Kiwi – 100 g",
+      "Fresh mint – 5 g",
+      "Lemon juice – 15 ml",
+      "Sugar syrup – 20 ml",
+      "Soda water – 150 ml"
+    ],
+    "allergens": [],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "22g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 149,
+    "slug": "mango-mint",
+    "name": "Mango Mint",
+    "description": "Mango, Fresh mint, Lemon juice, and more.",
+    "longDescription": "Mango – 120 g · Fresh mint – 5 g · Lemon juice – 10 ml · Sugar syrup – 15 ml · Water – 150 ml",
+    "image": "/images/dishes/mango-mint.jpg",
+    "price": 17900,
+    "kitchen": "continental",
+    "category": "beverages",
+    "isVeg": true,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 1,
+      "carbs": 29,
+      "fat": 1,
+      "fiber": 2,
+      "calories": 116
+    },
+    "ingredients": [
+      "Mango – 120 g",
+      "Fresh mint – 5 g",
+      "Lemon juice – 10 ml",
+      "Sugar syrup – 15 ml",
+      "Water – 150 ml"
+    ],
+    "allergens": [],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "27g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 150,
+    "slug": "guava-chilli-cooler",
+    "name": "Guava Chilli Cooler",
+    "description": "Guava, Green chili, Lemon juice, and more.",
+    "longDescription": "Guava – 120 g · Green chili – 2 g · Lemon juice – 15 ml · Sugar syrup – 15 ml · Water – 150 ml",
+    "image": "/images/dishes/guava-chilli-cooler.jpg",
+    "price": 17900,
+    "kitchen": "continental",
+    "category": "beverages",
+    "isVeg": true,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 3,
+      "carbs": 28,
+      "fat": 1,
+      "fiber": 7,
+      "calories": 125
+    },
+    "ingredients": [
+      "Guava – 120 g",
+      "Green chili – 2 g",
+      "Lemon juice – 15 ml",
+      "Sugar syrup – 15 ml",
+      "Water – 150 ml",
+      "Salt – a pinch"
+    ],
+    "allergens": [],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "21g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 151,
+    "slug": "stuffed-chicken-with-spinach-and-cheese-mushroom-sauce",
+    "name": "Stuffed Chicken with Spinach & Cheese, Mushroom Sauce",
+    "description": "Chicken breast, Spinach, Mozzarella, and more.",
+    "longDescription": "Chicken breast – 180 g · Spinach – 40 g · Mozzarella – 30 g · Mushroom sauce – 60 g · Mashed potato – 100 g · Olive oil – 1 tsp",
+    "image": "/images/dishes/stuffed-chicken-with-spinach-and-cheese-mushroom-sauce.jpg",
+    "price": 49900,
+    "kitchen": "continental",
+    "category": "mains",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 69,
+      "carbs": 23,
+      "fat": 26,
+      "fiber": 3,
+      "calories": 613
+    },
+    "ingredients": [
+      "Chicken breast – 180 g",
+      "Spinach – 40 g",
+      "Mozzarella – 30 g",
+      "Mushroom sauce – 60 g",
+      "Mashed potato – 100 g",
+      "Olive oil – 1 tsp",
+      "Salt & pepper – to taste"
+    ],
+    "allergens": [
+      "Dairy"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "3g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 152,
+    "slug": "loaded-chicken-nachos",
+    "name": "Loaded Chicken Nachos",
+    "description": "Nachos chips, Cheese sauce, Grilled chicken breast, and more.",
+    "longDescription": "Nachos chips – 100 g · Cheese sauce – 50 g · Grilled chicken breast – 60 g · Jalapeños – 20 g · Salsa – 30 g · Sour cream – 20 g",
+    "image": "/images/dishes/loaded-chicken-nachos.jpg",
+    "price": 25900,
+    "kitchen": "continental",
+    "category": "snacks",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 30,
+      "carbs": 71,
+      "fat": 38,
+      "fiber": 5,
+      "calories": 751
+    },
+    "ingredients": [
+      "Nachos chips – 100 g",
+      "Cheese sauce – 50 g",
+      "Grilled chicken breast – 60 g",
+      "Jalapeños – 20 g",
+      "Salsa – 30 g",
+      "Sour cream – 20 g"
+    ],
+    "allergens": [
+      "Gluten",
+      "Dairy"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "6g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 153,
+    "slug": "buffalo-chicken-wings-6-pc",
+    "name": "Buffalo Chicken Wings (6 pc)",
+    "description": "Chicken wings, Hot sauce, Butter, and more.",
+    "longDescription": "Chicken wings – 180 g (edible weight, 6 pc bone-in) · Hot sauce – 30 g · Butter – 15 g · All-purpose flour – 15 g · Oil – 1 tbsp (frying, absorbed) · Ranch yogurt dip – 2 tbsp",
+    "image": "/images/dishes/buffalo-chicken-wings-6-pc.jpg",
+    "price": 29900,
+    "kitchen": "continental",
+    "category": "snacks",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 50,
+      "carbs": 2,
+      "fat": 67,
+      "fiber": 0,
+      "calories": 809
+    },
+    "ingredients": [
+      "Chicken wings – 180 g (edible weight, 6 pc bone-in)",
+      "Hot sauce – 30 g",
+      "Butter – 15 g",
+      "All-purpose flour – 15 g",
+      "Oil – 1 tbsp (frying, absorbed)",
+      "Ranch yogurt dip – 2 tbsp"
+    ],
+    "allergens": [
+      "Dairy",
+      "Gluten"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "1g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 154,
+    "slug": "chicken-cheese-popcorn-6-pc",
+    "name": "Chicken Cheese Popcorn (6 pc)",
+    "description": "Chicken breast, Cheese, Breadcrumbs, and more.",
+    "longDescription": "Chicken breast – 100 g · Cheese – 30 g · Breadcrumbs – 30 g · Egg – 30 g · All-purpose flour – 15 g · Oil – 1.5 tbsp (frying, absorbed) · Peri peri sauce – 2 tbsp",
+    "image": "/images/dishes/chicken-cheese-popcorn-6-pc.jpg",
+    "price": 31000,
+    "kitchen": "continental",
+    "category": "snacks",
+    "isVeg": false,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 47,
+      "carbs": 26,
+      "fat": 42,
+      "fiber": 2,
+      "calories": 679
+    },
+    "ingredients": [
+      "Chicken breast – 100 g",
+      "Cheese – 30 g",
+      "Breadcrumbs – 30 g",
+      "Egg – 30 g",
+      "All-purpose flour – 15 g",
+      "Oil – 1.5 tbsp (frying, absorbed)",
+      "Peri peri sauce – 2 tbsp"
+    ],
+    "allergens": [
+      "Dairy",
+      "Gluten",
+      "Eggs"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "4g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // reference recipe 2026-09-17
+  {
+    "id": 155,
+    "slug": "cheese-corn-balls-6-pc",
+    "name": "Cheese Corn Balls (6 pc)",
+    "description": "Sweet corn, Mashed potato, Cheese, and more.",
+    "longDescription": "Sweet corn – 60 g · Mashed potato – 60 g · Cheese – 40 g · Breadcrumbs – 30 g · All-purpose flour – 15 g · Oil – 1.5 tbsp (frying, absorbed) · Peri peri sauce – 2 tbsp",
+    "image": "/images/dishes/cheese-corn-balls-6-pc.jpg",
+    "price": 23000,
+    "kitchen": "continental",
+    "category": "snacks",
+    "isVeg": true,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 18,
+      "carbs": 49,
+      "fat": 42,
+      "fiber": 4,
+      "calories": 637
+    },
+    "ingredients": [
+      "Sweet corn – 60 g",
+      "Mashed potato – 60 g",
+      "Cheese – 40 g",
+      "Breadcrumbs – 30 g",
+      "All-purpose flour – 15 g",
+      "Oil – 1.5 tbsp (frying, absorbed)",
+      "Peri peri sauce – 2 tbsp"
+    ],
+    "allergens": [
+      "Dairy",
+      "Gluten"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "8g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // sheet gram spec; rice/sauce option deltas
+  {
+    "id": 156,
+    "slug": "paneer-box-choose-your-rice-and-sauce",
+    "name": "Paneer Box — choose your rice & sauce",
+    "description": "Paneer, Mixed veggies, Rice, and more.",
+    "longDescription": "Paneer – 120 g · Mixed veggies – 80 g · Rice – 150 g (cooked) · Olive oil – 1 tsp",
+    "image": "/images/dishes/paneer-box-choose-your-rice-and-sauce.jpg",
+    "price": 29900,
+    "kitchen": "continental",
+    "category": "mains",
+    "isVeg": true,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 28,
+      "carbs": 49,
+      "fat": 36,
+      "fiber": 3,
+      "calories": 625
+    },
+    "ingredients": [
+      "Paneer – 120 g",
+      "Mixed veggies – 80 g",
+      "Rice – 150 g (cooked)",
+      "Olive oil – 1 tsp"
+    ],
+    "allergens": [
+      "Dairy"
+    ],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "4g",
+    "customizations": [],
+    "isAvailable": true
+  },
+  // sheet gram spec; rice/sauce option deltas
+  {
+    "id": 157,
+    "slug": "veggie-box-choose-your-rice-and-sauce",
+    "name": "Veggie Box — choose your rice & sauce",
+    "description": "Mixed veggies, Rice, Olive oil, and more.",
+    "longDescription": "Mixed veggies – 120 g · Rice – 150 g (cooked) · Olive oil – 1 tsp",
+    "image": "/images/dishes/veggie-box-choose-your-rice-and-sauce.jpg",
+    "price": 24900,
+    "kitchen": "continental",
+    "category": "mains",
+    "isVeg": true,
+    "rdVerified": false,
+    "prepTime": "15 min",
+    "macros": {
+      "protein": 6,
+      "carbs": 51,
+      "fat": 6,
+      "fiber": 4,
+      "calories": 285
+    },
+    "ingredients": [
+      "Mixed veggies – 120 g",
+      "Rice – 150 g (cooked)",
+      "Olive oil – 1 tsp"
+    ],
+    "allergens": [],
+    "glycaemicIndex": "medium",
+    "sugarPerServing": "4g",
+    "customizations": [],
+    "isAvailable": true
   }
 ];
 
@@ -4732,6 +6038,7 @@ export const DISHES: DishData[] = RAW_DISHES.map((d) => {
     "spinach-mushroom-omelette",
     "tomato-basil-soup",
     "veg-loaded-bread-omelette-2-egg",
+    "english-breakfast",
   ];
 
   /**
@@ -4748,7 +6055,6 @@ export const DISHES: DishData[] = RAW_DISHES.map((d) => {
     "boiled-3-egg-with-saut-ed-veggies",
     "classic-french-toast-with-butter",
     "crispy-edamame-roasted-cauliflower-bowl",
-    "english-breakfast",
     "fiery-tandoori-tofu-skewers",
     "four-boiled-egg",
     "fruity-greek-yogurt",
