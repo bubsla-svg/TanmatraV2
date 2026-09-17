@@ -5252,7 +5252,7 @@ export interface DishCustomOption {
     "customizations": [],
     "isAvailable": true
   },
-  // no price on the sheet
+  // priced 2026-09-17 (owner)
   {
     "id": 140,
     "slug": "english-breakfast",
@@ -5260,7 +5260,7 @@ export interface DishCustomOption {
     "description": "Eggs, Chicken sausage, Baked beans, and more.",
     "longDescription": "Eggs – 2 medium · Chicken sausage – 60 g · Baked beans – 100 g · Bread slices – 2 slices · Hash brown – 60 g · Tomato – 60 g (grilled) · Mushrooms – 50 g · Butter – 10 g",
     "image": "/images/dishes/english-breakfast.jpg",
-    "price": 0,
+    "price": 49900,
     "kitchen": "continental",
     "category": "breakfast",
     "isVeg": false,
