@@ -328,3 +328,39 @@ test("the adapter actually passes the ordering to Razorpay", () => {
   const src = fs.readFileSync(new URL("./razorpayAdapter.ts", import.meta.url), "utf8");
   assert.match(src, /\.\.\.buildRazorpayOptions\(order, opts\)/, "the constructor must spread the built options");
 });
+
+test("a payment.failed emitted by the sheet reaches onPaymentFailed with Razorpay's own code and reason (T2)", async () => {
+  const g = globalThis as Record<string, unknown>;
+  const prevWindow = g.window;
+  const prevDocument = g.document;
+  type FailedCb = (resp: { error?: { code?: string; description?: string; reason?: string; step?: string } }) => void;
+  class FailingRazorpay {
+    private opts: RzpOpts;
+    private failed: FailedCb | null = null;
+    constructor(opts: RzpOpts) {
+      this.opts = opts;
+    }
+    on(event: string, cb: FailedCb): void {
+      if (event === "payment.failed") this.failed = cb;
+    }
+    open(): void {
+      // One failed attempt inside the sheet (retry is on), then the customer
+      // gives up: the failure must be reported BEFORE the dismissal rejects.
+      this.failed?.({ error: { code: "BAD_REQUEST_ERROR", reason: "payment_failed", description: "Declined", step: "payment_authorization" } });
+      this.opts.modal.ondismiss();
+    }
+  }
+  g.document = { getElementById: () => ({}) };
+  g.window = { Razorpay: FailingRazorpay };
+  const failures: Array<{ code: string; reason: string; step?: string }> = [];
+  try {
+    await assert.rejects(
+      createRazorpayAdapter({ contact: "+911", onPaymentFailed: (f) => failures.push(f) }).open(ORDER),
+      (err) => err instanceof RazorpayDismissed,
+    );
+  } finally {
+    g.window = prevWindow;
+    g.document = prevDocument;
+  }
+  assert.deepEqual(failures, [{ code: "BAD_REQUEST_ERROR", reason: "payment_failed", step: "payment_authorization" }]);
+});

@@ -56,6 +56,14 @@ const orderItemsSchema = z
   .min(1)
   .max(50);
 
+/** A bounded, character-restricted read of an attribution cookie: the same
+ *  `[A-Za-z0-9_-]` shape the storefront writes, or null. Never trusted for
+ *  anything but grouping a scoreboard. */
+export function attributionCookie(req: Request, name: "tnm_src" | "tnm_fsid"): string | null {
+  const raw = (req.cookies as Record<string, unknown> | undefined)?.[name];
+  return typeof raw === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(raw) ? raw : null;
+}
+
 const placeOrderSchema = z.object({
   externalOrderId: z.string().min(1).max(64),
   items: orderItemsSchema,
@@ -473,6 +481,10 @@ router.post("/orders", async (req: Request, res: Response) => {
         city: address.city,
         pincode: address.pincode,
         phone,
+        // T2: acquisition attribution rides the browser's cookies through the
+        // same-origin /api proxy (lib/acquisition.ts on the storefront).
+        acquisitionSrc: attributionCookie(req, "tnm_src"),
+        funnelSessionId: attributionCookie(req, "tnm_fsid"),
         items: validatedItems,
         fulfillmentType: "delivery",
         deliverySlotId: slot?.id ?? null,

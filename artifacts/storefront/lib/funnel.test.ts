@@ -64,6 +64,7 @@ test("every emitted name satisfies the sink's name rule", () => {
     for (const name of [
       "cuj_router_answer",
       "add_to_cart",
+      "checkout_step",
       "begin_checkout",
       "payment_failed",
       "subscription_rescheduled",

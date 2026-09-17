@@ -17,7 +17,7 @@ import { fetchQuote, quoteIsFresh, type QuoteSnapshot } from "@/lib/quoteApi";
 // why, and what to do next — never the raw server string) plus the
 // retryable/deterministic split that keeps "Retry pricing" honest.
 import { humanizeOrderError, isRetryableQuoteError } from "@/lib/orderErrors";
-import { emitFunnel, funnelErrorCode } from "@/lib/funnel";
+import { emitFunnel, funnelErrorCode, inSheetFailureEmitter } from "@/lib/funnel";
 import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter";
 import {
   getAddresses,
@@ -88,7 +88,6 @@ export function AlacarteCheckout() {
   // events below. Ref-guarded so a re-quote (stepper tap, PIN change) does not
   // report a second checkout.
   const beganRef = useRef(false);
-
   const loadQuote = useCallback(() => {
     if (dishLines.length === 0) return;
     const seq = ++quoteSeq.current;
@@ -197,7 +196,6 @@ export function AlacarteCheckout() {
       })
       .catch(() => {});
   }
-
   async function handlePay(address: AlacarteAddress, allergenAck: boolean | undefined, extras: AlacarteExtras = {}) {
     if (dishLines.length === 0) return; // defense-in-depth; the button is also gated
     setError(null);
@@ -208,12 +206,14 @@ export function AlacarteCheckout() {
     // than zero-filled when no quote has landed — a 0 here would read as a
     // free order in the scoreboard.
     const totalProps: Record<string, number> = quote ? { total_paise: quote.payableNowPaise } : {};
+    emitFunnel("checkout_step", { step: "pay", ...totalProps }); // T2
     emitFunnel("payment_opened", { method: "razorpay", ...totalProps });
+    const onPaymentFailed = inSheetFailureEmitter({ has_plan: false }); // T2: in-sheet failures, gateway's cause
     try {
       let result;
       if (createdOrder.current) {
         // A prior attempt already created this order — pay it, don't re-create.
-        result = await finishAlacartePayment(createdOrder.current, createRazorpayAdapter({ contact }), undefined, {
+        result = await finishAlacartePayment(createdOrder.current, createRazorpayAdapter({ contact, onPaymentFailed }), undefined, {
           onVerifying: () => setVerifying(true),
           onCaptured: (facts) => {
             paidFactsRef.current = facts;
@@ -246,7 +246,7 @@ export function AlacarteCheckout() {
         };
         result = await runAlacarteCheckout({
           order,
-          razorpay: createRazorpayAdapter({ contact }),
+          razorpay: createRazorpayAdapter({ contact, onPaymentFailed }),
           onCreated: (o) => {
             createdOrder.current = o;
           },

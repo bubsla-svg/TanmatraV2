@@ -126,14 +126,13 @@ test("a failure code groups by cause, not by copy", () => {
   assert.equal(funnelErrorCode({ code: 42 }), "unknown", "a non-string code is not a cause");
 });
 
-test("the unreachable conversion event is still only in the flag-dark path", () => {
-  // Left in place deliberately — it is correct where it sits, and removing it
-  // would change the preview build's behaviour for no gain. This test records
-  // that it is NOT the production conversion event, so nobody restores a
-  // scoreboard onto it.
+test("cuj_paid is retired: no emitter, and not in the vocabulary (T2)", () => {
+  // It was only ever reachable in a flag-dark preview build, where it
+  // fabricated a receipt. The conversion truth is the server's `purchase`
+  // (api-server lib/purchaseEvents.ts), emitted on the paid transition.
   const flow = read("checkout", "CheckoutFlow.tsx");
-  const guard = flow.indexOf("if (LIVE_CHECKOUT_ENABLED)");
-  const paid = flow.indexOf('emitFunnel("cuj_paid"');
-  assert.ok(guard > 0 && paid > 0);
-  assert.ok(paid > guard, "cuj_paid still sits after the live-flag early return");
+  assert.equal(flow.includes('emitFunnel("cuj_paid"'), false);
+  const funnel = fs.readFileSync(path.join(HERE, "funnel.ts"), "utf8");
+  assert.doesNotMatch(funnel, /\|\s*"cuj_paid"/);
+  assert.match(funnel, /\|\s*"checkout_step"/);
 });

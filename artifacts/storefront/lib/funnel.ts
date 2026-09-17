@@ -15,7 +15,6 @@ export type FunnelEvent =
   | "cuj_builder_confirm"
   | "cuj_waitlist_captured"
   | "cuj_checkout_start"
-  | "cuj_paid"
   // ── Money path (Phase 3.3 canonical names) ────────────────────────────────
   // The `cuj_*` set above measures the browse-and-choose half. The purchase
   // half was measured by exactly one event, `cuj_paid`, emitted from
@@ -30,6 +29,12 @@ export type FunnelEvent =
   // name a unit that does not exist here — the kind of small lie that only
   // surfaces after someone has divided by 100.
   | "begin_checkout"
+  // T2: which of the checkout's five asks (phone | slot | address | consent
+  // | pay) the customer has cleared, so the drop between begin_checkout and
+  // payment_opened has a place, not just a size. `cuj_paid`, the old
+  // flag-dark conversion event, is retired: `purchase` is emitted by the
+  // server on the paid transition and is the only conversion truth.
+  | "checkout_step"
   | "payment_opened"
   | "payment_failed"
   | "checkout_complete"
@@ -141,4 +146,25 @@ export function emitFunnel(
   } catch {
     /* analytics is best-effort — never throw into the flow */
   }
+}
+
+/**
+ * T2: `payment_failed` for a failed attempt INSIDE the Razorpay sheet (retry
+ * is on, so the customer may still succeed). Carries the gateway's own code
+ * and reason, so the scoreboard groups by cause — "dismissed" is what the
+ * catch path records when the sheet is finally closed. Built once per pay
+ * attempt and handed to the adapter as `onPaymentFailed`.
+ */
+export function inSheetFailureEmitter(
+  extra: Record<string, string | number | boolean> = {},
+): (f: { code: string; reason: string; step?: string; source?: string }) => void {
+  return (f) =>
+    emitFunnel("payment_failed", {
+      error_code: f.code,
+      reason: f.reason,
+      ...(f.step ? { step: f.step } : {}),
+      ...(f.source ? { source: f.source } : {}),
+      in_sheet: true,
+      ...extra,
+    });
 }

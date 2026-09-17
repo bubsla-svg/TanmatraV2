@@ -8,6 +8,7 @@ import { Field } from "@astryxdesign/core/Field";
 import { formatPaise } from "@/lib/format";
 import { subtotalPaise, type CartState } from "@/lib/cartStore";
 import { DPDP_CONSENT_COPY, DPDP_SCOPE_NOTE } from "@/lib/consent";
+import { useCheckoutSteps } from "./useCheckoutSteps";
 import { apiGet } from "@/lib/apiClient";
 import { flagCartAllergens } from "@/lib/allergenAck";
 import { carriedPincode } from "@/lib/serviceabilityApi";
@@ -108,7 +109,6 @@ export function AlacarteDetails({
   useEffect(() => {
     if (!busy) submitLockRef.current = false;
   }, [busy]);
-
   const menuQuery = useQuery({
     queryKey: ["menu", "public"],
     queryFn: () => apiGet<{ dishes: DishData[] }>("/menu/public"),
@@ -210,6 +210,13 @@ export function AlacarteDetails({
                         ? { reason: "Accept the order-processing consent to continue", field: consentRef }
                         : null;
   const valid = blocker === null;
+
+  useCheckoutSteps({
+    phone: phoneValid,
+    slot: slotRequired ? slot !== null : false,
+    address: line1Valid && cityValid && pinValid,
+    consent,
+  });
   // T-09: the CTA stays tappable whenever the fix is a field the customer
   // can reach — a tap then takes them to it. Only server-side states disable it.
   const ctaEnabled = valid || blocker.field !== null;

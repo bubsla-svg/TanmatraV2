@@ -71,7 +71,25 @@ function loadCheckoutScript(): Promise<void> {
 }
 
 interface RazorpayCtor {
-  new (opts: unknown): { open(): void };
+  new (opts: unknown): {
+    open(): void;
+    /** checkout.js emits `payment.failed` for each failed attempt while the
+     *  sheet stays open (retry is on) — the only place the gateway's own
+     *  error code is visible before the webhook. */
+    on?(event: "payment.failed", cb: (resp: RazorpayFailedResponse) => void): void;
+  };
+}
+
+/** checkout.js's `payment.failed` payload, the parts the funnel records. */
+export interface RazorpayFailedResponse {
+  error?: {
+    code?: string;
+    description?: string;
+    source?: string;
+    step?: string;
+    reason?: string;
+    metadata?: { order_id?: string; payment_id?: string };
+  };
 }
 
 /**
@@ -107,6 +125,10 @@ export interface RazorpayAdapterOpts {
   description?: string;
   contact?: string;
   email?: string;
+  /** T2: a failed attempt INSIDE the sheet (the customer may still retry).
+   *  Carries Razorpay's own error code / reason, so `payment_failed` groups
+   *  by the gateway's cause rather than "dismissed". */
+  onPaymentFailed?: (failure: { code: string; reason: string; step?: string; source?: string }) => void;
 }
 
 /**
@@ -175,6 +197,17 @@ export function createRazorpayAdapter(opts?: RazorpayAdapterOpts): RazorpayAdapt
           // exactly as before (RazorpayDismissed, before verify).
           modal: { ondismiss: () => reject(new RazorpayDismissed()), confirm_close: true },
         });
+        if (opts?.onPaymentFailed && typeof rzp.on === "function") {
+          rzp.on("payment.failed", (resp) => {
+            const e = resp?.error ?? {};
+            opts.onPaymentFailed?.({
+              code: e.code || "unknown",
+              reason: e.reason || e.description || "unknown",
+              ...(e.step ? { step: e.step } : {}),
+              ...(e.source ? { source: e.source } : {}),
+            });
+          });
+        }
         rzp.open();
       });
     },

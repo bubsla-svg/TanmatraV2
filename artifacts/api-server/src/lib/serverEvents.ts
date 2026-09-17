@@ -1,5 +1,6 @@
 import { db, funnelEventsTable } from "@workspace/db";
 import { logger } from "./logger";
+import { forwardFunnelEvent } from "./eventForwarders";
 
 // Server-truth money events (playbook Part 8, A4). The client keeps firing
 // its own copies as corroboration; rows emitted here are the revenue truth
@@ -8,6 +9,12 @@ import { logger } from "./logger";
 type ServerEventName =
   | "order_created"
   | "payment_succeeded"
+  // T2 (CRO handoff 2026-09-17): the canonical conversion event, emitted
+  // once per order on the fresh placed→preparing transition, carrying
+  // order_id, amount_paise, method, src and the funnel session. Forwarded
+  // to GA4 (Measurement Protocol) and Meta (Conversions API) server-side.
+  | "purchase"
+  | "payment_failed"
   | "subscription_started"
   | "trial_started"
   | "delivery_completed"
@@ -24,15 +31,20 @@ export async function emitServerEvent(
   name: ServerEventName,
   props: Record<string, unknown>,
   userId: string | null,
+  sessionId: string | null = null,
 ): Promise<void> {
+  const row = {
+    name,
+    props: { ...props, source: "server" },
+    sessionId: sessionId ?? null,
+    userId: userId ?? null,
+    path: "server",
+  };
+  // Vendor forwarding is independent of the insert: a warehouse hiccup must
+  // not also lose the GA4 / Meta copy, and vice versa. Both never throw.
+  void forwardFunnelEvent(row, {});
   try {
-    await db.insert(funnelEventsTable).values({
-      name,
-      props: { ...props, source: "server" },
-      sessionId: null,
-      userId: userId ?? null,
-      path: "server",
-    });
+    await db.insert(funnelEventsTable).values(row);
   } catch (err) {
     // Analytics must never break checkout/payment/subscribe. Same degraded
     // posture as POST /events: log and move on.

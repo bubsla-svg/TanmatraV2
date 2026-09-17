@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { z } from "zod/v4";
 import { db, funnelEventsTable } from "@workspace/db";
 import { logger } from "../lib/logger";
+import { forwardFunnelEvent } from "../lib/eventForwarders";
 
 const router: IRouter = Router();
 
@@ -50,14 +51,21 @@ router.post("/events", async (req: Request, res: Response) => {
     }
   }
   const userId = req.isAuthenticated?.() ? (req.user as { id?: string } | undefined)?.id ?? null : null;
+  const row = {
+    name,
+    props: Object.keys(cleanProps).length > 0 ? cleanProps : null,
+    sessionId: sessionId ?? null,
+    userId,
+    path: path ?? null,
+  };
+  // T2: GA4 Measurement Protocol + Meta Conversions API, server-side from
+  // this sink — no client tags. Fire-and-forget; never delays the 204.
+  void forwardFunnelEvent(row, {
+    clientIp: req.ip ?? null,
+    userAgent: typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"] : null,
+  });
   try {
-    await db.insert(funnelEventsTable).values({
-      name,
-      props: Object.keys(cleanProps).length > 0 ? cleanProps : null,
-      sessionId: sessionId ?? null,
-      userId,
-      path: path ?? null,
-    });
+    await db.insert(funnelEventsTable).values(row);
   } catch (err) {
     // Degrade to structured logs (same posture as /vitals) if the table
     // is missing — the boot migration creates it on next deploy.

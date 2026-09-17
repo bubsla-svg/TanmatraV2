@@ -222,6 +222,12 @@ export const ordersTable = pgTable(
     city: varchar("city", { length: 64 }),
     pincode: varchar("pincode", { length: 16 }),
     phone: varchar("phone", { length: 32 }),
+    // T2 (CRO handoff 2026-09-17): the placement (`tnm_src`) and funnel visit
+    // (`tnm_fsid`) cookies present when the order was placed, so the server's
+    // `purchase` event — the revenue truth — joins back to the scan / visit
+    // that produced it. Nullable: direct traffic carries neither.
+    acquisitionSrc: varchar("acquisition_src", { length: 64 }),
+    funnelSessionId: varchar("funnel_session_id", { length: 64 }),
     // Real geocoded drop coordinates from the customer address.
     // Populated at checkout (see geocodeAddress / finalizeOrder) so the
     // dispatcher computes real distances and batching radii instead of

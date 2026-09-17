@@ -6,7 +6,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { screensForUser, type CheckoutUser } from "@/lib/checkout";
-import { emitFunnel } from "@/lib/funnel";
 import { formatPaise } from "@/lib/format";
 import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
 import { CheckoutIdentity } from "./CheckoutIdentity";
@@ -59,7 +58,9 @@ export function CheckoutFlow({
       setNotLive(true);
       return;
     }
-    emitFunnel("cuj_paid", { planId, total: totalPaise });
+    // No funnel event here any more (T2): this branch renders only in a
+    // flag-dark preview build and fabricates a receipt; the real conversion
+    // is the server's `purchase` on the paid transition.
     setPaid(true);
   }
 

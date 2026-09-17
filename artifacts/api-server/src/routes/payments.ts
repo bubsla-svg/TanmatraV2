@@ -15,6 +15,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod/v4";
 import { sendOrderConfirmation } from "../lib/orderNotification";
 import { emitServerEvent } from "../lib/serverEvents";
+import { emitPurchase, emitPaymentFailed } from "../lib/purchaseEvents";
 import { commitSubsidyForOrder, releaseSubsidyForOrder } from "../lib/corporateSubsidy";
 import { pushOrderToPetpooja } from "../lib/petpoojaClient";
 import { runPreDebitNotificationsSweep } from "../lib/preDebitScheduler";
@@ -497,11 +498,14 @@ router.post("/payments/razorpay/verify", async (req: Request, res: Response) => 
   const [order] = await db
     .select({
       id: ordersTable.id,
+      externalOrderId: ordersTable.externalOrderId,
       status: ordersTable.status,
       razorpayOrderId: ordersTable.razorpayOrderId,
       userId: ordersTable.userId,
       chargePaise: ordersTable.chargePaise,
       totalPaise: ordersTable.totalPaise,
+      acquisitionSrc: ordersTable.acquisitionSrc,
+      funnelSessionId: ordersTable.funnelSessionId,
     })
     .from(ordersTable)
     .where(eq(ordersTable.externalOrderId, orderId))
@@ -555,6 +559,9 @@ router.post("/payments/razorpay/verify", async (req: Request, res: Response) => 
         { charge_paise: order.chargePaise ?? order.totalPaise },
         order.userId,
       );
+      // T2: the canonical conversion, once per order (same fresh-transition
+      // guard). The verify path knows no method — the webhook copy does.
+      void emitPurchase(order, { method: "razorpay", path: "verify" });
     }
 
     // The customer's card has now been debited an amount already NET of the
@@ -809,7 +816,17 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
     id?: string;
     event?: string;
     payload?: {
-      payment?: { entity?: { order_id?: string; id?: string; amount?: number } };
+      payment?: {
+        entity?: {
+          order_id?: string;
+          id?: string;
+          amount?: number;
+          method?: string;
+          error_code?: string | null;
+          error_description?: string | null;
+          error_reason?: string | null;
+        };
+      };
       payment_link?: { entity?: { id?: string; reference_id?: string; amount?: number; amount_paid?: number; status?: string } };
       refund?: {
         entity?: {
@@ -944,6 +961,7 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
               { charge_paise: order.chargePaise ?? order.totalPaise },
               order.userId,
             );
+            void emitPurchase(order, { method: paymentEntity?.method ?? "razorpay", path: "webhook" });
             const fullName = [result.user?.firstName, result.user?.lastName]
               .filter(Boolean)
               .join(" ");
@@ -1042,6 +1060,7 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
               { charge_paise: order.chargePaise ?? order.totalPaise },
               order.userId,
             );
+            void emitPurchase(order, { method: paymentEntity?.method ?? "payment_link", path: "payment_link" });
             const fullName = [result.user?.firstName, result.user?.lastName]
               .filter(Boolean)
               .join(" ");
@@ -1077,8 +1096,24 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
           .update(ordersTable)
           .set({ status: "failed" })
           .where(and(eq(ordersTable.razorpayOrderId, razorpayOrderId), eq(ordersTable.status, "placed")))
-          .returning({ id: ordersTable.id });
+          .returning({
+            id: ordersTable.id,
+            externalOrderId: ordersTable.externalOrderId,
+            userId: ordersTable.userId,
+            chargePaise: ordersTable.chargePaise,
+            totalPaise: ordersTable.totalPaise,
+            acquisitionSrc: ordersTable.acquisitionSrc,
+            funnelSessionId: ordersTable.funnelSessionId,
+          });
         failedOrderIds = failed.map((row) => row.id);
+        // T2: the gateway's own cause, per order that actually flipped.
+        for (const row of failed) {
+          void emitPaymentFailed(row, {
+            method: paymentEntity?.method ?? null,
+            errorCode: paymentEntity?.error_code ?? null,
+            errorReason: paymentEntity?.error_reason ?? paymentEntity?.error_description ?? null,
+          });
+        }
       }
       // Give the employee their corporate budget back, exactly as the cancel
       // path does (routes/orders.ts). A subsidy is reserved when the order is
