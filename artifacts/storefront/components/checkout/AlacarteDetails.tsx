@@ -11,7 +11,7 @@ import { DPDP_CONSENT_COPY, DPDP_SCOPE_NOTE } from "@/lib/consent";
 import { useCheckoutSteps } from "./useCheckoutSteps";
 import { apiGet } from "@/lib/apiClient";
 import { flagCartAllergens } from "@/lib/allergenAck";
-import { carriedPincode } from "@/lib/serviceabilityApi";
+import { carriedPincode, cityForPincode } from "@/lib/serviceabilityApi";
 import { readAddressDraft, seedAddressFields } from "@/lib/addressSeed";
 import { fetchDeliverySlots } from "@/lib/deliverySlotsApi";
 import { isSlotBookable, slotSummary, type DeliverySlot } from "@/lib/deliverySlots";
@@ -146,7 +146,7 @@ export function AlacarteDetails({
     carriedPinRef.current = carried;
     const next = seedAddressFields({ line1, city, pincode }, readAddressDraft(ADDRESS_DRAFT_KEY), carried);
     setLine1(next.line1);
-    setCity(next.city);
+    setCity(next.city || (next.pincode ? (cityForPincode(next.pincode) ?? "") : "")); // T5: city from the PIN (Law 4)
     if (next.pincode !== pincode) {
       setPincode(next.pincode);
       onPincodeChange(next.pincode);

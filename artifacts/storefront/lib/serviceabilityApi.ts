@@ -21,6 +21,63 @@ export interface ServiceabilityResponse {
 const STORAGE_KEY = "tnm_serviceability_state";
 
 /**
+ * T5 (CRO handoff 2026-09-17): the verdict also lives in two cookies, so a
+ * server component or middleware can read the customer's PIN without waiting
+ * for hydration, and a `tnm:serviceability` window event lets every island
+ * (header pill, Add buttons, the first-visit banner, checkout) share one
+ * answer without a second copy of the state.
+ */
+export const PIN_COOKIE = "tnm_pin";
+export const PIN_OK_COOKIE = "tnm_pin_ok";
+export const SERVICEABILITY_EVENT = "tnm:serviceability";
+const PIN_COOKIE_MAX_AGE_SEC = 365 * 24 * 60 * 60;
+
+/** The `document.cookie` assignments for a state — set for a verdict, expired
+ *  for unknown. Pure, so the shape is testable without a DOM. */
+export function serviceabilityCookies(state: ServiceabilityState): string[] {
+  const attrs = "; path=/; samesite=lax";
+  if (state.verdict === "unknown" || !/^\d{6}$/.test(state.pincode)) {
+    return [`${PIN_COOKIE}=${attrs}; max-age=0`, `${PIN_OK_COOKIE}=${attrs}; max-age=0`];
+  }
+  return [
+    `${PIN_COOKIE}=${state.pincode}${attrs}; max-age=${PIN_COOKIE_MAX_AGE_SEC}`,
+    `${PIN_OK_COOKIE}=${state.verdict === "serviceable" ? "1" : "0"}${attrs}; max-age=${PIN_COOKIE_MAX_AGE_SEC}`,
+  ];
+}
+
+function broadcast(state: ServiceabilityState): void {
+  if (typeof document !== "undefined") {
+    try {
+      for (const c of serviceabilityCookies(state)) document.cookie = c;
+    } catch {
+      /* cookies blocked — localStorage still carries the verdict */
+    }
+  }
+  if (typeof window !== "undefined" && typeof window.dispatchEvent === "function" && typeof CustomEvent === "function") {
+    window.dispatchEvent(new CustomEvent(SERVICEABILITY_EVENT, { detail: state }));
+  }
+}
+
+/**
+ * The city a PIN belongs to, for prefilling the checkout's city field from
+ * the PIN the customer already gave the location gate (Law 4). Prefix table
+ * for the NCR only — anywhere else returns null and the field stays blank
+ * rather than guessing. Ghaziabad / Delhi / Gurugram are listed because a
+ * visitor there still types a PIN, and the refusal reads better with the
+ * city named.
+ */
+export function cityForPincode(pincode: string): string | null {
+  const pin = pincode.trim();
+  if (!/^\d{6}$/.test(pin)) return null;
+  if (pin.startsWith("2013") || pin.startsWith("2103")) return "Noida";
+  if (pin.startsWith("2010") || pin.startsWith("2011") || pin.startsWith("2012")) return "Ghaziabad";
+  if (pin.startsWith("110")) return "Delhi";
+  if (pin.startsWith("122")) return "Gurugram";
+  if (pin.startsWith("121")) return "Faridabad";
+  return null;
+}
+
+/**
  * Check serviceability against public GET /api/serviceability/:pincode.
  * Resolves to serviceable or unserviceable verdict. Throws on malformed inputs.
  */
@@ -86,6 +143,7 @@ export function saveServiceabilityState(state: ServiceabilityState): void {
   } catch {
     /* swallow storage quotas or privacy constraints */
   }
+  broadcast(state);
 }
 
 /** Clear stored serviceability verdict when user initiates re-evaluating delivery location. */
@@ -96,6 +154,7 @@ export function clearServiceabilityState(): void {
   } catch {
     /* swallow errors */
   }
+  broadcast({ verdict: "unknown", pincode: "" });
 }
 
 export interface ServiceabilityInterestResponse {

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { isLayoutSettling } from "./scrollSettle";
+import { isAnchoringShift, isLayoutSettling } from "./scrollSettle";
 
 /** Ignore scroll movement under this many px — small-movement hysteresis so
  *  chrome doesn't flicker on sub-pixel/rubber-band jitter (D-17). */
@@ -46,6 +46,13 @@ export function useScrollHide(disabled: boolean): boolean {
         return;
       }
       const delta = y - lastYRef.current;
+      // In-flow content just entered or left the flow above the anchor
+      // (the location-first banner after hydration): this one event is the
+      // engine's correction of exactly that height, not the reader.
+      if (isAnchoringShift(delta, SCROLL_HYSTERESIS_PX)) {
+        lastYRef.current = y;
+        return;
+      }
       if (y <= 0) {
         setHidden(false);
         lastYRef.current = y;

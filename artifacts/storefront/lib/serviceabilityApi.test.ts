@@ -11,6 +11,9 @@ import {
   loadServiceabilityState,
   saveServiceabilityState,
   clearServiceabilityState,
+  serviceabilityCookies,
+  cityForPincode,
+  SERVICEABILITY_EVENT,
   type ServiceabilityState,
 } from "./serviceabilityApi";
 import { ApiError } from "./apiClient";
@@ -121,3 +124,42 @@ test("submitServiceabilityInterest posts pincode and phone to server and returns
   assert.deepEqual(resDup, { ok: true, duplicate: true });
 });
 
+
+test("T5: a verdict is mirrored into the tnm_pin / tnm_pin_ok cookies; unknown expires both", () => {
+  assert.deepEqual(serviceabilityCookies({ verdict: "serviceable", pincode: "201301" }), [
+    "tnm_pin=201301; path=/; samesite=lax; max-age=31536000",
+    "tnm_pin_ok=1; path=/; samesite=lax; max-age=31536000",
+  ]);
+  assert.equal(serviceabilityCookies({ verdict: "unserviceable", pincode: "110001" })[1], "tnm_pin_ok=0; path=/; samesite=lax; max-age=31536000");
+  for (const c of serviceabilityCookies({ verdict: "unknown", pincode: "" })) assert.match(c, /max-age=0$/);
+  // A malformed PIN never becomes a cookie value.
+  for (const c of serviceabilityCookies({ verdict: "serviceable", pincode: "20130" })) assert.match(c, /max-age=0$/);
+});
+
+test("T5: save broadcasts the state to every island; clear broadcasts unknown", () => {
+  const seen: ServiceabilityState[] = [];
+  const g = globalThis as unknown as { window: Record<string, unknown>; CustomEvent?: unknown };
+  const prevCustomEvent = g.CustomEvent;
+  g.CustomEvent = class { type: string; detail: unknown; constructor(type: string, init: { detail: unknown }) { this.type = type; this.detail = init.detail; } };
+  g.window = { dispatchEvent: (e: { type: string; detail: ServiceabilityState }) => { if (e.type === SERVICEABILITY_EVENT) seen.push(e.detail); return true; } };
+  try {
+    saveServiceabilityState({ verdict: "serviceable", pincode: "201301" });
+    clearServiceabilityState();
+  } finally {
+    if (prevCustomEvent === undefined) delete g.CustomEvent; else g.CustomEvent = prevCustomEvent;
+  }
+  assert.deepEqual(seen, [
+    { verdict: "serviceable", pincode: "201301" },
+    { verdict: "unknown", pincode: "" },
+  ]);
+});
+
+test("T5: cityForPincode names the NCR city for a PIN and nothing for anywhere else", () => {
+  assert.equal(cityForPincode("201301"), "Noida");
+  assert.equal(cityForPincode("201306"), "Noida");
+  assert.equal(cityForPincode("201009"), "Ghaziabad");
+  assert.equal(cityForPincode("110001"), "Delhi");
+  assert.equal(cityForPincode("122002"), "Gurugram");
+  assert.equal(cityForPincode("400001"), null, "not the NCR → no guess");
+  assert.equal(cityForPincode("2013"), null);
+});

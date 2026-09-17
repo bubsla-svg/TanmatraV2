@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { MiniCartBar } from "@/components/cart/MiniCartBar";
+import { LocationFirstBanner } from "@/components/onboarding/LocationFirstBanner";
 
 /**
  * GlobalLayout — the browsing/discovery/account shell (P0 §9).
@@ -31,6 +32,9 @@ export default function GlobalLayout({
         id="main"
         className="pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0"
       >
+        {/* T5: location first — the ask sits above the food on the browsing
+            surfaces, inline, and stands down once a verdict exists. */}
+        <LocationFirstBanner />
         {children}
       </main>
       {/* §4.1/§4.3: persistent mini-cart bar once the cart is non-empty. */}

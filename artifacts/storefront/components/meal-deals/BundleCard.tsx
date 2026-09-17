@@ -12,6 +12,7 @@ import { SafeImage } from "@/components/ui/SafeImage";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { emitFunnel } from "@/lib/funnel";
+import { useOutOfZone } from "@/components/onboarding/useOutOfZone";
 
 /**
  * The combo card `/meal-deals` was missing. The page used to render a solid
@@ -27,6 +28,7 @@ import { emitFunnel } from "@/lib/funnel";
  */
 export function BundleCard({ bundle }: { bundle: MealBundle }) {
   const { cart, setCart, setCartOpen } = useCart();
+  const outOfZone = useOutOfZone(); // T5
   const [open, setOpen] = useState(false);
   const [added, setAdded] = useState(false);
 
@@ -139,8 +141,8 @@ export function BundleCard({ bundle }: { bundle: MealBundle }) {
               <span className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Combo total</span>
               <span className="font-data text-xl font-bold leading-none text-primary">{formatPaise(bundle.totalPaise)}</span>
             </div>
-            <Button type="button" onClick={addCombo} shape="pill" className="px-6 py-3 font-semibold">
-              Add Combo
+            <Button type="button" onClick={addCombo} disabled={outOfZone} shape="pill" className="px-6 py-3 font-semibold">
+              {outOfZone ? "Not in your area" : "Add Combo"}
             </Button>
           </div>
         </DrawerContent>

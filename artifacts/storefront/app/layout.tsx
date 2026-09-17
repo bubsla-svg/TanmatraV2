@@ -29,6 +29,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { StitchScope } from "@/components/StitchScope";
 import { CartProvider } from "@/components/cart/CartProvider";
+import { ServiceabilityProvider } from "@/components/onboarding/ServiceabilityProvider";
 import { SiteStructuredData } from "@/components/StructuredData";
 import { NetworkStatusToast } from "@/components/NetworkStatusToast";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
@@ -290,6 +291,7 @@ export default function RootLayout({
                 Skip to main content
               </a>
               <CartProvider>
+              <ServiceabilityProvider>
                 {/* Chrome lives in the route-group layouts — app/(global),
                     app/(focus), app/(b2b) — never here. The cart PROVIDER
                     stays at the root so a cart built while browsing survives
@@ -301,6 +303,7 @@ export default function RootLayout({
                   connection has to be visible rather than silent. */}
                 <NetworkStatusToast />
                 <ServiceWorkerRegistrar />
+              </ServiceabilityProvider>
               </CartProvider>
             </ThemeProvider>
           </QueryProvider>

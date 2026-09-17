@@ -82,6 +82,13 @@ export type FunnelEvent =
   // cannot tell a poster in an unserved sector from a poster nobody looked at,
   // and those two failures have opposite fixes (move the poster vs. change the
   // creative).
+  // ── Location first (T5, CRO handoff 2026-09-17) ───────────────────────────
+  // The first-visit ask and its answer, by source (banner PIN, GPS/map, the
+  // header bar), so the two ways of not answering — never shown, shown and
+  // dismissed — can be told apart from an unserviceable answer.
+  | "location_prompt_shown"
+  | "location_prompt_dismissed"
+  | "location_set"
   | "qr_landing_view"
   | "qr_pincode_serviceable"
   | "qr_pincode_unserviceable"

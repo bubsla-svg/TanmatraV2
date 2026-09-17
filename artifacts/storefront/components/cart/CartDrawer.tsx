@@ -19,6 +19,7 @@ import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 import { CartUpsellRail } from "./CartUpsellRail";
 import { RAIL_GAP_PX, useUpsellRailFit } from "./useUpsellRailFit";
 import { useCartUpsell } from "./useCartUpsell";
+import { useServiceability } from "@/components/onboarding/ServiceabilityProvider";
 import { checkoutHref } from "@/lib/checkoutIntent";
 
 /**
@@ -119,8 +120,17 @@ export function CartDrawer({
     `${hydrated}:${cart.lines.length}:${upsell.length}`,
   );
 
+  // T5: a checked, unserved PIN never reaches POST /orders — the cart says
+  // so here, before the checkout page would.
+  const { state: serviceability } = useServiceability();
   let footer: ReactNode;
-  if (LIVE_CHECKOUT_ENABLED) {
+  if (serviceability.verdict === "unserviceable") {
+    footer = (
+      <p role="status" className="rounded-2xl bg-secondary px-4 py-3 text-center text-xs text-ink-muted">
+        We don&rsquo;t deliver to {serviceability.pincode}{" "}yet. Change your location in the header to check another PIN code.
+      </p>
+    );
+  } else if (LIVE_CHECKOUT_ENABLED) {
     footer = (
       <Button asChild shape="pill" size="fluid" className="block min-h-11 px-5 py-3 text-center font-semibold">
         {/* prefetch: the only link in the storefront where the next step is

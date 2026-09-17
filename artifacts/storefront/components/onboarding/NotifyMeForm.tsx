@@ -3,6 +3,7 @@ import { useState } from "react";
 import { submitServiceabilityInterest } from "@/lib/serviceabilityApi";
 import { ApiError } from "@/lib/apiClient";
 import { Button } from "@/components/ui/button";
+import { emitFunnel } from "@/lib/funnel";
 import { MarketplaceFallbackCta } from "./MarketplaceFallbackCta";
 
 /**
@@ -57,6 +58,8 @@ export function NotifyMeForm({ pincode, onReset }: NotifyMeFormProps) {
     setErr(null);
     try {
       await submitServiceabilityInterest(pincode, phone);
+      // T5: the out-of-zone conversion, counted (prefix only — never the PIN).
+      emitFunnel("cuj_waitlist_captured", { pincode_prefix: pincode.slice(0, 3) });
       setSubmitted(true);
     } catch (e) {
       if (e instanceof ApiError && e.status === 404) {
