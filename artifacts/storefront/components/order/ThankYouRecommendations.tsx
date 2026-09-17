@@ -52,7 +52,7 @@ export function ThankYouRecommendations() {
             </div>
             <Link
               href={rec.href}
-              className="mt-4 inline-block text-center rounded-lg border border-line-strong bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-surface-raised active:scale-95"
+              className="mt-4 inline-block text-center rounded-lg border border-line-strong bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-surface-raised active:scale-[0.96]"
             >
               {rec.cta} &rarr;
             </Link>

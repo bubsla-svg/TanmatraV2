@@ -35,7 +35,7 @@ export function AlacartePayBar({
   onContinue: () => void;
 }) {
   return (
-    <StickyAction className="bottom-0 z-30">
+    <StickyAction className="bottom-0 z-[var(--z-bar)]">
       <div className="mx-auto flex max-w-md flex-col gap-1.5 px-4 py-3">
         {blockedReason !== null && !busy && (
           <p role="status" className="text-xs font-medium text-ink-muted">{blockedReason}</p>

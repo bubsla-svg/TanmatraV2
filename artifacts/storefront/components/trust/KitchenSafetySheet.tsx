@@ -63,7 +63,7 @@ export function KitchenSafetyChip({
           <div className="flex min-h-0 flex-col overflow-y-auto overscroll-contain px-4 pb-6 pt-3">
             <div className="flex items-center justify-between gap-3">
               <DrawerTitle className="font-display text-2xl font-semibold leading-tight text-primary">Kitchen &amp; safety</DrawerTitle>
-              <DrawerClose aria-label="Close" className="-mr-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink active:scale-95">
+              <DrawerClose aria-label="Close" className="-mr-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink active:scale-[0.96]">
                 <span aria-hidden className="text-xl leading-none">✕</span>
               </DrawerClose>
             </div>

@@ -86,7 +86,7 @@ export function PostCheckoutAddOns({ subscriptionId }: { subscriptionId: number 
                 className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
                   isAttached
                     ? "bg-sage-soft text-sage-text cursor-default"
-                    : "bg-gold text-gold-ink hover:opacity-90 active:scale-95"
+                    : "bg-gold text-gold-ink hover:opacity-90 active:scale-[0.96]"
                 }`}
               >
                 {isLoading ? "Updating..." : isAttached ? "✓ Attached" : "+ Attach Add-on"}

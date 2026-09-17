@@ -27,7 +27,7 @@ export default async function LegalDocPage({ params }: Params) {
   if (!lookup.ok) {
     return (
       <section className="mx-auto max-w-2xl px-4 py-10">
-        <Link href="/legal" className="text-sm text-ink-muted hover:text-ink">
+        <Link href="/legal" className="-mx-2 inline-flex min-h-11 items-center px-2 text-sm text-ink-muted hover:text-ink">
           &larr; Legal &amp; policies
         </Link>
         <div className="mt-8 rounded-2xl border border-line bg-surface p-8 text-center">

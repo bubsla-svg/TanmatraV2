@@ -132,6 +132,20 @@ export function setQty(
   };
 }
 
+/**
+ * The line that `next` no longer carries but `prev` did, or null. One line at
+ * most: every store operation removes at most one (setQty to 0), so the
+ * first hit is the only hit. Feeds the "Removed · Undo" toast — a minus at
+ * quantity 1 deletes the line, and without this the removal is silent.
+ */
+export function findRemovedLine(prev: CartState, next: CartState): CartLine | null {
+  for (const l of prev.lines) {
+    const sig = lineSignature(l.customizations);
+    if (!next.lines.some((n) => sameLine(n, l.dishId, l.kind, sig))) return l;
+  }
+  return null;
+}
+
 export function itemCount(state: CartState): number {
   return state.lines.reduce((n, l) => n + l.qty, 0);
 }

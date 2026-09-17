@@ -36,7 +36,7 @@ function CloseButton() {
   return (
     <Dialog.Close
       aria-label="Close"
-      className="touch-target-min -mr-2 p-2 text-ink-muted transition-all hover:text-ink active:scale-95"
+      className="touch-target-min -mr-2 p-2 text-ink-muted transition-all hover:text-ink active:scale-[0.96]"
     >
       <svg aria-hidden className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

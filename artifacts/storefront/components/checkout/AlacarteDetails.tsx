@@ -285,7 +285,7 @@ export function AlacarteDetails({
       <Field label="Flat / house · street" inputID="alc-line1">
         <input
           ref={line1Ref}
-          id="alc-line1" name="street-address" autoComplete="street-address" autoCapitalize="words" autoCorrect="off" spellCheck={false} enterKeyHint="next"
+          id="alc-line1" name="address-line1" autoComplete="address-line1" autoCapitalize="words" autoCorrect="off" spellCheck={false} enterKeyHint="next"
           value={line1} onChange={(e) => setLine1(e.target.value)} placeholder="Flat 3B, Sector 62"
           aria-invalid={attempted && !line1Valid} aria-describedby={attempted && !line1Valid ? "alc-line1-err" : undefined} required className={inputCls}
         />

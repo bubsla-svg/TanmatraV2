@@ -117,7 +117,7 @@ export async function Header() {
                   // this link had no responsive class at all, so once it
                   // became name-able it counted as a second one on mobile
                   // alongside MobileBottomNav's.
-                  className="hidden md:flex min-h-11 min-w-11 items-center justify-center rounded-full border border-line bg-surface hover:bg-surface-raised transition-colors overflow-hidden"
+                  className="hidden md:flex min-h-11 min-w-11 items-center justify-center rounded-full border border-line bg-surface hover:bg-surface-raised transition-[color,background-color,transform] active:scale-[0.96] overflow-hidden"
                 >
                   <svg aria-hidden className="w-4 h-4 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />

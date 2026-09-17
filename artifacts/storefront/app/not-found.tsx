@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { NotFoundCanvas } from "@/components/NotFoundCanvas";
 
 // Branded 404 — without this file, notFound() (called from dish/recipe/
 // challenge/plan/rd/team/legal/meal-guide/care [slug] routes) fell through to
@@ -13,6 +14,7 @@ import { MobileBottomNav } from "@/components/MobileBottomNav";
 export default function NotFound() {
   return (
     <>
+      <NotFoundCanvas />
       <Header />
       <main id="main" className="pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
         <section className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-24 text-center">

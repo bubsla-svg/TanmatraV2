@@ -119,7 +119,7 @@ export function MealPlanner() {
               type="button"
               onClick={() => void mp.discard()}
               disabled={mp.busy}
-              className="-ml-2 inline-flex min-h-11 items-center px-2 text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted transition-colors hover:text-ink disabled:opacity-60"
+              className="-ml-2 inline-flex min-h-11 items-center px-2 text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted transition-[color,transform] hover:text-ink active:scale-[0.98] disabled:opacity-60"
             >
               Discard
             </button>

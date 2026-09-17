@@ -2,7 +2,7 @@
 // Client: two decisions and nothing else — a PIN code, then veg or non-veg.
 // Everything above it on the page is server-rendered proof.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { NotifyMeForm } from "@/components/onboarding/NotifyMeForm";
@@ -59,6 +59,10 @@ export function QrStart({
   const [state, setState] = useState<ServiceabilityState>({ verdict: "unknown", pincode: "" });
   const [track, setTrack] = useState<TrialTrack>("veg");
   const [busy, setBusy] = useState(false);
+  // A ref, not the state: two taps queued in one browser task both read
+  // busy=false before React commits, so state alone let a double-tap fire
+  // two serviceability requests (audit 2026-09-17).
+  const checking = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -74,7 +78,8 @@ export function QrStart({
   const pinValid = pinDigits.length === 6;
 
   async function check() {
-    if (!pinValid || busy) return;
+    if (!pinValid || busy || checking.current) return;
+    checking.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -89,6 +94,7 @@ export function QrStart({
       // Law 9: name the next action, never just the failure.
       setError("We couldn't check that PIN code just now. Try again in a moment.");
     } finally {
+      checking.current = false;
       setBusy(false);
     }
   }

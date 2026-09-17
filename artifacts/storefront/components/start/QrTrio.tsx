@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { DishImage } from "@/components/menu/DishImage";
 import { formatMacroLine } from "@/lib/format";
 import type { TrioDish } from "@/lib/trialTrio";
 
@@ -20,19 +20,16 @@ export function QrTrio({ dishes }: { dishes: TrioDish[] }) {
           key={dish.slug}
           className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface"
         >
-          <div className="relative aspect-square w-full overflow-hidden bg-surface-raised">
-            {/* `fill` inside the aspect-square box keeps CLS at zero — which
-                matters more here than anywhere else in the app, since this is
-                the first paint of a cold visit. sizes: three columns inside
-                the max-w-md (28rem) px-4 column, two 12px gaps. */}
-            <Image
-              src={dish.image}
-              alt=""
-              fill
-              sizes="(min-width: 28rem) 131px, calc((100vw - 3.5rem) / 3)"
-              className="object-cover"
-            />
-          </div>
+          {/* DishImage (audit 2026-09-17): a missing derivative renders the
+              branded tile, never a broken image, on the first paint of a cold
+              visit. sizes: three columns inside the max-w-md (28rem) px-4
+              column, two 12px gaps. */}
+          <DishImage
+            src={dish.image}
+            name={dish.name}
+            className="aspect-square w-full bg-surface-raised"
+            sizes="(min-width: 28rem) 131px, calc((100vw - 3.5rem) / 3)"
+          />
           <div className="flex flex-1 flex-col gap-1 p-2.5 text-center">
             <p className="font-display text-sm font-semibold leading-tight text-primary">{dish.name}</p>
             {dish.macros && (

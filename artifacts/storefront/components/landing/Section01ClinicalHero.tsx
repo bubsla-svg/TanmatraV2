@@ -147,7 +147,7 @@ export function Section01ClinicalHero({
               the plans get their own sections further down, where someone who
               has seen the food is ready for them. */}
           <div className="mt-9 flex flex-wrap items-center gap-3 animate-rise-in stagger-2">
-            <Button asChild shape="pill" size="fluid" className="min-h-12 px-6 text-sm font-bold transition-transform duration-300 hover:scale-105 active:scale-95">
+            <Button asChild shape="pill" size="fluid" className="min-h-12 px-6 text-sm font-bold transition-transform duration-300 hover:scale-105 active:scale-[0.96]">
               <Link
                 href="/menu"
                 onClick={() => emitLpEvent("hero_cta_click", { page: "/", label: "See today's menu" })}

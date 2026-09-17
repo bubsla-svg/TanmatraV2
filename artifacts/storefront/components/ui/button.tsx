@@ -14,6 +14,12 @@ import { cn } from "@/lib/utils";
  * neutrals — never a rival hue; `destructive` is errors-only. Focus ring is the
  * saffron `ring-ring`. No raw colours, no `dark:` forks.
  *
+ * PRESSED-STATE TIERS (audit 2026-09-17): a control presses 2%
+ * (`active:scale-[0.98]`, baked in below); a chip / tab / icon-only control
+ * presses 4% (`active:scale-[0.96]`). Nothing else — the app used to carry
+ * 0.99, 0.96, 0.95 and 0.92 side by side, so two adjacent buttons pressed
+ * visibly differently.
+ *
  * `shape` and `size="fluid"` exist so a hand-tuned money-path CTA (its own
  * px-N/py-N, its own rounded-full) can adopt this primitive via `asChild`
  * without a forced layout change: pass the real padding/radius in

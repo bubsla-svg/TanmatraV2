@@ -4,7 +4,7 @@
 // track's three dishes are shown, never lets the buyer compose their own.
 
 import { useState } from "react";
-import Image from "next/image";
+import { DishImage } from "@/components/menu/DishImage";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { StickyAction } from "@/components/primitives/StickyAction";
@@ -112,19 +112,18 @@ export function TrialStart({
             key={dish.slug}
             className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface"
           >
-            <div className="relative aspect-square w-full overflow-hidden bg-surface-raised">
-              {/* `fill` inside the aspect-square box keeps CLS at zero. sizes:
-                  the trio sits in /trial's max-w-md (28rem) px-4 column, three
-                  columns with two 12px gaps — (448 − 32 − 24)/3 ≈ 131px once
-                  the container is capped, and (100vw − 56px)/3 below that. */}
-              <Image
-                src={dish.image}
-                alt=""
-                fill
-                sizes="(min-width: 28rem) 131px, calc((100vw - 3.5rem) / 3)"
-                className="object-cover"
-              />
-            </div>
+            {/* DishImage, not a bare next/image (audit 2026-09-17): two trio
+                dishes had no -800 derivative in the photo library and rendered
+                as broken images. The branded tile is the honest fallback. sizes:
+                the trio sits in /trial's max-w-md (28rem) px-4 column, three
+                columns with two 12px gaps — (448 − 32 − 24)/3 ≈ 131px once the
+                container is capped, and (100vw − 56px)/3 below that. */}
+            <DishImage
+              src={dish.image}
+              name={dish.name}
+              className="aspect-square w-full bg-surface-raised"
+              sizes="(min-width: 28rem) 131px, calc((100vw - 3.5rem) / 3)"
+            />
             <div className="flex flex-1 flex-col gap-1 p-2.5 text-center">
               <p className="font-display text-sm font-semibold leading-tight text-primary">{dish.name}</p>
               {dish.macros && (
@@ -166,7 +165,7 @@ export function TrialStart({
           bar to hand the bottom edge to — so the bar anchors at bottom-0, cart
           state or not. CTA only: ~72px of pinned chrome plus the safe-area
           inset. */}
-      <StickyAction className="bottom-0 z-30">
+      <StickyAction className="bottom-0 z-[var(--z-bar)]">
         <div className="mx-auto max-w-md px-4 py-3">
           <Button
             type="button"

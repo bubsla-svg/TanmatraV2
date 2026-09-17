@@ -143,3 +143,49 @@ test("a fast double-tap on Continue to payment sends exactly one POST /api/order
   await page.waitForTimeout(500);
   expect(orderRequests, "exactly one order-create reached the network").toBe(1);
 });
+
+// ---------------------------------------------------------------------------
+// Audit 2026-09-17: the same guard, two more taps on the money path. Plan
+// "Continue" is not covered — with plan checkout dark (T1) that screen is
+// unreachable by design; add it back when NEXT_PUBLIC_PLAN_CHECKOUT returns.
+// ---------------------------------------------------------------------------
+
+test("a fast double-tap on a menu Add button yields one line at quantity 1", async ({ page }) => {
+  const menu = new MenuPage(page);
+  await menu.goto();
+  const add = menu.card(ORDERABLE_DISH.name).getByRole("button", { name: "Add" });
+  await expect(add).toBeVisible();
+  await add.evaluate((el) => {
+    (el as HTMLButtonElement).click();
+    (el as HTMLButtonElement).click();
+  });
+  // The stepper replaces Add and reads 1 — not 2.
+  const stepper = menu.quantityStepper(ORDERABLE_DISH.name);
+  await expect(stepper).toBeVisible();
+  await expect(stepper.getByText("1", { exact: true })).toBeVisible();
+  await expect(stepper.getByText("2", { exact: true })).toHaveCount(0);
+});
+
+test("a fast double-tap on the /start PIN Check sends exactly one serviceability request", async ({ page }) => {
+  let checks = 0;
+  await page.route("**/api/serviceability/*", async (route) => {
+    checks += 1;
+    await new Promise((r) => setTimeout(r, 300));
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ pincode: "201301", serviceable: true }),
+    });
+  });
+  await page.goto("/start");
+  await page.getByRole("textbox", { name: /do we deliver to you/i }).fill("201301");
+  const check = page.getByRole("button", { name: "Check" });
+  await expect(check).toBeEnabled();
+  await check.evaluate((el) => {
+    (el as HTMLButtonElement).click();
+    (el as HTMLButtonElement).click();
+  });
+  await expect(page.getByText(/we deliver to/i)).toBeVisible();
+  await page.waitForTimeout(500);
+  expect(checks, "exactly one serviceability check reached the network").toBe(1);
+});

@@ -62,7 +62,7 @@ export function CartUpsellRail({
               type="button"
               onClick={() => onAdd(item)}
               aria-label={`Add ${item.name}`}
-              className="min-h-11 shrink-0 rounded-full border border-line-strong bg-surface px-3.5 py-1.5 text-xs font-bold text-ink transition-transform active:scale-95 hover:bg-surface-raised"
+              className="min-h-11 shrink-0 rounded-full border border-line-strong bg-surface px-3.5 py-1.5 text-xs font-bold text-ink transition-transform active:scale-[0.96] hover:bg-surface-raised"
             >
               + Add
             </button>

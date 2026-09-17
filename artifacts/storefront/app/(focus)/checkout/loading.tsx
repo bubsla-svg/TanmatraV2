@@ -43,7 +43,7 @@ export default function CheckoutLoading() {
         </div>
       </section>
 
-      <StickyAction aria-hidden className="bottom-0 z-30 p-4">
+      <StickyAction aria-hidden className="bottom-0 z-[var(--z-bar)] p-4">
         <div className="mx-auto flex max-w-md items-center justify-between gap-3">
           <Skeleton className="h-5 w-20" />
           <Skeleton className="h-12 w-40 rounded-full" />

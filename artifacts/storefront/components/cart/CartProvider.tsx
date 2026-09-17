@@ -9,15 +9,20 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import {
   EMPTY_CART,
+  addOrUpdateQty,
+  findRemovedLine,
   loadCart,
   saveCart,
+  type CartLine,
   type CartState,
 } from "@/lib/cartStore";
+import { CartRemovedToast } from "@/components/cart/CartRemovedToast";
 
 interface CartContextValue {
   cart: CartState;
@@ -46,11 +51,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCartState] = useState<CartState>(EMPTY_CART);
   const [hydrated, setHydrated] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  // The last line a write removed, for the "Removed · Undo" toast (audit
+  // 2026-09-17: minus at quantity 1 deleted the line with no confirm, no
+  // undo and no announcement). `id` re-arms the toast timer per removal.
+  const [removed, setRemoved] = useState<{ line: CartLine; id: number } | null>(null);
+  // Mirror of the committed cart so setCart can diff against it without a
+  // side effect inside a state updater.
+  const cartRef = useRef<CartState>(EMPTY_CART);
 
   // Server render and first client render both show the empty cart; the
   // stored cart applies after mount (guarded read — never throws).
   useEffect(() => {
-    setCartState(loadCart());
+    const stored = loadCart();
+    cartRef.current = stored;
+    setCartState(stored);
     setHydrated(true);
   }, []);
 
@@ -62,13 +76,30 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // array (menu add-buttons, the marketplace grid, cart drawer upsells) loses
   // its own memoization the moment ANY line item changes, anywhere.
   const setCart = useCallback((next: CartState) => {
+    const gone = findRemovedLine(cartRef.current, next);
+    cartRef.current = next;
     setCartState(next);
     saveCart(next);
+    if (gone) setRemoved({ line: gone, id: Date.now() });
   }, []);
+
+  const undoRemove = useCallback(() => {
+    if (!removed) return;
+    const { qty, ...line } = removed.line;
+    setRemoved(null);
+    // Restore the line at the quantity it had (not +1 on whatever is there).
+    const restored = addOrUpdateQty(cartRef.current, line, qty);
+    cartRef.current = restored;
+    setCartState(restored);
+    saveCart(restored);
+  }, [removed]);
 
   return (
     <CartContext.Provider value={{ cart, setCart, hydrated, cartOpen, setCartOpen }}>
       {children}
+      {removed && (
+        <CartRemovedToast key={removed.id} name={removed.line.name} onUndo={undoRemove} onDone={() => setRemoved(null)} />
+      )}
     </CartContext.Provider>
   );
 }

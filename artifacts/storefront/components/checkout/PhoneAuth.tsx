@@ -243,7 +243,7 @@ export function PhoneAuth({
         <>
           <Field label="Mobile number" inputID="pa-phone">
             <input
-              id="pa-phone" type="tel" inputMode="numeric" autoComplete="tel" value={phone}
+              id="pa-phone" type="tel" inputMode="tel" autoComplete="tel" value={phone}
               onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" className={inputCls}
             />
           </Field>

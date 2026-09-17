@@ -4,7 +4,8 @@
 // routes alike, so data-stitch sits on the sheet root, not a page wrapper) —
 // see lib/themes/stitch.css.
 import "@/lib/themes/stitch.css";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { addLine, qtyOf, setQty, subtotalPaise } from "@/lib/cartStore";
 import { QuantityStepper } from "@/components/primitives/QuantityStepper";
@@ -38,6 +39,12 @@ export function CartDrawer({
   onOpenChange: (open: boolean) => void;
 }) {
   const { cart, setCart, hydrated } = useCart();
+  // The Checkout link's pending state (audit 2026-09-17): a bare <Link> gave
+  // no feedback on a slow route transition and accepted a second tap. The
+  // navigation runs in a transition so the label can say so and the second
+  // tap is a no-op; still a real link (role, middle-click, prefetch).
+  const router = useRouter();
+  const [navigating, startNavigating] = useTransition();
 
   // Back gesture closes the drawer, not the page (Vaul owns the slide;
   // history ownership lives here).
@@ -131,7 +138,21 @@ export function CartDrawer({
             it. Everywhere else the default (the loading shell for a dynamic
             route) is right, because a menu of ~100 dishes would fire one
             full RSC render per visible card. */}
-        <Link href={checkoutHref({ mode: "alacarte" })} prefetch>Checkout</Link>
+        <Link
+          href={checkoutHref({ mode: "alacarte" })}
+          prefetch
+          aria-busy={navigating || undefined}
+          aria-disabled={navigating || undefined}
+          className={navigating ? "pointer-events-none" : undefined}
+          onClick={(e) => {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+            e.preventDefault();
+            if (navigating) return;
+            startNavigating(() => router.push(checkoutHref({ mode: "alacarte" })));
+          }}
+        >
+          {navigating ? "Opening checkout…" : "Checkout"}
+        </Link>
       </Button>
     );
   } else {
@@ -157,7 +178,7 @@ export function CartDrawer({
                 dismiss (Vaul owns those); this adds the thumb-reachable one. */}
             <DrawerClose
               aria-label="Close cart"
-              className="-mr-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink transition-transform active:scale-95"
+              className="-mr-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink transition-transform active:scale-[0.96]"
             >
               <span aria-hidden className="text-xl leading-none">✕</span>
             </DrawerClose>

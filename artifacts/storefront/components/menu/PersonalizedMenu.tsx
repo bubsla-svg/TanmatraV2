@@ -283,7 +283,7 @@ export function PersonalizedMenu({
             <button
               type="button"
               onClick={() => setFilterOpen(true)}
-              className="min-h-[44px] rounded-full border border-line bg-surface px-5 text-sm font-semibold text-ink transition-transform active:scale-95"
+              className="min-h-[44px] rounded-full border border-line bg-surface px-5 text-sm font-semibold text-ink transition-transform active:scale-[0.96]"
             >
               Adjust filters
             </button>

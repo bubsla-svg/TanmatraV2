@@ -114,8 +114,11 @@ export function DishCard({
     // card, that z-10 competes with the sticky section-chip strip in document
     // order and the Add button paints over the chips as the card scrolls under
     // them. Isolating keeps the card's z-10 internal to the card.
-    <article className="group isolate flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-transform active:scale-[0.99]">
-      <Link href={`/menu?dish=${dish.slug}`} scroll={false} className="flex flex-1 flex-col">
+    <article className="group isolate flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface">
+      {/* The pressed state lives on the Link: :active on a non-interactive
+          <article> is unreliable on iOS, and pressing Add scaled the whole
+          card. Control tier — 2%, same as Button (audit 2026-09-17). */}
+      <Link href={`/menu?dish=${dish.slug}`} scroll={false} className="flex flex-1 flex-col transition-transform active:scale-[0.98]">
         <div className="relative">
           {/* Fixed aspect from the revision (1.12) — a slow image never
               shifts the card. No `sizes`: the card is one column at every

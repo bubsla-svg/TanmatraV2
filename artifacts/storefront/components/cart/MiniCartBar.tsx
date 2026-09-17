@@ -91,17 +91,18 @@ export function MiniCartBar() {
         // pill returns null on an empty cart, so without this the reserve was
         // permanently sized for the worst case — see the rule for the numbers.
         data-minicart-present
-        className={`pointer-events-none bottom-16 z-30 px-3 text-ink transition-transform duration-200 motion-reduce:transition-none md:bottom-0 md:px-4 md:pb-[max(env(safe-area-inset-bottom),1rem)] ${
+        className={`pointer-events-none bottom-16 z-[var(--z-bar)] px-3 text-ink transition-transform duration-200 motion-reduce:transition-none md:bottom-0 md:px-4 md:pb-[max(env(safe-area-inset-bottom),1rem)] ${
           navRetreated
             ? "translate-y-14 pb-[max(env(safe-area-inset-bottom),0.375rem)] md:translate-y-0"
             : "translate-y-0 pb-1.5"
         }`}
       >
-        <div className="pointer-events-auto mx-auto flex max-w-md items-center justify-between gap-3 rounded-full border border-line bg-glass py-1.5 pl-5 pr-1.5 shadow-lg backdrop-blur">
+        <div className="pointer-events-auto mx-auto flex max-w-md items-center justify-between gap-3 rounded-full border border-line bg-glass py-1.5 pl-5 pr-1.5 shadow-lg backdrop-blur animate-bar-in">
           {/* Live: adding announced only the stepper's "1" — the count and the
               money changed silently for a screen reader (2026-09-06 audit). */}
           <p aria-live="polite" aria-atomic="true" className="tabular text-sm text-ink">
-            <span className="font-semibold">{count}</span>{" "}
+            {/* key={count}: remount on change replays the bump. */}
+            <span key={count} className="inline-block font-semibold animate-count-bump">{count}</span>{" "}
             {count === 1 ? "item" : "items"}{" "}
             <span aria-hidden className="text-ink-faint">·</span>{" "}
             <span className="font-data font-bold text-primary">{formatPaise(subtotalPaise(cart))}</span>

@@ -106,7 +106,7 @@ export function CheckoutAddress({
           <input
             id="co-street"
             type="text"
-            autoComplete="street-address"
+            autoComplete="address-line1"
             value={line}
             onChange={(e) => setLine(e.target.value)}
             placeholder="Flat 3B, Sector 62"

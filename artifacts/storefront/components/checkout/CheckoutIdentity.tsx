@@ -49,7 +49,7 @@ export function CheckoutIdentity({
           <input
             id="co-phone"
             type="tel"
-            inputMode="numeric"
+            inputMode="tel"
             autoFocus
             autoComplete="tel"
             value={phone}

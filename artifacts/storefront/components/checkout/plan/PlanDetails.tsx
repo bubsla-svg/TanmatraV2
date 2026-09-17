@@ -350,7 +350,7 @@ export function PlanDetails({
         <Link href="/legal/refunds" className="underline underline-offset-2 hover:text-ink">refund policy</Link>.
       </p>
 
-      <StickyAction className="bottom-0 z-30">
+      <StickyAction className="bottom-0 z-[var(--z-bar)]">
         <div className="mx-auto max-w-md px-4 py-3">
           {blocker && (
             <p role="status" className="mb-1.5 text-center text-xs font-medium text-ink-muted">{blocker.reason}</p>

@@ -58,7 +58,7 @@ export function SaveToVaultButton({ dishSlug, dishName, defaultSaved = false }: 
         className={`rounded-xl border px-3 py-2 text-xs font-semibold transition-all duration-200 ${
           saved
             ? "border-gold bg-gold/10 text-gold-text cursor-default"
-            : "border-line bg-surface text-ink-muted hover:border-ink/30 hover:text-ink active:scale-95"
+            : "border-line bg-surface text-ink-muted hover:border-ink/30 hover:text-ink active:scale-[0.96]"
         }`}
       >
         {saved ? "★ Saved to Vault" : saveMutation.isPending ? "Saving…" : "+ Save to Vault"}
