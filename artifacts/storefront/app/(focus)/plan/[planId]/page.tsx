@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { PLAN_CHECKOUT_ENABLED } from "@/lib/flags";
+import { planLandingHref } from "@/lib/planLanding";
 import { PLAN_CATALOG, planIsSelfServiceLaunchable, type PlanId, type DietTrack } from "@workspace/subscription-rules";
 import { planDisplay, planQuoteView, bookingBlock, getPlanBuilderData } from "@/lib/plans";
 import { PlanBuilder } from "@/components/plans/PlanBuilder";
@@ -8,7 +10,7 @@ import { FocusHeader } from "@/components/FocusHeader";
 
 type Props = {
   params: Promise<{ planId: string }>;
-  searchParams: Promise<{ waitlist?: string }>;
+  searchParams: Promise<{ waitlist?: string } & Record<string, string | undefined>>;
 };
 
 function asPlanId(v: string): PlanId | null {
@@ -28,9 +30,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  */
 export default async function PlanPage({ params, searchParams }: Props) {
   const { planId } = await params;
-  const { waitlist } = await searchParams;
+  const { waitlist, ...rest } = await searchParams;
   const id = asPlanId(planId);
   if (!id) notFound();
+
+  // T1: the builder's only exit is the subscription checkout, which is dark.
+  // Land on the goal-filtered menu instead, carrying the acquisition context
+  // the wizard attached. An explicit ?waitlist=1 is still lead capture, so it
+  // keeps rendering.
+  if (!PLAN_CHECKOUT_ENABLED && waitlist !== "1") {
+    redirect(planLandingHref(id, rest));
+  }
 
   const q = planQuoteView(id);
   const defaultTrack: DietTrack = q.servedTracks[0] ?? "veg";

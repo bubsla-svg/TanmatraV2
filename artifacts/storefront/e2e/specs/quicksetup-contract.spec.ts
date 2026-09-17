@@ -69,11 +69,17 @@ test("?condition=pcos exits to the mapped plan with condition/goal/acquisitionCo
   await page.getByRole("button", { name: /continue/i }).click();
   await page.getByRole("button", { name: /see my plan/i }).click();
 
-  // pcos → steady (lib/subscription-rules planForCondition).
-  await expect(page).toHaveURL(/\/plan\/steady\?/);
+  // pcos → steady (lib/subscription-rules planForCondition). With plan
+  // checkout dark (T1, NEXT_PUBLIC_PLAN_CHECKOUT unset at build), /plan/steady
+  // redirects to the goal-filtered menu, carrying the same query params.
+  const plansLive = process.env["NEXT_PUBLIC_PLAN_CHECKOUT"] === "1";
+  await expect(page).toHaveURL(plansLive ? /\/plan\/steady\?/ : /\/menu\?/);
   const url = new URL(page.url());
   expect(url.searchParams.get("condition")).toBe("pcos");
-  expect(url.searchParams.get("goal")).toBe("maintain");
+  // On the menu, `goal` is the MENU's filter vocabulary and the plan's own
+  // filter is the more specific answer (lib/planLanding.ts), so it replaces
+  // the wizard's wellness goal there; on the builder it is carried verbatim.
+  expect(url.searchParams.get("goal")).toBe(plansLive ? "maintain" : "glucose_steady");
   expect(url.searchParams.get("acquisitionContextId")).toBeTruthy();
 });
 

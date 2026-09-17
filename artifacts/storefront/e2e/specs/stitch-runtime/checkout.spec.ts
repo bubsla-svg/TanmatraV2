@@ -29,6 +29,11 @@ import { marker, evidenceShot } from "./support";
  */
 
 const deployedLive = process.env["E2E_LIVE_CHECKOUT"] === "1" ? test : test.skip;
+// T1 dead-funnel containment: with NEXT_PUBLIC_PLAN_CHECKOUT unset at build,
+// `/checkout?plan=` redirects to a surface that can take money (middleware +
+// checkout/page.tsx), so the plan-checkout screens below are unreachable by
+// design, not broken. The flag-on build restores them.
+const plansLive = process.env["NEXT_PUBLIC_PLAN_CHECKOUT"] === "1" ? test : test.skip;
 const SEEDED_ORDER_ID = process.env["E2E_SEEDED_ORDER_ID"] ?? "";
 const seededOrder = SEEDED_ORDER_ID ? test : test.skip;
 
@@ -106,7 +111,7 @@ async function fillPlanDetailsAndPay(page: Page): Promise<void> {
 }
 
 test.describe("stitch-runtime · checkout", () => {
-  test("8.1 checkout quote-active is wired", async ({ page }) => {
+  plansLive("8.1 checkout quote-active is wired", async ({ page }) => {
     const errors = collectErrors(page);
     // Reached the way cuj-02 reaches it: a launchable plan seeded via ?plan=.
     await page.goto("/checkout?plan=desk_fuel");

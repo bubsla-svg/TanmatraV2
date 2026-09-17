@@ -41,3 +41,15 @@ export const CARE_BY_CONDITION_ENABLED = process.env.NEXT_PUBLIC_CARE_BY_CONDITI
  * behaviour is identical to before. Restoring the service is this env flip.
  */
 export const RD_SERVICES_ENABLED = process.env.NEXT_PUBLIC_RD_SERVICES === "1";
+
+/**
+ * Plan / trial SUBSCRIPTION checkout — every CTA whose purchase ends at
+ * POST /subscriptions. OFF by default (T1, CRO handoff 2026-09-17): that
+ * route answers 503 in production (PLAN_CHECKOUT_DISABLED), so with the flag
+ * off the storefront routes each of those CTAs to a surface that can take
+ * money instead — the three-lunch trio becomes ordinary à-la-carte cart lines
+ * at menu price (/trial, /start), plan cards open the goal-filtered menu, and
+ * a stale `/checkout?plan=` or `/plan/<id>` link redirects the same way.
+ * Turning plans back on is this env flip; nothing is deleted.
+ */
+export const PLAN_CHECKOUT_ENABLED = process.env.NEXT_PUBLIC_PLAN_CHECKOUT === "1";

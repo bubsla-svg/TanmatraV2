@@ -18,8 +18,12 @@ import {
   type ServiceabilityState,
 } from "@/lib/serviceabilityApi";
 import { TRIAL_COPY } from "@/lib/trial";
-import type { TrialTrack } from "@/lib/trialTrio";
+import type { TrialTrack, TrioDish } from "@/lib/trialTrio";
 import { checkoutHref } from "@/lib/checkoutIntent";
+import { PLAN_CHECKOUT_ENABLED } from "@/lib/flags";
+import { useCart } from "@/components/cart/CartProvider";
+import { menuHrefWithSrc, trioTotalPaise, withTrioInCart } from "@/lib/trialBundle";
+import { TRIO_ORDER_COPY } from "@/components/trial/TrialStart";
 
 /**
  * The two-screen half of the scan-to-paid landing (screens 1 and 2).
@@ -40,8 +44,17 @@ import { checkoutHref } from "@/lib/checkoutIntent";
  * answered the PIN in the header bar on a previous visit never sees it at all
  * (Law 4).
  */
-export function QrStart({ pricePaise }: { pricePaise: number }) {
+export function QrStart({
+  pricePaise,
+  trios,
+}: {
+  pricePaise: number;
+  /** Both tracks' trios, resolved by the page — the toggle picks which three
+   *  lines go in the cart when plan checkout is dark (T1). */
+  trios: Record<TrialTrack, TrioDish[]>;
+}) {
   const router = useRouter();
+  const { cart, setCart } = useCart();
   const [pincode, setPincode] = useState("");
   const [state, setState] = useState<ServiceabilityState>({ verdict: "unknown", pincode: "" });
   const [track, setTrack] = useState<TrialTrack>("veg");
@@ -86,7 +99,21 @@ export function QrStart({ pricePaise }: { pricePaise: number }) {
     emitFunnel("cuj_track_selected", { track: next, plan_id: "trial_3day" });
   }
 
+  const trio = trios[track];
+  const ctaPaise = PLAN_CHECKOUT_ENABLED ? pricePaise : trioTotalPaise(trio);
+
   function start() {
+    if (!PLAN_CHECKOUT_ENABLED) {
+      // T1: three ordinary cart lines at menu price, then the menu — the
+      // scan never ends at a route that cannot take money. `src` rides the
+      // URL so attribution survives a direct /start?src= arrival.
+      setCart(withTrioInCart(cart, trio));
+      for (const d of trio) {
+        emitFunnel("add_to_cart", { dish_id: d.slug, price_paise: d.pricePaise, source: "qr_trio" });
+      }
+      router.push(menuHrefWithSrc(window.location.search));
+      return;
+    }
     emitFunnel("cuj_checkout_start", { planId: "trial_3day", track });
     router.push(checkoutHref({ mode: "plan", planId: "trial_3day", track }));
   }
@@ -117,7 +144,9 @@ export function QrStart({ pricePaise }: { pricePaise: number }) {
             We deliver to <span className="font-data tabular">{state.pincode}</span>
           </p>
           <p className="tabular mt-1 text-xs text-ink-muted">
-            {earliest ? `Earliest box: ${earliest}` : null}
+            {/* The weekday-box date is the PLAN's schedule; an à-la-carte
+                order picks its own slot at checkout (T1). */}
+            {PLAN_CHECKOUT_ENABLED && earliest ? `Earliest box: ${earliest}` : null}
           </p>
           <button
             type="button"
@@ -166,9 +195,11 @@ export function QrStart({ pricePaise }: { pricePaise: number }) {
           size="fluid"
           className="w-full min-h-12 px-8 py-3.5 text-center text-base font-semibold"
         >
-          Get my 3 boxes · {formatPaise(pricePaise)}
+          {PLAN_CHECKOUT_ENABLED ? "Get my 3 boxes" : "Add these 3 to my order"} · {formatPaise(ctaPaise)}
         </Button>
-        <p className="text-center text-xs text-ink-muted">{TRIAL_COPY.noAutoConvert}</p>
+        <p className="text-center text-xs text-ink-muted">
+          {PLAN_CHECKOUT_ENABLED ? TRIAL_COPY.noAutoConvert : TRIO_ORDER_COPY}
+        </p>
       </section>
     );
   }

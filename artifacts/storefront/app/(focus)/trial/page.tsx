@@ -7,12 +7,19 @@ import { TRIAL_PRICE_PAISE, TRIAL_COPY } from "@/lib/trial";
 import { resolveTrio, type TrialTrack, type TrioDish } from "@/lib/trialTrio";
 import { TrialStart } from "@/components/trial/TrialStart";
 import { FocusHeader } from "@/components/FocusHeader";
+import { PLAN_CHECKOUT_ENABLED } from "@/lib/flags";
+import { trioTotalPaise } from "@/lib/trialBundle";
 
-export const metadata: Metadata = {
-  title: "Try three lunches",
-  description:
-    "Three lunches for ₹399 — every rupee credited back the moment you start a plan.",
-};
+export const metadata: Metadata = PLAN_CHECKOUT_ENABLED
+  ? {
+      title: "Try three lunches",
+      description:
+        "Three lunches for ₹399 — every rupee credited back the moment you start a plan.",
+    }
+  : {
+      title: "Try three lunches",
+      description: "Three chef-cooked lunches off today's menu, delivered to your desk. Order once — nothing renews.",
+    };
 
 /**
  * The 3-Day Taste Test surface (02b). Server-rendered: the offer promise + the
@@ -31,6 +38,11 @@ export default async function TrialPage() {
   const deskFuelWeekly = computePlanQuote("desk_fuel", "veg", "weekly");
   const deskFuelMonthly = computePlanQuote("desk_fuel", "veg", "monthly");
 
+  // T1 (plan checkout dark): the trio is sold as three à-la-carte lines, so
+  // the headline price is the sum of the veg trio's catalog prices — the
+  // server's figures, summed for display. TrialStart restates it per track.
+  const headlinePaise = PLAN_CHECKOUT_ENABLED ? TRIAL_PRICE_PAISE : trioTotalPaise(trios.veg);
+
   return (
     <div data-ui-generation="stitch-74" data-screen-id="6.8" data-screen-state="default" className="min-h-dvh">
       {/* pb-48 clears the sticky footer TrialStart renders (button + the
@@ -44,20 +56,35 @@ export default async function TrialPage() {
         <FocusHeader backLabel="Back to plans" />
         <div className="flex flex-col items-center gap-2 text-center">
           <span className="text-[11px] font-bold uppercase tracking-[.18em] text-accent">
-            Not ready for a month?
+            {PLAN_CHECKOUT_ENABLED ? "Not ready for a month?" : "Start here"}
           </span>
           <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">
-            Try three lunches for {formatPaise(TRIAL_PRICE_PAISE)}
+            Try three lunches for {formatPaise(headlinePaise)}
           </h1>
           <p className="max-w-[280px] text-sm leading-relaxed text-ink-muted">
-            {TRIAL_COPY.creditLine}
+            {PLAN_CHECKOUT_ENABLED
+              ? TRIAL_COPY.creditLine
+              : "Three chef-cooked lunches off today's menu, each at its own price. Delivery and GST are shown before you pay."}
           </p>
         </div>
 
         <TrialStart trios={trios} pricePaise={TRIAL_PRICE_PAISE} />
 
+        {!PLAN_CHECKOUT_ENABLED && (
+          <div className="rounded-2xl border border-line bg-surface p-5">
+            <h2 className="font-display text-lg font-semibold leading-tight text-primary">How it works</h2>
+            <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+              Start puts these three dishes in your cart at their menu price. Swap any of them on the
+              menu, pick a delivery slot at checkout, and pay once — there is no plan and nothing renews.
+            </p>
+          </div>
+        )}
+
         {/* Secondary reassurance card — deliberately smaller type and less
-            visual weight than the hero + trio + CTA above (Brief 23). */}
+            visual weight than the hero + trio + CTA above (Brief 23). Both
+            cards describe the subscription that follows a trial, so they
+            render only while plan checkout is live (T1). */}
+        {PLAN_CHECKOUT_ENABLED && (<>
         <div className="rounded-2xl border border-line bg-surface p-5">
           <h2 className="font-display text-lg font-semibold leading-tight text-primary">What happens after the trial?</h2>
           <p className="mt-2 text-sm leading-relaxed text-ink-muted">
@@ -108,6 +135,7 @@ export default async function TrialPage() {
             </li>
           </ol>
         </div>
+        </>)}
       </section>
     </div>
   );

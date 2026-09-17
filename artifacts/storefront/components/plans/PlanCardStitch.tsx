@@ -2,6 +2,8 @@ import Link from "next/link";
 import { formatPaise } from "@/lib/format";
 import { planDisplay, planQuoteView } from "@/lib/plans";
 import type { PlanId } from "@workspace/subscription-rules";
+import { PLAN_CHECKOUT_ENABLED } from "@/lib/flags";
+import { planLandingHref } from "@/lib/planLanding";
 
 /**
  * Stitch-scoped plan card (route-05 redesign) — rendered by app/plans/page.tsx
@@ -15,7 +17,13 @@ import type { PlanId } from "@workspace/subscription-rules";
 export function PlanCardStitch({ id }: { id: PlanId }) {
   const d = planDisplay(id);
   const q = planQuoteView(id);
-  const href = q.launchable ? `/plan/${id}` : `/plan/${id}?waitlist=1`;
+  // T1: while plan checkout is dark a launchable plan opens the menu already
+  // filtered to its dishes — a surface that takes money — not the builder.
+  const href = !q.launchable
+    ? `/plan/${id}?waitlist=1`
+    : PLAN_CHECKOUT_ENABLED
+      ? `/plan/${id}`
+      : planLandingHref(id);
 
   return (
     <Link
@@ -54,7 +62,7 @@ export function PlanCardStitch({ id }: { id: PlanId }) {
 
       {q.launchable ? (
         <span className="inline-flex items-center justify-center rounded-full bg-gold px-5 py-3 text-sm font-semibold text-gold-ink">
-          Select plan
+          {PLAN_CHECKOUT_ENABLED ? "Select plan" : "See these meals"}
         </span>
       ) : (
         <span className="inline-flex items-center justify-center rounded-full border border-line-strong px-5 py-3 text-sm font-semibold text-ink">

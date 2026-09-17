@@ -11,6 +11,8 @@ import { resolveTrio } from "@/lib/trialTrio";
 import { QrStart } from "@/components/start/QrStart";
 import { QrTrio } from "@/components/start/QrTrio";
 import { ReferralWelcome } from "@/components/start/ReferralWelcome";
+import { PLAN_CHECKOUT_ENABLED } from "@/lib/flags";
+import { trioTotalPaise } from "@/lib/trialBundle";
 
 export const metadata: Metadata = {
   title: "Three lunches, one price",
@@ -58,6 +60,12 @@ export default async function StartPage({
   // cost a second catalogue pass and a client bundle for a decision that only
   // changes three thumbnails after the PIN gate anyway).
   const trio = resolveTrio("veg", dishes, sharedMacroKeys);
+  // Both tracks go to the client island: with plan checkout dark (T1) the
+  // toggle decides which three cart lines are written, and the island cannot
+  // read the catalog itself. Same dishes array, so this is a second filter,
+  // not a second fetch.
+  const trios = { veg: trio, nonveg: resolveTrio("nonveg", dishes, sharedMacroKeys) };
+  const headlinePaise = PLAN_CHECKOUT_ENABLED ? TRIAL_PRICE_PAISE : trioTotalPaise(trio);
 
   return (
     <div className="min-h-dvh">
@@ -67,10 +75,12 @@ export default async function StartPage({
             This week&rsquo;s three
           </span>
           <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-[-.02em] text-primary">
-            Three lunches for {formatPaise(TRIAL_PRICE_PAISE)}
+            Three lunches for {formatPaise(headlinePaise)}
           </h1>
           <p className="max-w-[300px] text-sm leading-relaxed text-ink-muted">
-            All in — cooking, packing and delivery. No delivery or packing charges at checkout.
+            {PLAN_CHECKOUT_ENABLED
+              ? "All in — cooking, packing and delivery. No delivery or packing charges at checkout."
+              : "Three dishes off today's menu, each at its own price. Delivery and GST are shown before you pay."}
           </p>
         </div>
 
@@ -81,11 +91,13 @@ export default async function StartPage({
         {/* Law 1: what arrives, and when, stated before the field. Both
             constants are the ones `buildSubscriptionInput` books the delivery
             with, so this cannot drift from what is actually scheduled. */}
-        <p className="text-center text-xs text-ink-muted">
-          Delivered {PLAN_DELIVERY_DAYS_SENTENCE}.
-        </p>
+        {PLAN_CHECKOUT_ENABLED && (
+          <p className="text-center text-xs text-ink-muted">
+            Delivered {PLAN_DELIVERY_DAYS_SENTENCE}.
+          </p>
+        )}
 
-        <QrStart pricePaise={TRIAL_PRICE_PAISE} />
+        <QrStart pricePaise={TRIAL_PRICE_PAISE} trios={trios} />
 
         {/* "registered", not "licensed": the certificate on file is an FSSAI
             *Registration* (petty-FBO tier), and a Registration and a Licence

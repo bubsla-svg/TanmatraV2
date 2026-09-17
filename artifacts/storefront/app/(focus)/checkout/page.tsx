@@ -21,7 +21,8 @@ import { CheckoutFlow } from "@/components/checkout/CheckoutFlow";
 import { AlacarteCheckout } from "@/components/checkout/AlacarteCheckout";
 import { FocusHeader } from "@/components/FocusHeader";
 import { PlanCheckout } from "@/components/checkout/plan/PlanCheckout";
-import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
+import { LIVE_CHECKOUT_ENABLED, PLAN_CHECKOUT_ENABLED } from "@/lib/flags";
+import { planLandingHref } from "@/lib/planLanding";
 import { asBuilderCycle } from "@/lib/checkoutCycle";
 import { parseCheckoutIntent } from "@/lib/checkoutIntent";
 import { fetchMarketplaceItemServer } from "@/lib/marketplaceApi";
@@ -66,6 +67,14 @@ export default async function CheckoutPage({ searchParams }: Props) {
   // completable purchase parses to null and falls through to the à-la-carte
   // leg, the one mode with a designed empty state.
   const intent = parseCheckoutIntent(params);
+
+  // T1 dead-funnel containment: POST /subscriptions answers 503 while plan
+  // checkout is dark, so a plan intent — including the `?plan=` shape live in
+  // printed QR codes and bookmarks — lands on a surface that can take money
+  // (the trio as cart lines, or the goal-filtered menu), never on this leg.
+  if (intent?.mode === "plan" && !PLAN_CHECKOUT_ENABLED) {
+    redirect(planLandingHref(intent.planId));
+  }
 
   if (intent?.mode === "premium" || intent?.mode === "consult" || intent?.mode === "marketplace") {
     return (
