@@ -1,5 +1,6 @@
 "use client"; // Justification: client-side pincode entry, API serviceability verdict, and localStorage persistence.
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { checkServiceability } from "@/lib/serviceabilityApi";
 import { useServiceability } from "./ServiceabilityProvider";
@@ -8,6 +9,7 @@ import { ApiError } from "@/lib/apiClient";
 import { Button } from "@/components/ui/button";
 import { NotifyMeForm } from "./NotifyMeForm";
 import { LocationPickerFlow } from "@/components/address/LocationPickerFlow";
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 
 export interface ServiceabilityBarProps {
   /** Optional location label for diagnostic or analytics tagging. */
@@ -53,13 +55,38 @@ const MENU_FIT = "min-w-0 max-w-[9rem] sm:max-w-xs";
  */
 export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps) {
   // T5: the verdict is the provider's — one answer shared with every island.
-  const { state, set, clear } = useServiceability();
+  const { state, hydrated, set, clear } = useServiceability();
   const { verdict, pincode } = state;
   const [inputVal, setInputVal] = useState("");
   const [err, setErr] = useState<string | null>(null);
 
   const [pickingLocation, setPickingLocation] = useState(false);
   const [manualMode, setManualMode] = useState(false);
+  // Header placement only: the waitlist card and the PIN form open in a
+  // bottom sheet. Rendered inline they landed inside TopNav's 9rem endContent
+  // slot and inflated the sticky header to the full card height — on /menu
+  // the card then sat across the section-chip strip and the first rows.
+  const inHeader = placement === "menu";
+  const [sheetOpen, setSheetOpen] = useState(false);
+  // The verdict lands from the header's own check OR from the first-visit
+  // banner (LocationFirstBanner writes the same provider), so the sheet opens
+  // on the TRANSITION to unserviceable rather than from one caller — and never
+  // on hydrating a stored verdict: a reload must not re-open it over the page.
+  const lastVerdict = useRef<string | null>(null);
+  useEffect(() => {
+    if (!hydrated) return;
+    const prev = lastVerdict.current;
+    lastVerdict.current = verdict;
+    if (inHeader && prev !== null && prev !== "unserviceable" && verdict === "unserviceable") setSheetOpen(true);
+  }, [hydrated, verdict, inHeader]);
+  // The waitlist card links onward (the marketplace) and the header persists
+  // across routes, so the sheet would otherwise ride along and veil the page
+  // it just sent the customer to. Any route change closes it.
+  const pathname = usePathname();
+  useEffect(() => {
+    setSheetOpen(false);
+    setManualMode(false);
+  }, [pathname]);
   // "Delivering to 201301 · today 7–8 pm" — the window is the checkout's own
   // next bookable slot, fetched only once the PIN is served.
   const nextWindow = useNextDeliveryWindow(verdict === "serviceable");
@@ -72,6 +99,9 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
       set(res);
       setInputVal("");
       setManualMode(false);
+      // The customer needs to read the verdict once; the pill alone says
+      // only "not in 334001".
+      if (inHeader) setSheetOpen(res.verdict === "unserviceable");
     },
   });
   const busy = checkMutation.isPending;
@@ -111,59 +141,12 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
     clear();
     setInputVal("");
     setManualMode(false);
+    setSheetOpen(false);
   };
 
-  if (verdict === "serviceable") {
-    // T-05: ONE line, and the WHOLE pill is the tap target. The old
-    // "Delivering in 201301 ✓ · Change" wrapped to three lines inside the
-    // header's 9rem cap and grew the sticky bar from 63 to 83px for the rest
-    // of the session, with "Change" a 43×16 link. The pin glyph carries
-    // "delivering"; the code carries the where; the tick carries the verdict.
-    return (
-      <button
-        type="button"
-        onClick={handleReset}
-        aria-label={`Delivering to ${pincode}${nextWindow ? `, ${nextWindow}` : ""}. Change location`}
-        className={`${placement === 'menu' ? MENU_FIT : 'mb-6'} inline-flex min-h-11 max-w-[45vw] items-center gap-1.5 whitespace-nowrap rounded-full border border-line-strong bg-secondary px-3 text-xs font-semibold text-ink transition-colors hover:border-gold`}
-      >
-        <svg aria-hidden className="h-4 w-4 shrink-0 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        {/* T5: "Delivering to 201301 · today 7–8 pm". The window truncates
-            first inside the header's cap; the PIN and tick always read. */}
-        <span className="tabular truncate">
-          <span className="hidden sm:inline">Delivering to </span>
-          {pincode}
-          {nextWindow && <span className="text-ink-muted"> · {nextWindow}</span>}
-        </span>
-        <span aria-hidden className="text-sage-text">✓</span>
-      </button>
-    );
-  }
-
-  if (verdict === "unserviceable") {
-    return (
-      <div className={`${placement === 'menu' ? '' : 'mb-6'} rounded-2xl border border-line bg-surface p-5 text-left max-w-lg`}>
-        <p className="text-sm font-semibold text-ink">
-          {/* `{" "}` is load-bearing, not formatting noise. Written as
-              `{pincode} yet`, the space between the expression and the
-              following text is dropped by the JSX transform, and the shipped
-              DOM reads "not in 400001yet" — verified against a production
-              build's innerHTML, not guessed. Every out-of-zone visitor saw it.
-              An explicit space node cannot be collapsed. */}
-          We&rsquo;re not in {pincode}{" "}
-          yet &mdash; browse anyway, and leave your number: we&rsquo;ll message you the day we arrive.
-        </p>
-        <NotifyMeForm pincode={pincode} onReset={handleReset} />
-      </div>
-    );
-  }
-
-  if (manualMode) {
-    return (
-      <form onSubmit={handleSubmit} className={`${placement === 'menu' ? MENU_FIT : 'mb-6 max-w-md'} flex flex-wrap items-center gap-2`}>
-        {placement !== 'menu' && (
+  const pinForm = (
+      <form onSubmit={handleSubmit} className={`${inHeader ? "" : "mb-6 max-w-md"} flex flex-wrap items-center gap-2`}>
+        {(
           <label htmlFor={`pin-input-${placement}`} className="w-full text-xs font-medium uppercase tracking-wide text-ink-muted">
             Where should we deliver? Enter your pincode
           </label>
@@ -197,7 +180,7 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
           </Button>
           <button
             type="button"
-            onClick={() => setManualMode(false)}
+            onClick={() => { setManualMode(false); setSheetOpen(false); }}
             className="text-xs font-medium text-ink-muted underline hover:text-ink ml-2"
           >
             Cancel
@@ -205,8 +188,94 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
         </div>
         {err && <p role="alert" className="text-xs font-medium text-danger w-full">{err}</p>}
       </form>
+  );
+
+  const waitlistCard = (
+      <div className={`${inHeader ? "" : "mb-6 max-w-lg"} rounded-2xl border border-line bg-surface p-5 text-left`}>
+        <p className="text-sm font-semibold text-ink">
+          {/* `{" "}` is load-bearing, not formatting noise. Written as
+              `{pincode} yet`, the space between the expression and the
+              following text is dropped by the JSX transform, and the shipped
+              DOM reads "not in 400001yet" — verified against a production
+              build's innerHTML, not guessed. Every out-of-zone visitor saw it.
+              An explicit space node cannot be collapsed. */}
+          We&rsquo;re not in {pincode}{" "}
+          yet &mdash; browse anyway, and leave your number: we&rsquo;ll message you the day we arrive.
+        </p>
+        <NotifyMeForm pincode={pincode} onReset={handleReset} />
+      </div>
+  );
+
+  // Header: every verdict is a one-line pill; anything taller opens a sheet.
+  // The sheet closes on backdrop/swipe and leaves the pill state alone, so
+  // a customer who dismisses the waitlist keeps "Not in 334001" as the cue.
+  const headerSheet = inHeader && (
+    <Drawer open={sheetOpen || manualMode} onOpenChange={(o) => { if (!o) { setSheetOpen(false); setManualMode(false); } }}>
+      <DrawerContent aria-describedby={undefined}>
+        <div className="px-4 pb-6 pt-3">
+          <DrawerTitle className="mb-3 font-display text-xl font-semibold text-primary">
+            {verdict === "unserviceable" && !manualMode ? "Delivery area" : "Where should we deliver?"}
+          </DrawerTitle>
+          {verdict === "unserviceable" && !manualMode ? waitlistCard : pinForm}
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+
+  if (verdict === "serviceable") {
+    // T-05: ONE line, and the WHOLE pill is the tap target. The old
+    // "Delivering in 201301 ✓ · Change" wrapped to three lines inside the
+    // header's 9rem cap and grew the sticky bar from 63 to 83px for the rest
+    // of the session, with "Change" a 43×16 link. The pin glyph carries
+    // "delivering"; the code carries the where; the tick carries the verdict.
+    return (
+      <button
+        type="button"
+        onClick={handleReset}
+        aria-label={`Delivering to ${pincode}${nextWindow ? `, ${nextWindow}` : ""}. Change location`}
+        className={`${placement === 'menu' ? MENU_FIT : 'mb-6'} inline-flex min-h-11 max-w-[45vw] items-center gap-1.5 whitespace-nowrap rounded-full border border-line-strong bg-secondary px-3 text-xs font-semibold text-ink transition-colors hover:border-gold`}
+      >
+        <svg aria-hidden className="h-4 w-4 shrink-0 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        {/* T5: "Delivering to 201301 · today 7–8 pm". The window truncates
+            first inside the header's cap; the PIN and tick always read. */}
+        <span className="tabular truncate">
+          <span className="hidden sm:inline">Delivering to </span>
+          {pincode}
+          {nextWindow && <span className="text-ink-muted"> · {nextWindow}</span>}
+        </span>
+        <span aria-hidden className="text-sage-text">✓</span>
+      </button>
     );
   }
+
+  if (verdict === "unserviceable") {
+    if (!inHeader) return waitlistCard;
+    // Same shape as the serviceable pill, so the header never changes height
+    // with the verdict: pin, code, no tick. Tap re-opens the waitlist sheet;
+    // "Change pincode" inside it resets.
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setSheetOpen(true)}
+          aria-label={`We don't deliver to ${pincode} yet. Join the waitlist or change location`}
+          className={`${MENU_FIT} inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full border border-line-strong bg-secondary px-3 text-xs font-semibold text-ink transition-colors hover:border-gold`}
+        >
+          <svg aria-hidden className="h-4 w-4 shrink-0 text-ink-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span className="tabular truncate">Not in {pincode}</span>
+        </button>
+        {headerSheet}
+      </>
+    );
+  }
+
+  if (manualMode && !inHeader) return pinForm;
 
   return (
     <div className={`${placement === 'menu' ? MENU_FIT : 'mb-6 max-w-md'} flex flex-col items-start gap-2`}>
@@ -272,6 +341,7 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
           }}
         />
       )}
+      {headerSheet}
     </div>
   );
 }

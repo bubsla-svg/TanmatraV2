@@ -3,6 +3,7 @@ import { Footer } from "@/components/Footer";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { MiniCartBar } from "@/components/cart/MiniCartBar";
 import { LocationFirstBanner } from "@/components/onboarding/LocationFirstBanner";
+import { PullToRefresh } from "@/components/PullToRefresh";
 
 /**
  * GlobalLayout — the browsing/discovery/account shell (P0 §9).
@@ -27,6 +28,8 @@ export default function GlobalLayout({
 }) {
   return (
     <>
+      {/* Browsing shell only — never on (focus) money routes; see the component. */}
+      <PullToRefresh />
       <Header />
       <main
         id="main"
