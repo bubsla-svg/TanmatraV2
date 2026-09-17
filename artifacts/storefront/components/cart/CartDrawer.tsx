@@ -6,8 +6,7 @@
 import "@/lib/themes/stitch.css";
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { addLine, qtyOf, setQty, subtotalPaise } from "@/lib/cartStore";
+import { qtyOf, setQty, subtotalPaise } from "@/lib/cartStore";
 import { QuantityStepper } from "@/components/primitives/QuantityStepper";
 import { formatMacroLine, formatPaise } from "@/lib/format";
 import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
@@ -19,10 +18,8 @@ import { Drawer, DrawerClose, DrawerContent, DrawerTitle } from "@/components/ui
 import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 import { CartUpsellRail } from "./CartUpsellRail";
 import { RAIL_GAP_PX, useUpsellRailFit } from "./useUpsellRailFit";
-import { listItems, type MarketplaceItem } from "@/lib/marketplaceApi";
-import { selectUpsellItems } from "@/lib/upsell";
+import { useCartUpsell } from "./useCartUpsell";
 import { checkoutHref } from "@/lib/checkoutIntent";
-import { emitFunnel } from "@/lib/funnel";
 
 /**
  * Cart as a bottom sheet (§4.3). Line items with in-place steppers; the
@@ -100,20 +97,13 @@ export function CartDrawer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, dishKey]);
 
-  // Upsell candidates — the REAL catalog, same query key as MarketplaceGrid
-  // (one cache entry serves both surfaces), fetched only while the sheet is
-  // open: this component is mounted on every page. Selection rules (in-cart
-  // exclusion, stock gating, max 3) live in lib/upsell.ts. A failed fetch
-  // simply means no rail — decoration must not add noise where the customer
-  // is about to pay. Nothing here gates the money path.
-  const { data: catalog } = useQuery({
-    queryKey: ["marketplace", "items"],
-    queryFn: () => listItems(),
-    staleTime: 5 * 60_000,
-    retry: 1,
-    enabled: open,
-  });
-  const upsell = selectUpsellItems(catalog?.items ?? [], cart.lines);
+  // Upsell candidates (T7) — food cheaper than the cheapest meal for a cart
+  // with a dish in it, pantry items for a pantry-only cart, nothing for an
+  // empty one. The hook owns both catalog queries (fetched only while the
+  // sheet is open — this component mounts on every page) and each card's
+  // cart write; the selection rules live in lib/upsell.ts. A failed fetch
+  // simply means no rail. Nothing here gates the money path.
+  const upsell = useCartUpsell(open, cart, setCart);
 
   // Where the rail sits under the order is measured, not assumed (see
   // useUpsellRailFit): 0 extra padding when it fits in view, else enough to
@@ -271,27 +261,14 @@ export function CartDrawer({
               <li data-ui-generation="stitch-74" data-screen-id="14.1" data-screen-state="cart-empty" className="py-6 text-center text-sm text-ink-muted">Cart is empty.</li>
             )}
           </ul>
-          {/* Real catalog items, same line shape as MarketplaceGrid's add —
-              ids/slugs/prices all resolve server-side (the rail used to add
-              invented items checkout could only dead-end on). The wrapper's
-              top padding is the rail's gap plus the measured spacer. */}
+          {/* Real catalog items, same line shapes as the menu card's and
+              MarketplaceGrid's adds — ids/slugs/prices all resolve
+              server-side (the rail used to add invented items checkout could
+              only dead-end on). The wrapper's top padding is the rail's gap
+              plus the measured spacer. */}
           {upsell.length > 0 && (
             <div ref={railRef} style={{ paddingTop: RAIL_GAP_PX + railSpacerPx }}>
-              <CartUpsellRail
-                items={upsell}
-                onAdd={(item: MarketplaceItem) => {
-                  setCart(
-                    addLine(cart, {
-                      dishId: item.id,
-                      kind: "marketplace",
-                      slug: item.slug,
-                      name: item.name,
-                      pricePaise: item.pricePaise,
-                    })
-                  );
-                  emitFunnel("add_to_cart", { dish_id: item.slug, price_paise: item.pricePaise, source: "cart_upsell" });
-                }}
-              />
+              <CartUpsellRail items={upsell} />
             </div>
           )}
           </div>
