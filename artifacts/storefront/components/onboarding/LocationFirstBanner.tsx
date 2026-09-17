@@ -113,7 +113,7 @@ export function LocationFirstBanner() {
   return (
     <section ref={sectionRef} aria-label="Where should we deliver?" className="mx-auto w-full max-w-screen-xl px-4 pt-4">
       <form onSubmit={submit} className="rounded-2xl border border-gold/40 bg-surface p-4">
-        <p className="font-display text-lg font-semibold leading-tight text-primary">Where should we deliver?</p>
+        <p className="font-display text-lg font-semibold leading-6 text-primary">Where should we deliver?</p>
         <p className="mt-1 text-xs text-ink-muted">
           Confirm your PIN code to see today&rsquo;s delivery windows before you pick a dish.
         </p>
