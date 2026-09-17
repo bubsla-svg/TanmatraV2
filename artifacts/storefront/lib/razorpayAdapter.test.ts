@@ -97,6 +97,8 @@ test("the modal is configured from the SERVER order, verbatim", () => {
   assert.equal(o.currency, ORDER.currency);
   assert.equal(o.order_id, ORDER.razorpayOrderId);
   assert.equal(o.config, RAZORPAY_DISPLAY_CONFIG);
+  assert.equal(o.remember_customer, true, "returning customers must see their saved instruments");
+  assert.deepEqual(o.retry, { enabled: true, max_count: 3 }, "a failed attempt must retry inside the sheet");
 });
 
 test("prefill carries what the checkout already knows — never re-ask for it", () => {
@@ -303,6 +305,8 @@ test("UPI is ordered first without hiding any other method", () => {
   const { display } = RAZORPAY_DISPLAY_CONFIG;
   assert.deepEqual(display.sequence, ["block.upi"]);
   assert.equal(display.blocks.upi.instruments[0].method, "upi");
+  // Collect is retired by Razorpay on 28 Feb 2026; intent + QR are what stay.
+  assert.deepEqual(display.blocks.upi.instruments[0].flows, ["intent", "qr"]);
 
   // The half that matters most. Without show_default_blocks the sequence
   // becomes an ALLOW-LIST and cards, netbanking and wallets vanish from

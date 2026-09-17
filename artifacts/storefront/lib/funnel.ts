@@ -40,6 +40,10 @@ export type FunnelEvent =
   // plan option is being considered and declined, or simply never seen — two
   // very different problems that look identical in a funnel without it.
   | "view_dish"
+  // The step between "viewed a dish" and "began checkout". Without it a
+  // cart that is built and abandoned is indistinguishable from a menu that
+  // was never acted on.
+  | "add_to_cart"
   | "plan_toggle"
   | "subscribe_cta_click"
   // ── Retention (plan item 2.2) ─────────────────────────────────────────────

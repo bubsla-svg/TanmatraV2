@@ -93,7 +93,9 @@ interface RazorpayCtor {
 export const RAZORPAY_DISPLAY_CONFIG = {
   display: {
     blocks: {
-      upi: { name: "Pay by UPI", instruments: [{ method: "upi" }] },
+      // Intent + QR only: Razorpay retires UPI Collect on 28 Feb 2026, and
+      // collect was the flow that stalled at "enter your VPA" on this sheet.
+      upi: { name: "Pay by UPI", instruments: [{ method: "upi", flows: ["intent", "qr"] }] },
     },
     sequence: ["block.upi"],
     preferences: { show_default_blocks: true },
@@ -137,6 +139,12 @@ export function buildRazorpayOptions(
     prefill: { contact: opts?.contact ?? "", email: opts?.email ?? "" },
     theme: { color: ACCENT_GOLD_LIGHT },
     send_sms_hash: true,
+    // A returning customer gets their saved card / VPA offered inside the
+    // sheet instead of re-typing it; tokens live with Razorpay, never here.
+    remember_customer: true,
+    // A failed attempt stays in the sheet with a retry instead of closing it
+    // and sending the customer back to the checkout page to start over.
+    retry: { enabled: true, max_count: 3 },
     // UPI first, every other method still present — see the constant.
     config: RAZORPAY_DISPLAY_CONFIG,
   } as const;

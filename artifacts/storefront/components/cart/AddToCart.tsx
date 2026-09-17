@@ -11,6 +11,7 @@ import { useCart } from "@/components/cart/CartProvider";
 import { ApiError } from "@/lib/apiClient";
 import { addItem } from "@/lib/groupOrdersApi";
 import { QuantityStepper } from "@/components/primitives/QuantityStepper";
+import { emitFunnel } from "@/lib/funnel";
 
 // `isAvailable` is optional here (unlike DishData, where it's required): most
 // call sites hand this component a full DishData and get it for free, but a
@@ -149,6 +150,7 @@ function CartAdd({ dish }: { dish: Dish }) {
           // unavailable dish — this is cartStore's own backstop (D-19),
           // never the primary gate.
           setCart(addLine(cart, line, { isAvailable: dish.isAvailable }));
+          emitFunnel("add_to_cart", { dish_id: dish.slug, price_paise: line.pricePaise });
         }}
         className="min-h-11 rounded-lg border border-gold bg-surface px-5 py-2 text-sm font-bold text-gold-text transition-transform active:scale-[0.98]"
       >
