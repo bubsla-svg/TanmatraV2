@@ -43,9 +43,4 @@ export class CartDrawer {
   get checkoutLink(): Locator {
     return this.root.getByRole("link", { name: "Checkout" });
   }
-
-  /** The fail-loud status that must appear when checkout is gated. */
-  get gatedStatus(): Locator {
-    return this.root.getByRole("status");
-  }
 }

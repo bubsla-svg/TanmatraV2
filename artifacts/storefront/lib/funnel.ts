@@ -17,12 +17,12 @@ export type FunnelEvent =
   | "cuj_checkout_start"
   // ── Money path (Phase 3.3 canonical names) ────────────────────────────────
   // The `cuj_*` set above measures the browse-and-choose half. The purchase
-  // half was measured by exactly one event, `cuj_paid`, emitted from
-  // CheckoutFlow's `pay()` AFTER its `if (LIVE_CHECKOUT_ENABLED) … return` —
-  // so it can only fire when live checkout is switched OFF. In production the
-  // storefront's only conversion event is unreachable, and the two paths that
-  // actually take money (AlacarteCheckout, PlanCheckout) emitted nothing at
-  // all. A funnel with no bottom cannot show where anyone drops out.
+  // half was measured by exactly one event, `cuj_paid`, emitted from the
+  // since-deleted flag-dark skeleton (CheckoutFlow) — so it could only fire
+  // when live checkout was switched OFF. In production the storefront's only
+  // conversion event was unreachable, and the two paths that actually take
+  // money (AlacarteCheckout, PlanCheckout) emitted nothing at all. A funnel
+  // with no bottom cannot show where anyone drops out.
   //
   // Amounts are named `_paise`, not the canonical list's `_cents`: this
   // product bills in INR and the whole codebase counts paise, so "cents" would

@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import { qtyOf, setQty, subtotalPaise } from "@/lib/cartStore";
 import { QuantityStepper } from "@/components/primitives/QuantityStepper";
 import { formatMacroLine, formatPaise } from "@/lib/format";
-import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
 import { fetchQuote, type QuoteSnapshot } from "@/lib/quoteApi";
 import { useCart } from "@/components/cart/CartProvider";
 import { Button } from "@/components/ui/button";
@@ -25,9 +24,9 @@ import { checkoutHref } from "@/lib/checkoutIntent";
 /**
  * Cart as a bottom sheet (§4.3). Line items with in-place steppers; the
  * subtotal is display-only (server owns the billed amount at order create).
- * The checkout CTA sits behind the named NEXT_PUBLIC_LIVE_CHECKOUT flag and
- * fails LOUD when dark (visible "not yet live" state, per the LIVE-CUTOVER
- * pattern) — never a dead button, never a silent advance.
+ * The checkout CTA is always the real link (live checkout stopped being a
+ * flag on 2026-09-17); the one state that replaces it is an unserviceable
+ * PIN, which says so — never a dead button, never a silent advance.
  */
 export function CartDrawer({
   open,
@@ -130,7 +129,7 @@ export function CartDrawer({
         We don&rsquo;t deliver to {serviceability.pincode}{" "}yet. Change your location in the header to check another PIN code.
       </p>
     );
-  } else if (LIVE_CHECKOUT_ENABLED) {
+  } else {
     footer = (
       <Button asChild shape="pill" size="fluid" className="block min-h-11 px-5 py-3 text-center font-semibold">
         {/* prefetch: the only link in the storefront where the next step is
@@ -154,12 +153,6 @@ export function CartDrawer({
           {navigating ? "Opening checkout…" : "Checkout"}
         </Link>
       </Button>
-    );
-  } else {
-    footer = (
-      <p role="status" className="rounded-2xl bg-secondary px-4 py-3 text-center text-xs text-ink-muted">
-        Checkout goes live with the payment slice — your cart is saved.
-      </p>
     );
   }
 

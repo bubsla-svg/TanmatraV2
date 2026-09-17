@@ -721,3 +721,54 @@ test("payment.failed emits payment_failed with Razorpay's own error code and rea
   await db.delete(funnelEventsTable).where(eq(funnelEventsTable.id, rows[0]!.id));
   await db.delete(ordersTable).where(eq(ordersTable.id, seeded!.id));
 });
+
+test("order.paid is a second capture signal: it promotes a placed order, and a later payment.captured is a no-op", async () => {
+  const externalOrderId = `ord_orderpaid_${randomUUID()}`;
+  const razorpayOrderId = `order_rzp_${randomUUID().slice(0, 8)}`;
+  const [seeded] = await db
+    .insert(ordersTable)
+    .values({
+      userId: null,
+      externalOrderId,
+      razorpayOrderId,
+      status: "placed",
+      totalPaise: 49900,
+      addressLabel: "Test",
+      addressLine: "1 Test Rd",
+      city: "Noida",
+      pincode: "201301",
+      phone: "9999999999",
+      items: [{ id: 1, name: "Test Dish", qty: 1, price: 49900 }],
+      fulfillmentType: "delivery",
+    })
+    .returning({ id: ordersTable.id });
+
+  const paidEvt = `evt_orderpaid_${randomUUID()}`;
+  const capEvt = `evt_captured_after_${randomUUID()}`;
+  CREATED_EVENT_IDS.push(paidEvt, capEvt);
+  const paid = await postWebhook(
+    {
+      event: "order.paid",
+      payload: {
+        order: { entity: { id: razorpayOrderId, amount: 49900, amount_paid: 49900, status: "paid" } },
+        payment: { entity: { id: "pay_op1", order_id: razorpayOrderId, amount: 49900, method: "upi" } },
+      },
+    },
+    paidEvt,
+  );
+  assert.equal(paid.status, 200);
+  const [afterPaid] = await db.select({ status: ordersTable.status, razorpayPaymentId: ordersTable.razorpayPaymentId }).from(ordersTable).where(eq(ordersTable.id, seeded!.id));
+  assert.equal(afterPaid!.status, "preparing");
+  assert.equal(afterPaid!.razorpayPaymentId, "pay_op1");
+
+  const cap = await postWebhook(
+    { event: "payment.captured", payload: { payment: { entity: { id: "pay_op1", order_id: razorpayOrderId, amount: 49900, method: "upi" } } } },
+    capEvt,
+  );
+  assert.equal(cap.status, 200);
+  const purchases = await funnelRowsFor(externalOrderId, "purchase");
+  assert.equal(purchases.length, 1, "two capture signals, one purchase");
+
+  for (const r of purchases) await db.delete(funnelEventsTable).where(eq(funnelEventsTable.id, r.id));
+  await db.delete(ordersTable).where(eq(ordersTable.id, seeded!.id));
+});

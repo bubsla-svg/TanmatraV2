@@ -8,14 +8,11 @@
  */
 export const MEALCARD_RAIL_ENABLED = process.env.NEXT_PUBLIC_MEALCARD_RAIL === "1";
 
-/**
- * Live checkout — routes the OTP / create / pay seams at the api-server instead
- * of the skeleton stubs. OFF by default: the live path needs the api-server
- * reachable (CORS + `SESSION_SAMESITE=none`), `FLAG_PLAN_V2=1`, the Firebase
- * phone-auth + Razorpay browser SDKs, and `RAZORPAY_*` secrets — none present in
- * a bare build. See docs/LIVE-CUTOVER.md.
- */
-export const LIVE_CHECKOUT_ENABLED = process.env.NEXT_PUBLIC_LIVE_CHECKOUT === "1";
+// Live checkout is no longer a flag (Housekeeping, CRO handoff 2026-09-17):
+// the storefront has taken real money through AlacarteCheckout / PlanCheckout
+// since the 2026-07-25 cutover, and the flag-dark skeleton (CheckoutFlow /
+// CheckoutPay) it used to fall back to is deleted. A build with no api-server
+// behind it still renders the real forms; only the network calls fail.
 
 /**
  * The /care "by condition" surface — the condition rail, the assessment entry

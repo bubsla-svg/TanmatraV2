@@ -102,13 +102,9 @@ test.describe("stitch-runtime: commerce (5.x)", () => {
     await expect(marker(page, "5.6", "cart-drawer-open")).toBeVisible();
     // Parent route is preserved while the overlay is open (not URL-driven).
     await expect(page).toHaveURL(/\/menu$/);
-    // Primary action "Checkout" is flag-dual (mirrors cuj-01): live link when
-    // built in, LOUD gated status otherwise â never a dead CTA.
-    if (process.env["E2E_LIVE_CHECKOUT"] === "1") {
-      await expect(cart.checkoutLink).toBeVisible();
-    } else {
-      await expect(cart.gatedStatus).toBeVisible();
-    }
+    // Primary action "Checkout" is the real link in every build (live
+    // checkout stopped being a flag on 2026-09-17) — never a dead CTA.
+    await expect(cart.checkoutLink).toBeVisible();
     // Close works (escape) and the parent route survives.
     await page.keyboard.press("Escape");
     await expect(cart.root).toBeHidden();

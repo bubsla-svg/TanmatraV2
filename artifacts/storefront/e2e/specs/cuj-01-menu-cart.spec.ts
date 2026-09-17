@@ -67,25 +67,15 @@ test("cart drawer shows lines + subtotal; dark checkout fails LOUD, never dead",
   await expect(cart.line(ORDERABLE_DISH.name)).toBeVisible();
   await expect(cart.subtotal).toBeVisible();
 
-  // Flag-dark contract (§0.3): a VISIBLE status explains checkout is gated —
-  // and no "Checkout" CTA exists to click into a void. When SF-05 lands and
-  // NEXT_PUBLIC_LIVE_CHECKOUT=1 is built in, this branch flips to asserting
-  // the live checkout leg instead.
-  if (process.env["E2E_LIVE_CHECKOUT"] === "1") {
-    await expect(cart.checkoutLink).toBeVisible();
-  } else {
-    await expect(cart.gatedStatus).toContainText(/checkout goes live/i);
-    await expect(cart.checkoutLink).toHaveCount(0);
-  }
+  // Live checkout is not a flag any more (Housekeeping 2026-09-17): the real
+  // Checkout link is the drawer's CTA in every build.
+  await expect(cart.checkoutLink).toBeVisible();
 });
 
-// The à-la-carte checkout leg (SF-05) only exists where the live flag is built
-// in — i.e. the deployed service, run with E2E_LIVE_CHECKOUT=1. In the flag-dark
-// PR-gate build the CTA is absent, so this leg is skipped rather than asserting
-// a surface that isn't there.
-const liveCheckout = process.env["E2E_LIVE_CHECKOUT"] === "1" ? test : test.skip;
-
-liveCheckout("cart → live à-la-carte checkout renders the guest details form", async ({ page }) => {
+// The à-la-carte checkout page renders its real form in every build (the
+// network calls behind it are what need the deployed api-server), so this leg
+// runs in the PR gate too. Stops before anything that needs a quote.
+test("cart → à-la-carte checkout renders the guest details form", async ({ page }) => {
   const menu = new MenuPage(page);
   const cart = new CartDrawer(page);
   await page.goto("/menu");
@@ -96,7 +86,7 @@ liveCheckout("cart → live à-la-carte checkout renders the guest details form"
   await expect(page).toHaveURL(/\/checkout\?mode=alacarte/);
   await expect(page.getByRole("heading", { name: "Checkout" })).toBeVisible();
   // The DPDP consent the server hard-requires (400 consent_required) is present.
-  await expect(page.getByText(/process my dietary and health details/i)).toBeVisible();
+  await expect(page.locator("label", { hasText: "DPDP Act 2023" })).toBeVisible();
   // The pay CTA exists; once the server quote lands it carries the SERVER's
   // amount ("Pay ₹…") — never a client sum. T-09: with the form empty it is
   // NOT a dead disabled button — a tap takes the customer to the first field

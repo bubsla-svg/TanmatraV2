@@ -7,11 +7,11 @@ import { marker, evidenceShot } from "./support";
  * 8.3, 14.6, 14.7). Same gating philosophy as cuj-02/cuj-04:
  *
  * 8.1  runs everywhere — /checkout?plan=… hosts the quote-active marker on
- *      every branch (live PlanCheckout, flag-dark CheckoutFlow), so the test
+ *      every branch, so the test
  *      accepts either surface's honest heading, exactly like cuj-06's .or().
  *
- * 14.6/14.7 need the LIVE PlanCheckout (NEXT_PUBLIC_LIVE_CHECKOUT=1 build +
- *      Firebase config shipped) — the same E2E_LIVE_CHECKOUT=1 targets cuj-02
+ * 14.6/14.7 need the LIVE PlanCheckout (plan checkout on + Firebase config
+ *      shipped) — the same E2E_LIVE_CHECKOUT=1 targets cuj-02
  *      runs against. There the seams are all BROWSER calls, so the network
  *      edge is stubbed with page.route (session probe /api/auth/user auto-
  *      passes the identity gate; quote/create/pay-order return fixtures;

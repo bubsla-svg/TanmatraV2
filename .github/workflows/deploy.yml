@@ -1143,8 +1143,6 @@ jobs:
                 - BUILDKIT_INLINE_CACHE=1
                 - --build-arg
                 - NEXT_PUBLIC_API_BASE=
-                - --build-arg
-                - NEXT_PUBLIC_LIVE_CHECKOUT=1
                 # First-party funnel sink (api-server routes/events.ts via the
                 # same-origin /api/* rewrite). Left unset, lib/funnel.ts drops
                 # every payment_opened/payment_failed beacon client-side — the

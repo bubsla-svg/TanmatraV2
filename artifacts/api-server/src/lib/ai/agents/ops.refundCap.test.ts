@@ -448,3 +448,66 @@ test("a successful refund still writes its ops-audit row", async () => {
   );
   assert.equal(mine.length, 1, "the refund must leave exactly one audit row");
 });
+
+// ---------------------------------------------------------------------------
+// Housekeeping (CRO handoff 2026-09-17): the tool now MOVES the money. With
+// gateway credentials present it calls Razorpay's refund endpoint through the
+// same helper the finance console uses, and the event it records carries the
+// gateway's refund id (what refund.processed matches on) and the order's prior
+// status (what refund.failed restores). Without credentials, outside
+// production, it records a mock intent — which is what every test above runs.
+// ---------------------------------------------------------------------------
+
+test("with gateway credentials the refund is issued at Razorpay and the ledger carries its id", async () => {
+  const orderId = await seedOrder({ totalPaise: SUBTOTAL, chargePaise: CHARGED });
+  await db.update(ordersTable).set({ razorpayPaymentId: "pay_ops_test_1" }).where(eq(ordersTable.id, orderId));
+
+  const calls: { url: string; body: Record<string, unknown>; idem: string | null }[] = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    const url = String(input);
+    const headers = new Headers(init?.headers);
+    calls.push({ url, body: JSON.parse(String(init?.body)), idem: headers.get("Idempotency-Key") });
+    return new Response(JSON.stringify({ id: "rfnd_ops_1", status: "pending" }), { status: 200 });
+  }) as typeof fetch;
+  const prevKey = process.env["RAZORPAY_KEY_ID"];
+  const prevSecret = process.env["RAZORPAY_KEY_SECRET"];
+  process.env["RAZORPAY_KEY_ID"] = "rzp_test_ops";
+  process.env["RAZORPAY_KEY_SECRET"] = "secret_ops";
+  try {
+    const out = await refund({ orderId, amountPaise: 10000, reason: "one dish spilled", reasoning: "rider confirmed spill", confirm: true });
+    assert.equal(out.success, true, `expected success, got: ${JSON.stringify(out)}`);
+    assert.equal(calls.length, 1, "exactly one gateway call");
+    assert.match(calls[0]!.url, /\/v1\/payments\/pay_ops_test_1\/refund$/);
+    assert.equal(calls[0]!.body.amount, 10000);
+    assert.ok(calls[0]!.idem, "the refund is idempotent at the gateway");
+    const events = await refundEventsFor(orderId);
+    assert.equal(events.length, 1);
+    const meta = events[0]!.meta as Record<string, unknown>;
+    assert.equal(meta.razorpayRefundId, "rfnd_ops_1");
+    assert.equal(meta.previousOrderStatus, "delivered");
+    assert.equal(meta.mock, undefined);
+  } finally {
+    globalThis.fetch = realFetch;
+    if (prevKey === undefined) delete process.env["RAZORPAY_KEY_ID"]; else process.env["RAZORPAY_KEY_ID"] = prevKey;
+    if (prevSecret === undefined) delete process.env["RAZORPAY_KEY_SECRET"]; else process.env["RAZORPAY_KEY_SECRET"] = prevSecret;
+  }
+});
+
+test("with gateway credentials but no captured payment, nothing is recorded and the console is named", async () => {
+  const orderId = await seedOrder({ totalPaise: SUBTOTAL, chargePaise: CHARGED });
+  const prevKey = process.env["RAZORPAY_KEY_ID"];
+  const prevSecret = process.env["RAZORPAY_KEY_SECRET"];
+  process.env["RAZORPAY_KEY_ID"] = "rzp_test_ops";
+  process.env["RAZORPAY_KEY_SECRET"] = "secret_ops";
+  try {
+    const out = await refund({ orderId, amountPaise: 10000, reason: "x", reasoning: "y", confirm: true });
+    assert.equal(out.success, false);
+    assert.match(String(out.error), /refunds console/i);
+    assert.equal(await statusOf(orderId), "delivered");
+    assert.deepEqual(await refundEventsFor(orderId), []);
+  } finally {
+    if (prevKey === undefined) delete process.env["RAZORPAY_KEY_ID"]; else process.env["RAZORPAY_KEY_ID"] = prevKey;
+    if (prevSecret === undefined) delete process.env["RAZORPAY_KEY_SECRET"]; else process.env["RAZORPAY_KEY_SECRET"] = prevSecret;
+  }
+});

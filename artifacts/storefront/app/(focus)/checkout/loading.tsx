@@ -3,12 +3,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StickyAction } from "@/components/primitives/StickyAction";
 
 /**
- * Checkout skeleton. All three branches page.tsx can render (à-la-carte,
- * live-plan builder, legacy CheckoutFlow) share the same outer shell — a
+ * Checkout skeleton. Every branch page.tsx can render (à-la-carte, plan,
+ * pantry, premium, consult) shares the same outer shell — a
  * FocusHeader (rendered for real: no data, and it's the one thing every
  * checkout leg is contractually required to carry) over a max-w-md, pb-52
- * column with a fixed pay bar at the bottom. This covers the shell all three
- * share; each flow's own real content replaces the body once it resolves.
+ * column with a fixed pay bar at the bottom. This covers the shared shell;
+ * each flow's own real content replaces the body once it resolves.
  */
 export default function CheckoutLoading() {
   return (

@@ -815,6 +815,8 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
         };
       };
       payment_link?: { entity?: { id?: string; reference_id?: string; amount?: number; amount_paid?: number; status?: string } };
+      /** order.paid carries the order beside the payment. */
+      order?: { entity?: { id?: string; amount?: number; amount_paid?: number; status?: string } };
       refund?: {
         entity?: {
           id?: string;
@@ -886,8 +888,15 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
   // Process business logic and update inbox status.
   let processError: Error | null = null;
   try {
-    if (eventType === "payment.captured") {
-      const razorpayOrderId = paymentEntity?.order_id ?? "";
+    if (eventType === "payment.captured" || eventType === "order.paid") {
+      // `order.paid` is the SECOND capture signal (Housekeeping, CRO handoff
+      // 2026-09-17): Razorpay fires it per order once a payment on it is
+      // captured, carrying both the order and the payment entity. Handled by
+      // the same guarded placed→preparing transition, so whichever of the two
+      // events lands first promotes the order and the other is a no-op — a
+      // dropped or delayed payment.captured no longer leaves a paid order
+      // sitting in the kitchen queue as "placed".
+      const razorpayOrderId = paymentEntity?.order_id ?? event.payload?.order?.entity?.id ?? "";
       const capturedAmount = paymentEntity?.amount;
       if (razorpayOrderId) {
         const rows = await db

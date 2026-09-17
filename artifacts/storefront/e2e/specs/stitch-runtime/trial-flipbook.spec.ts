@@ -46,11 +46,11 @@ import { evidenceShot } from "./support";
  * entire mobile project on every PR, so an ungated frame here would become a
  * blocking check — and two things make that wrong:
  *
- *  1. Most frames need the LIVE PlanCheckout. `NEXT_PUBLIC_LIVE_CHECKOUT` is
- *     inlined at BUILD time, and the PR-gate build is flag-dark, so
- *     `/checkout` renders CheckoutFlow instead — no PIN gate, no plan details,
- *     no pay CTA. Frames asserting those would fail for a reason that has
- *     nothing to do with the change under review.
+ *  1. Most frames need the LIVE PlanCheckout. `NEXT_PUBLIC_PLAN_CHECKOUT` is
+ *     inlined at BUILD time, and the PR-gate build has it off (T1), so
+ *     `/checkout?plan=` redirects to the plan landing — no PIN gate, no plan
+ *     details, no pay CTA. Frames asserting those would fail for a reason
+ *     that has nothing to do with the change under review.
  *  2. F06 is designed to FAIL while F-2 stands. A frame that reddens every
  *     unrelated PR is not evidence, it is a broken gate.
  *
