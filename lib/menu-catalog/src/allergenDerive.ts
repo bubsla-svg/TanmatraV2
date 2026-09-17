@@ -50,6 +50,7 @@ const ALLERGEN_RULES: ReadonlyArray<readonly [RegExp, readonly DerivedAllergen[]
   // are the load-bearing catch for the fried items the old data mislabelled [].
   [/\bbatter|\bbreaded|\bcrumbed|\bbread crumb|\bpanko/, ["Gluten"]],
   [/\b(wheat|atta|maida|semolina|suji|rava|barley|rye|bulgur|couscous|seitan)/, ["Gluten"]],
+  [/\b(all-purpose|all purpose|refined|plain|self-raising) flour/, ["Gluten"]],
   [/\b(bread|bun|pita|naan|roti|chapati|paratha|tortilla|wrap|pasta|spaghetti|penne|macaroni|noodle|vermicelli|nacho|crouton)/, ["Gluten"]],
   // Soy sauce carries BOTH soy and (fermented-wheat) gluten.
   [/\bsoy sauce|\bsoya sauce|\bteriyaki|\bhoisin/, ["Soy", "Gluten"]],
@@ -81,6 +82,8 @@ const ALLERGEN_RULES: ReadonlyArray<readonly [RegExp, readonly DerivedAllergen[]
   [/\b(prawn|shrimp|crab|lobster|shellfish|squid|calamari)/, ["Shellfish"]],
   // Mustard (an EU/India-labelled allergen; seeds and oil).
   [/\bmustard/, ["Mustard"]],
+  // Vinaigrette is conventionally emulsified with mustard; over-warning is safe.
+  [/\bvinaigrette/, ["Mustard"]],
 ];
 
 /**
@@ -99,9 +102,9 @@ const SAFE_PATTERNS: ReadonlyArray<RegExp> = [
   // Naturally gluten-free grains, seeds & legumes
   /\b(rice|quinoa|amaranth|buckwheat|millet|barnyard|jowar|bajra|ragi|poha|oat|chia|flax|sunflower seed|pumpkin seed|chickpea|lentil|dal|daal|moong|rajma|kidney bean|black bean|besan|gram flour)/,
   // Proteins that are not themselves top allergens
-  /\b(chicken|turkey)/,
+  /\b(chicken|turkey|mutton|lamb|bacon|ham\b|sausage|salami)/,
   // Oils, fats, sweeteners, leavening, seasonings, liquids, sealed beverages
-  /\b(olive oil|coconut oil|sunflower oil|rice bran oil|oil|salt|pepper|chill?i flake|paprika|cumin|jeera|turmeric|haldi|garam masala|masala|spice|cinnamon|cardamom|clove|bay leaf|oregano|thyme|rosemary|nutmeg|cocoa|cacao|baking powder|baking soda|yeast|charcoal|activated charcoal|honey|jaggery|sugar|stevia|vinegar|water|ice|veg stock|vegetable stock|cornstarch|corn starch|corn flour|arrowroot|tomato puree|tomato paste|passata|lemon juice|lime juice|coke|cola|pepsi|thums up|sprite|fanta|soda)/,
+  /\b(olive oil|coconut oil|sunflower oil|rice bran oil|oil|salt|pepper|chill?i flake|paprika|cumin|jeera|turmeric|haldi|garam masala|masala|spice|cinnamon|cardamom|clove|bay leaf|oregano|thyme|rosemary|nutmeg|cocoa|cacao|baking powder|baking soda|yeast|charcoal|activated charcoal|honey|jaggery|sugar|stevia|maple syrup|sugar syrup|vinegar|water|ice|hash brown|hot sauce|salsa|peri peri sauce|veg stock|vegetable stock|cornstarch|corn starch|corn flour|arrowroot|tomato puree|tomato paste|passata|lemon juice|lime juice|coke|cola|pepsi|thums up|sprite|fanta|soda)/,
 ];
 
 function classifyIngredient(

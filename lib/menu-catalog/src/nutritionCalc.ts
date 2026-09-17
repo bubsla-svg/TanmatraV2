@@ -320,18 +320,28 @@ const ZERO: DishMacros = {
   sugarG: 0,
 };
 
-/** Look an ingredient up in the table (exact, then loose substring match). */
+/** " veg stock / water " — padded, punctuation-free word list for whole-word tests. */
+function words(s: string): string {
+  return ` ${s.replace(/[^a-z0-9]+/gi, " ").trim().toLowerCase()} `;
+}
+
+/**
+ * Look an ingredient up in the table: exact key first, otherwise the LONGEST
+ * key that is a whole-word subset of the ingredient or vice versa. Raw
+ * substring matching is not allowed — it resolved "ice" to "bread slices",
+ * "mixed veggies" to "egg" and "chicken stock" to "chicken".
+ */
 export function lookup(name: string, table: NutritionTable): NutritionPer100g | null {
   if (table[name]) return table[name]!;
-  // loose: a table key that is a whole-word subset of the ingredient, or v.v.
-  const keys = Object.keys(table);
-  for (const k of keys) {
-    if (name === k) return table[k]!;
+  const n = words(name);
+  let best: string | null = null;
+  for (const k of Object.keys(table)) {
+    const kw = words(k);
+    if (n.includes(kw) || kw.includes(n)) {
+      if (best === null || k.length > best.length) best = k;
+    }
   }
-  for (const k of keys) {
-    if (name.includes(k) || k.includes(name)) return table[k]!;
-  }
-  return null;
+  return best === null ? null : table[best]!;
 }
 
 /**
