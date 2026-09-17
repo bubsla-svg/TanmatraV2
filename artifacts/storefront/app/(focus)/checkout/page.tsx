@@ -79,7 +79,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
   if (intent?.mode === "premium" || intent?.mode === "consult" || intent?.mode === "marketplace") {
     return (
       <div data-ui-generation="stitch-74" data-screen-id="8.1" data-screen-state="quote-active" className="min-h-dvh">
-        <section className="mx-auto max-w-md px-4 pt-6 pb-44">
+        <section className="mx-auto max-w-md px-4 pt-6 pb-52">
           <FocusHeader title="Checkout" backLabel="Back" trustSignal="Secure UPI checkout" />
           {intent.mode === "premium" && <PremiumPurchase />}
           {intent.mode === "consult" && <ConsultPurchase appointmentId={intent.appointmentId} />}
@@ -101,7 +101,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
         data-screen-id="8.1" data-screen-state="quote-active"
         className="min-h-dvh"
       >
-        <section className="mx-auto max-w-md px-4 pt-6 pb-44">
+        <section className="mx-auto max-w-md px-4 pt-6 pb-52">
           <FocusHeader title="Checkout" backLabel="Back to cart" trustSignal="Secure UPI checkout" />
           <AlacarteCheckout />
         </section>
@@ -195,7 +195,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
         );
     return (
       <div data-ui-generation="stitch-74" data-screen-id="8.1" data-screen-state="quote-active" className="min-h-dvh">
-        <section className="mx-auto max-w-md px-4 pt-10 pb-44">
+        <section className="mx-auto max-w-md px-4 pt-10 pb-52">
           {/* D-16: the à-la-carte checkout's own "Back to cart" pattern —
               FocusHeader's goBack() is real history navigation (router.back()),
               not a fresh push, so returning lands on the SAME /plan/[planId]
@@ -272,7 +272,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
       data-screen-id="8.1" data-screen-state="quote-active"
       className="min-h-dvh"
     >
-      <section className="mx-auto max-w-md px-4 pt-10 pb-44">
+      <section className="mx-auto max-w-md px-4 pt-10 pb-52">
         <CheckoutFlow
           planId={id}
           planSummary={`${d.name} · ${q.mealsPerCycle} lunches${applyBump ? " · + dietitian" : ""}`}

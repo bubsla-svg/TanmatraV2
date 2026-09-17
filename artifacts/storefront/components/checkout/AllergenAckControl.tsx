@@ -39,10 +39,12 @@ export function AllergenAckControl({
         className="mt-0.5 size-6 shrink-0 cursor-pointer accent-[var(--gold)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]"
       />
       <span>
+        {/* T6: under 15 words before the dish names — the safety fact, then
+            the acknowledgement, nothing else. */}
         <span className="font-medium text-ink">
-          This order has {flagged.allergens.length > 0 ? flagged.allergens.join(", ") : "declared contraindications"}
+          Contains {flagged.allergens.length > 0 ? flagged.allergens.join(", ") : "declared contraindications"}
         </span>{" "}
-        in {flagged.dishes.map((d) => d.name).join(", ")}. I&rsquo;ve reviewed the allergen information for this order.
+        ({flagged.dishes.map((d) => d.name).join(", ")}). I&rsquo;ve reviewed the allergen information.
         {touched && !checked && (
           <span id="allergen-ack-error" role="alert" className="mt-1 block text-xs font-medium text-danger">
             Please confirm you&rsquo;ve reviewed the allergen information for this order.

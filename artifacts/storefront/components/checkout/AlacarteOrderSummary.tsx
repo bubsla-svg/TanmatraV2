@@ -10,11 +10,12 @@ import { QuoteBreakdown } from "./QuoteBreakdown";
 import { QuantityStepper } from "@/components/primitives/QuantityStepper";
 
 /**
- * The order summary as a DISCLOSURE at the top of the form (T-09). It used to
- * be a fully open card that pushed the first form field ~900px below the fold
- * on a phone; the sticky bar already carries the total, so the card's job is
- * to be one tap away, not to be read first. Every figure inside is the
- * server quote's or the line's own price — nothing is summed here.
+ * The order summary as a DISCLOSURE at the top of the form (T-09), OPEN by
+ * default (T6, CRO handoff 2026-09-17): a buyer who cannot see what they are
+ * paying for hesitates at the pay bar, and the old closed default hid the
+ * lines and the priced breakdown behind a tap most never made. It is still a
+ * disclosure — one tap folds it away — and every figure inside is the server
+ * quote's or the line's own price; nothing is summed here.
  */
 export function AlacarteOrderSummary({
   cart,
@@ -37,7 +38,7 @@ export function AlacarteOrderSummary({
     quoteState === "active" && quote ? formatPaise(quote.payableNowPaise) : `${formatPaise(subtotalPaise(cart))} est.`;
 
   return (
-    <details className="group rounded-2xl border border-line bg-surface" data-testid="alc-order-summary">
+    <details open className="group rounded-2xl border border-line bg-surface" data-testid="alc-order-summary">
       <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 [&::-webkit-details-marker]:hidden">
         <span className="font-display text-lg font-semibold leading-tight text-primary">
           <span className="tabular">{count}</span> {count === 1 ? "item" : "items"}{" "}

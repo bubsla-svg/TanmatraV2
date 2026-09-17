@@ -5,6 +5,7 @@ import { Card } from "@astryxdesign/core/Card";
 import { Field } from "@astryxdesign/core/Field";
 import { Button } from "@/components/ui/button";
 import { emitFunnel } from "@/lib/funnel";
+import { requestSmsOtp } from "@/lib/webOtp";
 import { firebaseConfigured, friendlyFirebaseError } from "@/lib/firebase";
 import { sendPhoneOtp, toE164, type PhoneVerification } from "@/lib/phoneAuth";
 import { getAuthUser, verifyOtp, ApiError, type AuthUser } from "@/lib/api";
@@ -168,8 +169,34 @@ export function PhoneAuth({
     }
   }, [phone]);
 
-  async function verify() {
-    if (!isCodeValid(code)) {
+  // T6: the SMS goes out the moment a valid number is committed — the field
+  // blurring is that commitment on a phone keyboard ("Next"/"Done"). Only
+  // the FIRST send is automatic; a re-send stays a deliberate tap, because
+  // an automatic one on every blur would burn the Firebase quota.
+  function sendOnBlur() {
+    if (busy || lastSentAt !== null || !isPhoneValid(phone)) return;
+    void send();
+  }
+
+  const verifyRef = useRef<(submitted?: string) => Promise<void>>(async () => {});
+  // T6: WebOTP — on Android Chrome the code is read from the SMS into the
+  // input and verified without a tap. Best-effort by construction
+  // (lib/webOtp.ts): everywhere else the input is simply typed into. The
+  // request is aborted when the code stage is left, so a late SMS cannot
+  // fill a field that no longer exists.
+  useEffect(() => {
+    if (stage !== "code") return;
+    const ctrl = new AbortController();
+    void requestSmsOtp(navigator, window, ctrl.signal).then((otp) => {
+      if (!otp || ctrl.signal.aborted) return;
+      setCode(otp);
+      if (isCodeValid(otp)) void verifyRef.current(otp);
+    });
+    return () => ctrl.abort();
+  }, [stage]);
+
+  async function verify(submitted: string = code) {
+    if (!isCodeValid(submitted)) {
       setError(OTP_MESSAGES.invalidCode);
       return;
     }
@@ -183,7 +210,7 @@ export function PhoneAuth({
     setNotice(null);
     setBusy(true);
     try {
-      const idToken = await verification.current.confirm(code);
+      const idToken = await verification.current.confirm(submitted);
       const res = await verifyOtp({ idToken });
       // The "phone" step of scan → pincode → phone → paid, and the only place
       // in the app where an OTP is actually accepted. Emitted HERE rather than
@@ -208,6 +235,8 @@ export function PhoneAuth({
       setBusy(false);
     }
   }
+
+  verifyRef.current = verify;
 
   if (!firebaseConfigured()) return null;
   // Already authenticated (or still probing): never show a sign-in wall.
@@ -244,7 +273,7 @@ export function PhoneAuth({
           <Field label="Mobile number" inputID="pa-phone">
             <input
               id="pa-phone" type="tel" inputMode="tel" autoComplete="tel" value={phone}
-              onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" className={inputCls}
+              onChange={(e) => setPhone(e.target.value)} onBlur={sendOnBlur} placeholder="98765 43210" className={inputCls}
             />
           </Field>
           <Button

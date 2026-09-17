@@ -48,10 +48,10 @@ test("à-la-carte checkout line shows kcal/protein macros for the added dish", a
   await page.goto("/checkout?mode=alacarte"); // direct nav — no live-checkout flag needed
   await expect(page.getByRole("heading", { name: "Checkout" })).toBeVisible();
 
-  // T-09: the order summary is a disclosure above the form (closed by default
-  // so the phone field sits in the first screen). The line rows — and the
-  // macros they carry — are one tap away, which is what this opens.
-  await page.getByTestId("alc-order-summary").locator("summary").click();
+  // T-09 / T6: the order summary is a disclosure above the form, OPEN by
+  // default — the line rows, and the macros they carry, are on screen without
+  // a tap.
+  await expect(page.getByTestId("alc-order-summary")).toHaveAttribute("open", "");
 
   const checkoutLine = page.getByText(ORDERABLE_DISH.name).locator("..");
   await expect(checkoutLine.getByText(/kcal/)).toBeVisible();

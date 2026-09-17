@@ -6,7 +6,7 @@ import { StickyAction } from "@/components/primitives/StickyAction";
  * Checkout skeleton. All three branches page.tsx can render (à-la-carte,
  * live-plan builder, legacy CheckoutFlow) share the same outer shell — a
  * FocusHeader (rendered for real: no data, and it's the one thing every
- * checkout leg is contractually required to carry) over a max-w-md, pb-44
+ * checkout leg is contractually required to carry) over a max-w-md, pb-52
  * column with a fixed pay bar at the bottom. This covers the shell all three
  * share; each flow's own real content replaces the body once it resolves.
  */
@@ -16,7 +16,7 @@ export default function CheckoutLoading() {
       <p role="status" className="sr-only">
         Loading checkout…
       </p>
-      <section className="mx-auto max-w-md px-4 pt-6 pb-44">
+      <section className="mx-auto max-w-md px-4 pt-6 pb-52">
         {/* No trustSignal: this skeleton shields the PLAN identity stage too
             (N5.10 — "Secure UPI checkout" over an OTP field misdescribes the
             moment), and a skeleton can't know which branch it's covering.

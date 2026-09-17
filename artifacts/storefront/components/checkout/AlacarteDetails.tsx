@@ -7,7 +7,6 @@ import type { DishData } from "@workspace/menu-catalog";
 import { Field } from "@astryxdesign/core/Field";
 import { formatPaise } from "@/lib/format";
 import { subtotalPaise, type CartState } from "@/lib/cartStore";
-import { DPDP_CONSENT_COPY, DPDP_SCOPE_NOTE } from "@/lib/consent";
 import { useCheckoutSteps } from "./useCheckoutSteps";
 import { apiGet } from "@/lib/apiClient";
 import { flagCartAllergens } from "@/lib/allergenAck";
@@ -19,6 +18,7 @@ import type { QuoteSnapshot } from "@/lib/quoteApi";
 import type { QuoteUiState } from "./AlacarteCheckout";
 import { ADDRESS_DRAFT_KEY } from "./AlacarteCheckout";
 import { AllergenAckControl } from "./AllergenAckControl";
+import { ConsentControl } from "./ConsentControl";
 import { AlacarteOrderSummary } from "./AlacarteOrderSummary";
 import { AlacartePayBar } from "./AlacartePayBar";
 import { DeliverySlotPicker } from "./DeliverySlotPicker";
@@ -336,23 +336,10 @@ export function AlacarteDetails({
         </p>
       )}
 
-      {/* Consent block — T-10: a 48px row where the whole label toggles and
-          the box is 24px. DPDP first; the allergen ack beside it when the
-          cart needs one. */}
+      {/* Consent block — T-10 row sizing; T6 one line + disclosure (ConsentControl).
+          DPDP first; the allergen ack beside it when the cart needs one. */}
       <div className="flex flex-col gap-3">
-        <label className="flex min-h-12 w-full cursor-pointer items-start gap-3 rounded-2xl border border-line bg-surface p-3 text-sm text-ink-muted">
-          <input
-            ref={consentRef}
-            type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)}
-            aria-invalid={attempted && !consent} aria-describedby={attempted && !consent ? "alc-consent-err" : undefined}
-            className="mt-0.5 size-6 shrink-0 cursor-pointer accent-[var(--gold)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]"
-          />
-          <span>
-            {DPDP_CONSENT_COPY}
-            <span className="mt-1 block text-xs text-ink-faint">{DPDP_SCOPE_NOTE}</span>
-            {attempted && !consent && <span id="alc-consent-err" role="alert" className={errCls}>Tick this to continue — we can&rsquo;t cook without it.</span>}
-          </span>
-        </label>
+        <ConsentControl checked={consent} onCheckedChange={setConsent} invalid={attempted && !consent} inputRef={consentRef} errorClassName={errCls} />
 
         {allergenAckRequired && (
           <AllergenAckControl

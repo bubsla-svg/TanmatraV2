@@ -323,10 +323,48 @@ export function CartDrawer({
                 Free delivery unlocked
               </p>
             )}
-            <div aria-live="polite" aria-atomic="true" className="mb-3 flex items-center justify-between gap-3 text-sm">
-              <span className="text-sm text-ink-muted">Subtotal (before delivery &amp; GST)</span>
-              <span className="font-data text-lg font-bold text-primary">{formatPaise(subtotalPaise(cart))}</span>
-            </div>
+            {/* T6 — the cart's total IS checkout's total. Every figure below
+                is the server quote's (the same POST /orders/quote checkout
+                prices from), so the number a customer carries into checkout
+                is the one they see there. Without a quote the display-only
+                subtotal stays, labelled for what it is. */}
+            {quote ? (
+              <dl aria-live="polite" aria-atomic="true" className="mb-3 flex flex-col gap-1 text-sm" data-testid="cart-ledger">
+                <div className="flex justify-between gap-3">
+                  <dt className="text-ink-muted">Item subtotal</dt>
+                  <dd className="font-data text-ink">{formatPaise(quote.subtotalPaise)}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-ink-muted">Delivery</dt>
+                  <dd className="font-data text-ink">{quote.deliveryFeePaise === 0 ? "Free" : formatPaise(quote.deliveryFeePaise)}</dd>
+                </div>
+                {quote.packagingPaise > 0 && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-ink-muted">Packaging</dt>
+                    <dd className="font-data text-ink">{formatPaise(quote.packagingPaise)}</dd>
+                  </div>
+                )}
+                {quote.discountPaise > 0 && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-ink-muted">Discount</dt>
+                    <dd className="font-data text-ink">−{formatPaise(quote.discountPaise)}</dd>
+                  </div>
+                )}
+                <div className="flex justify-between gap-3">
+                  <dt className="text-ink-muted">GST</dt>
+                  <dd className="font-data text-ink">{formatPaise(quote.taxPaise)}</dd>
+                </div>
+                <div className="mt-1 flex items-center justify-between gap-3 border-t border-line pt-2">
+                  <dt className="font-display text-base font-semibold text-primary">Total to pay</dt>
+                  <dd className="font-data text-lg font-bold text-primary">{formatPaise(quote.payableNowPaise)}</dd>
+                </div>
+              </dl>
+            ) : (
+              <div aria-live="polite" aria-atomic="true" className="mb-3 flex items-center justify-between gap-3 text-sm">
+                <span className="text-sm text-ink-muted">Subtotal (before delivery &amp; GST)</span>
+                <span className="font-data text-lg font-bold text-primary">{formatPaise(subtotalPaise(cart))}</span>
+              </div>
+            )}
             {footer}
           </div>
         </div>
