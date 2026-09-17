@@ -134,10 +134,7 @@ jobs:
             ./src/lib/billingCadence.test.ts \
             ./src/lib/errorReportIntake.test.ts \
             ./src/lib/orderClaim.test.ts \
-            ./src/lib/eventForwarders.test.ts \
-            ./src/lib/purchaseEvents.test.ts \
-            ./src/routes/checkout.attribution.test.ts \
-            ./src/lib/abandonmentRecovery.test.ts
+            ./src/lib/eventForwarders.test.ts
       # The web half of the money-path lockstep rule, for the legacy SPA that is
       # still the app on tanmatra.food. It had no wired test script, so CI ran
       # these nowhere; they are driven through the api-server tsx loader.
@@ -449,6 +446,8 @@ jobs:
           DATABASE_URL: postgres://dummy:dummy@127.0.0.1:1/dummy
         run: |
           node --test --import tsx \
+            ./src/lib/purchaseEvents.test.ts \
+            ./src/routes/checkout.attribution.test.ts \
             ./src/lib/bridgeCredit.test.ts \
             ./src/lib/checkoutSafety.test.ts \
             ./src/lib/purchaseIngest.test.ts \
@@ -756,6 +755,7 @@ jobs:
           ./src/lib/chargeMandateScheduler.test.ts
           ./src/lib/preDebitScheduler.test.ts
           ./src/lib/subscriptionAbandonmentScheduler.test.ts
+          ./src/lib/abandonmentRecovery.test.ts
           ./src/lib/trialLifecycleScheduler.test.ts
 
       - name: Dispatch SLA and priority (serialized)
