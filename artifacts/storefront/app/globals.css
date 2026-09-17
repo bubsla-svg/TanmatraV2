@@ -361,8 +361,12 @@ textarea:focus-visible,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    /* .stagger-* keeps 70–280ms delays; with fill-mode both that left
+       rise-in content invisible for the delay, then popping. */
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
     scroll-behavior: auto !important;
   }
 }

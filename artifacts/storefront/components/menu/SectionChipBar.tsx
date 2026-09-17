@@ -96,7 +96,12 @@ export function SectionChipBar({
   useEffect(() => {
     railRef.current
       ?.querySelector<HTMLElement>(`[data-anchor="${active}"]`)
-      ?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+      ?.scrollIntoView({
+        inline: "center",
+        block: "nearest",
+        // A JS behavior overrides the CSS scroll-behavior reduced-motion rule.
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      });
   }, [active]);
 
   function jump(id: string) {

@@ -116,7 +116,10 @@ export default async function StartPage({
             the rest of the product, not a back button that loops. */}
         <p className="text-center text-xs text-ink-muted">
           Not ready?{" "}
-          <Link href="/menu" className="font-medium text-primary underline underline-offset-4 hover:text-ink">
+          <Link
+            href="/menu"
+            className="inline-flex min-h-11 items-center px-2 font-medium text-primary underline underline-offset-4 hover:text-ink"
+          >
             Just order one lunch
           </Link>
         </p>

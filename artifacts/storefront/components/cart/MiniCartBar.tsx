@@ -20,7 +20,9 @@ import { StickyAction } from "@/components/primitives/StickyAction";
 // static import here would ship all of that in the baseline JS for every
 // route, since MiniCartBar is mounted globally in app/layout.tsx — most
 // visits never open the drawer. Loaded on demand instead.
-const CART_BAR_HIDDEN_ROUTES = ["/plans", "/plan", "/trial", "/account"];
+// /meal-planner has its own sticky "Accept & schedule" footer in the same
+// bottom-16 band; the cart bar (z-30) painted over it and took its taps.
+const CART_BAR_HIDDEN_ROUTES = ["/plans", "/plan", "/trial", "/account", "/meal-planner"];
 
 const CartDrawer = dynamic(
   () => import("@/components/cart/CartDrawer").then((m) => m.CartDrawer),

@@ -4,6 +4,13 @@ import { fetchMenu } from "@/lib/catalog";
 import { CustomBuildHub } from "@/components/custom/CustomBuildHub";
 import { FocusHeader } from "@/components/FocusHeader";
 
+// Rendered from the live catalog on every request. Prerendered at build time
+// this page baked in the static fallback (API unreachable inside the image
+// build) and served stale prices and dead image paths in production —
+// "Activated Charcoal Smoothie ₹69 /images/dishes/charcoal-smoothie.jpg"
+// while the API said ₹50. Prices on a page that adds to cart must be live.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Order Customization & Macro Build Hub",
   description: "Pick a dish, adjust its real customisation options — bread, sauce, portion size and more where available — and add it to your order.",
