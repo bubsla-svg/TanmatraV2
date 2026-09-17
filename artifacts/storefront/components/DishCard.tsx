@@ -109,7 +109,12 @@ export function DishCard({
   const vegClass = resolveVegClass(dish);
   const pad = compact ? "p-4" : "p-5";
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-transform active:scale-[0.99]">
+    // `isolate`: the veg badge and the price/Add row carry z-10 to sit above
+    // the photo, and 10 is also --z-chrome. Without a stacking context on the
+    // card, that z-10 competes with the sticky section-chip strip in document
+    // order and the Add button paints over the chips as the card scrolls under
+    // them. Isolating keeps the card's z-10 internal to the card.
+    <article className="group isolate flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-transform active:scale-[0.99]">
       <Link href={`/menu?dish=${dish.slug}`} scroll={false} className="flex flex-1 flex-col">
         <div className="relative">
           {/* Fixed aspect from the revision (1.12) — a slow image never

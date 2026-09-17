@@ -92,7 +92,7 @@ const SHARE_IMAGE = {
   url: "/brand/storefront.jpg",
   width: 1213,
   height: 682,
-  alt: "The Tanmatra shopfront, wordmark lit above an open door",
+  alt: "The Tanmatra café shopfront at Sector 104, Noida — signboard above the green door",
 };
 
 export const metadata: Metadata = {

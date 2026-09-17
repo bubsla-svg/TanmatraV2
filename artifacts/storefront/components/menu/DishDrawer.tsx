@@ -88,12 +88,25 @@ export function DishDrawer({ dish }: { dish: DishData }) {
           <DishRationale dishId={dish.id} />
 
           <dl className="mt-4 grid grid-cols-4 gap-2">
-            {macros.map(([label, value]) => (
-              <div key={label} className="rounded-2xl bg-secondary p-2.5 text-center">
-                <dd className="font-display text-lg font-semibold text-primary">{value}</dd>
+            {macros.map(([label, value]) => {
+              // Four tiles share 393px, so each value has ~66px. "460 kcal"
+              // in the display face does not fit that; "≈1060 kcal" is
+              // wider still. The formatter's NBSP marks where the unit
+              // starts, so the number keeps the display size and the unit
+              // drops to a small trailing span instead of clipping.
+              const nbsp = value.indexOf("\u00a0");
+              const num = nbsp === -1 ? value : value.slice(0, nbsp);
+              const unit = nbsp === -1 ? null : value.slice(nbsp + 1);
+              return (
+              <div key={label} className="min-w-0 rounded-2xl bg-secondary p-2.5 text-center">
+                <dd className="font-display text-lg font-semibold leading-tight text-primary">
+                  {num}
+                  {unit && <span className="ml-0.5 text-[11px] font-sans font-semibold text-ink-muted">{unit}</span>}
+                </dd>
                 <dt className="mt-0.5 text-[10px] font-bold uppercase tracking-[.14em] text-ink-muted">{label}</dt>
               </div>
-            ))}
+              );
+            })}
           </dl>
 
           <DishSpec dish={dish} />
