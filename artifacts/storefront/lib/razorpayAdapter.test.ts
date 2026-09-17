@@ -364,3 +364,13 @@ test("a payment.failed emitted by the sheet reaches onPaymentFailed with Razorpa
   }
   assert.deepEqual(failures, [{ code: "BAD_REQUEST_ERROR", reason: "payment_failed", step: "payment_authorization" }]);
 });
+
+test("T10: the Magic Checkout arm adds one_click_checkout with coupons off; control adds nothing", () => {
+  const magic = buildRazorpayOptions(ORDER, { magicCheckout: true }) as Record<string, unknown>;
+  assert.equal(magic.one_click_checkout, true);
+  assert.equal(magic.show_coupons, false);
+  assert.equal(magic.order_id, ORDER.razorpayOrderId, "the server order still drives the sheet");
+  const control = buildRazorpayOptions(ORDER, { magicCheckout: false }) as Record<string, unknown>;
+  assert.equal("one_click_checkout" in control, false);
+  assert.equal("one_click_checkout" in (buildRazorpayOptions(ORDER) as Record<string, unknown>), false);
+});

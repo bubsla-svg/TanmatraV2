@@ -95,6 +95,10 @@ const createRazorpayOrderSchema = z.object({
   receipt: z.string().max(64).optional(),
   orderId: z.string().min(1).max(64),
   subscriptionId: z.number().int().positive().optional(),
+  // T10: the storefront's Magic Checkout arm. Adds `line_items_total` (the
+  // SAME server amount — Magic Checkout refuses an order without it) and a
+  // note naming the arm; changes nothing about what is billed.
+  magic: z.boolean().optional(),
 });
 
 const verifyPaymentSchema = z.object({
@@ -276,7 +280,7 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
     return;
   }
 
-  const { amountPaise: clientAmount, orderId, subscriptionId } = parsed.data;
+  const { amountPaise: clientAmount, orderId, subscriptionId, magic } = parsed.data;
 
   // The gateway order MUST be created for the amount the server computed and
   // stored on the order, never a client-supplied number. Resolve it first.
@@ -386,6 +390,11 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
 
   if (razorpayCustomerId) {
     rpOrderPayload.customer_id = razorpayCustomerId;
+  }
+
+  if (magic && !subscriptionId) {
+    rpOrderPayload.line_items_total = authoritativePaise;
+    rpOrderPayload.notes = { ...(rpOrderPayload.notes ?? {}), experiment: "magic_checkout:treatment" };
   }
 
   if (isRecurring && razorpayCustomerId) {

@@ -53,3 +53,15 @@ export const RD_SERVICES_ENABLED = process.env.NEXT_PUBLIC_RD_SERVICES === "1";
  * Turning plans back on is this env flip; nothing is deleted.
  */
 export const PLAN_CHECKOUT_ENABLED = process.env.NEXT_PUBLIC_PLAN_CHECKOUT === "1";
+
+/**
+ * Magic Checkout 50/50 pilot on à-la-carte (T10, CRO handoff 2026-09-17).
+ * With the flag on, half of sessions (sticky per session — lib/experiments)
+ * open Razorpay's sheet with `one_click_checkout` and the gateway order
+ * carries `line_items_total`; the other half get the standard sheet. Every
+ * checkout funnel event carries `magic_checkout: control|treatment`, and the
+ * server `purchase` event joins on the funnel session id. OFF by default:
+ * Magic Checkout must be enabled on the Razorpay account first, or the
+ * treatment arm silently gets the standard sheet and the test reads null.
+ */
+export const MAGIC_CHECKOUT_PILOT_ENABLED = process.env.NEXT_PUBLIC_MAGIC_CHECKOUT_PILOT === "1";

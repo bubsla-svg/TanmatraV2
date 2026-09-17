@@ -129,6 +129,11 @@ export interface RazorpayAdapterOpts {
    *  Carries Razorpay's own error code / reason, so `payment_failed` groups
    *  by the gateway's cause rather than "dismissed". */
   onPaymentFailed?: (failure: { code: string; reason: string; step?: string; source?: string }) => void;
+  /** T10 pilot arm: open Razorpay Magic Checkout (`one_click_checkout`)
+   *  instead of the standard sheet. Coupons stay off — the server owns every
+   *  discount. The gateway order must carry `line_items_total` (api-server
+   *  adds it when the order-create call says `magic: true`). */
+  magicCheckout?: boolean;
 }
 
 /**
@@ -169,6 +174,7 @@ export function buildRazorpayOptions(
     retry: { enabled: true, max_count: 3 },
     // UPI first, every other method still present — see the constant.
     config: RAZORPAY_DISPLAY_CONFIG,
+    ...(opts?.magicCheckout ? { one_click_checkout: true, show_coupons: false } : {}),
   } as const;
 }
 
