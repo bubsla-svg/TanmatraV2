@@ -91,7 +91,13 @@ export function MiniCartBar() {
         // pill returns null on an empty cart, so without this the reserve was
         // permanently sized for the worst case — see the rule for the numbers.
         data-minicart-present
-        className={`pointer-events-none bottom-16 z-[var(--z-bar)] px-3 text-ink transition-transform duration-200 motion-reduce:transition-none md:bottom-0 md:px-4 md:pb-[max(env(safe-area-inset-bottom),1rem)] ${
+        // `invisible` while the drawer is open: the drawer's own Checkout is
+        // the one gold action then, and this pill sat behind the overlay
+        // still counting as a second one (one-gold.spec caught it once the
+        // drawer's Checkout stopped being flag-gated). visibility keeps the
+        // layout reserve (`data-minicart-present`) so nothing shifts under
+        // the sheet; the pill simply is not there to a reader or a probe.
+        className={`pointer-events-none bottom-16 z-[var(--z-bar)] px-3 text-ink transition-transform duration-200 motion-reduce:transition-none md:bottom-0 md:px-4 md:pb-[max(env(safe-area-inset-bottom),1rem)] ${cartOpen ? "invisible" : ""} ${
           navRetreated
             ? "translate-y-14 pb-[max(env(safe-area-inset-bottom),0.375rem)] md:translate-y-0"
             : "translate-y-0 pb-1.5"
