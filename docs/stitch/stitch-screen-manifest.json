@@ -2240,7 +2240,7 @@
     },
     "implementationComponent": "artifacts/storefront/components/checkout/plan/PlanCheckout.tsx",
     "routeEntryPoint": "artifacts/storefront/app/(focus)/checkout/page.tsx",
-    "controllerComponent": "artifacts/storefront/components/checkout/CheckoutFlow.tsx",
+    "controllerComponent": "artifacts/storefront/components/checkout/plan/PlanCheckout.tsx",
     "trigger": {
       "type": "button",
       "accessibleName": "Checkout",

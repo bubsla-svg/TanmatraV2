@@ -274,8 +274,12 @@ export function CartDrawer({
               <CartUpsellRail items={upsell} />
             </div>
           )}
-          </div>
-          <div className="mt-3 border-t border-line pt-3">
+          {/* The fee / quote notices live in the SCROLL region, not the pinned
+              footer: the failed-quote notice lands ~350 ms + one round trip
+              after the sheet opens, and in the footer it pushed the Checkout
+              link down under a thumb already on its way (cuj-01b flaked on
+              exactly that in CI). Here it can appear without moving the CTA. */}
+          <div className="mt-3">
             {/* N5.2 — the fee is disclosed HERE, while quantities are still
                 being decided, not sprung on the pay screen. Every number is
                 the server quote's; the progress-bar width is the only derived
@@ -316,6 +320,9 @@ export function CartDrawer({
                 Free delivery unlocked
               </p>
             )}
+          </div>
+          </div>
+          <div className="mt-3 border-t border-line pt-3">
             {/* T6 — the cart's total IS checkout's total. Every figure below
                 is the server quote's (the same POST /orders/quote checkout
                 prices from), so the number a customer carries into checkout

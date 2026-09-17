@@ -143,10 +143,13 @@ function LocalLedger({ dish }: { dish: Dish }) {
             type="button"
             shape="pill"
             size="fluid"
-            className="min-h-11 flex-1 px-6 py-3 font-semibold"
+            // min-w-0 + truncate: at 390px the stepper, the price column and a
+            // long label overflowed the bar sideways (the count is redundant
+            // with the stepper beside it, so it is dropped rather than clipped).
+            className="min-h-11 min-w-0 flex-1 truncate px-5 py-3 font-semibold"
             onClick={() => setDrawerOpen(true)}
           >
-            View cart · {count} {count === 1 ? "item" : "items"} · {formatPaise(subtotalPaise(cart))}
+            View cart · {formatPaise(subtotalPaise(cart))}
           </Button>
         )}
       </div>
