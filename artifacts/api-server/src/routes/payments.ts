@@ -16,6 +16,7 @@ import { z } from "zod/v4";
 import { sendOrderConfirmation } from "../lib/orderNotification";
 import { emitServerEvent } from "../lib/serverEvents";
 import { emitPurchase, emitPaymentFailed } from "../lib/purchaseEvents";
+import { createUpiPaymentLink, PaymentLinkError, type PaymentLink } from "../lib/paymentLinks";
 import { commitSubsidyForOrder, releaseSubsidyForOrder } from "../lib/corporateSubsidy";
 import { pushOrderToPetpooja } from "../lib/petpoojaClient";
 import { runPreDebitNotificationsSweep } from "../lib/preDebitScheduler";
@@ -674,47 +675,24 @@ router.post("/payments/upi/intent", async (req: Request, res: Response) => {
     );
   }
 
-  const rpRes = await fetch("https://api.razorpay.com/v1/payment_links", {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${razorpayBasicAuth(keyId, keySecret)}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      amount: authoritativePaise,
-      currency: "INR",
-      description: "Tanmatra Order",
-      reference_id: orderId,
-      customer: { contact: phone },
-      options: { checkout: { method: { upi: 1 } } },
-      expire_by: Math.floor(Date.now() / 1000) + 1800,
-    }),
-    signal: AbortSignal.timeout(8000),
-  });
-
-  if (!rpRes.ok) {
-    let body: unknown;
-    try {
-      body = await rpRes.json();
-    } catch {
-      body = await rpRes.text();
-    }
-    req.log.error({ status: rpRes.status, body }, "Razorpay payment link creation failed");
+  let link: PaymentLink;
+  try {
+    link = await createUpiPaymentLink(
+      { externalOrderId: orderId, amountPaise: authoritativePaise, phone, expireInSec: 1800 },
+      { credentials: [keyId, keySecret] },
+    );
+  } catch (err) {
+    const e = err instanceof PaymentLinkError ? err : null;
+    req.log.error({ status: e?.status ?? null, body: e?.body ?? String(err) }, "Razorpay payment link creation failed");
     res.status(502).json({ error: "payment gateway error" });
     return;
   }
 
-  const link = (await rpRes.json()) as {
-    id: string;
-    short_url: string;
-    expire_by: number;
-  };
-
   res.json({
     intentId: link.id,
-    paymentUrl: link.short_url,
+    paymentUrl: link.shortUrl,
     status: "pending",
-    expiresAt: new Date(link.expire_by * 1000).toISOString(),
+    expiresAt: link.expiresAt.toISOString(),
   });
 });
 
@@ -933,10 +911,15 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
           // cancelled/failed order or downgrade a later state. Capture the
           // payment id (used to issue refunds).
           const razorpayPaymentId = paymentEntity?.id ?? null;
+          // `failed` is payable HERE and only here (T9): the recovery sweep
+          // sends a payment link for an order whose sheet attempt failed, so
+          // a link capture on a failed order is that customer coming back,
+          // not a stray capture. The sheet's own verify path stays
+          // placed-only; a cancelled order stays unpayable everywhere.
           const updated = await db
             .update(ordersTable)
             .set({ status: "preparing", ...(razorpayPaymentId ? { razorpayPaymentId } : {}) })
-            .where(and(eq(ordersTable.id, order.id), eq(ordersTable.status, "placed")))
+            .where(and(eq(ordersTable.id, order.id), inArray(ordersTable.status, ["placed", "failed"])))
             .returning({ id: ordersTable.id });
           // Capture confirmed: the customer paid an amount already net of the
           // company's share, so commit that share. Idempotent, and outside the
@@ -1032,10 +1015,15 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
             { referenceId, capturedAmount, expected, path: "payment_link" }, req.log);
         } else if (order) {
           const razorpayPaymentId = paymentEntity?.id ?? null;
+          // `failed` is payable HERE and only here (T9): the recovery sweep
+          // sends a payment link for an order whose sheet attempt failed, so
+          // a link capture on a failed order is that customer coming back,
+          // not a stray capture. The sheet's own verify path stays
+          // placed-only; a cancelled order stays unpayable everywhere.
           const updated = await db
             .update(ordersTable)
             .set({ status: "preparing", ...(razorpayPaymentId ? { razorpayPaymentId } : {}) })
-            .where(and(eq(ordersTable.id, order.id), eq(ordersTable.status, "placed")))
+            .where(and(eq(ordersTable.id, order.id), inArray(ordersTable.status, ["placed", "failed"])))
             .returning({ id: ordersTable.id });
           // Capture confirmed: the customer paid an amount already net of the
           // company's share, so commit that share. Idempotent, and outside the
@@ -1075,10 +1063,10 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
                 req.log.error({ err, orderId: order.id }, "webhook: failed to push order to Petpooja");
               });
             }
-          } else if (order.status === "cancelled" || order.status === "failed") {
+          } else if (order.status === "cancelled") {
             req.log.error(
               { referenceId, orderId: order.id, status: order.status },
-              "webhook: payment link capture arrived for a cancelled/failed order — needs refund review",
+              "webhook: payment link capture arrived for a cancelled order — needs refund review",
             );
             await recordCaptureIntegrityHalt(order.id, "order_not_payable",
               { referenceId, orderStatus: order.status, capturedAmount, path: "payment_link" }, req.log);

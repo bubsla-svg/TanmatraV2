@@ -23,6 +23,7 @@ import {
   stopSubscriptionAbandonmentScheduler,
 } from "./lib/subscriptionAbandonmentScheduler";
 import { startReconciliationScheduler, stopReconciliationScheduler } from "./lib/reconciliationScheduler";
+import { startAbandonmentRecoveryScheduler, stopAbandonmentRecoveryScheduler } from "./lib/abandonmentRecovery";
 import {
   startPlanDraftMaintenanceScheduler,
   stopPlanDraftMaintenanceScheduler,
@@ -83,6 +84,11 @@ if (!schedulersDisabled) {
   startTrialLifecycleScheduler();
   startChargeMandateScheduler();
   startSubscriptionAbandonmentScheduler();
+  // T9: WhatsApp payment link for a dismissed/failed sheet, and the 60-min
+  // cart nudge for known customers. Inside the gate: it mints payment links
+  // (money-adjacent) and messages customers. ABANDONMENT_RECOVERY_DISABLED=1
+  // is its own kill switch.
+  startAbandonmentRecoveryScheduler();
   // Ages out generation leases whose worker died mid-build (the one stranding
   // case in-process release cannot cover) and collects abandoned guest drafts.
   startPlanDraftMaintenanceScheduler();

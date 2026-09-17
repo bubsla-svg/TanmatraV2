@@ -136,7 +136,8 @@ jobs:
             ./src/lib/orderClaim.test.ts \
             ./src/lib/eventForwarders.test.ts \
             ./src/lib/purchaseEvents.test.ts \
-            ./src/routes/checkout.attribution.test.ts
+            ./src/routes/checkout.attribution.test.ts \
+            ./src/lib/abandonmentRecovery.test.ts
       # The web half of the money-path lockstep rule, for the legacy SPA that is
       # still the app on tanmatra.food. It had no wired test script, so CI ran
       # these nowhere; they are driven through the api-server tsx loader.
