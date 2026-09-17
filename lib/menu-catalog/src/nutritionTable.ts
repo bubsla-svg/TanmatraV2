@@ -213,4 +213,36 @@ export const NUTRITION_TABLE: NutritionTable = {
   "spices": { kcal: 300, proteinG: 12, carbsG: 50, fatG: 10, fiberG: 25, sodiumMg: 50, sugarG: 3 }, // low-confidence estimate; negligible at gram doses
   "garam masala & spices": { kcal: 300, proteinG: 12, carbsG: 50, fatG: 10, fiberG: 25, sodiumMg: 50, sugarG: 3 }, // low-confidence estimate
   "tandoori spice blend": { kcal: 300, proteinG: 12, carbsG: 50, fatG: 10, fiberG: 25, sodiumMg: 2000, sugarG: 3 }, // low-confidence estimate
+  // Added 2026-09-17 for the Sep-2026 café menu additions (burgers, carbonara,
+  // rosé pasta, quick bites, desserts, coolers). USDA FDC / IFCT 2017 unless marked.
+  "burger bun": { kcal: 280, proteinG: 9, carbsG: 50, fatG: 4, fiberG: 2, sodiumMg: 450, sugarG: 6 },
+  "chicken patty": { kcal: 200, proteinG: 24, carbsG: 2, fatG: 11, fiberG: 0, sodiumMg: 350, sugarG: 0 }, // low-confidence estimate (grilled minced-chicken patty)
+  "mutton patty": { kcal: 258, proteinG: 25, carbsG: 0, fatG: 17, fiberG: 0, sodiumMg: 80, sugarG: 0 },
+  "chicken bacon": { kcal: 240, proteinG: 20, carbsG: 2, fatG: 17, fiberG: 0, sodiumMg: 1200, sugarG: 1 },
+  "chicken ham": { kcal: 120, proteinG: 18, carbsG: 2, fatG: 4, fiberG: 0, sodiumMg: 1100, sugarG: 1 },
+  "chicken sausage": { kcal: 200, proteinG: 14, carbsG: 4, fatG: 15, fiberG: 0, sodiumMg: 800, sugarG: 1 },
+  "hash brown": { kcal: 265, proteinG: 3, carbsG: 30, fatG: 15, fiberG: 2, sodiumMg: 400, sugarG: 0 },
+  "all-purpose flour": { kcal: 364, proteinG: 10, carbsG: 76, fatG: 1, fiberG: 2.7, sodiumMg: 2, sugarG: 0.3 },
+  "maple syrup": { kcal: 260, proteinG: 0, carbsG: 67, fatG: 0, fiberG: 0, sodiumMg: 12, sugarG: 60 },
+  "goat cheese": { kcal: 364, proteinG: 22, carbsG: 0, fatG: 30, fiberG: 0, sodiumMg: 515, sugarG: 0 },
+  "sweet potato": { kcal: 90, proteinG: 2, carbsG: 21, fatG: 0.2, fiberG: 3.3, sodiumMg: 36, sugarG: 6.5 },
+  "dried cranberries": { kcal: 308, proteinG: 0.2, carbsG: 82, fatG: 1.1, fiberG: 5.3, sodiumMg: 5, sugarG: 65 },
+  "sweet corn": { kcal: 96, proteinG: 3.4, carbsG: 21, fatG: 1.5, fiberG: 2.4, sodiumMg: 15, sugarG: 4.5 },
+  "mozzarella": { kcal: 280, proteinG: 28, carbsG: 3, fatG: 17, fiberG: 0, sodiumMg: 627, sugarG: 1 },
+  "chicken wings": { kcal: 290, proteinG: 27, carbsG: 0, fatG: 20, fiberG: 0, sodiumMg: 90, sugarG: 0 },
+  "hot sauce": { kcal: 15, proteinG: 1, carbsG: 2, fatG: 0.5, fiberG: 0, sodiumMg: 2600, sugarG: 1 },
+  "breadcrumbs": { kcal: 395, proteinG: 13, carbsG: 72, fatG: 5, fiberG: 4, sodiumMg: 700, sugarG: 6 },
+  "pineapple": { kcal: 50, proteinG: 0.5, carbsG: 13, fatG: 0.1, fiberG: 1.4, sodiumMg: 1, sugarG: 10 },
+  "kiwi": { kcal: 61, proteinG: 1.1, carbsG: 15, fatG: 0.5, fiberG: 3, sodiumMg: 3, sugarG: 9 },
+  "guava": { kcal: 68, proteinG: 2.6, carbsG: 14, fatG: 1, fiberG: 5.4, sodiumMg: 2, sugarG: 9 },
+  "mango": { kcal: 60, proteinG: 0.8, carbsG: 15, fatG: 0.4, fiberG: 1.6, sodiumMg: 1, sugarG: 14 },
+  "sugar syrup": { kcal: 260, proteinG: 0, carbsG: 65, fatG: 0, fiberG: 0, sodiumMg: 5, sugarG: 65 },
+  "walnuts": { kcal: 654, proteinG: 15, carbsG: 14, fatG: 65, fiberG: 7, sodiumMg: 2, sugarG: 2.6 },
+  "pumpkin": { kcal: 26, proteinG: 1, carbsG: 6.5, fatG: 0.1, fiberG: 0.5, sodiumMg: 1, sugarG: 2.8 },
+  "mixed greens": { kcal: 20, proteinG: 1.8, carbsG: 3.5, fatG: 0.3, fiberG: 2, sodiumMg: 25, sugarG: 1 },
+  "baked beans": { kcal: 94, proteinG: 5, carbsG: 19, fatG: 0.5, fiberG: 5, sodiumMg: 400, sugarG: 6 },
+  "vinaigrette": { kcal: 450, proteinG: 0, carbsG: 5, fatG: 48, fiberG: 0, sodiumMg: 600, sugarG: 3 },
+  "mushroom sauce": { kcal: 110, proteinG: 2, carbsG: 6, fatG: 9, fiberG: 0.5, sodiumMg: 400, sugarG: 2 }, // low-confidence estimate
+  "egg yolk": { kcal: 322, proteinG: 16, carbsG: 3.6, fatG: 27, fiberG: 0, sodiumMg: 48, sugarG: 0.6 },
+  "hollandaise": { kcal: 540, proteinG: 4, carbsG: 2, fatG: 58, fiberG: 0, sodiumMg: 600, sugarG: 0 },
 };
