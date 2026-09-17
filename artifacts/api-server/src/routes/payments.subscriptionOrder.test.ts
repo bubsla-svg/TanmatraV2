@@ -617,15 +617,17 @@ test("quarterly cadence never mints a recurring token even with a correctly-owne
   assert.equal(orderRes.status, 200, JSON.stringify(orderRes.json));
   const razorpayOrderId = orderRes.json.razorpayOrderId as string;
 
+  // The one-off saved-instrument path (T0) still attaches the payer's own
+  // customer_id; what quarterly must never get is the recurring token block.
   assert.equal(
     rzpCustomerCalls.length,
-    customerCallsBefore,
-    "quarterly cadence must never create a Razorpay customer or recurring mandate",
+    customerCallsBefore + 1,
+    "quarterly cadence creates only the payer's own customer (one-off path), never a recurring mandate",
   );
   const rzpCall = rzpOrderCalls.find((c) => c.id === razorpayOrderId);
   assert.ok(rzpCall);
-  assert.equal(rzpCall!.body.customer_id, undefined);
-  assert.equal(rzpCall!.body.token, undefined);
+  assert.match(String(rzpCall!.body.customer_id), /^cust_test_/);
+  assert.equal(rzpCall!.body.token, undefined, "quarterly must never request a recurring token");
 });
 
 // ---------------------------------------------------------------------------
@@ -657,15 +659,17 @@ test("a live trial (weekly cadence) never mints a recurring token, and verify wr
   assert.equal(orderRes.status, 200, JSON.stringify(orderRes.json));
   const razorpayOrderId = orderRes.json.razorpayOrderId as string;
 
+  // As above: the payer's own customer_id rides the one-off path; a live
+  // trial must never get the recurring token block, despite its weekly cadence.
   assert.equal(
     rzpCustomerCalls.length,
-    customerCallsBefore,
-    "a live trial must never create a Razorpay customer, despite its weekly cadence",
+    customerCallsBefore + 1,
+    "a live trial creates only the payer's own customer (one-off path), never a recurring mandate",
   );
   const rzpCall = rzpOrderCalls.find((c) => c.id === razorpayOrderId);
   assert.ok(rzpCall);
-  assert.equal(rzpCall!.body.customer_id, undefined);
-  assert.equal(rzpCall!.body.token, undefined);
+  assert.match(String(rzpCall!.body.customer_id), /^cust_test_/);
+  assert.equal(rzpCall!.body.token, undefined, "a live trial must never request a recurring token");
 
   // paymentId intentionally left unregistered in paymentToOrder — a genuine
   // non-recurring capture from Razorpay carries no customer_id/token_id
@@ -712,17 +716,22 @@ test("subscriptionId belonging to ANOTHER user is refused — no customer/token 
   assert.equal(orderRes.status, 200, JSON.stringify(orderRes.json));
   const razorpayOrderId = orderRes.json.razorpayOrderId as string;
 
+  // Exactly ONE customer is created — the attacker's own, for the one-off
+  // saved-instrument path (T0) — never one sourced from the victim's
+  // subscription. The recurring block is what the tamper was after, and it
+  // must be absent.
   assert.equal(
     rzpCustomerCalls.length,
-    customerCallsBefore,
-    "no Razorpay customer may be created off a subscriptionId the caller does not own",
+    customerCallsBefore + 1,
+    "only the caller's own Razorpay customer may be created; none off a subscriptionId they do not own",
   );
+  assert.equal(rzpCustomerCalls.at(-1)!.body.name, "attacker Tester");
   const rzpCall = rzpOrderCalls.find((c) => c.id === razorpayOrderId);
   assert.ok(rzpCall);
-  assert.equal(
-    rzpCall!.body.customer_id,
-    undefined,
-    "order must not carry a customer_id sourced from someone else's subscription",
+  assert.match(
+    String(rzpCall!.body.customer_id),
+    /^cust_test_/,
+    "order carries the attacker's OWN customer_id (one-off saved-instrument path), nothing from the victim",
   );
   assert.equal(
     rzpCall!.body.token,
@@ -755,4 +764,59 @@ test("subscriptionId belonging to ANOTHER user is refused — no customer/token 
     "paused",
     "victim's subscription status must be completely untouched",
   );
+});
+
+// ---------------------------------------------------------------------------
+// T0 (CRO handoff 2026-09-17): one-off orders carry a customer_id for a
+// logged-in user so the sheet can offer their saved instruments — and never a
+// recurring token. Guest orders carry neither.
+// ---------------------------------------------------------------------------
+test("a logged-in one-off order carries the user's Razorpay customer_id but NO recurring token", async () => {
+  const user = await makeUser("oneoff");
+  const externalOrderId = `TAN-ONEOFF-${RUN}`;
+  await seedOrder({ externalOrderId, userId: user.id, chargePaise: 24900 });
+
+  const customerCallsBefore = rzpCustomerCalls.length;
+  const orderRes = await api("POST", "/payments/razorpay/order", { orderId: externalOrderId }, user);
+  assert.equal(orderRes.status, 200, JSON.stringify(orderRes.json));
+  const razorpayOrderId = orderRes.json.razorpayOrderId as string;
+
+  assert.equal(rzpCustomerCalls.length, customerCallsBefore + 1, "one customer created for the paying user");
+  assert.equal(rzpCustomerCalls.at(-1)!.body.name, "oneoff Tester");
+  const rzpCall = rzpOrderCalls.find((c) => c.id === razorpayOrderId);
+  assert.ok(rzpCall);
+  assert.match(String(rzpCall!.body.customer_id), /^cust_test_/);
+  assert.equal(rzpCall!.body.token, undefined, "a one-off order must never request a recurring token");
+  assert.equal(rzpCall!.body.amount, 24900, "amount is still the server's");
+
+  // verify() on this order must not write a mandate: the payment carries no
+  // token_id (the mock mirrors real Razorpay there).
+  const paymentId = `pay_${razorpayOrderId}`;
+  paymentToOrder.set(paymentId, razorpayOrderId);
+  const verifyRes = await postVerify({
+    orderId: externalOrderId,
+    razorpayPaymentId: paymentId,
+    razorpayOrderId,
+    razorpaySignature: verifySignature(razorpayOrderId, paymentId),
+  });
+  assert.equal(verifyRes.status, 200, JSON.stringify(verifyRes.json));
+  assert.equal(verifyRes.json.autopayDisclaimer, undefined);
+});
+
+test("a guest one-off order carries neither customer_id nor token, and creates no Razorpay customer", async () => {
+  const externalOrderId = `TAN-GUEST-${RUN}`;
+  const [row] = await db
+    .insert(ordersTable)
+    .values({ userId: null, externalOrderId, status: "placed", chargePaise: 19900, totalPaise: 19900, items: [] })
+    .returning({ id: ordersTable.id });
+  CREATED_ORDER_IDS.push(row!.id);
+
+  const customerCallsBefore = rzpCustomerCalls.length;
+  const orderRes = await api("POST", "/payments/razorpay/order", { orderId: externalOrderId });
+  assert.equal(orderRes.status, 200, JSON.stringify(orderRes.json));
+  const rzpCall = rzpOrderCalls.find((c) => c.id === orderRes.json.razorpayOrderId);
+  assert.ok(rzpCall);
+  assert.equal(rzpCustomerCalls.length, customerCallsBefore, "no Razorpay customer for a guest");
+  assert.equal(rzpCall!.body.customer_id, undefined);
+  assert.equal(rzpCall!.body.token, undefined);
 });

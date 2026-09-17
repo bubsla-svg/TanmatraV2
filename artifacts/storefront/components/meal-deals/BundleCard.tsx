@@ -11,6 +11,7 @@ import { useCart } from "@/components/cart/CartProvider";
 import { SafeImage } from "@/components/ui/SafeImage";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
+import { emitFunnel } from "@/lib/funnel";
 
 /**
  * The combo card `/meal-deals` was missing. The page used to render a solid
@@ -57,6 +58,11 @@ export function BundleCard({ bundle }: { bundle: MealBundle }) {
       );
     }
     setCart(next);
+    // One event per constituent line, same shape as every other add site, so
+    // a bundle add is not invisible in the funnel and not a phantom SKU.
+    for (const dish of bundle.dishes) {
+      emitFunnel("add_to_cart", { dish_id: dish.slug, price_paise: dish.price, source: "bundle" });
+    }
     setAdded(true);
     // Land the customer where the added lines are visible and editable —
     // the same cart drawer every other add flows into.

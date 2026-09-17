@@ -4,6 +4,7 @@ import { useCart } from "@/components/cart/CartProvider";
 import { addLine, qtyOf, setQty } from "@/lib/cartStore";
 import type { MarketplaceItem } from "@/lib/marketplaceApi";
 import { QuantityStepper } from "@/components/primitives/QuantityStepper";
+import { emitFunnel } from "@/lib/funnel";
 
 export function MarketplaceAddToCart({
   item,
@@ -38,6 +39,7 @@ export function MarketplaceAddToCart({
         onClick={(e) => {
           e.stopPropagation();
           setCart(addLine(cart, line));
+          emitFunnel("add_to_cart", { dish_id: item.slug, price_paise: item.pricePaise, source: "marketplace" });
         }}
         className={
           variant === "card"

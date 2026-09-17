@@ -361,6 +361,20 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
     }
   }
 
+  // T0 (CRO handoff 2026-09-17): a logged-in customer paying a ONE-OFF order
+  // also gets a Razorpay customer_id on the gateway order. Together with the
+  // sheet's `remember_customer`, that is what lets a returning customer see
+  // their saved card / VPA instead of re-typing it. No `token` block is sent
+  // here, so no mandate is ever minted off this path. Best-effort: a failed
+  // customer lookup must never block taking the money.
+  if (!razorpayCustomerId && order.userId) {
+    try {
+      razorpayCustomerId = await getOrCreateRazorpayCustomer(order.userId, keyId, keySecret, req.log);
+    } catch (err) {
+      req.log.warn({ err, orderId }, "Razorpay customer lookup failed for one-off order — proceeding without customer_id");
+    }
+  }
+
   const rpOrderPayload: Record<string, any> = {
     amount: authoritativePaise,
     currency: "INR",
@@ -368,8 +382,11 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
     payment_capture: 1,
   };
 
-  if (isRecurring && razorpayCustomerId) {
+  if (razorpayCustomerId) {
     rpOrderPayload.customer_id = razorpayCustomerId;
+  }
+
+  if (isRecurring && razorpayCustomerId) {
     rpOrderPayload.token = {
       auth_type: "otp",
       max_amount: MANDATE_MAX_AMOUNT_PAISE,

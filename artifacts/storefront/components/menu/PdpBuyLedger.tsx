@@ -10,6 +10,7 @@ import { addLine, itemCount, qtyOf, setQty, subtotalPaise } from "@/lib/cartStor
 import { QuantityStepper } from "@/components/primitives/QuantityStepper";
 import { useCart } from "@/components/cart/CartProvider";
 import { AddToCart } from "@/components/cart/AddToCart";
+import { emitFunnel } from "@/lib/funnel";
 
 // Same on-demand load as MiniCartBar's host: the drawer pulls in Vaul, and
 // most PDP visits never open it.
@@ -127,6 +128,7 @@ function LocalLedger({ dish }: { dish: Dish }) {
                   { isAvailable: dish.isAvailable },
                 ),
               );
+              emitFunnel("add_to_cart", { dish_id: dish.slug, price_paise: dish.price, source: "pdp" });
               setDrawerOpen(true);
             }}
           >

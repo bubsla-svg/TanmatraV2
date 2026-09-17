@@ -21,6 +21,7 @@ import { RAIL_GAP_PX, useUpsellRailFit } from "./useUpsellRailFit";
 import { listItems, type MarketplaceItem } from "@/lib/marketplaceApi";
 import { selectUpsellItems } from "@/lib/upsell";
 import { checkoutHref } from "@/lib/checkoutIntent";
+import { emitFunnel } from "@/lib/funnel";
 
 /**
  * Cart as a bottom sheet (§4.3). Line items with in-place steppers; the
@@ -267,6 +268,7 @@ export function CartDrawer({
                       pricePaise: item.pricePaise,
                     })
                   );
+                  emitFunnel("add_to_cart", { dish_id: item.slug, price_paise: item.pricePaise, source: "cart_upsell" });
                 }}
               />
             </div>
