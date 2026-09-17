@@ -187,4 +187,30 @@ export const NUTRITION_TABLE: NutritionTable = {
   "yogurt": { kcal: 60, proteinG: 3.1, carbsG: 4.7, fatG: 4, fiberG: 0, sodiumMg: 45, sugarG: 4.7 },
   "yogurt dressing": { kcal: 100, proteinG: 3, carbsG: 6, fatG: 7, fiberG: 0, sodiumMg: 300, sugarG: 4 }, // low-confidence estimate
   "zucchini, bell peppers, broccoli": { kcal: 28, proteinG: 2, carbsG: 5, fatG: 0.3, fiberG: 2, sodiumMg: 15, sugarG: 2.5 }, // low-confidence estimate
+  // Added 2026-09-17: tokens that previously fell through to a wrong loose match
+  // (ice → bread, mixed veggies → egg, chicken stock → chicken, buckwheat → oats)
+  // or were unmatched. USDA FDC / IFCT 2017 unless marked.
+  "ice": { kcal: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0, sodiumMg: 0, sugarG: 0 },
+  "mixed veggies": { kcal: 38, proteinG: 2, carbsG: 7.5, fatG: 0.3, fiberG: 3, sodiumMg: 40, sugarG: 3.5 }, // low-confidence estimate
+  "chicken stock": { kcal: 4, proteinG: 0.5, carbsG: 0.4, fatG: 0.1, fiberG: 0, sodiumMg: 340, sugarG: 0.2 },
+  "vegetable stock": { kcal: 6, proteinG: 0.3, carbsG: 1, fatG: 0.1, fiberG: 0, sodiumMg: 300, sugarG: 0.5 }, // low-confidence estimate
+  "buckwheat groats": { kcal: 343, proteinG: 13.3, carbsG: 71.5, fatG: 3.4, fiberG: 10, sodiumMg: 1, sugarG: 0 },
+  "whole wheat bread": { kcal: 247, proteinG: 13, carbsG: 41, fatG: 3.4, fiberG: 6, sodiumMg: 450, sugarG: 4.3 },
+  "mixed berries": { kcal: 50, proteinG: 0.9, carbsG: 12, fatG: 0.3, fiberG: 3.5, sodiumMg: 1, sugarG: 7.5 },
+  "bell pepper": { kcal: 26, proteinG: 1, carbsG: 6, fatG: 0.3, fiberG: 2.1, sodiumMg: 4, sugarG: 4.2 },
+  "cauliflower": { kcal: 25, proteinG: 1.9, carbsG: 5, fatG: 0.3, fiberG: 2, sodiumMg: 30, sugarG: 1.9 },
+  "edamame": { kcal: 121, proteinG: 11.9, carbsG: 8.9, fatG: 5.2, fiberG: 5.2, sodiumMg: 6, sugarG: 2.2 },
+  "kale": { kcal: 49, proteinG: 4.3, carbsG: 8.8, fatG: 0.9, fiberG: 3.6, sodiumMg: 38, sugarG: 2.3 },
+  "purple cabbage": { kcal: 31, proteinG: 1.4, carbsG: 7.4, fatG: 0.2, fiberG: 2.1, sodiumMg: 27, sugarG: 3.8 },
+  "tempeh": { kcal: 192, proteinG: 20.3, carbsG: 7.6, fatG: 10.8, fiberG: 6, sodiumMg: 9, sugarG: 0 },
+  "radish": { kcal: 16, proteinG: 0.7, carbsG: 3.4, fatG: 0.1, fiberG: 1.6, sodiumMg: 39, sugarG: 1.9 },
+  "yellow mung dal": { kcal: 347, proteinG: 24, carbsG: 63, fatG: 1.2, fiberG: 16, sodiumMg: 15, sugarG: 2 },
+  "sprouted green mung": { kcal: 30, proteinG: 3, carbsG: 5.9, fatG: 0.2, fiberG: 1.8, sodiumMg: 6, sugarG: 4.1 },
+  "fenugreek leaves": { kcal: 49, proteinG: 4.4, carbsG: 6, fatG: 0.9, fiberG: 1.1, sodiumMg: 76, sugarG: 0 },
+  "cooked brown lentils": { kcal: 116, proteinG: 9, carbsG: 20, fatG: 0.4, fiberG: 7.9, sodiumMg: 2, sugarG: 1.8 },
+  "roasted split lentils": { kcal: 360, proteinG: 20, carbsG: 60, fatG: 5, fiberG: 15, sodiumMg: 50, sugarG: 5 }, // low-confidence estimate (roasted chana dal)
+  "pea protein isolate": { kcal: 375, proteinG: 80, carbsG: 5, fatG: 5, fiberG: 5, sodiumMg: 1000, sugarG: 0 }, // low-confidence estimate
+  "spices": { kcal: 300, proteinG: 12, carbsG: 50, fatG: 10, fiberG: 25, sodiumMg: 50, sugarG: 3 }, // low-confidence estimate; negligible at gram doses
+  "garam masala & spices": { kcal: 300, proteinG: 12, carbsG: 50, fatG: 10, fiberG: 25, sodiumMg: 50, sugarG: 3 }, // low-confidence estimate
+  "tandoori spice blend": { kcal: 300, proteinG: 12, carbsG: 50, fatG: 10, fiberG: 25, sodiumMg: 2000, sugarG: 3 }, // low-confidence estimate
 };
