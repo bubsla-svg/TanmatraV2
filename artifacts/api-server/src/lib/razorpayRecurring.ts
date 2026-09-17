@@ -62,6 +62,9 @@ export async function getOrCreateRazorpayCustomer(
       contact: user.phoneE164 || undefined,
       fail_existing: 0,
     }),
+    // Same ceiling as the order-create call: a hung customers call must not
+    // hold the checkout open indefinitely.
+    signal: AbortSignal.timeout(8000),
   });
 
   if (!rpRes.ok) {

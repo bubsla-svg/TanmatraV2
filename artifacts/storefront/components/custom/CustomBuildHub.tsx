@@ -56,7 +56,7 @@ const DishPickRow = memo(function DishPickRow({
       type="button"
       onClick={() => onSelect(dish.slug)}
       aria-pressed={active}
-      className={`flex items-center gap-4 rounded-2xl border p-3 text-left transition-all active:scale-[0.99] ${
+      className={`flex items-center gap-4 rounded-2xl border p-3 text-left transition-all active:scale-[0.98] ${
         active ? "border-gold bg-gold/5 shadow-[var(--shadow-card)]" : "border-line bg-surface hover:border-line-strong"
       }`}
     >

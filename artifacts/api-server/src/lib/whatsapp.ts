@@ -3,6 +3,13 @@ import { maskE164 } from "./piiMask";
 import { shouldDeferMessage } from "./quietHours";
 import { db, messageDispatchesTable } from "@workspace/db";
 
+/** Postgres 23505, on the error itself or on drizzle's wrapped `cause`. */
+export function isUniqueViolation(err: unknown): boolean {
+  const code = (err as { code?: unknown } | null)?.code;
+  const causeCode = (err as { cause?: { code?: unknown } } | null)?.cause?.code;
+  return code === "23505" || causeCode === "23505";
+}
+
 /**
  * Thin wrapper around Twilio's Verify API for WhatsApp OTPs. When the
  * Twilio env vars are not set (most local-dev installs and CI), the
@@ -172,12 +179,10 @@ export async function sendWhatsappMessage(
         dedupeKey,
       });
     } catch (e) {
-      if (
-        e &&
-        typeof e === "object" &&
-        "code" in e &&
-        (e as { code?: string }).code === "23505"
-      ) {
+      // Drizzle wraps the driver error (DrizzleQueryError → cause), so the
+      // Postgres code lives on `cause` — checking only the top level let a
+      // duplicate dispatch rethrow instead of dedupe (T9 found it).
+      if (isUniqueViolation(e)) {
         logger.info(
           { userId, templateId, serviceDate, dedupeKey },
           "whatsapp.message.deduped"

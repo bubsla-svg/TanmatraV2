@@ -3,6 +3,8 @@ import { REF_COOKIE_NAME, REF_COOKIE_MAX_AGE_SEC, extractRefFromQuery } from "./
 import { PLAN_CATALOG, planIsSelfServiceLaunchable, type PlanId } from "@workspace/subscription-rules";
 import { checkMenuSource } from "./lib/catalog";
 import { canonicalScanPath } from "./lib/qrPlacement";
+import { PLAN_CHECKOUT_ENABLED } from "./lib/flags";
+import { planLandingHref } from "./lib/planLanding";
 
 function withRefCookie(response: NextResponse, ref: string | null): NextResponse {
   if (ref) {
@@ -41,6 +43,13 @@ function checkoutPlanRedirect(request: NextRequest): NextResponse | null {
   if (!id) return NextResponse.redirect(new URL("/checkout?mode=alacarte", request.url));
   if (!planIsSelfServiceLaunchable(id)) {
     return NextResponse.redirect(new URL(`/plan/${id}?waitlist=1`, request.url));
+  }
+  // T1 dead-funnel containment: POST /subscriptions answers 503 while plan
+  // checkout is dark, so a plan link — including the `?plan=` shape printed
+  // on QR codes — lands where money can be taken. Mirrors the page's own
+  // redirect, which streams behind loading.tsx; here it is an instant 307.
+  if (!PLAN_CHECKOUT_ENABLED) {
+    return NextResponse.redirect(new URL(planLandingHref(id), request.url));
   }
   return null;
 }

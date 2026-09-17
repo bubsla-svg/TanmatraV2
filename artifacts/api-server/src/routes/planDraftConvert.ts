@@ -13,7 +13,6 @@ import {
   type PlanDraftQuote,
   type SubscriptionDelivery,
 } from "@workspace/db";
-import { isPlanCheckoutDisabled } from "../lib/flags";
 import { requireAuthUser as requireAuth } from "../middlewares/requireAuth";
 import { planDraftMutateRateLimit } from "../middlewares/rateLimitMiddleware";
 import { consumeQuoteTx } from "../lib/planDraftSchedule";
@@ -68,20 +67,6 @@ const convertSchema = z.object({
 
 function paramId(raw: unknown): string {
   return typeof raw === "string" ? raw : Array.isArray(raw) ? (raw[0] ?? "") : "";
-}
-
-/** Owner containment (docs/MONEY-PATH-VERIFICATION.md §5). Mounted before any
- *  work so a gated attempt creates nothing at all. */
-function planCheckoutGate(_req: Request, res: Response, next: () => void): void {
-  if (isPlanCheckoutDisabled()) {
-    res.status(503).json({
-      code: "PLAN_CHECKOUT_TEMPORARILY_UNAVAILABLE",
-      message: "Plan checkout is temporarily unavailable. Please try again shortly.",
-      error: "Plan checkout is temporarily unavailable. Please try again shortly.",
-    });
-    return;
-  }
-  next();
 }
 
 function razorpayCredentials(): [string, string] | null {
@@ -148,7 +133,6 @@ type ConversionRefusal =
 
 router.post(
   "/plan-drafts/:id/convert",
-  planCheckoutGate,
   planDraftMutateRateLimit,
   async (req: Request, res: Response) => {
     const userId = requireAuth(req, res);

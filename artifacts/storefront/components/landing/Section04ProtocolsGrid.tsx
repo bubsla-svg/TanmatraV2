@@ -158,7 +158,7 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
             <Link
               href="/plan/desk_fuel"
               onClick={() => handlePlanSelect("weight_loss_jumpstart_plan")}
-              className="flex h-12 min-h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-95"
+              className="flex h-12 min-h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-[0.96]"
             >
               See plan
               <span className="sr-only">: {deskFuel.name}</span>
@@ -189,7 +189,7 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
             <Link
               href="/plan/steady"
               onClick={() => handlePlanSelect("pcos_hormone_balance_plan")}
-              className="flex h-12 min-h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-95"
+              className="flex h-12 min-h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-[0.96]"
             >
               See plan
               <span className="sr-only">: {steady.name}</span>
@@ -225,7 +225,7 @@ export function Section04ProtocolsGrid({ dishes }: { dishes: PlanDishMap }) {
             <Link
               href="/plan/protein_build"
               onClick={() => handlePlanSelect("lean_muscle_builder_plan")}
-              className="flex h-12 min-h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-95"
+              className="flex h-12 min-h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 active:scale-[0.96]"
             >
               See plan
               <span className="sr-only">: {proteinBuild.name}</span>

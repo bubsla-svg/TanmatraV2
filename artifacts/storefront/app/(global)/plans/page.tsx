@@ -52,7 +52,7 @@ export default function PlansPage() {
           <h2 className="text-lg font-semibold text-ink">Lunch for your whole office.</h2>
           <Link
             href="/corporate-wellness"
-            className="-m-2 mt-1 p-2 text-sm font-semibold text-gold-text underline-offset-4 hover:underline"
+            className="-mx-2 mt-1 inline-flex min-h-11 items-center px-2 text-sm font-semibold text-gold-text underline-offset-4 hover:underline"
           >
             Talk to us &rarr;
           </Link>

@@ -225,6 +225,9 @@ export async function runAlacarteCheckout(
     /** Fired at the same instant as onVerifying, with the verify input — see
      *  finishPlanPayment's onCaptured for the full rationale. */
     onCaptured?: (facts: PaidFacts) => void;
+    /** T10: the Magic Checkout arm — the gateway order is created with
+     *  line_items_total so the one-click sheet can open on it. Ids only. */
+    magic?: boolean;
   },
   deps: AlacartePathDeps = ALC_DEFAULT_DEPS,
 ): Promise<AlacarteCheckoutResult> {
@@ -233,6 +236,7 @@ export async function runAlacarteCheckout(
   return finishAlacartePayment(created, params.razorpay, deps, {
     onVerifying: params.onVerifying,
     onCaptured: params.onCaptured,
+    magic: params.magic,
   });
 }
 
@@ -254,9 +258,11 @@ export async function finishAlacartePayment(
     /** Fired at the same instant as onVerifying, with the verify input — see
      *  finishPlanPayment's onCaptured for the full rationale. */
     onCaptured?: (facts: PaidFacts) => void;
+    /** T10 — see runAlacarteCheckout. */
+    magic?: boolean;
   },
 ): Promise<AlacarteCheckoutResult> {
-  const rzpOrder = await deps.createRazorpayOrder({ orderId: order.orderId });
+  const rzpOrder = await deps.createRazorpayOrder({ orderId: order.orderId, ...(opts?.magic ? { magic: true } : {}) });
 
   const paid = await razorpay.open(rzpOrder);
   const facts: PaidFacts = {

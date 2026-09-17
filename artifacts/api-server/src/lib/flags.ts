@@ -22,30 +22,8 @@ export function isPlanV2Enabled(): boolean {
   return envTrue(process.env.FLAG_PLAN_V2);
 }
 
-/**
- * Owner containment gate (2026-08-09, docs/MONEY-PATH-VERIFICATION.md §5):
- * while set, POST /subscriptions rejects NEW plan purchases with a typed 503
- * so production plan checkout cannot accept money until the plan money path
- * passes its own controlled verification. Default (unset) = OPEN, so tests,
- * dev and staging are unaffected; production closes it via deploy.yml env.
- * Existing subscriptions are untouched — only the create route is gated.
- */
-export function isPlanCheckoutDisabled(): boolean {
-  return envTrue(process.env.PLAN_CHECKOUT_DISABLED);
-}
-
-/**
- * Containment gate (2026-08-09, docs/MONEY-PATH-VERIFICATION.md "Settlement
- * Trust Boundary"): POST /orders/finalize let a caller-supplied
- * `externalOrderId` stand in as settlement evidence in the reconciliation
- * sweep (fixed in lib/reconciliationScheduler.ts — real evidence is now a
- * join against a server-owned row, never the identifier's string content).
- * This route has no live first-party caller (the legacy SPA's customer
- * checkout was removed 2026-07-26) but remains a callable HTTP surface, so it
- * stays closed in production pending an owner decision on whether to keep or
- * retire it. Same shape as isPlanCheckoutDisabled: default OPEN so tests, dev
- * and staging are unaffected; production closes it via deploy.yml env.
- */
-export function isOrderFinalizeDisabled(): boolean {
-  return envTrue(process.env.ORDER_FINALIZE_DISABLED);
-}
+// The two owner containment gates that lived here (PLAN_CHECKOUT_DISABLED /
+// isPlanCheckoutDisabled and ORDER_FINALIZE_DISABLED / isOrderFinalizeDisabled,
+// docs/MONEY-PATH-VERIFICATION.md §5) were removed on 2026-09-17 (T3, CRO
+// handoff): plan checkout and /orders/finalize are open in every environment,
+// and production's deploy env no longer sets either variable.

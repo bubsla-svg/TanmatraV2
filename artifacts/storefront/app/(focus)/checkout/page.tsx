@@ -14,14 +14,14 @@ import { fetchMenu } from "@/lib/catalog";
 import { planOfferDishes, type PlanOfferDish } from "@/lib/planOffer";
 import { buildSharedMacroKeys } from "@/lib/dishTrust";
 import { resolveTrio } from "@/lib/trialTrio";
-import { planAllowsAddOn, addOnView } from "@/lib/addons";
-import { planTotalAfterCredit, TRIAL_COPY, TRIAL_CREDITBACK_PAISE } from "@/lib/trial";
+import { planAllowsAddOn } from "@/lib/addons";
+import { TRIAL_COPY, TRIAL_CREDITBACK_PAISE } from "@/lib/trial";
 import { planDecisionFacts } from "@/lib/planDecisionFacts";
-import { CheckoutFlow } from "@/components/checkout/CheckoutFlow";
 import { AlacarteCheckout } from "@/components/checkout/AlacarteCheckout";
 import { FocusHeader } from "@/components/FocusHeader";
 import { PlanCheckout } from "@/components/checkout/plan/PlanCheckout";
-import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
+import { PLAN_CHECKOUT_ENABLED } from "@/lib/flags";
+import { planLandingHref } from "@/lib/planLanding";
 import { asBuilderCycle } from "@/lib/checkoutCycle";
 import { parseCheckoutIntent } from "@/lib/checkoutIntent";
 import { fetchMarketplaceItemServer } from "@/lib/marketplaceApi";
@@ -59,7 +59,7 @@ type Props = {
  */
 export default async function CheckoutPage({ searchParams }: Props) {
   const params = await searchParams;
-  const { plan, track, cycle, returning, credit, bump, mode } = params;
+  const { plan, track, cycle, bump, mode } = params;
 
   // Every money path in the storefront now ends here. lib/checkoutIntent is the
   // one place a /checkout query string is validated; a string that names no
@@ -67,10 +67,18 @@ export default async function CheckoutPage({ searchParams }: Props) {
   // leg, the one mode with a designed empty state.
   const intent = parseCheckoutIntent(params);
 
+  // T1 dead-funnel containment: POST /subscriptions answers 503 while plan
+  // checkout is dark, so a plan intent — including the `?plan=` shape live in
+  // printed QR codes and bookmarks — lands on a surface that can take money
+  // (the trio as cart lines, or the goal-filtered menu), never on this leg.
+  if (intent?.mode === "plan" && !PLAN_CHECKOUT_ENABLED) {
+    redirect(planLandingHref(intent.planId));
+  }
+
   if (intent?.mode === "premium" || intent?.mode === "consult" || intent?.mode === "marketplace") {
     return (
       <div data-ui-generation="stitch-74" data-screen-id="8.1" data-screen-state="quote-active" className="min-h-dvh">
-        <section className="mx-auto max-w-md px-4 pt-6 pb-44">
+        <section className="mx-auto max-w-md px-4 pt-6 pb-52">
           <FocusHeader title="Checkout" backLabel="Back" trustSignal="Secure UPI checkout" />
           {intent.mode === "premium" && <PremiumPurchase />}
           {intent.mode === "consult" && <ConsultPurchase appointmentId={intent.appointmentId} />}
@@ -92,7 +100,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
         data-screen-id="8.1" data-screen-state="quote-active"
         className="min-h-dvh"
       >
-        <section className="mx-auto max-w-md px-4 pt-6 pb-44">
+        <section className="mx-auto max-w-md px-4 pt-6 pb-52">
           <FocusHeader title="Checkout" backLabel="Back to cart" trustSignal="Secure UPI checkout" />
           <AlacarteCheckout />
         </section>
@@ -110,7 +118,6 @@ export default async function CheckoutPage({ searchParams }: Props) {
 
   const q = planQuoteView(id);
   const d = planDisplay(id);
-  const isReturning = returning === "1";
   const isTrial = id === "trial_3day";
 
   // Live plan money path (SF-07/09/11 · CUJ-02/03/04): identity → eater
@@ -125,153 +132,109 @@ export default async function CheckoutPage({ searchParams }: Props) {
   // net total; subscriptions.ts redeems the same balance automatically at
   // create time. `credit=1` is accepted for back-compat with existing links
   // but no longer gates which surface renders.
-  if (LIVE_CHECKOUT_ENABLED) {
-    const requestedTrack =
-      track && q.servedTracks.includes(track as DietTrack) ? (track as DietTrack) : undefined;
-    // The builder confirms a cycle (Weekly/Monthly/Quarterly, each a different
-    // price) and sends it here as ?cycle=. Previously dropped on the floor —
-    // this page quoted and billed every plan as monthly regardless of what the
-    // customer picked. Validate against the fixed set the builder can emit;
-    // an absent or unrecognised value falls back to monthly, the builder's
-    // own default, never a guess.
-    const requestedCadence = asBuilderCycle(cycle);
-    const withRdBump = RD_SERVICES_ENABLED && bump === "1" && planAllowsAddOn(id, "rd_bump");
-    // N5.11: the sign-in gate used to be a bare phone field in empty canvas —
-    // the customer was asked for their number before being reminded what they
-    // were buying. This recap is the SPINE's list quote for the exact
-    // (plan, track, cadence) selection — the same server-owned figures /plans
-    // already shows anonymous visitors — so the gate can restate the offer
-    // without inventing a number. The post-auth server quote (net of credit)
-    // remains the billed amount.
-    // No invented cadence fallback: absent ?cycle=, computePlanQuote uses the
-    // plan's OWN cycle — which for trial_3day is "one_off". Forcing "monthly"
-    // here would caption a no-auto-renew ₹399 trial as "billed monthly",
-    // contradicting the noAutoConvert fine print on the very next screen.
-    const recapQuote = computePlanQuote(
-      id,
-      requestedTrack ?? q.servedTracks[0] ?? "veg",
-      requestedCadence,
-    );
-    // Laws 1 + 8: the same figures, plus the dishes and the delivery window,
-    // shown ABOVE the serviceability gate — the journey's first ask. Resolved
-    // here because the rotation comes off the live catalog and PlanCheckout is
-    // a client island that cannot read it. Only the requested track's rotation
-    // when one was chosen: showing a chicken dish to someone who arrived on
-    // ?track=veg would be a worse answer than showing fewer.
-    const { dishes: catalogDishes } = await fetchMenu();
-    // T-16: the trial is three FIXED dishes, and /trial already showed them —
-    // so the checkout shows the same trio, from the same resolver, for the
-    // same track. A sample of the plan's rotation is the wrong answer for a
-    // product whose whole promise is these three specific lunches.
-    const rotation: { dishes: PlanOfferDish[]; more: number } = isTrial
-      ? {
-          dishes: resolveTrio(
-            requestedTrack === "nonveg" ? "nonveg" : "veg",
-            catalogDishes,
-            buildSharedMacroKeys(catalogDishes),
-          ).map((d) => ({
-            slug: d.slug,
-            name: d.name,
-            image: d.image,
-            ...(d.macros ? { macros: d.macros } : {}),
-            macrosEstimated: d.macrosEstimated === true,
-          })),
-          more: 0,
-        }
-      : planOfferDishes(
-          id,
-          requestedTrack ? [requestedTrack] : q.servedTracks,
+  const requestedTrack =
+    track && q.servedTracks.includes(track as DietTrack) ? (track as DietTrack) : undefined;
+  // The builder confirms a cycle (Weekly/Monthly/Quarterly, each a different
+  // price) and sends it here as ?cycle=. Previously dropped on the floor —
+  // this page quoted and billed every plan as monthly regardless of what the
+  // customer picked. Validate against the fixed set the builder can emit;
+  // an absent or unrecognised value falls back to monthly, the builder's
+  // own default, never a guess.
+  const requestedCadence = asBuilderCycle(cycle);
+  const withRdBump = RD_SERVICES_ENABLED && bump === "1" && planAllowsAddOn(id, "rd_bump");
+  // N5.11: the sign-in gate used to be a bare phone field in empty canvas —
+  // the customer was asked for their number before being reminded what they
+  // were buying. This recap is the SPINE's list quote for the exact
+  // (plan, track, cadence) selection — the same server-owned figures /plans
+  // already shows anonymous visitors — so the gate can restate the offer
+  // without inventing a number. The post-auth server quote (net of credit)
+  // remains the billed amount.
+  // No invented cadence fallback: absent ?cycle=, computePlanQuote uses the
+  // plan's OWN cycle — which for trial_3day is "one_off". Forcing "monthly"
+  // here would caption a no-auto-renew ₹399 trial as "billed monthly",
+  // contradicting the noAutoConvert fine print on the very next screen.
+  const recapQuote = computePlanQuote(
+    id,
+    requestedTrack ?? q.servedTracks[0] ?? "veg",
+    requestedCadence,
+  );
+  // Laws 1 + 8: the same figures, plus the dishes and the delivery window,
+  // shown ABOVE the serviceability gate — the journey's first ask. Resolved
+  // here because the rotation comes off the live catalog and PlanCheckout is
+  // a client island that cannot read it. Only the requested track's rotation
+  // when one was chosen: showing a chicken dish to someone who arrived on
+  // ?track=veg would be a worse answer than showing fewer.
+  const { dishes: catalogDishes } = await fetchMenu();
+  // T-16: the trial is three FIXED dishes, and /trial already showed them —
+  // so the checkout shows the same trio, from the same resolver, for the
+  // same track. A sample of the plan's rotation is the wrong answer for a
+  // product whose whole promise is these three specific lunches.
+  const rotation: { dishes: PlanOfferDish[]; more: number } = isTrial
+    ? {
+        dishes: resolveTrio(
+          requestedTrack === "nonveg" ? "nonveg" : "veg",
           catalogDishes,
-          OFFER_DISH_SAMPLE,
-        );
-    return (
-      <div data-ui-generation="stitch-74" data-screen-id="8.1" data-screen-state="quote-active" className="min-h-dvh">
-        <section className="mx-auto max-w-md px-4 pt-10 pb-44">
-          {/* D-16: the à-la-carte checkout's own "Back to cart" pattern —
-              FocusHeader's goBack() is real history navigation (router.back()),
-              not a fresh push, so returning lands on the SAME /plan/[planId]
-              instance rather than a reset one. No `title`: PlanIdentityGate
-              and PlanCheckout each already render their own contextual h1
-              ("Start your X plan" / the plan name) — FocusHeader's own doc
-              comment names this exact case as the reason `title` is optional.
-
-              N5.10: no trustSignal here any more. This header renders on the
-              IDENTITY stage too, where the only transaction is an SMS code —
-              "Secure UPI checkout" over an OTP field misdescribes the moment.
-              The pay stage carries its own trust line beside the actual pay
-              CTA (PlanDetails' bar), which is where the claim is true. */}
-          <FocusHeader backLabel="Back to plan" />
-          <PlanCheckout
-            planId={id}
-            planName={d.name}
-            servedTracks={q.servedTracks}
-            initialTrack={requestedTrack}
-            cadence={requestedCadence}
-            addOns={withRdBump ? ["rd_bump"] : undefined}
-            // A plan used to pass `undefined`, so the purchase that registers a
-            // recurring UPI Autopay mandate disclosed LESS at the decision
-            // moment than the trial, which registers none.
-            finePrint={
-              isTrial
-                ? [TRIAL_COPY.creditLine, TRIAL_COPY.noAutoConvert]
-                : planDecisionFacts(id, requestedCadence)
-            }
-            successPerks={isTrial ? { trialCreditbackPaise: TRIAL_CREDITBACK_PAISE } : undefined}
-            recap={{
-              mealsPerCycle: recapQuote.mealsPerCycle,
-              cycleTotalPaise: recapQuote.cycleTotalPaise,
-              cadence: recapQuote.cycle,
-            }}
-            offer={{
-              dishes: rotation.dishes,
-              more: rotation.more,
-              mealsPerCycle: recapQuote.mealsPerCycle,
-              cycleTotalPaise: recapQuote.cycleTotalPaise,
-              cadence: recapQuote.cycle,
-            }}
-          />
-        </section>
-      </div>
-    );
-  }
-
-  // Credit applies to the base plan only (the trial earns it; #287 owns
-  // eligibility). The RD bump is added on top — a bump is never discounted.
-  const base = q.cycleTotalPaise;
-  const afterCredit = credit === "1" && !isTrial ? planTotalAfterCredit(base) : base;
-  const creditPaise = base - afterCredit;
-
-  // The builder no longer offers the bump, but a `?bump=1` link already sent
-  // or bookmarked would still attach a paid dietitian. Same flag, both ends.
-  const applyBump = RD_SERVICES_ENABLED && bump === "1" && planAllowsAddOn(id, "rd_bump");
-  const bumpPaise = applyBump ? addOnView("rd_bump").pricePaise : 0;
-  const total = afterCredit + bumpPaise;
-
-  // Evening Add is offered post-purchase on the confirmation, where the plan
-  // permits it (never on the trial — its allow-list is empty).
-  const eveningAddPaise = planAllowsAddOn(id, "evening_add")
-    ? addOnView("evening_add").pricePaise
-    : null;
-
-  const futureLine = isTrial
-    ? TRIAL_COPY.noAutoConvert
-    : "Next billing next month · pause or cancel anytime.";
-
+          buildSharedMacroKeys(catalogDishes),
+        ).map((d) => ({
+          slug: d.slug,
+          name: d.name,
+          image: d.image,
+          ...(d.macros ? { macros: d.macros } : {}),
+          macrosEstimated: d.macrosEstimated === true,
+        })),
+        more: 0,
+      }
+    : planOfferDishes(
+        id,
+        requestedTrack ? [requestedTrack] : q.servedTracks,
+        catalogDishes,
+        OFFER_DISH_SAMPLE,
+      );
   return (
-    <div 
-      data-ui-generation="stitch-74" 
-      data-screen-id="8.1" data-screen-state="quote-active"
-      className="min-h-dvh"
-    >
-      <section className="mx-auto max-w-md px-4 pt-10 pb-44">
-        <CheckoutFlow
+    <div data-ui-generation="stitch-74" data-screen-id="8.1" data-screen-state="quote-active" className="min-h-dvh">
+      <section className="mx-auto max-w-md px-4 pt-10 pb-52">
+        {/* D-16: the à-la-carte checkout's own "Back to cart" pattern —
+            FocusHeader's goBack() is real history navigation (router.back()),
+            not a fresh push, so returning lands on the SAME /plan/[planId]
+            instance rather than a reset one. No `title`: PlanIdentityGate
+            and PlanCheckout each already render their own contextual h1
+            ("Start your X plan" / the plan name) — FocusHeader's own doc
+            comment names this exact case as the reason `title` is optional.
+
+            N5.10: no trustSignal here any more. This header renders on the
+            IDENTITY stage too, where the only transaction is an SMS code —
+            "Secure UPI checkout" over an OTP field misdescribes the moment.
+            The pay stage carries its own trust line beside the actual pay
+            CTA (PlanDetails' bar), which is where the claim is true. */}
+        <FocusHeader backLabel="Back to plan" />
+        <PlanCheckout
           planId={id}
-          planSummary={`${d.name} · ${q.mealsPerCycle} lunches${applyBump ? " · + dietitian" : ""}`}
-          totalPaise={total}
-          futureLine={futureLine}
-          creditPaise={creditPaise}
-          eveningAddPaise={eveningAddPaise}
-          user={{ signedIn: isReturning, hasSavedAddress: isReturning }}
+          planName={d.name}
+          servedTracks={q.servedTracks}
+          initialTrack={requestedTrack}
+          cadence={requestedCadence}
+          addOns={withRdBump ? ["rd_bump"] : undefined}
+          // A plan used to pass `undefined`, so the purchase that registers a
+          // recurring UPI Autopay mandate disclosed LESS at the decision
+          // moment than the trial, which registers none.
+          finePrint={
+            isTrial
+              ? [TRIAL_COPY.creditLine, TRIAL_COPY.noAutoConvert]
+              : planDecisionFacts(id, requestedCadence)
+          }
+          successPerks={isTrial ? { trialCreditbackPaise: TRIAL_CREDITBACK_PAISE } : undefined}
+          recap={{
+            mealsPerCycle: recapQuote.mealsPerCycle,
+            cycleTotalPaise: recapQuote.cycleTotalPaise,
+            cadence: recapQuote.cycle,
+          }}
+          offer={{
+            dishes: rotation.dishes,
+            more: rotation.more,
+            mealsPerCycle: recapQuote.mealsPerCycle,
+            cycleTotalPaise: recapQuote.cycleTotalPaise,
+            cadence: recapQuote.cycle,
+          }}
         />
       </section>
     </div>

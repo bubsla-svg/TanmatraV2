@@ -10,7 +10,10 @@ import { StickyAction } from "@/components/primitives/StickyAction";
  * server quote's payable-now, rendered by the parent — never a client sum.
  *
  * T-12: the accepted methods sit in the bar, above the CTA, and the CTA
- * names the amount once a quote has landed.
+ * names the amount once a quote has landed. T6: the cancellation promise
+ * sits directly under the CTA — the server's cancel window is placed |
+ * preparing | ready (routes/orders.ts) and the refund route pays the full
+ * charge, so "before dispatch, full refund" is the rule, not marketing.
  */
 export function AlacartePayBar({
   amount,
@@ -35,7 +38,7 @@ export function AlacartePayBar({
   onContinue: () => void;
 }) {
   return (
-    <StickyAction className="bottom-0 z-30">
+    <StickyAction className="bottom-0 z-[var(--z-bar)]">
       <div className="mx-auto flex max-w-md flex-col gap-1.5 px-4 py-3">
         {blockedReason !== null && !busy && (
           <p role="status" className="text-xs font-medium text-ink-muted">{blockedReason}</p>
@@ -75,6 +78,7 @@ export function AlacartePayBar({
             {ctaLabel}
           </Button>
         </div>
+        <p className="text-center text-[11px] text-ink-faint">Cancel before dispatch for a full refund.</p>
       </div>
     </StickyAction>
   );

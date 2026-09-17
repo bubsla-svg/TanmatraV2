@@ -2,12 +2,12 @@
  * The bottom of the funnel, which did not exist.
  *
  * The `cuj_*` vocabulary measured browsing and choosing. The purchase half was
- * measured by exactly one event — `cuj_paid` in CheckoutFlow's `pay()` — placed
- * AFTER that function's `if (LIVE_CHECKOUT_ENABLED) … return`. It can therefore
- * only fire when live checkout is switched OFF, and `app/(focus)/checkout` does
- * not even render CheckoutFlow when the flag is on. In production the
+ * measured by exactly one event — `cuj_paid` in the flag-dark skeleton
+ * checkout's `pay()`, placed after its live-checkout early return. It could
+ * therefore only fire when live checkout was switched OFF. In production the
  * storefront's only conversion event was unreachable, and the two components
- * that actually take money emitted nothing at all.
+ * that actually take money emitted nothing at all. The skeleton itself is
+ * gone now (Housekeeping 2026-09-17); the pin at the bottom keeps it gone.
  *
  * You cannot find where a funnel leaks if it has no bottom.
  *
@@ -126,14 +126,16 @@ test("a failure code groups by cause, not by copy", () => {
   assert.equal(funnelErrorCode({ code: 42 }), "unknown", "a non-string code is not a cause");
 });
 
-test("the unreachable conversion event is still only in the flag-dark path", () => {
-  // Left in place deliberately — it is correct where it sits, and removing it
-  // would change the preview build's behaviour for no gain. This test records
-  // that it is NOT the production conversion event, so nobody restores a
-  // scoreboard onto it.
-  const flow = read("checkout", "CheckoutFlow.tsx");
-  const guard = flow.indexOf("if (LIVE_CHECKOUT_ENABLED)");
-  const paid = flow.indexOf('emitFunnel("cuj_paid"');
-  assert.ok(guard > 0 && paid > 0);
-  assert.ok(paid > guard, "cuj_paid still sits after the live-flag early return");
+test("cuj_paid is retired: the skeleton that emitted it is gone, and it is not in the vocabulary (T2)", () => {
+  // It was only ever reachable in a flag-dark preview build, where it
+  // fabricated a receipt. The conversion truth is the server's `purchase`
+  // (api-server lib/purchaseEvents.ts), emitted on the paid transition.
+  for (const legacy of ["CheckoutFlow.tsx", "CheckoutPay.tsx", "CheckoutIdentity.tsx", "CheckoutAddress.tsx"]) {
+    assert.equal(fs.existsSync(path.join(COMPONENTS, "checkout", legacy)), false, `${legacy} must stay deleted`);
+  }
+  const flags = fs.readFileSync(path.join(HERE, "flags.ts"), "utf8");
+  assert.doesNotMatch(flags, /LIVE_CHECKOUT_ENABLED\s*=/, "live checkout is not a flag any more");
+  const funnel = fs.readFileSync(path.join(HERE, "funnel.ts"), "utf8");
+  assert.doesNotMatch(funnel, /\|\s*"cuj_paid"/);
+  assert.match(funnel, /\|\s*"checkout_step"/);
 });

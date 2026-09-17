@@ -1,4 +1,5 @@
 import { logger } from "./logger";
+import { isUniqueViolation } from "./whatsapp";
 import { maskE164 } from "./piiMask";
 import { shouldDeferMessage } from "./quietHours";
 import { db, messageDispatchesTable } from "@workspace/db";
@@ -222,12 +223,10 @@ export async function sendDeliveryDelaySms(
         dedupeKey,
       });
     } catch (e) {
-      if (
-        e &&
-        typeof e === "object" &&
-        "code" in e &&
-        (e as { code?: string }).code === "23505"
-      ) {
+      // Drizzle wraps the driver error (DrizzleQueryError → cause), so the
+      // Postgres code lives on `cause` — checking only the top level let a
+      // duplicate dispatch rethrow instead of dedupe (T9 found it).
+      if (isUniqueViolation(e)) {
         logger.info(
           { userId, templateId, serviceDate, dedupeKey },
           "sms.message.deduped"

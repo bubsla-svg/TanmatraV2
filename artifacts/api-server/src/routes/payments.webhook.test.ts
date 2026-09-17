@@ -19,6 +19,11 @@ import {
   webhookInboxTable,
   deliveryEventsTable,
   refundRequestsTable,
+  funnelEventsTable,
+  usersTable,
+  subscriptionsTable,
+  subscriptionMandatesTable,
+  preDebitNotificationsTable,
 } from "@workspace/db";
 
 import paymentsRouter from "./payments";
@@ -595,4 +600,235 @@ test("refund.processed: settlement of a refund already in the ledger is not coun
   } finally {
     await cleanupOrder(orderId);
   }
+});
+
+// ---------------------------------------------------------------------------
+// T2 (CRO handoff 2026-09-17): the server-truth `purchase` and
+// `payment_failed` events, emitted from the webhook's own transitions with
+// the order's attribution. emitServerEvent is fire-and-forget, so the rows
+// are polled for rather than awaited.
+// ---------------------------------------------------------------------------
+
+async function funnelRowsFor(orderId: string, name: string, tries = 20) {
+  for (let i = 0; i < tries; i++) {
+    const rows = await db.select().from(funnelEventsTable).where(eq(funnelEventsTable.name, name));
+    const hit = rows.filter((r) => (r.props as Record<string, unknown> | null)?.order_id === orderId);
+    if (hit.length > 0) return hit;
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  return [];
+}
+
+test("payment.captured emits ONE purchase carrying order_id, amount, method, src and the funnel session", async () => {
+  const externalOrderId = `ord_purchase_${randomUUID()}`;
+  const razorpayOrderId = `order_rzp_${randomUUID().slice(0, 8)}`;
+  const [seeded] = await db
+    .insert(ordersTable)
+    .values({
+      userId: null,
+      externalOrderId,
+      razorpayOrderId,
+      status: "placed",
+      totalPaise: 65700,
+      addressLabel: "Test",
+      addressLine: "1 Test Rd",
+      city: "Noida",
+      pincode: "201301",
+      phone: "9999999999",
+      items: [{ id: 1, name: "Test Dish", qty: 1, price: 65700 }],
+      fulfillmentType: "delivery",
+      acquisitionSrc: "gym12",
+      funnelSessionId: "fs_test_1",
+    })
+    .returning({ id: ordersTable.id });
+
+  const eventId = `evt_purchase_${randomUUID()}`;
+  CREATED_EVENT_IDS.push(eventId);
+  const payload = {
+    event: "payment.captured",
+    payload: { payment: { entity: { id: "pay_p1", order_id: razorpayOrderId, amount: 65700, method: "upi" } } },
+  };
+  const first = await postWebhook(payload, eventId);
+  assert.equal(first.status, 200);
+  // A replay of the same capture must not emit a second purchase.
+  await postWebhook(payload, eventId);
+
+  const rows = await funnelRowsFor(externalOrderId, "purchase");
+  assert.equal(rows.length, 1, "exactly one purchase per order");
+  const props = rows[0]!.props as Record<string, unknown>;
+  assert.equal(props.amount_paise, 65700);
+  assert.equal(props.method, "upi");
+  assert.equal(props.src, "gym12");
+  assert.equal(props.capture_path, "webhook");
+  assert.equal(rows[0]!.sessionId, "fs_test_1", "the funnel session joins the scan to the sale");
+  assert.equal(rows[0]!.path, "server");
+
+  await db.delete(funnelEventsTable).where(eq(funnelEventsTable.id, rows[0]!.id));
+  await db.delete(ordersTable).where(eq(ordersTable.id, seeded!.id));
+});
+
+test("payment.failed emits payment_failed with Razorpay's own error code and reason", async () => {
+  const externalOrderId = `ord_failed_${randomUUID()}`;
+  const razorpayOrderId = `order_rzp_${randomUUID().slice(0, 8)}`;
+  const [seeded] = await db
+    .insert(ordersTable)
+    .values({
+      userId: null,
+      externalOrderId,
+      razorpayOrderId,
+      status: "placed",
+      totalPaise: 24900,
+      addressLabel: "Test",
+      addressLine: "1 Test Rd",
+      city: "Noida",
+      pincode: "201301",
+      phone: "9999999999",
+      items: [{ id: 1, name: "Test Dish", qty: 1, price: 24900 }],
+      fulfillmentType: "delivery",
+      acquisitionSrc: "box",
+      funnelSessionId: "fs_test_2",
+    })
+    .returning({ id: ordersTable.id });
+
+  const eventId = `evt_failed_${randomUUID()}`;
+  CREATED_EVENT_IDS.push(eventId);
+  const res = await postWebhook(
+    {
+      event: "payment.failed",
+      payload: {
+        payment: {
+          entity: {
+            id: "pay_f1",
+            order_id: razorpayOrderId,
+            amount: 24900,
+            method: "upi",
+            error_code: "BAD_REQUEST_ERROR",
+            error_description: "Payment was unsuccessful due to a temporary issue.",
+            error_reason: "payment_failed",
+          },
+        },
+      },
+    },
+    eventId,
+  );
+  assert.equal(res.status, 200);
+
+  const rows = await funnelRowsFor(externalOrderId, "payment_failed");
+  assert.equal(rows.length, 1);
+  const props = rows[0]!.props as Record<string, unknown>;
+  assert.equal(props.error_code, "BAD_REQUEST_ERROR");
+  assert.equal(props.reason, "payment_failed");
+  assert.equal(props.method, "upi");
+  assert.equal(props.src, "box");
+  assert.equal(rows[0]!.sessionId, "fs_test_2");
+
+  await db.delete(funnelEventsTable).where(eq(funnelEventsTable.id, rows[0]!.id));
+  await db.delete(ordersTable).where(eq(ordersTable.id, seeded!.id));
+});
+
+test("order.paid is a second capture signal: it promotes a placed order, and a later payment.captured is a no-op", async () => {
+  const externalOrderId = `ord_orderpaid_${randomUUID()}`;
+  const razorpayOrderId = `order_rzp_${randomUUID().slice(0, 8)}`;
+  const [seeded] = await db
+    .insert(ordersTable)
+    .values({
+      userId: null,
+      externalOrderId,
+      razorpayOrderId,
+      status: "placed",
+      totalPaise: 49900,
+      addressLabel: "Test",
+      addressLine: "1 Test Rd",
+      city: "Noida",
+      pincode: "201301",
+      phone: "9999999999",
+      items: [{ id: 1, name: "Test Dish", qty: 1, price: 49900 }],
+      fulfillmentType: "delivery",
+    })
+    .returning({ id: ordersTable.id });
+
+  const paidEvt = `evt_orderpaid_${randomUUID()}`;
+  const capEvt = `evt_captured_after_${randomUUID()}`;
+  CREATED_EVENT_IDS.push(paidEvt, capEvt);
+  const paid = await postWebhook(
+    {
+      event: "order.paid",
+      payload: {
+        order: { entity: { id: razorpayOrderId, amount: 49900, amount_paid: 49900, status: "paid" } },
+        payment: { entity: { id: "pay_op1", order_id: razorpayOrderId, amount: 49900, method: "upi" } },
+      },
+    },
+    paidEvt,
+  );
+  assert.equal(paid.status, 200);
+  const [afterPaid] = await db.select({ status: ordersTable.status, razorpayPaymentId: ordersTable.razorpayPaymentId }).from(ordersTable).where(eq(ordersTable.id, seeded!.id));
+  assert.equal(afterPaid!.status, "preparing");
+  assert.equal(afterPaid!.razorpayPaymentId, "pay_op1");
+
+  const cap = await postWebhook(
+    { event: "payment.captured", payload: { payment: { entity: { id: "pay_op1", order_id: razorpayOrderId, amount: 49900, method: "upi" } } } },
+    capEvt,
+  );
+  assert.equal(cap.status, 200);
+  const purchases = await funnelRowsFor(externalOrderId, "purchase");
+  assert.equal(purchases.length, 1, "two capture signals, one purchase");
+
+  for (const r of purchases) await db.delete(funnelEventsTable).where(eq(funnelEventsTable.id, r.id));
+  await db.delete(ordersTable).where(eq(ordersTable.id, seeded!.id));
+});
+
+test("token.cancelled: the gateway-side mandate revoke cancels the mandate, purges notices and halts the subscription (T3)", async () => {
+  const userId = randomUUID();
+  await db.insert(usersTable).values({ id: userId, email: `t3-${userId}@example.test`, firstName: "Mandate", lastName: "Revoker" });
+  const startDate = new Date(Date.now() + 2 * 86400000);
+  const [sub] = await db
+    .insert(subscriptionsTable)
+    .values({
+      userId,
+      cadence: "weekly",
+      mealsPerDelivery: 5,
+      deliveryWindow: "12:00-14:00",
+      status: "active",
+      startDate,
+      nextDeliveryAt: startDate,
+      pricePerDeliveryPaise: 380000,
+    })
+    .returning({ id: subscriptionsTable.id });
+  const tokenId = `token_t3_${randomUUID().slice(0, 8)}`;
+  await db.insert(subscriptionMandatesTable).values({
+    subscriptionId: sub!.id,
+    razorpayCustomerId: "cust_t3",
+    razorpayTokenId: tokenId,
+    status: "active",
+    nextChargeAt: new Date(Date.now() + 5 * 86400000),
+  });
+  await db.insert(preDebitNotificationsTable).values({
+    subscriptionId: sub!.id,
+    scheduledChargeAt: new Date(Date.now() + 5 * 86400000),
+    status: "pending",
+  });
+
+  const eventId = `evt_token_cancelled_${randomUUID()}`;
+  CREATED_EVENT_IDS.push(eventId);
+  const res = await postWebhook(
+    { event: "token.cancelled", payload: { token: { entity: { id: tokenId, customer_id: "cust_t3", status: "cancelled" } } } },
+    eventId,
+  );
+  assert.equal(res.status, 200);
+
+  const [mandate] = await db.select().from(subscriptionMandatesTable).where(eq(subscriptionMandatesTable.subscriptionId, sub!.id));
+  assert.equal(mandate!.status, "cancelled");
+  assert.equal(mandate!.nextChargeAt, null);
+  const notices = await db.select().from(preDebitNotificationsTable).where(eq(preDebitNotificationsTable.subscriptionId, sub!.id));
+  assert.equal(notices.length, 0, "pending notices are purged so no charge is triggered later");
+  const [after] = await db.select({ status: subscriptionsTable.status }).from(subscriptionsTable).where(eq(subscriptionsTable.id, sub!.id));
+  assert.equal(after!.status, "halted");
+  const events = await db.select().from(funnelEventsTable).where(and(eq(funnelEventsTable.name, "mandate_revoked"), eq(funnelEventsTable.userId, userId)));
+  assert.equal(events.length, 1);
+  assert.equal((events[0]!.props as Record<string, unknown>).reason, "token.cancelled");
+
+  for (const e of events) await db.delete(funnelEventsTable).where(eq(funnelEventsTable.id, e.id));
+  await db.delete(subscriptionMandatesTable).where(eq(subscriptionMandatesTable.subscriptionId, sub!.id));
+  await db.delete(subscriptionsTable).where(eq(subscriptionsTable.id, sub!.id));
+  await db.delete(usersTable).where(eq(usersTable.id, userId));
 });

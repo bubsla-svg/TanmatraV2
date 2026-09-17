@@ -3,6 +3,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPaise } from "@/lib/format";
 import { TRIAL_PRICE_PAISE, TRIAL_COPY } from "@/lib/trial";
+import { PLAN_CHECKOUT_ENABLED } from "@/lib/flags";
 
 /**
  * The 3-day trial, given its own band on the homepage.
@@ -40,7 +41,9 @@ export function SectionTrialPush() {
               Start here
             </span>
             <h2 className="mt-4 max-w-md font-display text-4xl font-semibold leading-[1] text-primary sm:text-5xl">
-              Try three lunches for {price}.
+              {/* T1: no figure while plan checkout is dark — the trio is
+                  priced by the menu and /trial shows the server's sum. */}
+              {PLAN_CHECKOUT_ENABLED ? `Try three lunches for ${price}.` : "Try three lunches."}
             </h2>
             <p className="mt-5 max-w-sm text-base leading-7 text-ink-muted">
               Three weekday lunches, cooked fresh and delivered hot. Decide
@@ -54,11 +57,13 @@ export function SectionTrialPush() {
             <ul className="flex flex-col gap-7 text-base leading-6 text-ink">
               <li className="flex gap-4 border-b border-line pb-7">
                 <span aria-hidden className="font-display text-3xl leading-none text-accent">✓</span>
-                {TRIAL_COPY.creditLine}
+                {PLAN_CHECKOUT_ENABLED
+                  ? TRIAL_COPY.creditLine
+                  : "Three chef-cooked lunches off today's menu, each at its own price."}
               </li>
               <li className="flex gap-4 border-b border-line pb-7">
                 <span aria-hidden className="font-display text-3xl leading-none text-accent">✓</span>
-                {TRIAL_COPY.noAutoConvert}
+                {PLAN_CHECKOUT_ENABLED ? TRIAL_COPY.noAutoConvert : "Order once. No plan, nothing renews."}
               </li>
             </ul>
 
@@ -69,17 +74,25 @@ export function SectionTrialPush() {
               {/* The only other door, and it is quiet on purpose: someone who
                   already knows they want a month should not have to read the
                   trial pitch twice, but they are not who this band is for. */}
+              {PLAN_CHECKOUT_ENABLED ? (
               <Link
                 href="/plans"
                 /* 328×20 before: a full-width text link with no vertical box of
                    its own. `w-full` because touch-target-min is inline-flex and
                    would otherwise shrink this to its text, undoing the centred
-                   full-column look it has in this card. */
+                   full-width look it has in this card. */
                 className="touch-target-min w-full items-center justify-center gap-2 text-sm font-bold text-primary hover:opacity-80"
               >
                 Or see monthly plans
                 <ArrowRight aria-hidden size={16} />
               </Link>
+              ) : (
+              // T1: with plan checkout dark, the only other door is the menu.
+              <Link href="/menu" className="touch-target-min w-full items-center justify-center gap-2 text-sm font-bold text-primary hover:opacity-80">
+                Or browse the full menu
+                <ArrowRight aria-hidden size={16} />
+              </Link>
+              )}
             </div>
           </div>
         </div>

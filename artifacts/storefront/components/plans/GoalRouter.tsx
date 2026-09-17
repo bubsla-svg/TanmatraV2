@@ -29,7 +29,7 @@ export function GoalRouter() {
         ))}
         <Link
           href="/menu"
-          className="-m-2 mt-2 self-center p-2 text-sm font-medium text-ink-muted underline-offset-4 hover:underline"
+          className="-mx-2 mt-2 inline-flex min-h-11 items-center self-center px-2 text-sm font-medium text-ink-muted underline-offset-4 hover:underline"
         >
           Just show me the menu &rarr;
         </Link>

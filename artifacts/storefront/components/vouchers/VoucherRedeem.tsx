@@ -149,7 +149,7 @@ export function VoucherRedeem() {
           exists, MiniCartBar owns the bottom edge. The Enter key on the code
           field still submits, so the input keeps its own path to doRedeem. */}
       {cart.lines.length === 0 && (
-        <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-line bg-glass pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
+        <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-[var(--z-bar)] border-t border-line bg-glass pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:bottom-0">
           <div className="mx-auto max-w-md px-4 py-3">
             <Button
               type="button" onClick={doRedeem} disabled={redeemMutation.isPending || !code.trim()}

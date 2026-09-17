@@ -1,4 +1,5 @@
 import React from "react";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 /**
  * §7: Kitchen — where your lunch is cooked, and what stands behind it.
@@ -30,13 +31,11 @@ export function Section07ProofKitchen() {
     // the gold fill — 2.53:1, measured 2026-09-06 — while every span in the
     // same block, carrying text-primary-foreground itself, was correct.
     <section className="bg-primary text-primary-foreground">
-      {/* No ambient kitchen photo here, deliberately. This section's whole
-          claim is that OUR kitchen is auditable — FSSAI, ISO 22000, daily swab
-          checks — and it was illustrated with a random stock kitchen at 10%
-          opacity: a stranger's worktop, behind the sentence promising ours.
-          Nothing beats a real frame from the Noida kitchen; until that shoot
-          happens, no image is the honest state. It also cost every visitor a
-          1920x1080 download to render almost nothing. */}
+      {/* Real frames from the 15 Sep 2026 shoot at Sector 104 (Drive folder
+          "tanmantra final", ads-24 and ads-11), served from public/brand at
+          1200×900 / ~100 KB each. This section's claim is that OUR kitchen is
+          auditable; until this shoot it deliberately carried no image rather
+          than a stock one. Not decorative: `alt` names what is shown. */}
       <div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-16 sm:px-8 sm:py-20 md:grid-cols-[.85fr_1.15fr] md:items-center">
         <div className="animate-rise-in">
           <span className="text-[11px] font-bold uppercase tracking-[.2em] text-primary-foreground/80">
@@ -46,6 +45,24 @@ export function Section07ProofKitchen() {
           <span className="mt-6 inline-block rounded-full border border-primary-foreground/20 px-3 py-1 text-xs font-bold text-primary-foreground">
             Sector 104, Noida
           </span>
+          <div className="mt-8 grid grid-cols-2 gap-3">
+            <figure className="overflow-hidden rounded-2xl">
+              <SafeImage
+                src="/brand/kitchen.jpg"
+                alt="The range and prep counter in the Tanmatra kitchen, Sector 104"
+                className="aspect-[4/3] w-full object-cover"
+              />
+              <figcaption className="mt-2 text-xs text-primary-foreground/70">The kitchen</figcaption>
+            </figure>
+            <figure className="overflow-hidden rounded-2xl">
+              <SafeImage
+                src="/brand/cafe.jpg"
+                alt="Tables and the counter inside the Tanmatra café"
+                className="aspect-[4/3] w-full object-cover"
+              />
+              <figcaption className="mt-2 text-xs text-primary-foreground/70">Or eat in — the café at Sector 104</figcaption>
+            </figure>
+          </div>
         </div>
 
         <div className="grid gap-7 sm:grid-cols-3 animate-rise-in stagger-1">

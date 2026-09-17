@@ -3,6 +3,7 @@ import { isAlaCarteEnabled } from "@workspace/menu-catalog";
 import type { DishForMatch } from "@workspace/preferences-match";
 import { fetchMenu, findDish } from "@/lib/catalog";
 import { DishCard } from "@/components/DishCard";
+import { DishRow } from "@/components/menu/DishRow";
 import type { MenuGridRow } from "@/components/MenuGrid";
 import { PersonalizedMenu } from "@/components/menu/PersonalizedMenu";
 import { DishDrawer } from "@/components/menu/DishDrawer";
@@ -82,11 +83,26 @@ export default async function MenuPage({
   // what disqualifies the claim — narrowing the input here would let a shared
   // pair survive whenever one of the two is not orderable today.
   const sharedMacroKeys = buildSharedMacroKeys(dishes);
-  const rows: MenuGridRow[] = orderable.map((dish) => ({
-    dishId: dish.id,
-    node: <DishCard key={dish.id} dish={dish} sharedMacroKeys={sharedMacroKeys} />,
-    sectionOrder: dish.sectionOrder,
-  }));
+  // T4 (CRO handoff, 17 Sep 2026): ONE photo-led hero card per section — the
+  // first dish in that section's natural sort — and a compact DishRow for
+  // every dish after it. `orderable` is already grouped by sectionOrder, so
+  // "first seen for this section key" is the hero. Dishes with no section
+  // share the trailing "More dishes" bucket and get one hero between them.
+  const heroSeen = new Set<number | undefined>();
+  const rows: MenuGridRow[] = orderable.map((dish) => {
+    const hero = !heroSeen.has(dish.sectionOrder);
+    heroSeen.add(dish.sectionOrder);
+    return {
+      dishId: dish.id,
+      node: hero ? (
+        <DishCard key={dish.id} dish={dish} sharedMacroKeys={sharedMacroKeys} />
+      ) : (
+        <DishRow key={dish.id} dish={dish} sharedMacroKeys={sharedMacroKeys} />
+      ),
+      sectionOrder: dish.sectionOrder,
+      hero,
+    };
+  });
 
   return (
     <div data-ui-generation="stitch-74" data-screen-id="5.2" data-screen-state="default" className="min-h-dvh">

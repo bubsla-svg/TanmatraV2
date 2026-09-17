@@ -34,7 +34,7 @@ export function MenuControls({
   onToggleGoal: (goal: GoalFilter) => void;
 }) {
   const chipCls = (active: boolean) =>
-    `inline-flex min-h-11 shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-3.5 text-xs font-semibold transition-transform active:scale-95 ${
+    `inline-flex min-h-11 shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-3.5 text-xs font-semibold transition-transform active:scale-[0.96] ${
       active ? "border-gold bg-primary/10 text-primary" : "border-transparent bg-secondary text-ink-muted hover:text-ink"
     }`;
 
@@ -59,7 +59,7 @@ export function MenuControls({
         onClick={onOpenFilter}
         data-testid="menu-filter-trigger"
         aria-label={activeFilterCount > 0 ? `Filters (${activeFilterCount} active)` : "Filters"}
-        className="inline-flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-transparent bg-secondary px-3.5 text-xs font-semibold text-ink transition-transform active:scale-95"
+        className="inline-flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-transparent bg-secondary px-3.5 text-xs font-semibold text-ink transition-transform active:scale-[0.96]"
       >
         <svg aria-hidden className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="4" y1="6" x2="20" y2="6" />

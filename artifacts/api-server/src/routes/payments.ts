@@ -7,6 +7,8 @@ import {
   usersTable,
   subscriptionsTable,
   subscriptionDeliveriesTable,
+  subscriptionMandatesTable,
+  preDebitNotificationsTable,
   refundRequestsTable,
   deliveryEventsTable,
   isLiveTrialState,
@@ -15,6 +17,8 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod/v4";
 import { sendOrderConfirmation } from "../lib/orderNotification";
 import { emitServerEvent } from "../lib/serverEvents";
+import { emitPurchase, emitPaymentFailed } from "../lib/purchaseEvents";
+import { createUpiPaymentLink, PaymentLinkError, type PaymentLink } from "../lib/paymentLinks";
 import { commitSubsidyForOrder, releaseSubsidyForOrder } from "../lib/corporateSubsidy";
 import { pushOrderToPetpooja } from "../lib/petpoojaClient";
 import { runPreDebitNotificationsSweep } from "../lib/preDebitScheduler";
@@ -93,6 +97,10 @@ const createRazorpayOrderSchema = z.object({
   receipt: z.string().max(64).optional(),
   orderId: z.string().min(1).max(64),
   subscriptionId: z.number().int().positive().optional(),
+  // T10: the storefront's Magic Checkout arm. Adds `line_items_total` (the
+  // SAME server amount — Magic Checkout refuses an order without it) and a
+  // note naming the arm; changes nothing about what is billed.
+  magic: z.boolean().optional(),
 });
 
 const verifyPaymentSchema = z.object({
@@ -274,7 +282,7 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
     return;
   }
 
-  const { amountPaise: clientAmount, orderId, subscriptionId } = parsed.data;
+  const { amountPaise: clientAmount, orderId, subscriptionId, magic } = parsed.data;
 
   // The gateway order MUST be created for the amount the server computed and
   // stored on the order, never a client-supplied number. Resolve it first.
@@ -361,6 +369,20 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
     }
   }
 
+  // T0 (CRO handoff 2026-09-17): a logged-in customer paying a ONE-OFF order
+  // also gets a Razorpay customer_id on the gateway order. Together with the
+  // sheet's `remember_customer`, that is what lets a returning customer see
+  // their saved card / VPA instead of re-typing it. No `token` block is sent
+  // here, so no mandate is ever minted off this path. Best-effort: a failed
+  // customer lookup must never block taking the money.
+  if (!razorpayCustomerId && order.userId) {
+    try {
+      razorpayCustomerId = await getOrCreateRazorpayCustomer(order.userId, keyId, keySecret, req.log);
+    } catch (err) {
+      req.log.warn({ err, orderId }, "Razorpay customer lookup failed for one-off order — proceeding without customer_id");
+    }
+  }
+
   const rpOrderPayload: Record<string, any> = {
     amount: authoritativePaise,
     currency: "INR",
@@ -368,8 +390,16 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
     payment_capture: 1,
   };
 
-  if (isRecurring && razorpayCustomerId) {
+  if (razorpayCustomerId) {
     rpOrderPayload.customer_id = razorpayCustomerId;
+  }
+
+  if (magic && !subscriptionId) {
+    rpOrderPayload.line_items_total = authoritativePaise;
+    rpOrderPayload.notes = { ...(rpOrderPayload.notes ?? {}), experiment: "magic_checkout:treatment" };
+  }
+
+  if (isRecurring && razorpayCustomerId) {
     rpOrderPayload.token = {
       auth_type: "otp",
       max_amount: MANDATE_MAX_AMOUNT_PAISE,
@@ -480,11 +510,14 @@ router.post("/payments/razorpay/verify", async (req: Request, res: Response) => 
   const [order] = await db
     .select({
       id: ordersTable.id,
+      externalOrderId: ordersTable.externalOrderId,
       status: ordersTable.status,
       razorpayOrderId: ordersTable.razorpayOrderId,
       userId: ordersTable.userId,
       chargePaise: ordersTable.chargePaise,
       totalPaise: ordersTable.totalPaise,
+      acquisitionSrc: ordersTable.acquisitionSrc,
+      funnelSessionId: ordersTable.funnelSessionId,
     })
     .from(ordersTable)
     .where(eq(ordersTable.externalOrderId, orderId))
@@ -538,6 +571,9 @@ router.post("/payments/razorpay/verify", async (req: Request, res: Response) => 
         { charge_paise: order.chargePaise ?? order.totalPaise },
         order.userId,
       );
+      // T2: the canonical conversion, once per order (same fresh-transition
+      // guard). The verify path knows no method — the webhook copy does.
+      void emitPurchase(order, { method: "razorpay", path: "verify" });
     }
 
     // The customer's card has now been debited an amount already NET of the
@@ -650,47 +686,24 @@ router.post("/payments/upi/intent", async (req: Request, res: Response) => {
     );
   }
 
-  const rpRes = await fetch("https://api.razorpay.com/v1/payment_links", {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${razorpayBasicAuth(keyId, keySecret)}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      amount: authoritativePaise,
-      currency: "INR",
-      description: "Tanmatra Order",
-      reference_id: orderId,
-      customer: { contact: phone },
-      options: { checkout: { method: { upi: 1 } } },
-      expire_by: Math.floor(Date.now() / 1000) + 1800,
-    }),
-    signal: AbortSignal.timeout(8000),
-  });
-
-  if (!rpRes.ok) {
-    let body: unknown;
-    try {
-      body = await rpRes.json();
-    } catch {
-      body = await rpRes.text();
-    }
-    req.log.error({ status: rpRes.status, body }, "Razorpay payment link creation failed");
+  let link: PaymentLink;
+  try {
+    link = await createUpiPaymentLink(
+      { externalOrderId: orderId, amountPaise: authoritativePaise, phone, expireInSec: 1800 },
+      { credentials: [keyId, keySecret] },
+    );
+  } catch (err) {
+    const e = err instanceof PaymentLinkError ? err : null;
+    req.log.error({ status: e?.status ?? null, body: e?.body ?? String(err) }, "Razorpay payment link creation failed");
     res.status(502).json({ error: "payment gateway error" });
     return;
   }
 
-  const link = (await rpRes.json()) as {
-    id: string;
-    short_url: string;
-    expire_by: number;
-  };
-
   res.json({
     intentId: link.id,
-    paymentUrl: link.short_url,
+    paymentUrl: link.shortUrl,
     status: "pending",
-    expiresAt: new Date(link.expire_by * 1000).toISOString(),
+    expiresAt: link.expiresAt.toISOString(),
   });
 });
 
@@ -792,8 +805,22 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
     id?: string;
     event?: string;
     payload?: {
-      payment?: { entity?: { order_id?: string; id?: string; amount?: number } };
+      payment?: {
+        entity?: {
+          order_id?: string;
+          id?: string;
+          amount?: number;
+          method?: string;
+          error_code?: string | null;
+          error_description?: string | null;
+          error_reason?: string | null;
+        };
+      };
       payment_link?: { entity?: { id?: string; reference_id?: string; amount?: number; amount_paid?: number; status?: string } };
+      /** order.paid carries the order beside the payment. */
+      order?: { entity?: { id?: string; amount?: number; amount_paid?: number; status?: string } };
+      /** token.* — the UPI Autopay mandate's own lifecycle. */
+      token?: { entity?: { id?: string; customer_id?: string; status?: string } };
       refund?: {
         entity?: {
           id?: string;
@@ -865,8 +892,15 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
   // Process business logic and update inbox status.
   let processError: Error | null = null;
   try {
-    if (eventType === "payment.captured") {
-      const razorpayOrderId = paymentEntity?.order_id ?? "";
+    if (eventType === "payment.captured" || eventType === "order.paid") {
+      // `order.paid` is the SECOND capture signal (Housekeeping, CRO handoff
+      // 2026-09-17): Razorpay fires it per order once a payment on it is
+      // captured, carrying both the order and the payment entity. Handled by
+      // the same guarded placed→preparing transition, so whichever of the two
+      // events lands first promotes the order and the other is a no-op — a
+      // dropped or delayed payment.captured no longer leaves a paid order
+      // sitting in the kitchen queue as "placed".
+      const razorpayOrderId = paymentEntity?.order_id ?? event.payload?.order?.entity?.id ?? "";
       const capturedAmount = paymentEntity?.amount;
       if (razorpayOrderId) {
         const rows = await db
@@ -899,10 +933,15 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
           // cancelled/failed order or downgrade a later state. Capture the
           // payment id (used to issue refunds).
           const razorpayPaymentId = paymentEntity?.id ?? null;
+          // `failed` is payable HERE and only here (T9): the recovery sweep
+          // sends a payment link for an order whose sheet attempt failed, so
+          // a link capture on a failed order is that customer coming back,
+          // not a stray capture. The sheet's own verify path stays
+          // placed-only; a cancelled order stays unpayable everywhere.
           const updated = await db
             .update(ordersTable)
             .set({ status: "preparing", ...(razorpayPaymentId ? { razorpayPaymentId } : {}) })
-            .where(and(eq(ordersTable.id, order.id), eq(ordersTable.status, "placed")))
+            .where(and(eq(ordersTable.id, order.id), inArray(ordersTable.status, ["placed", "failed"])))
             .returning({ id: ordersTable.id });
           // Capture confirmed: the customer paid an amount already net of the
           // company's share, so commit that share. Idempotent, and outside the
@@ -927,6 +966,7 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
               { charge_paise: order.chargePaise ?? order.totalPaise },
               order.userId,
             );
+            void emitPurchase(order, { method: paymentEntity?.method ?? "razorpay", path: "webhook" });
             const fullName = [result.user?.firstName, result.user?.lastName]
               .filter(Boolean)
               .join(" ");
@@ -997,10 +1037,15 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
             { referenceId, capturedAmount, expected, path: "payment_link" }, req.log);
         } else if (order) {
           const razorpayPaymentId = paymentEntity?.id ?? null;
+          // `failed` is payable HERE and only here (T9): the recovery sweep
+          // sends a payment link for an order whose sheet attempt failed, so
+          // a link capture on a failed order is that customer coming back,
+          // not a stray capture. The sheet's own verify path stays
+          // placed-only; a cancelled order stays unpayable everywhere.
           const updated = await db
             .update(ordersTable)
             .set({ status: "preparing", ...(razorpayPaymentId ? { razorpayPaymentId } : {}) })
-            .where(and(eq(ordersTable.id, order.id), eq(ordersTable.status, "placed")))
+            .where(and(eq(ordersTable.id, order.id), inArray(ordersTable.status, ["placed", "failed"])))
             .returning({ id: ordersTable.id });
           // Capture confirmed: the customer paid an amount already net of the
           // company's share, so commit that share. Idempotent, and outside the
@@ -1025,6 +1070,7 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
               { charge_paise: order.chargePaise ?? order.totalPaise },
               order.userId,
             );
+            void emitPurchase(order, { method: paymentEntity?.method ?? "payment_link", path: "payment_link" });
             const fullName = [result.user?.firstName, result.user?.lastName]
               .filter(Boolean)
               .join(" ");
@@ -1039,10 +1085,10 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
                 req.log.error({ err, orderId: order.id }, "webhook: failed to push order to Petpooja");
               });
             }
-          } else if (order.status === "cancelled" || order.status === "failed") {
+          } else if (order.status === "cancelled") {
             req.log.error(
               { referenceId, orderId: order.id, status: order.status },
-              "webhook: payment link capture arrived for a cancelled/failed order — needs refund review",
+              "webhook: payment link capture arrived for a cancelled order — needs refund review",
             );
             await recordCaptureIntegrityHalt(order.id, "order_not_payable",
               { referenceId, orderStatus: order.status, capturedAmount, path: "payment_link" }, req.log);
@@ -1060,8 +1106,24 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
           .update(ordersTable)
           .set({ status: "failed" })
           .where(and(eq(ordersTable.razorpayOrderId, razorpayOrderId), eq(ordersTable.status, "placed")))
-          .returning({ id: ordersTable.id });
+          .returning({
+            id: ordersTable.id,
+            externalOrderId: ordersTable.externalOrderId,
+            userId: ordersTable.userId,
+            chargePaise: ordersTable.chargePaise,
+            totalPaise: ordersTable.totalPaise,
+            acquisitionSrc: ordersTable.acquisitionSrc,
+            funnelSessionId: ordersTable.funnelSessionId,
+          });
         failedOrderIds = failed.map((row) => row.id);
+        // T2: the gateway's own cause, per order that actually flipped.
+        for (const row of failed) {
+          void emitPaymentFailed(row, {
+            method: paymentEntity?.method ?? null,
+            errorCode: paymentEntity?.error_code ?? null,
+            errorReason: paymentEntity?.error_reason ?? paymentEntity?.error_description ?? null,
+          });
+        }
       }
       // Give the employee their corporate budget back, exactly as the cancel
       // path does (routes/orders.ts). A subsidy is reserved when the order is
@@ -1085,6 +1147,39 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
         }
       }
       req.log.warn({ razorpayOrderId }, "webhook: payment failed");
+    } else if (eventType === "token.cancelled" || eventType === "token.paused" || eventType === "token.rejected") {
+      // T3 (CRO handoff 2026-09-17): the customer revoked or paused the UPI
+      // Autopay mandate from their bank app, or the bank rejected it. Until
+      // now only OUR cancel path flipped the mandate row, so a gateway-side
+      // revoke left `subscription_mandates.status = 'active'` with a live
+      // nextChargeAt and the scheduler kept attempting a charge the mandate
+      // could no longer honour (each attempt then counted toward the halt
+      // threshold instead of stopping at once). Same local flip as
+      // cancelAutopayMandate, minus the gateway DELETE (the gateway is the
+      // one telling us), and the subscription goes to `halted` — billing
+      // stops, deliveries stay, and re-authorising through the plan-change
+      // flow reactivates it.
+      const tokenId = event.payload?.token?.entity?.id ?? "";
+      if (tokenId) {
+        const revoked = await db
+          .update(subscriptionMandatesTable)
+          .set({ status: "cancelled", nextChargeAt: null })
+          .where(and(eq(subscriptionMandatesTable.razorpayTokenId, tokenId), eq(subscriptionMandatesTable.status, "active")))
+          .returning({ subscriptionId: subscriptionMandatesTable.subscriptionId });
+        for (const { subscriptionId } of revoked) {
+          await db
+            .delete(preDebitNotificationsTable)
+            .where(and(eq(preDebitNotificationsTable.subscriptionId, subscriptionId), inArray(preDebitNotificationsTable.status, ["pending", "sent"])));
+          const [sub] = await db
+            .update(subscriptionsTable)
+            .set({ status: "halted", updatedAt: new Date() })
+            .where(and(eq(subscriptionsTable.id, subscriptionId), eq(subscriptionsTable.status, "active")))
+            .returning({ userId: subscriptionsTable.userId });
+          void emitServerEvent("mandate_revoked", { subscription_id: subscriptionId, reason: eventType }, sub?.userId ?? null);
+          req.log.warn({ subscriptionId, tokenId, eventType }, "webhook: autopay mandate revoked at the gateway — subscription halted");
+        }
+        if (revoked.length === 0) req.log.info({ tokenId, eventType }, "webhook: token event matched no active mandate");
+      }
     } else if (eventType === "refund.processed" || eventType === "refund.failed") {
       // ─────────────────────────────────────────────────────────────────────
       // The refund lifecycle. Nothing here handled it before, and the console

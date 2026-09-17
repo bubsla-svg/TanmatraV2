@@ -1,5 +1,5 @@
 /**
- * Which marketplace items may the cart drawer offer as an upsell.
+ * What the cart drawer may offer as an upsell ("Recommended add-ons").
  *
  * Pure and DB/DOM-free because every rule here is a way to sell something we
  * cannot deliver. The rail this feeds used to ship its own INVENTED catalog —
@@ -8,7 +8,14 @@
  * a marketplace line) and pointed the customer at the marketplace to buy it —
  * where the product did not exist. A dead-end disguised as a recommendation,
  * priced with numbers no server ever quoted.
+ *
+ * T7 (CRO handoff, 2026-09-17): a cart with a MEAL in it is offered FOOD —
+ * desserts, coolers and quick bites from the café catalog, each cheaper than
+ * the cheapest meal already in the cart. A pantry jar next to a ₹349 pasta
+ * is a category switch, not an add-on; a ₹119 cooler is. Pantry (marketplace)
+ * items are offered only to a cart that holds nothing but pantry items.
  */
+import type { DishData } from "@workspace/menu-catalog";
 import type { MarketplaceItem } from "./marketplaceApi";
 import type { CartLine } from "./cartStore";
 
@@ -37,6 +44,114 @@ export function selectUpsellItems(
     cartLines.filter((l) => l.kind === "marketplace").map((l) => l.dishId),
   );
   return items.filter((it) => it.stockQty > 0 && !inCart.has(it.id)).slice(0, max);
+}
+
+// ---- food add-ons (T7) ------------------------------------------------------
+
+/** The slice of a dish the food recommender reads. `Pick` rather than the
+ *  whole `DishData` so a test can build one without 30 fields, and so the
+ *  function hands back the caller's own (fuller) type. */
+export type UpsellDish = Pick<
+  DishData,
+  "id" | "slug" | "name" | "price" | "category" | "isAvailable" | "sectionOrder"
+>;
+
+/**
+ * "Food" for the rail = the small, cheap, impulse end of the menu — never a
+ * second main. Two signals, because the catalog carries both and neither
+ * alone covers it:
+ *
+ * - `category`: the café additions (2026-09-17) are seeded as `snacks`
+ *   (nachos, wings, corn balls — the quick bites) and `beverages` (coolers,
+ *   fizzes, smoothies).
+ * - `sectionOrder`: the §5 storefront sections 10 "Smoothies & Juices",
+ *   11 "Desserts" and 12 "Sides & Sips". There is no `desserts` category —
+ *   a dessert is a `snacks`/`breakfast` row governed into section 11 — so
+ *   the section is the only way to name one.
+ */
+export const UPSELL_FOOD_CATEGORIES: ReadonlySet<DishData["category"]> = new Set([
+  "snacks",
+  "beverages",
+]);
+export const UPSELL_FOOD_SECTIONS: ReadonlySet<number> = new Set([10, 11, 12]);
+
+export function isUpsellFood(dish: Pick<UpsellDish, "category" | "sectionOrder">): boolean {
+  return (
+    UPSELL_FOOD_CATEGORIES.has(dish.category) ||
+    (dish.sectionOrder !== undefined && UPSELL_FOOD_SECTIONS.has(dish.sectionOrder))
+  );
+}
+
+/** The cheapest MEAL in the cart — dish lines only, unit price (a ₹349 pasta
+ *  at qty 3 is still a ₹349 meal). `null` when the cart holds no dish line. */
+export function cheapestDishLinePaise(cartLines: readonly CartLine[]): number | null {
+  let min: number | null = null;
+  for (const l of cartLines) {
+    if (l.kind !== "dish") continue;
+    if (min === null || l.pricePaise < min) min = l.pricePaise;
+  }
+  return min;
+}
+
+/**
+ * Food add-ons for a cart that holds at least one dish line:
+ *
+ * - food only (`isUpsellFood`), and available;
+ * - not already in the cart — matched on DISH lines only, the same per-kind
+ *   rule as the pantry selector;
+ * - STRICTLY cheaper than the cheapest dish line's unit price. An add-on that
+ *   costs as much as the meal is a second meal.
+ *
+ * Ordered by price ascending (the rail reads left-to-right and the first
+ * card is the one that gets tapped — the cheapest nudge goes first), ties
+ * broken by name then id so the result is deterministic. Capped at `max`.
+ *
+ * A cart with no dish line has no "cheapest meal" to price against and
+ * yields nothing; `selectUpsell` routes that case.
+ */
+export function selectUpsellDishes<D extends UpsellDish>(
+  dishes: readonly D[],
+  cartLines: readonly CartLine[],
+  max: number = UPSELL_MAX,
+): D[] {
+  const ceiling = cheapestDishLinePaise(cartLines);
+  if (ceiling === null) return [];
+  const inCart = new Set(cartLines.filter((l) => l.kind === "dish").map((l) => l.dishId));
+  return dishes
+    .filter((d) => d.isAvailable && isUpsellFood(d) && !inCart.has(d.id) && d.price < ceiling)
+    .sort((a, b) => a.price - b.price || a.name.localeCompare(b.name) || a.id - b.id)
+    .slice(0, max);
+}
+
+export type UpsellSelection<D extends UpsellDish> =
+  | { kind: "dish"; items: D[] }
+  | { kind: "marketplace"; items: MarketplaceItem[] }
+  | { kind: "none"; items: [] };
+
+/**
+ * Which rail a cart gets:
+ *
+ * - any dish line (dish-only or mixed) → food add-ons (`selectUpsellDishes`);
+ * - only marketplace lines → pantry items (`selectUpsellItems`);
+ * - empty cart → nothing. There is no meal to price food against, and a
+ *   pantry rail under "Cart is empty." was selling groceries to someone who
+ *   came for lunch.
+ *
+ * The drawer fetches only the catalog the selected kind needs; an absent
+ * catalog (not loaded yet, or the fetch failed) yields an empty rail.
+ */
+export function selectUpsell<D extends UpsellDish>(input: {
+  dishes: readonly D[] | undefined;
+  marketplaceItems: readonly MarketplaceItem[] | undefined;
+  cartLines: readonly CartLine[];
+  max?: number;
+}): UpsellSelection<D> {
+  const { dishes, marketplaceItems, cartLines, max = UPSELL_MAX } = input;
+  if (cartLines.length === 0) return { kind: "none", items: [] };
+  if (cartLines.some((l) => l.kind === "dish")) {
+    return { kind: "dish", items: selectUpsellDishes(dishes ?? [], cartLines, max) };
+  }
+  return { kind: "marketplace", items: selectUpsellItems(marketplaceItems ?? [], cartLines, max) };
 }
 
 /**

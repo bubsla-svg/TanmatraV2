@@ -146,7 +146,9 @@ test("the cart's checkout button goes through the router, and prefetches", () =>
   // now builds its link through lib/checkoutIntent (see checkoutHosting.test.ts),
   // so what this pins is the <Link> + eager prefetch, not the query string.
   const src = fs.readFileSync(path.join(STOREFRONT, "components/cart/CartDrawer.tsx"), "utf8");
-  assert.match(src, /<Link href=\{checkoutHref\(\{ mode: "alacarte" \}\)\} prefetch>/);
+  // Multi-line since the audit (2026-09-17) gave it a pending state — the
+  // <Link> and the eager prefetch are still what this pins.
+  assert.match(src, /<Link\s+href=\{checkoutHref\(\{ mode: "alacarte" \}\)\}\s+prefetch\b/);
 });
 
 test("no other link opts into eager prefetch without saying why", () => {

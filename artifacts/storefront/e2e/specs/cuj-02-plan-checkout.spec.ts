@@ -5,8 +5,8 @@ import { test, expect } from "@playwright/test";
  * real session (Firebase OTP) + a live Razorpay modal, neither headlessly
  * drivable, so this verifies the IDENTITY GATE: a launchable plan renders the
  * sign-in-first surface (not the flag-dark skeleton, not a dead end).
- * Deployed-only (E2E_LIVE_CHECKOUT=1): the local PR-gate build is flag-dark, so
- * /checkout renders the skeleton CheckoutFlow instead of PlanCheckout there.
+ * Deployed-only (E2E_LIVE_CHECKOUT=1): the local PR-gate build has no live
+ * api-server or Firebase config behind it, so the identity gate cannot send.
  */
 const deployedLive = process.env["E2E_LIVE_CHECKOUT"] === "1" ? test : test.skip;
 

@@ -1,4 +1,9 @@
 # Storefront money-path — live cutover runbook
+> **2026-09-17 (Housekeeping, CRO handoff):** `NEXT_PUBLIC_LIVE_CHECKOUT` / `LIVE_CHECKOUT_ENABLED`
+> no longer exist. Live checkout is hard-coded on; the flag-dark skeleton (`CheckoutFlow`,
+> `CheckoutPay`, `CheckoutIdentity`, `CheckoutAddress`) and `quarantine/` are deleted. The
+> flag references below are historical.
+
 
 **Scope:** what it takes to turn the new storefront's checkout from the buildable
 skeleton (stubs) into a live money path against the existing api-server. Written

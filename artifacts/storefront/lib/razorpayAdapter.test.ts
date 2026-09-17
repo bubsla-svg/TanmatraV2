@@ -97,6 +97,8 @@ test("the modal is configured from the SERVER order, verbatim", () => {
   assert.equal(o.currency, ORDER.currency);
   assert.equal(o.order_id, ORDER.razorpayOrderId);
   assert.equal(o.config, RAZORPAY_DISPLAY_CONFIG);
+  assert.equal(o.remember_customer, true, "returning customers must see their saved instruments");
+  assert.deepEqual(o.retry, { enabled: true, max_count: 3 }, "a failed attempt must retry inside the sheet");
 });
 
 test("prefill carries what the checkout already knows — never re-ask for it", () => {
@@ -303,6 +305,8 @@ test("UPI is ordered first without hiding any other method", () => {
   const { display } = RAZORPAY_DISPLAY_CONFIG;
   assert.deepEqual(display.sequence, ["block.upi"]);
   assert.equal(display.blocks.upi.instruments[0].method, "upi");
+  // Collect is retired by Razorpay on 28 Feb 2026; intent + QR are what stay.
+  assert.deepEqual(display.blocks.upi.instruments[0].flows, ["intent", "qr"]);
 
   // The half that matters most. Without show_default_blocks the sequence
   // becomes an ALLOW-LIST and cards, netbanking and wallets vanish from
@@ -323,4 +327,50 @@ test("the adapter actually passes the ordering to Razorpay", () => {
   // one line that connects the two (the spread inside `new Razorpay(...)`).
   const src = fs.readFileSync(new URL("./razorpayAdapter.ts", import.meta.url), "utf8");
   assert.match(src, /\.\.\.buildRazorpayOptions\(order, opts\)/, "the constructor must spread the built options");
+});
+
+test("a payment.failed emitted by the sheet reaches onPaymentFailed with Razorpay's own code and reason (T2)", async () => {
+  const g = globalThis as Record<string, unknown>;
+  const prevWindow = g.window;
+  const prevDocument = g.document;
+  type FailedCb = (resp: { error?: { code?: string; description?: string; reason?: string; step?: string } }) => void;
+  class FailingRazorpay {
+    private opts: RzpOpts;
+    private failed: FailedCb | null = null;
+    constructor(opts: RzpOpts) {
+      this.opts = opts;
+    }
+    on(event: string, cb: FailedCb): void {
+      if (event === "payment.failed") this.failed = cb;
+    }
+    open(): void {
+      // One failed attempt inside the sheet (retry is on), then the customer
+      // gives up: the failure must be reported BEFORE the dismissal rejects.
+      this.failed?.({ error: { code: "BAD_REQUEST_ERROR", reason: "payment_failed", description: "Declined", step: "payment_authorization" } });
+      this.opts.modal.ondismiss();
+    }
+  }
+  g.document = { getElementById: () => ({}) };
+  g.window = { Razorpay: FailingRazorpay };
+  const failures: Array<{ code: string; reason: string; step?: string }> = [];
+  try {
+    await assert.rejects(
+      createRazorpayAdapter({ contact: "+911", onPaymentFailed: (f) => failures.push(f) }).open(ORDER),
+      (err) => err instanceof RazorpayDismissed,
+    );
+  } finally {
+    g.window = prevWindow;
+    g.document = prevDocument;
+  }
+  assert.deepEqual(failures, [{ code: "BAD_REQUEST_ERROR", reason: "payment_failed", step: "payment_authorization" }]);
+});
+
+test("T10: the Magic Checkout arm adds one_click_checkout with coupons off; control adds nothing", () => {
+  const magic = buildRazorpayOptions(ORDER, { magicCheckout: true }) as Record<string, unknown>;
+  assert.equal(magic.one_click_checkout, true);
+  assert.equal(magic.show_coupons, false);
+  assert.equal(magic.order_id, ORDER.razorpayOrderId, "the server order still drives the sheet");
+  const control = buildRazorpayOptions(ORDER, { magicCheckout: false }) as Record<string, unknown>;
+  assert.equal("one_click_checkout" in control, false);
+  assert.equal("one_click_checkout" in (buildRazorpayOptions(ORDER) as Record<string, unknown>), false);
 });

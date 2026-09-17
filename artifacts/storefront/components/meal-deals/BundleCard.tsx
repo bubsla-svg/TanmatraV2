@@ -11,6 +11,8 @@ import { useCart } from "@/components/cart/CartProvider";
 import { SafeImage } from "@/components/ui/SafeImage";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
+import { emitFunnel } from "@/lib/funnel";
+import { useOutOfZone } from "@/components/onboarding/useOutOfZone";
 
 /**
  * The combo card `/meal-deals` was missing. The page used to render a solid
@@ -26,6 +28,7 @@ import { Drawer, DrawerContent, DrawerTitle, DrawerDescription } from "@/compone
  */
 export function BundleCard({ bundle }: { bundle: MealBundle }) {
   const { cart, setCart, setCartOpen } = useCart();
+  const outOfZone = useOutOfZone(); // T5
   const [open, setOpen] = useState(false);
   const [added, setAdded] = useState(false);
 
@@ -57,6 +60,11 @@ export function BundleCard({ bundle }: { bundle: MealBundle }) {
       );
     }
     setCart(next);
+    // One event per constituent line, same shape as every other add site, so
+    // a bundle add is not invisible in the funnel and not a phantom SKU.
+    for (const dish of bundle.dishes) {
+      emitFunnel("add_to_cart", { dish_id: dish.slug, price_paise: dish.price, source: "bundle" });
+    }
     setAdded(true);
     // Land the customer where the added lines are visible and editable —
     // the same cart drawer every other add flows into.
@@ -133,8 +141,8 @@ export function BundleCard({ bundle }: { bundle: MealBundle }) {
               <span className="text-[10px] font-bold uppercase tracking-[.16em] text-ink-muted">Combo total</span>
               <span className="font-data text-xl font-bold leading-none text-primary">{formatPaise(bundle.totalPaise)}</span>
             </div>
-            <Button type="button" onClick={addCombo} shape="pill" className="px-6 py-3 font-semibold">
-              Add Combo
+            <Button type="button" onClick={addCombo} disabled={outOfZone} shape="pill" className="px-6 py-3 font-semibold">
+              {outOfZone ? "Not in your area" : "Add Combo"}
             </Button>
           </div>
         </DrawerContent>

@@ -61,7 +61,7 @@ export function Disclosure({ items, defaultOpen = null, onOpen, className }: Dis
               aria-expanded={isOpen}
               aria-controls={isOpen ? panelId : undefined}
               onClick={() => toggle(i, item)}
-              className="group flex min-h-12 w-full items-center justify-between gap-4 py-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="group flex min-h-12 w-full items-center justify-between gap-4 py-4 text-left outline-none transition-transform active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-ring"
             >
               <span className="text-sm font-semibold text-ink">{item.summary}</span>
               <svg

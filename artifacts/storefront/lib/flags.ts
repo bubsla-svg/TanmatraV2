@@ -8,14 +8,11 @@
  */
 export const MEALCARD_RAIL_ENABLED = process.env.NEXT_PUBLIC_MEALCARD_RAIL === "1";
 
-/**
- * Live checkout — routes the OTP / create / pay seams at the api-server instead
- * of the skeleton stubs. OFF by default: the live path needs the api-server
- * reachable (CORS + `SESSION_SAMESITE=none`), `FLAG_PLAN_V2=1`, the Firebase
- * phone-auth + Razorpay browser SDKs, and `RAZORPAY_*` secrets — none present in
- * a bare build. See docs/LIVE-CUTOVER.md.
- */
-export const LIVE_CHECKOUT_ENABLED = process.env.NEXT_PUBLIC_LIVE_CHECKOUT === "1";
+// Live checkout is no longer a flag (Housekeeping, CRO handoff 2026-09-17):
+// the storefront has taken real money through AlacarteCheckout / PlanCheckout
+// since the 2026-07-25 cutover, and the flag-dark skeleton (CheckoutFlow /
+// CheckoutPay) it used to fall back to is deleted. A build with no api-server
+// behind it still renders the real forms; only the network calls fail.
 
 /**
  * The /care "by condition" surface — the condition rail, the assessment entry
@@ -41,3 +38,31 @@ export const CARE_BY_CONDITION_ENABLED = process.env.NEXT_PUBLIC_CARE_BY_CONDITI
  * behaviour is identical to before. Restoring the service is this env flip.
  */
 export const RD_SERVICES_ENABLED = process.env.NEXT_PUBLIC_RD_SERVICES === "1";
+
+/**
+ * Plan / trial SUBSCRIPTION checkout — every CTA whose purchase ends at
+ * POST /subscriptions. OFF by default (T1, CRO handoff 2026-09-17): that
+ * route answers 503 in production (PLAN_CHECKOUT_DISABLED), so with the flag
+ * off the storefront routes each of those CTAs to a surface that can take
+ * money instead — the three-lunch trio becomes ordinary à-la-carte cart lines
+ * at menu price (/trial, /start), plan cards open the goal-filtered menu, and
+ * a stale `/checkout?plan=` or `/plan/<id>` link redirects the same way.
+ * Turning plans back on is this env flip; nothing is deleted.
+ *
+ * T3 (2026-09-17): the api-server gate is gone and deploy.yml builds the
+ * storefront with NEXT_PUBLIC_PLAN_CHECKOUT=1, so production runs with plans
+ * ON. Local and PR-gate builds keep the default (off).
+ */
+export const PLAN_CHECKOUT_ENABLED = process.env.NEXT_PUBLIC_PLAN_CHECKOUT === "1";
+
+/**
+ * Magic Checkout 50/50 pilot on à-la-carte (T10, CRO handoff 2026-09-17).
+ * With the flag on, half of sessions (sticky per session — lib/experiments)
+ * open Razorpay's sheet with `one_click_checkout` and the gateway order
+ * carries `line_items_total`; the other half get the standard sheet. Every
+ * checkout funnel event carries `magic_checkout: control|treatment`, and the
+ * server `purchase` event joins on the funnel session id. OFF by default:
+ * Magic Checkout must be enabled on the Razorpay account first, or the
+ * treatment arm silently gets the standard sheet and the test reads null.
+ */
+export const MAGIC_CHECKOUT_PILOT_ENABLED = process.env.NEXT_PUBLIC_MAGIC_CHECKOUT_PILOT === "1";

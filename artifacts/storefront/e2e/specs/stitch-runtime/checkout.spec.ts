@@ -7,11 +7,11 @@ import { marker, evidenceShot } from "./support";
  * 8.3, 14.6, 14.7). Same gating philosophy as cuj-02/cuj-04:
  *
  * 8.1  runs everywhere — /checkout?plan=… hosts the quote-active marker on
- *      every branch (live PlanCheckout, flag-dark CheckoutFlow), so the test
+ *      every branch, so the test
  *      accepts either surface's honest heading, exactly like cuj-06's .or().
  *
- * 14.6/14.7 need the LIVE PlanCheckout (NEXT_PUBLIC_LIVE_CHECKOUT=1 build +
- *      Firebase config shipped) — the same E2E_LIVE_CHECKOUT=1 targets cuj-02
+ * 14.6/14.7 need the LIVE PlanCheckout (plan checkout on + Firebase config
+ *      shipped) — the same E2E_LIVE_CHECKOUT=1 targets cuj-02
  *      runs against. There the seams are all BROWSER calls, so the network
  *      edge is stubbed with page.route (session probe /api/auth/user auto-
  *      passes the identity gate; quote/create/pay-order return fixtures;
@@ -29,6 +29,11 @@ import { marker, evidenceShot } from "./support";
  */
 
 const deployedLive = process.env["E2E_LIVE_CHECKOUT"] === "1" ? test : test.skip;
+// T1 dead-funnel containment: with NEXT_PUBLIC_PLAN_CHECKOUT unset at build,
+// `/checkout?plan=` redirects to a surface that can take money (middleware +
+// checkout/page.tsx), so the plan-checkout screens below are unreachable by
+// design, not broken. The flag-on build restores them.
+const plansLive = process.env["NEXT_PUBLIC_PLAN_CHECKOUT"] === "1" ? test : test.skip;
 const SEEDED_ORDER_ID = process.env["E2E_SEEDED_ORDER_ID"] ?? "";
 const seededOrder = SEEDED_ORDER_ID ? test : test.skip;
 
@@ -106,7 +111,7 @@ async function fillPlanDetailsAndPay(page: Page): Promise<void> {
 }
 
 test.describe("stitch-runtime · checkout", () => {
-  test("8.1 checkout quote-active is wired", async ({ page }) => {
+  plansLive("8.1 checkout quote-active is wired", async ({ page }) => {
     const errors = collectErrors(page);
     // Reached the way cuj-02 reaches it: a launchable plan seeded via ?plan=.
     await page.goto("/checkout?plan=desk_fuel");

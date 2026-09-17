@@ -242,6 +242,27 @@
     from { opacity: 0; }
     to { opacity: 1; }
   }
+  /* Bottom-band entrances (audit 2026-09-17): the mini-cart pill and the
+     removed-line toast slide up 150ms instead of appearing; the pill's count
+     bumps on change so an add has a visible acknowledgement beyond the
+     button morph. Both collapse under the reduced-motion block below. */
+  --animate-bar-in: bar-in 150ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-count-bump: count-bump 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  @keyframes bar-in {
+    from {
+      opacity: 0;
+      translate: 0 12px;
+    }
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+  @keyframes count-bump {
+    0% { scale: 1; }
+    40% { scale: 1.35; }
+    100% { scale: 1; }
+  }
   @keyframes sheet-in {
     from { transform: translateY(100%); }
     to { transform: translateY(0); }
@@ -361,8 +382,12 @@ textarea:focus-visible,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    /* .stagger-* keeps 70–280ms delays; with fill-mode both that left
+       rise-in content invisible for the delay, then popping. */
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
     scroll-behavior: auto !important;
   }
 }

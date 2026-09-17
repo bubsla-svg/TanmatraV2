@@ -51,7 +51,7 @@ export function LegalArticle({ doc }: { doc: LegalDoc }) {
               <li key={s.heading}>
                 <a
                   href={`#${sectionId(i)}`}
-                  className="-my-0.5 flex items-baseline gap-2 py-1 text-sm text-ink-muted hover:text-primary"
+                  className="flex min-h-11 items-center gap-2 py-1 text-sm text-ink-muted hover:text-primary"
                 >
                   <span className="font-data shrink-0 text-xs text-ink-faint">
                     {String(i + 1).padStart(2, "0")}

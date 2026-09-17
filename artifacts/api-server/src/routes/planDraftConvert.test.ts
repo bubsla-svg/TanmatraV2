@@ -89,9 +89,6 @@ before(async () => {
   ]) {
     process.env[k] = "100000";
   }
-  // Origination is behind the owner containment gate; these tests exercise the
-  // path behind it, and one test asserts the gate itself still refuses.
-  delete process.env["PLAN_CHECKOUT_DISABLED"];
   server = http.createServer(makeApp());
   await new Promise<void>((resolve) => server.listen(0, resolve));
   baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
@@ -878,29 +875,3 @@ test("conversion requires an Idempotency-Key", async () => {
   await assertNothingCreated(q.user.id, "no key");
 });
 
-test("PLAN_CHECKOUT_DISABLED refuses origination and creates nothing", async () => {
-  const slotId = await makeSlot(21, 5, 7);
-  const q = await quotedDraft(slotId);
-  await makeQuoteFree(q.quoteId);
-
-  process.env["PLAN_CHECKOUT_DISABLED"] = "1";
-  try {
-    const res = await call(`/plan-drafts/${q.draftId}/convert`, {
-      method: "POST",
-      user: q.user,
-      cookie: q.cookie,
-      idempotencyKey: `gated-${randomUUID()}`,
-      body: { quoteId: q.quoteId, settlement: { kind: "zero_charge" } },
-    });
-    assert.equal(res.status, 503, JSON.stringify(res.json));
-    assert.equal(res.json.code, "PLAN_CHECKOUT_TEMPORARILY_UNAVAILABLE");
-    await assertNothingCreated(q.user.id, "gated");
-    const [quote] = await db
-      .select()
-      .from(planDraftQuotesTable)
-      .where(eq(planDraftQuotesTable.id, q.quoteId));
-    assert.equal(quote!.status, "active", "a gated attempt must not spend the quote");
-  } finally {
-    delete process.env["PLAN_CHECKOUT_DISABLED"];
-  }
-});

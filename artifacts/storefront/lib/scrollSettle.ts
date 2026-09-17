@@ -40,3 +40,37 @@ export function beginLayoutSettle(ms: number): void {
 export function isLayoutSettling(): boolean {
   return performance.now() < settlingUntil;
 }
+
+/**
+ * A second, sharper signal for the other kind of layout change: in-flow
+ * content that mounts or unmounts ABOVE the reader's anchor, which the engine
+ * compensates with one anchoring scroll of exactly that content's height.
+ * A settle window would work here too, but it swallows every scroll for its
+ * whole duration — including the reader's real gesture in the same instant,
+ * which is precisely what happens when a first-visit banner mounts right
+ * after hydration on a page the reader has already started scrolling.
+ *
+ * So the declaration carries the magnitude: a direction detector that sees
+ * a delta matching it (either sign — mount pushes down, unmount pulls up)
+ * within the window treats that one event as the engine's correction and
+ * rebases; a delta that does not match is the reader and is handled as
+ * usual. Kept per-document at module scope for the same reason the settle
+ * window is.
+ */
+let shiftPx = 0;
+let shiftUntil = 0;
+
+/** Declare that in-flow content of `px` height just entered or left the
+ *  flow above the viewport's anchor. `px` ≤ 0 declares nothing. */
+export function declareAnchoringShift(px: number, ms = 300): void {
+  if (!(px > 0)) return;
+  shiftPx = px;
+  shiftUntil = performance.now() + ms;
+}
+
+/** True when `delta` (a scrollY difference) is the declared anchoring
+ *  correction rather than a gesture. `tolerance` absorbs sub-pixel rounding. */
+export function isAnchoringShift(delta: number, tolerance: number): boolean {
+  if (shiftPx <= 0 || performance.now() >= shiftUntil) return false;
+  return Math.abs(Math.abs(delta) - shiftPx) <= tolerance;
+}

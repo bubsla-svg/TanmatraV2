@@ -10,6 +10,8 @@ import { addLine, itemCount, qtyOf, setQty, subtotalPaise } from "@/lib/cartStor
 import { QuantityStepper } from "@/components/primitives/QuantityStepper";
 import { useCart } from "@/components/cart/CartProvider";
 import { AddToCart } from "@/components/cart/AddToCart";
+import { useOutOfZone } from "@/components/onboarding/useOutOfZone";
+import { emitFunnel } from "@/lib/funnel";
 
 // Same on-demand load as MiniCartBar's host: the drawer pulls in Vaul, and
 // most PDP visits never open it.
@@ -57,6 +59,7 @@ function PdpBuyLedgerResolved({ dish }: { dish: Dish }) {
 
 function LocalLedger({ dish }: { dish: Dish }) {
   const { cart, setCart, hydrated } = useCart();
+  const outOfZone = useOutOfZone(); // T5: no cart for a PIN we do not serve
   const [drawerOpen, setDrawerOpen] = useState(false);
   const qty = qtyOf(cart, dish.id, "dish");
   const count = itemCount(cart);
@@ -105,6 +108,8 @@ function LocalLedger({ dish }: { dish: Dish }) {
             type="button"
             shape="pill"
             size="fluid"
+            disabled={outOfZone}
+            aria-label={outOfZone ? "Not in your area yet — we don't deliver to your PIN code" : undefined}
             className="min-h-11 flex-1 px-6 py-3 font-semibold"
             onClick={() => {
               setCart(
@@ -127,20 +132,24 @@ function LocalLedger({ dish }: { dish: Dish }) {
                   { isAvailable: dish.isAvailable },
                 ),
               );
+              emitFunnel("add_to_cart", { dish_id: dish.slug, price_paise: dish.price, source: "pdp" });
               setDrawerOpen(true);
             }}
           >
-            Add to cart
+            {outOfZone ? "Not in your area" : "Add to cart"}
           </Button>
         ) : (
           <Button
             type="button"
             shape="pill"
             size="fluid"
-            className="min-h-11 flex-1 px-6 py-3 font-semibold"
+            // min-w-0 + truncate: at 390px the stepper, the price column and a
+            // long label overflowed the bar sideways (the count is redundant
+            // with the stepper beside it, so it is dropped rather than clipped).
+            className="min-h-11 min-w-0 flex-1 truncate px-5 py-3 font-semibold"
             onClick={() => setDrawerOpen(true)}
           >
-            View cart · {count} {count === 1 ? "item" : "items"} · {formatPaise(subtotalPaise(cart))}
+            View cart · {formatPaise(subtotalPaise(cart))}
           </Button>
         )}
       </div>

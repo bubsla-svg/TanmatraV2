@@ -71,7 +71,25 @@ function loadCheckoutScript(): Promise<void> {
 }
 
 interface RazorpayCtor {
-  new (opts: unknown): { open(): void };
+  new (opts: unknown): {
+    open(): void;
+    /** checkout.js emits `payment.failed` for each failed attempt while the
+     *  sheet stays open (retry is on) — the only place the gateway's own
+     *  error code is visible before the webhook. */
+    on?(event: "payment.failed", cb: (resp: RazorpayFailedResponse) => void): void;
+  };
+}
+
+/** checkout.js's `payment.failed` payload, the parts the funnel records. */
+export interface RazorpayFailedResponse {
+  error?: {
+    code?: string;
+    description?: string;
+    source?: string;
+    step?: string;
+    reason?: string;
+    metadata?: { order_id?: string; payment_id?: string };
+  };
 }
 
 /**
@@ -93,7 +111,9 @@ interface RazorpayCtor {
 export const RAZORPAY_DISPLAY_CONFIG = {
   display: {
     blocks: {
-      upi: { name: "Pay by UPI", instruments: [{ method: "upi" }] },
+      // Intent + QR only: Razorpay retires UPI Collect on 28 Feb 2026, and
+      // collect was the flow that stalled at "enter your VPA" on this sheet.
+      upi: { name: "Pay by UPI", instruments: [{ method: "upi", flows: ["intent", "qr"] }] },
     },
     sequence: ["block.upi"],
     preferences: { show_default_blocks: true },
@@ -105,6 +125,15 @@ export interface RazorpayAdapterOpts {
   description?: string;
   contact?: string;
   email?: string;
+  /** T2: a failed attempt INSIDE the sheet (the customer may still retry).
+   *  Carries Razorpay's own error code / reason, so `payment_failed` groups
+   *  by the gateway's cause rather than "dismissed". */
+  onPaymentFailed?: (failure: { code: string; reason: string; step?: string; source?: string }) => void;
+  /** T10 pilot arm: open Razorpay Magic Checkout (`one_click_checkout`)
+   *  instead of the standard sheet. Coupons stay off — the server owns every
+   *  discount. The gateway order must carry `line_items_total` (api-server
+   *  adds it when the order-create call says `magic: true`). */
+  magicCheckout?: boolean;
 }
 
 /**
@@ -137,8 +166,15 @@ export function buildRazorpayOptions(
     prefill: { contact: opts?.contact ?? "", email: opts?.email ?? "" },
     theme: { color: ACCENT_GOLD_LIGHT },
     send_sms_hash: true,
+    // A returning customer gets their saved card / VPA offered inside the
+    // sheet instead of re-typing it; tokens live with Razorpay, never here.
+    remember_customer: true,
+    // A failed attempt stays in the sheet with a retry instead of closing it
+    // and sending the customer back to the checkout page to start over.
+    retry: { enabled: true, max_count: 3 },
     // UPI first, every other method still present — see the constant.
     config: RAZORPAY_DISPLAY_CONFIG,
+    ...(opts?.magicCheckout ? { one_click_checkout: true, show_coupons: false } : {}),
   } as const;
 }
 
@@ -167,6 +203,17 @@ export function createRazorpayAdapter(opts?: RazorpayAdapterOpts): RazorpayAdapt
           // exactly as before (RazorpayDismissed, before verify).
           modal: { ondismiss: () => reject(new RazorpayDismissed()), confirm_close: true },
         });
+        if (opts?.onPaymentFailed && typeof rzp.on === "function") {
+          rzp.on("payment.failed", (resp) => {
+            const e = resp?.error ?? {};
+            opts.onPaymentFailed?.({
+              code: e.code || "unknown",
+              reason: e.reason || e.description || "unknown",
+              ...(e.step ? { step: e.step } : {}),
+              ...(e.source ? { source: e.source } : {}),
+            });
+          });
+        }
         rzp.open();
       });
     },

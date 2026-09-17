@@ -83,9 +83,11 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
 
 
   return (
-    // pb-32 (128px), not pb-24: the sticky ledger card measures ~90px plus
-    // its 16px mask band, so 96px left the last content row sitting under
-    // it. Clearance is the card's real height, not a round number.
+    // No bottom clearance: the ledger below is `sticky`, not `fixed` — it is
+    // the last flow child, so at the end of the page it sits after the
+    // content, never over it. The old pb-32 was clearance for a fixed bar
+    // that no longer exists and rendered as ~130px of dead space under the
+    // ledger on every dish page.
     //
     // The data-screen-* attributes are load-bearing, not decoration: the
     // Stitch runtime suite asserts this exact marker to prove screen 5.5 is
@@ -96,7 +98,7 @@ export default async function DishPage({ params }: { params: Promise<{ slug: str
       data-ui-generation="stitch-74"
       data-screen-id="5.5"
       data-screen-state="default"
-      className="flex min-h-dvh flex-col bg-bg pb-32"
+      className="flex min-h-dvh flex-col bg-bg"
     >
       <ViewDishBeacon dishSlug={dish.slug} hasPlanOption={planOffer !== null} />
       <div className="relative aspect-square w-full overflow-hidden md:aspect-video">

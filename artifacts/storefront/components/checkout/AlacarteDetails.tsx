@@ -7,10 +7,10 @@ import type { DishData } from "@workspace/menu-catalog";
 import { Field } from "@astryxdesign/core/Field";
 import { formatPaise } from "@/lib/format";
 import { subtotalPaise, type CartState } from "@/lib/cartStore";
-import { DPDP_CONSENT_COPY, DPDP_SCOPE_NOTE } from "@/lib/consent";
+import { useCheckoutSteps } from "./useCheckoutSteps";
 import { apiGet } from "@/lib/apiClient";
 import { flagCartAllergens } from "@/lib/allergenAck";
-import { carriedPincode } from "@/lib/serviceabilityApi";
+import { carriedPincode, cityForPincode } from "@/lib/serviceabilityApi";
 import { readAddressDraft, seedAddressFields } from "@/lib/addressSeed";
 import { fetchDeliverySlots } from "@/lib/deliverySlotsApi";
 import { isSlotBookable, slotSummary, type DeliverySlot } from "@/lib/deliverySlots";
@@ -18,6 +18,7 @@ import type { QuoteSnapshot } from "@/lib/quoteApi";
 import type { QuoteUiState } from "./AlacarteCheckout";
 import { ADDRESS_DRAFT_KEY } from "./AlacarteCheckout";
 import { AllergenAckControl } from "./AllergenAckControl";
+import { ConsentControl } from "./ConsentControl";
 import { AlacarteOrderSummary } from "./AlacarteOrderSummary";
 import { AlacartePayBar } from "./AlacartePayBar";
 import { DeliverySlotPicker } from "./DeliverySlotPicker";
@@ -108,7 +109,6 @@ export function AlacarteDetails({
   useEffect(() => {
     if (!busy) submitLockRef.current = false;
   }, [busy]);
-
   const menuQuery = useQuery({
     queryKey: ["menu", "public"],
     queryFn: () => apiGet<{ dishes: DishData[] }>("/menu/public"),
@@ -146,7 +146,7 @@ export function AlacarteDetails({
     carriedPinRef.current = carried;
     const next = seedAddressFields({ line1, city, pincode }, readAddressDraft(ADDRESS_DRAFT_KEY), carried);
     setLine1(next.line1);
-    setCity(next.city);
+    setCity(next.city || (next.pincode ? (cityForPincode(next.pincode) ?? "") : "")); // T5: city from the PIN (Law 4)
     if (next.pincode !== pincode) {
       setPincode(next.pincode);
       onPincodeChange(next.pincode);
@@ -210,6 +210,13 @@ export function AlacarteDetails({
                         ? { reason: "Accept the order-processing consent to continue", field: consentRef }
                         : null;
   const valid = blocker === null;
+
+  useCheckoutSteps({
+    phone: phoneValid,
+    slot: slotRequired ? slot !== null : false,
+    address: line1Valid && cityValid && pinValid,
+    consent,
+  });
   // T-09: the CTA stays tappable whenever the fix is a field the customer
   // can reach — a tap then takes them to it. Only server-side states disable it.
   const ctaEnabled = valid || blocker.field !== null;
@@ -285,7 +292,7 @@ export function AlacarteDetails({
       <Field label="Flat / house · street" inputID="alc-line1">
         <input
           ref={line1Ref}
-          id="alc-line1" name="street-address" autoComplete="street-address" autoCapitalize="words" autoCorrect="off" spellCheck={false} enterKeyHint="next"
+          id="alc-line1" name="address-line1" autoComplete="address-line1" autoCapitalize="words" autoCorrect="off" spellCheck={false} enterKeyHint="next"
           value={line1} onChange={(e) => setLine1(e.target.value)} placeholder="Flat 3B, Sector 62"
           aria-invalid={attempted && !line1Valid} aria-describedby={attempted && !line1Valid ? "alc-line1-err" : undefined} required className={inputCls}
         />
@@ -329,23 +336,10 @@ export function AlacarteDetails({
         </p>
       )}
 
-      {/* Consent block — T-10: a 48px row where the whole label toggles and
-          the box is 24px. DPDP first; the allergen ack beside it when the
-          cart needs one. */}
+      {/* Consent block — T-10 row sizing; T6 one line + disclosure (ConsentControl).
+          DPDP first; the allergen ack beside it when the cart needs one. */}
       <div className="flex flex-col gap-3">
-        <label className="flex min-h-12 w-full cursor-pointer items-start gap-3 rounded-2xl border border-line bg-surface p-3 text-sm text-ink-muted">
-          <input
-            ref={consentRef}
-            type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)}
-            aria-invalid={attempted && !consent} aria-describedby={attempted && !consent ? "alc-consent-err" : undefined}
-            className="mt-0.5 size-6 shrink-0 cursor-pointer accent-[var(--gold)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]"
-          />
-          <span>
-            {DPDP_CONSENT_COPY}
-            <span className="mt-1 block text-xs text-ink-faint">{DPDP_SCOPE_NOTE}</span>
-            {attempted && !consent && <span id="alc-consent-err" role="alert" className={errCls}>Tick this to continue — we can&rsquo;t cook without it.</span>}
-          </span>
-        </label>
+        <ConsentControl checked={consent} onCheckedChange={setConsent} invalid={attempted && !consent} inputRef={consentRef} errorClassName={errCls} />
 
         {allergenAckRequired && (
           <AllergenAckControl

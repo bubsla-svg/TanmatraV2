@@ -17,7 +17,7 @@ import { fetchQuote, quoteIsFresh, type QuoteSnapshot } from "@/lib/quoteApi";
 // why, and what to do next — never the raw server string) plus the
 // retryable/deterministic split that keeps "Retry pricing" honest.
 import { humanizeOrderError, isRetryableQuoteError } from "@/lib/orderErrors";
-import { emitFunnel, funnelErrorCode } from "@/lib/funnel";
+import { emitFunnel, funnelErrorCode, inSheetFailureEmitter } from "@/lib/funnel";
 import { createRazorpayAdapter, RazorpayDismissed } from "@/lib/razorpayAdapter";
 import {
   getAddresses,
@@ -27,6 +27,7 @@ import {
   type AuthUser,
 } from "@/lib/api";
 import { DPDP_POLICY_VERSION } from "@/lib/consent";
+import { useMagicCheckoutArm } from "./useMagicCheckoutArm";
 import { PhoneAuth } from "./PhoneAuth";
 import { AlacarteDetails, type AlacarteAddress, type AlacarteExtras } from "./AlacarteDetails";
 import { UnresolvedPaymentPanel } from "./UnresolvedPaymentPanel";
@@ -88,7 +89,7 @@ export function AlacarteCheckout() {
   // events below. Ref-guarded so a re-quote (stepper tap, PIN change) does not
   // report a second checkout.
   const beganRef = useRef(false);
-
+  const { magic, props: expProps } = useMagicCheckoutArm(); // T10
   const loadQuote = useCallback(() => {
     if (dishLines.length === 0) return;
     const seq = ++quoteSeq.current;
@@ -137,6 +138,7 @@ export function AlacarteCheckout() {
       total_paise: quote.payableNowPaise,
       item_count: itemCount(dishCart),
       has_plan: false,
+      ...expProps,
     });
     // dishCart is derived per render; the ref is what makes this fire once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -197,7 +199,6 @@ export function AlacarteCheckout() {
       })
       .catch(() => {});
   }
-
   async function handlePay(address: AlacarteAddress, allergenAck: boolean | undefined, extras: AlacarteExtras = {}) {
     if (dishLines.length === 0) return; // defense-in-depth; the button is also gated
     setError(null);
@@ -207,18 +208,17 @@ export function AlacarteCheckout() {
     // rendered, so the funnel and the receipt cannot disagree. Omitted rather
     // than zero-filled when no quote has landed — a 0 here would read as a
     // free order in the scoreboard.
-    const totalProps: Record<string, number> = quote ? { total_paise: quote.payableNowPaise } : {};
+    const totalProps: Record<string, number | string> = { ...expProps, ...(quote ? { total_paise: quote.payableNowPaise } : {}) };
+    emitFunnel("checkout_step", { step: "pay", ...totalProps }); // T2
     emitFunnel("payment_opened", { method: "razorpay", ...totalProps });
+    const onPaymentFailed = inSheetFailureEmitter({ has_plan: false, ...expProps }); // T2: in-sheet failures, gateway's cause
+    const razorpay = createRazorpayAdapter({ contact, onPaymentFailed, magicCheckout: magic });
+    const payOpts = { onVerifying: () => setVerifying(true), onCaptured: (facts: PaidFacts) => { paidFactsRef.current = facts; }, magic };
     try {
       let result;
       if (createdOrder.current) {
         // A prior attempt already created this order — pay it, don't re-create.
-        result = await finishAlacartePayment(createdOrder.current, createRazorpayAdapter({ contact }), undefined, {
-          onVerifying: () => setVerifying(true),
-          onCaptured: (facts) => {
-            paidFactsRef.current = facts;
-          },
-        });
+        result = await finishAlacartePayment(createdOrder.current, razorpay, undefined, payOpts);
       } else {
         if (!idempotencyKey.current) idempotencyKey.current = `alc-${crypto.randomUUID()}`;
         const order: AlacarteOrderInput = {
@@ -244,17 +244,7 @@ export function AlacarteCheckout() {
           ...(extras.deliverySlotId ? { deliverySlotId: extras.deliverySlotId } : {}),
           ...(extras.deliveryInstructions ? { deliveryInstructions: extras.deliveryInstructions } : {}),
         };
-        result = await runAlacarteCheckout({
-          order,
-          razorpay: createRazorpayAdapter({ contact }),
-          onCreated: (o) => {
-            createdOrder.current = o;
-          },
-          onVerifying: () => setVerifying(true),
-          onCaptured: (facts) => {
-            paidFactsRef.current = facts;
-          },
-        });
+        result = await runAlacarteCheckout({ order, razorpay, onCreated: (o) => { createdOrder.current = o; }, ...payOpts });
       }
       emitFunnel("checkout_complete", {
         order_id: result.orderId,
@@ -284,6 +274,7 @@ export function AlacarteCheckout() {
       emitFunnel("payment_failed", {
         error_code: e instanceof RazorpayDismissed ? "dismissed" : funnelErrorCode(e),
         has_plan: false,
+        ...expProps,
       });
       if (e instanceof RazorpayDismissed) {
         setError("Payment cancelled — you haven't been charged. Tap Continue to try again.");

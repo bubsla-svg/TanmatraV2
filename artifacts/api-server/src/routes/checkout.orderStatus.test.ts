@@ -80,6 +80,8 @@ test("on-demand order: unchanged 25-minute countdown, no schedule fields", async
   const body = (await res.json()) as any;
   assert.equal(res.status, 200);
   assert.equal(body.timing, "on_demand");
+  // T8: the order's own meal lines ride along for "Order this again".
+  assert.deepEqual(body.items, [{ id: 1, name: "Test dish", qty: 1, price: 50000 }]);
   assert.equal(typeof body.etaMinutes, "number");
   assert.ok(body.etaMinutes <= 25 && body.etaMinutes >= 0, `etaMinutes out of range: ${body.etaMinutes}`);
   assert.equal(body.scheduledFor, null);

@@ -101,13 +101,12 @@ test("carriedPincode is server-safe", () => {
   assert.equal(carriedPincode(), "");
 });
 
-test("both checkout address forms read the carried PIN", () => {
+test("the checkout address form reads the carried PIN", () => {
   // The defect was a form seeding its PIN with "" and never consulting the
   // stored answer — invisible to the type-checker, since "" is a valid seed.
-  const forms = [
-    path.join("checkout", "AlacarteDetails.tsx"),
-    path.join("checkout", "CheckoutAddress.tsx"),
-  ];
+  // (The legacy skeleton's CheckoutAddress was the second form; deleted
+  // 2026-09-17 with the flag-dark checkout.)
+  const forms = [path.join("checkout", "AlacarteDetails.tsx")];
   for (const rel of forms) {
     const src = fs.readFileSync(path.join(COMPONENTS, rel), "utf8");
     assert.match(src, /carriedPincode\(\)/, `${rel} must consult the carried PIN`);

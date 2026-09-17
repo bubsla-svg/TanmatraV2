@@ -11,6 +11,8 @@ import { useCart } from "@/components/cart/CartProvider";
 import { ApiError } from "@/lib/apiClient";
 import { addItem } from "@/lib/groupOrdersApi";
 import { QuantityStepper } from "@/components/primitives/QuantityStepper";
+import { emitFunnel } from "@/lib/funnel";
+import { useOutOfZone } from "@/components/onboarding/useOutOfZone";
 
 // `isAvailable` is optional here (unlike DishData, where it's required): most
 // call sites hand this component a full DishData and get it for free, but a
@@ -41,6 +43,10 @@ export function AddToCart({ dish }: { dish: Dish }) {
 
 function AddToCartResolved({ dish }: { dish: Dish }) {
   const group = useSearchParams().get("group");
+  // T5: a customer whose PIN we have checked and do not serve cannot build a
+  // cart that checkout would only refuse — the button says so instead.
+  const outOfZone = useOutOfZone();
+  if (outOfZone) return <OutOfZoneAdd />;
   // D-19: a paused dish is refused before either destination — the shared
   // group order (server-resolved) and the local cart both get the same
   // "Back soon" state, since adding to a group order the host can't
@@ -48,6 +54,20 @@ function AddToCartResolved({ dish }: { dish: Dish }) {
   if (dish.isAvailable === false) return <UnavailableAdd />;
   if (group && GROUP_CODE.test(group)) return <GroupAdd code={group} dish={dish} />;
   return <CartAdd dish={dish} />;
+}
+
+/** T5: the out-of-zone face — disabled, labelled, same footprint as Add. */
+function OutOfZoneAdd() {
+  return (
+    <button
+      type="button"
+      disabled
+      aria-label="Not in your area yet — we don't deliver to your PIN code"
+      className="min-h-11 rounded-lg border border-line-strong bg-surface px-3 py-2 text-xs font-semibold text-ink-muted opacity-70"
+    >
+      Not in your area
+    </button>
+  );
 }
 
 /** D-19: the "Back soon" face — disabled, labeled, same footprint as Add so
@@ -149,6 +169,7 @@ function CartAdd({ dish }: { dish: Dish }) {
           // unavailable dish — this is cartStore's own backstop (D-19),
           // never the primary gate.
           setCart(addLine(cart, line, { isAvailable: dish.isAvailable }));
+          emitFunnel("add_to_cart", { dish_id: dish.slug, price_paise: line.pricePaise });
         }}
         className="min-h-11 rounded-lg border border-gold bg-surface px-5 py-2 text-sm font-bold text-gold-text transition-transform active:scale-[0.98]"
       >

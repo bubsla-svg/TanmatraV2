@@ -19,6 +19,7 @@ import {
 import { emitDeliveryEvent } from "../../realtime";
 import { dispatchOrder, overrideAssignment } from "../../dispatch";
 import { ackAlert, listAlerts, snoozeAlert } from "../../anomalies";
+import { issueRazorpayRefund } from "../../refundGateway";
 
 const REFUND_CONFIRM_THRESHOLD_PAISE = 50_000;
 const ALLOWED_ORDER_STATUSES = [
@@ -403,9 +404,44 @@ const refundOrder = defineTool({
       };
     }
 
-    // The actual payment-gateway refund is delegated to the existing
-    // payments service in production. For now we record the refund
-    // intent against the order + audit log. Status moves to "refunded".
+    // The gateway refund itself (Housekeeping, CRO handoff 2026-09-17 — this
+    // used to record `refund_issued` and mark the order refunded WITHOUT ever
+    // calling Razorpay, so an operator saw "refunded" while the customer got
+    // nothing). Same helper, same idempotency discipline as the finance
+    // console. Without gateway credentials: in production, refuse and point
+    // at the console; elsewhere (dev/CI) record a `mock: true` intent so the
+    // tool remains exercisable, exactly as WhatsApp/SMS mock without Twilio.
+    const keyId = process.env["RAZORPAY_KEY_ID"];
+    const keySecret = process.env["RAZORPAY_KEY_SECRET"];
+    let gateway: { razorpayRefundId: string | null; gatewayStatus: string | null; mock: boolean };
+    if (keyId && keySecret) {
+      if (!order.razorpayPaymentId) {
+        return { success: false as const, error: `Order #${orderId} has no captured Razorpay payment to refund against. Issue this refund through the refunds console instead.` };
+      }
+      const issued = await issueRazorpayRefund(
+        {
+          razorpayPaymentId: order.razorpayPaymentId,
+          amountPaise,
+          idempotencyKey: `refund-ops-${orderId}-${amountPaise}-${remainingPaise}`,
+          notes: { orderId: order.externalOrderId ?? "", opsOperatorId: ctx.userId ?? "ops-agent" },
+        },
+        [keyId, keySecret],
+      );
+      if (!issued.ok) {
+        return {
+          success: false as const,
+          error: issued.kind === "gateway_error"
+            ? `Razorpay refused the refund (HTTP ${issued.status}). Nothing was recorded; retry or use the refunds console.`
+            : "Razorpay could not be reached. Nothing was recorded; retry in a moment.",
+        };
+      }
+      gateway = { razorpayRefundId: issued.refundId, gatewayStatus: issued.status, mock: false };
+    } else if ((process.env["NODE_ENV"] ?? "development") === "production") {
+      return { success: false as const, error: "Payment gateway is not configured on this server. Issue this refund through the refunds console instead." };
+    } else {
+      gateway = { razorpayRefundId: null, gatewayStatus: null, mock: true };
+    }
+
     await db.transaction(async (tx) => {
       await tx
         .update(ordersTable)
@@ -414,7 +450,17 @@ const refundOrder = defineTool({
       await tx.insert(deliveryEventsTable).values({
         orderId,
         event: "refund_issued",
-        meta: { amountPaise, reason, operatorId: ctx.userId },
+        // `previousOrderStatus` is what the refund.failed webhook restores;
+        // `razorpayRefundId` is what refund.processed matches on.
+        meta: {
+          amountPaise,
+          reason,
+          operatorId: ctx.userId,
+          razorpayRefundId: gateway.razorpayRefundId,
+          gatewayStatus: gateway.gatewayStatus,
+          previousOrderStatus: order.status,
+          ...(gateway.mock ? { mock: true } : {}),
+        },
       });
       await recordOpsAction(
         {

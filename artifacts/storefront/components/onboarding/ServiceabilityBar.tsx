@@ -1,13 +1,9 @@
 "use client"; // Justification: client-side pincode entry, API serviceability verdict, and localStorage persistence.
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import {
-  checkServiceability,
-  loadServiceabilityState,
-  saveServiceabilityState,
-  clearServiceabilityState,
-  type ServiceabilityVerdict,
-} from "@/lib/serviceabilityApi";
+import { checkServiceability } from "@/lib/serviceabilityApi";
+import { useServiceability } from "./ServiceabilityProvider";
+import { useNextDeliveryWindow } from "./useNextDeliveryWindow";
 import { ApiError } from "@/lib/apiClient";
 import { Button } from "@/components/ui/button";
 import { NotifyMeForm } from "./NotifyMeForm";
@@ -56,30 +52,24 @@ const MENU_FIT = "min-w-0 max-w-[9rem] sm:max-w-xs";
  * a second bar.
  */
 export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps) {
-  const [verdict, setVerdict] = useState<ServiceabilityVerdict>("unknown");
-  const [pincode, setPincode] = useState("");
+  // T5: the verdict is the provider's — one answer shared with every island.
+  const { state, set, clear } = useServiceability();
+  const { verdict, pincode } = state;
   const [inputVal, setInputVal] = useState("");
   const [err, setErr] = useState<string | null>(null);
 
   const [pickingLocation, setPickingLocation] = useState(false);
   const [manualMode, setManualMode] = useState(false);
-
-  useEffect(() => {
-    const s = loadServiceabilityState();
-    if (s.verdict !== "unknown") {
-      setVerdict(s.verdict);
-      setPincode(s.pincode);
-    }
-  }, []);
+  // "Delivering to 201301 · today 7–8 pm" — the window is the checkout's own
+  // next bookable slot, fetched only once the PIN is served.
+  const nextWindow = useNextDeliveryWindow(verdict === "serviceable");
 
   // A user-triggered check (button tap / location confirm), not data read for
   // render — a mutation, even though the verb underneath is GET.
   const checkMutation = useMutation({
     mutationFn: (code: string) => checkServiceability(code),
     onSuccess: (res) => {
-      saveServiceabilityState(res);
-      setVerdict(res.verdict);
-      setPincode(res.pincode);
+      set(res);
       setInputVal("");
       setManualMode(false);
     },
@@ -118,9 +108,7 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
   };
 
   const handleReset = () => {
-    clearServiceabilityState();
-    setVerdict("unknown");
-    setPincode("");
+    clear();
     setInputVal("");
     setManualMode(false);
   };
@@ -135,14 +123,20 @@ export function ServiceabilityBar({ placement = "hero" }: ServiceabilityBarProps
       <button
         type="button"
         onClick={handleReset}
-        aria-label={`Delivering in ${pincode}. Change location`}
+        aria-label={`Delivering to ${pincode}${nextWindow ? `, ${nextWindow}` : ""}. Change location`}
         className={`${placement === 'menu' ? MENU_FIT : 'mb-6'} inline-flex min-h-11 max-w-[45vw] items-center gap-1.5 whitespace-nowrap rounded-full border border-line-strong bg-secondary px-3 text-xs font-semibold text-ink transition-colors hover:border-gold`}
       >
         <svg aria-hidden className="h-4 w-4 shrink-0 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.242-4.243a8 8 0 1111.314 0z" />
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
-        <span className="tabular truncate">{pincode}</span>
+        {/* T5: "Delivering to 201301 · today 7–8 pm". The window truncates
+            first inside the header's cap; the PIN and tick always read. */}
+        <span className="tabular truncate">
+          <span className="hidden sm:inline">Delivering to </span>
+          {pincode}
+          {nextWindow && <span className="text-ink-muted"> · {nextWindow}</span>}
+        </span>
         <span aria-hidden className="text-sage-text">✓</span>
       </button>
     );

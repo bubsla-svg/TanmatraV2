@@ -4,12 +4,11 @@
 // routes alike, so data-stitch sits on the sheet root, not a page wrapper) —
 // see lib/themes/stitch.css.
 import "@/lib/themes/stitch.css";
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { addLine, qtyOf, setQty, subtotalPaise } from "@/lib/cartStore";
+import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { qtyOf, setQty, subtotalPaise } from "@/lib/cartStore";
 import { QuantityStepper } from "@/components/primitives/QuantityStepper";
 import { formatMacroLine, formatPaise } from "@/lib/format";
-import { LIVE_CHECKOUT_ENABLED } from "@/lib/flags";
 import { fetchQuote, type QuoteSnapshot } from "@/lib/quoteApi";
 import { useCart } from "@/components/cart/CartProvider";
 import { Button } from "@/components/ui/button";
@@ -18,16 +17,16 @@ import { Drawer, DrawerClose, DrawerContent, DrawerTitle } from "@/components/ui
 import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
 import { CartUpsellRail } from "./CartUpsellRail";
 import { RAIL_GAP_PX, useUpsellRailFit } from "./useUpsellRailFit";
-import { listItems, type MarketplaceItem } from "@/lib/marketplaceApi";
-import { selectUpsellItems } from "@/lib/upsell";
+import { useCartUpsell } from "./useCartUpsell";
+import { useServiceability } from "@/components/onboarding/ServiceabilityProvider";
 import { checkoutHref } from "@/lib/checkoutIntent";
 
 /**
  * Cart as a bottom sheet (§4.3). Line items with in-place steppers; the
  * subtotal is display-only (server owns the billed amount at order create).
- * The checkout CTA sits behind the named NEXT_PUBLIC_LIVE_CHECKOUT flag and
- * fails LOUD when dark (visible "not yet live" state, per the LIVE-CUTOVER
- * pattern) — never a dead button, never a silent advance.
+ * The checkout CTA is always the real link (live checkout stopped being a
+ * flag on 2026-09-17); the one state that replaces it is an unserviceable
+ * PIN, which says so — never a dead button, never a silent advance.
  */
 export function CartDrawer({
   open,
@@ -37,6 +36,12 @@ export function CartDrawer({
   onOpenChange: (open: boolean) => void;
 }) {
   const { cart, setCart, hydrated } = useCart();
+  // The Checkout link's pending state (audit 2026-09-17): a bare <Link> gave
+  // no feedback on a slow route transition and accepted a second tap. The
+  // navigation runs in a transition so the label can say so and the second
+  // tap is a no-op; still a real link (role, middle-click, prefetch).
+  const router = useRouter();
+  const [navigating, startNavigating] = useTransition();
 
   // Back gesture closes the drawer, not the page (Vaul owns the slide;
   // history ownership lives here).
@@ -92,20 +97,13 @@ export function CartDrawer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, dishKey]);
 
-  // Upsell candidates — the REAL catalog, same query key as MarketplaceGrid
-  // (one cache entry serves both surfaces), fetched only while the sheet is
-  // open: this component is mounted on every page. Selection rules (in-cart
-  // exclusion, stock gating, max 3) live in lib/upsell.ts. A failed fetch
-  // simply means no rail — decoration must not add noise where the customer
-  // is about to pay. Nothing here gates the money path.
-  const { data: catalog } = useQuery({
-    queryKey: ["marketplace", "items"],
-    queryFn: () => listItems(),
-    staleTime: 5 * 60_000,
-    retry: 1,
-    enabled: open,
-  });
-  const upsell = selectUpsellItems(catalog?.items ?? [], cart.lines);
+  // Upsell candidates (T7) — food cheaper than the cheapest meal for a cart
+  // with a dish in it, pantry items for a pantry-only cart, nothing for an
+  // empty one. The hook owns both catalog queries (fetched only while the
+  // sheet is open — this component mounts on every page) and each card's
+  // cart write; the selection rules live in lib/upsell.ts. A failed fetch
+  // simply means no rail. Nothing here gates the money path.
+  const upsell = useCartUpsell(open, cart, setCart);
 
   // Where the rail sits under the order is measured, not assumed (see
   // useUpsellRailFit): 0 extra padding when it fits in view, else enough to
@@ -121,8 +119,17 @@ export function CartDrawer({
     `${hydrated}:${cart.lines.length}:${upsell.length}`,
   );
 
+  // T5: a checked, unserved PIN never reaches POST /orders — the cart says
+  // so here, before the checkout page would.
+  const { state: serviceability } = useServiceability();
   let footer: ReactNode;
-  if (LIVE_CHECKOUT_ENABLED) {
+  if (serviceability.verdict === "unserviceable") {
+    footer = (
+      <p role="status" className="rounded-2xl bg-secondary px-4 py-3 text-center text-xs text-ink-muted">
+        We don&rsquo;t deliver to {serviceability.pincode}{" "}yet. Change your location in the header to check another PIN code.
+      </p>
+    );
+  } else {
     footer = (
       <Button asChild shape="pill" size="fluid" className="block min-h-11 px-5 py-3 text-center font-semibold">
         {/* prefetch: the only link in the storefront where the next step is
@@ -130,14 +137,22 @@ export function CartDrawer({
             it. Everywhere else the default (the loading shell for a dynamic
             route) is right, because a menu of ~100 dishes would fire one
             full RSC render per visible card. */}
-        <Link href={checkoutHref({ mode: "alacarte" })} prefetch>Checkout</Link>
+        <Link
+          href={checkoutHref({ mode: "alacarte" })}
+          prefetch
+          aria-busy={navigating || undefined}
+          aria-disabled={navigating || undefined}
+          className={navigating ? "pointer-events-none" : undefined}
+          onClick={(e) => {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+            e.preventDefault();
+            if (navigating) return;
+            startNavigating(() => router.push(checkoutHref({ mode: "alacarte" })));
+          }}
+        >
+          {navigating ? "Opening checkout…" : "Checkout"}
+        </Link>
       </Button>
-    );
-  } else {
-    footer = (
-      <p role="status" className="rounded-2xl bg-secondary px-4 py-3 text-center text-xs text-ink-muted">
-        Checkout goes live with the payment slice — your cart is saved.
-      </p>
     );
   }
 
@@ -156,7 +171,7 @@ export function CartDrawer({
                 dismiss (Vaul owns those); this adds the thumb-reachable one. */}
             <DrawerClose
               aria-label="Close cart"
-              className="-mr-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink transition-transform active:scale-95"
+              className="-mr-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink transition-transform active:scale-[0.96]"
             >
               <span aria-hidden className="text-xl leading-none">✕</span>
             </DrawerClose>
@@ -249,30 +264,22 @@ export function CartDrawer({
               <li data-ui-generation="stitch-74" data-screen-id="14.1" data-screen-state="cart-empty" className="py-6 text-center text-sm text-ink-muted">Cart is empty.</li>
             )}
           </ul>
-          {/* Real catalog items, same line shape as MarketplaceGrid's add —
-              ids/slugs/prices all resolve server-side (the rail used to add
-              invented items checkout could only dead-end on). The wrapper's
-              top padding is the rail's gap plus the measured spacer. */}
+          {/* Real catalog items, same line shapes as the menu card's and
+              MarketplaceGrid's adds — ids/slugs/prices all resolve
+              server-side (the rail used to add invented items checkout could
+              only dead-end on). The wrapper's top padding is the rail's gap
+              plus the measured spacer. */}
           {upsell.length > 0 && (
             <div ref={railRef} style={{ paddingTop: RAIL_GAP_PX + railSpacerPx }}>
-              <CartUpsellRail
-                items={upsell}
-                onAdd={(item: MarketplaceItem) => {
-                  setCart(
-                    addLine(cart, {
-                      dishId: item.id,
-                      kind: "marketplace",
-                      slug: item.slug,
-                      name: item.name,
-                      pricePaise: item.pricePaise,
-                    })
-                  );
-                }}
-              />
+              <CartUpsellRail items={upsell} />
             </div>
           )}
-          </div>
-          <div className="mt-3 border-t border-line pt-3">
+          {/* The fee / quote notices live in the SCROLL region, not the pinned
+              footer: the failed-quote notice lands ~350 ms + one round trip
+              after the sheet opens, and in the footer it pushed the Checkout
+              link down under a thumb already on its way (cuj-01b flaked on
+              exactly that in CI). Here it can appear without moving the CTA. */}
+          <div className="mt-3">
             {/* N5.2 — the fee is disclosed HERE, while quantities are still
                 being decided, not sprung on the pay screen. Every number is
                 the server quote's; the progress-bar width is the only derived
@@ -313,10 +320,51 @@ export function CartDrawer({
                 Free delivery unlocked
               </p>
             )}
-            <div aria-live="polite" aria-atomic="true" className="mb-3 flex items-center justify-between gap-3 text-sm">
-              <span className="text-sm text-ink-muted">Subtotal (before delivery &amp; GST)</span>
-              <span className="font-data text-lg font-bold text-primary">{formatPaise(subtotalPaise(cart))}</span>
-            </div>
+          </div>
+          </div>
+          <div className="mt-3 border-t border-line pt-3">
+            {/* T6 — the cart's total IS checkout's total. Every figure below
+                is the server quote's (the same POST /orders/quote checkout
+                prices from), so the number a customer carries into checkout
+                is the one they see there. Without a quote the display-only
+                subtotal stays, labelled for what it is. */}
+            {quote ? (
+              <dl aria-live="polite" aria-atomic="true" className="mb-3 flex flex-col gap-1 text-sm" data-testid="cart-ledger">
+                <div className="flex justify-between gap-3">
+                  <dt className="text-ink-muted">Item subtotal</dt>
+                  <dd className="font-data text-ink">{formatPaise(quote.subtotalPaise)}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-ink-muted">Delivery</dt>
+                  <dd className="font-data text-ink">{quote.deliveryFeePaise === 0 ? "Free" : formatPaise(quote.deliveryFeePaise)}</dd>
+                </div>
+                {quote.packagingPaise > 0 && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-ink-muted">Packaging</dt>
+                    <dd className="font-data text-ink">{formatPaise(quote.packagingPaise)}</dd>
+                  </div>
+                )}
+                {quote.discountPaise > 0 && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-ink-muted">Discount</dt>
+                    <dd className="font-data text-ink">−{formatPaise(quote.discountPaise)}</dd>
+                  </div>
+                )}
+                <div className="flex justify-between gap-3">
+                  <dt className="text-ink-muted">GST</dt>
+                  <dd className="font-data text-ink">{formatPaise(quote.taxPaise)}</dd>
+                </div>
+                <div className="mt-1 flex items-center justify-between gap-3 border-t border-line pt-2">
+                  <dt className="font-display text-base font-semibold text-primary">Total to pay</dt>
+                  <dd className="font-data text-lg font-bold text-primary">{formatPaise(quote.payableNowPaise)}</dd>
+                </div>
+              </dl>
+            ) : (
+              <div aria-live="polite" aria-atomic="true" className="mb-3 flex items-center justify-between gap-3 text-sm">
+                <span className="text-sm text-ink-muted">Subtotal (before delivery &amp; GST)</span>
+                <span className="font-data text-lg font-bold text-primary">{formatPaise(subtotalPaise(cart))}</span>
+              </div>
+            )}
             {footer}
           </div>
         </div>

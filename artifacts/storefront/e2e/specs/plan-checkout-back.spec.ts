@@ -16,11 +16,9 @@ import { test, expect } from "@playwright/test";
  * track/cycle/bump choices across the remount a bare back-navigation would
  * otherwise lose.
  *
- * DEPLOYED-ONLY (E2E_LIVE_CHECKOUT=1): PlanCheckout/FocusHeader only render
- * on this route when NEXT_PUBLIC_LIVE_CHECKOUT was set at build time — the
- * PR-gate build falls back to the legacy CheckoutFlow component instead
- * (verified: this exact assertion failed against the flag-dark build, with
- * "Back to plan" simply not present). Stops at PlanIdentityGate deliberately
+ * DEPLOYED-ONLY (E2E_LIVE_CHECKOUT=1): with plan checkout dark (T1), the
+ * PR-gate build redirects /checkout?plan= to the plan landing before
+ * PlanCheckout/FocusHeader ever render. Stops at PlanIdentityGate deliberately
  * — reaching PlanDetails needs real Firebase phone-OTP auth, which has no
  * test hook in this wave (that's C2, a separate branch); the back affordance
  * and the draft restore are both fully exercised without going further,

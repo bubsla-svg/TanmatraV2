@@ -333,49 +333,7 @@ test("POST /orders/finalize lets a premium user complete an order with premium d
   assert.equal(r.json.finalPaise, premium.price);
 });
 
-// ---------------------------------------------------------------------------
-// Owner containment gate (docs/MONEY-PATH-VERIFICATION.md "Settlement Trust
-// Boundary"): ORDER_FINALIZE_DISABLED refuses this route with a typed 503,
-// same shape as PLAN_CHECKOUT_DISABLED (subscriptions.idempotency.test.ts).
-// ---------------------------------------------------------------------------
-
-test("ORDER_FINALIZE_DISABLED: typed 503, nothing created, idempotency key not poisoned", async () => {
-  const user = await makeUser("Gated");
-  const pickupId = await makePickup();
-  const [dish] = pickAvailableNonPremium(1);
-  const body = {
-    orderId: `ord-gated-${randomUUID()}`,
-    fulfillmentType: "pickup",
-    pickupLocationId: pickupId,
-    items: [{ id: dish!.id, name: dish!.name, qty: 1, price: dish!.price }],
-  };
-
-  process.env["ORDER_FINALIZE_DISABLED"] = "1";
-  try {
-    const gated = await api("POST", "/orders/finalize", body, user);
-    assert.equal(gated.status, 503, JSON.stringify(gated.json));
-    assert.equal(gated.json.code, "CHECKOUT_TEMPORARILY_UNAVAILABLE");
-    assert.equal(
-      gated.json.message,
-      "Checkout is temporarily unavailable. Please try again shortly.",
-    );
-
-    const orders = await db
-      .select({ externalOrderId: ordersTable.externalOrderId })
-      .from(ordersTable)
-      .where(eq(ordersTable.userId, user.id));
-    const nonSeeded = orders.filter(
-      (o) => !String(o.externalOrderId ?? "").startsWith("prior-"),
-    );
-    assert.equal(nonSeeded.length, 0, "a gated request must create nothing");
-  } finally {
-    delete process.env["ORDER_FINALIZE_DISABLED"];
-  }
-});
-
-test("ORDER_FINALIZE_DISABLED unset: the route behaves exactly as before — the control", async () => {
-  // Without this, the gate test above would pass just as happily if the
-  // route were broken for every request regardless of the flag.
+test("POST /orders/finalize: a plain pickup finalize succeeds (the containment gate is gone — T3)", async () => {
   const user = await makeUser("Ungated");
   const pickupId = await makePickup();
   const [dish] = pickAvailableNonPremium(1);

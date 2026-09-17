@@ -15,21 +15,26 @@ export type FunnelEvent =
   | "cuj_builder_confirm"
   | "cuj_waitlist_captured"
   | "cuj_checkout_start"
-  | "cuj_paid"
   // ── Money path (Phase 3.3 canonical names) ────────────────────────────────
   // The `cuj_*` set above measures the browse-and-choose half. The purchase
-  // half was measured by exactly one event, `cuj_paid`, emitted from
-  // CheckoutFlow's `pay()` AFTER its `if (LIVE_CHECKOUT_ENABLED) … return` —
-  // so it can only fire when live checkout is switched OFF. In production the
-  // storefront's only conversion event is unreachable, and the two paths that
-  // actually take money (AlacarteCheckout, PlanCheckout) emitted nothing at
-  // all. A funnel with no bottom cannot show where anyone drops out.
+  // half was measured by exactly one event, `cuj_paid`, emitted from the
+  // since-deleted flag-dark skeleton (CheckoutFlow) — so it could only fire
+  // when live checkout was switched OFF. In production the storefront's only
+  // conversion event was unreachable, and the two paths that actually take
+  // money (AlacarteCheckout, PlanCheckout) emitted nothing at all. A funnel
+  // with no bottom cannot show where anyone drops out.
   //
   // Amounts are named `_paise`, not the canonical list's `_cents`: this
   // product bills in INR and the whole codebase counts paise, so "cents" would
   // name a unit that does not exist here — the kind of small lie that only
   // surfaces after someone has divided by 100.
   | "begin_checkout"
+  // T2: which of the checkout's five asks (phone | slot | address | consent
+  // | pay) the customer has cleared, so the drop between begin_checkout and
+  // payment_opened has a place, not just a size. `cuj_paid`, the old
+  // flag-dark conversion event, is retired: `purchase` is emitted by the
+  // server on the paid transition and is the only conversion truth.
+  | "checkout_step"
   | "payment_opened"
   | "payment_failed"
   | "checkout_complete"
@@ -40,6 +45,10 @@ export type FunnelEvent =
   // plan option is being considered and declined, or simply never seen — two
   // very different problems that look identical in a funnel without it.
   | "view_dish"
+  // The step between "viewed a dish" and "began checkout". Without it a
+  // cart that is built and abandoned is indistinguishable from a menu that
+  // was never acted on.
+  | "add_to_cart"
   | "plan_toggle"
   | "subscribe_cta_click"
   // ── Retention (plan item 2.2) ─────────────────────────────────────────────
@@ -73,6 +82,13 @@ export type FunnelEvent =
   // cannot tell a poster in an unserved sector from a poster nobody looked at,
   // and those two failures have opposite fixes (move the poster vs. change the
   // creative).
+  // ── Location first (T5, CRO handoff 2026-09-17) ───────────────────────────
+  // The first-visit ask and its answer, by source (banner PIN, GPS/map, the
+  // header bar), so the two ways of not answering — never shown, shown and
+  // dismissed — can be told apart from an unserviceable answer.
+  | "location_prompt_shown"
+  | "location_prompt_dismissed"
+  | "location_set"
   | "qr_landing_view"
   | "qr_pincode_serviceable"
   | "qr_pincode_unserviceable"
@@ -80,7 +96,11 @@ export type FunnelEvent =
   // OTP was accepted, so the single largest drop-off in the funnel — people who
   // reach the sign-in wall and leave — was invisible between begin_checkout and
   // the payment events.
-  | "identity_verified";
+  | "identity_verified"
+  // T8: a past order re-seeded the cart. `added`/`dropped` are line counts;
+  // `source` is which surface offered it (order history or the confirmation
+  // page). Fires before the hand-off to /checkout, never on the pay itself.
+  | "reorder";
 
 /**
  * A stable, groupable cause for `payment_failed`.
@@ -137,4 +157,25 @@ export function emitFunnel(
   } catch {
     /* analytics is best-effort — never throw into the flow */
   }
+}
+
+/**
+ * T2: `payment_failed` for a failed attempt INSIDE the Razorpay sheet (retry
+ * is on, so the customer may still succeed). Carries the gateway's own code
+ * and reason, so the scoreboard groups by cause — "dismissed" is what the
+ * catch path records when the sheet is finally closed. Built once per pay
+ * attempt and handed to the adapter as `onPaymentFailed`.
+ */
+export function inSheetFailureEmitter(
+  extra: Record<string, string | number | boolean> = {},
+): (f: { code: string; reason: string; step?: string; source?: string }) => void {
+  return (f) =>
+    emitFunnel("payment_failed", {
+      error_code: f.code,
+      reason: f.reason,
+      ...(f.step ? { step: f.step } : {}),
+      ...(f.source ? { source: f.source } : {}),
+      in_sheet: true,
+      ...extra,
+    });
 }

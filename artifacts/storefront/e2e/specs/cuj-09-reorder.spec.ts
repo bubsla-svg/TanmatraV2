@@ -7,8 +7,9 @@ import { test, expect } from "@playwright/test";
  * lines reference REAL dishes read from the live /api/menu/public moments
  * earlier. Everything else is genuine — the shipped JS, the live menu through
  * the proxy, reorderIntoCart's repricing/drop logic, the cart store, and the
- * mini-bar on /menu after navigation. A ghost line (id 999999) asserts the
- * honest-drop path ("No longer on the menu: …") alongside the happy path.
+ * hand-off to /checkout. A ghost line (id 999999) asserts the honest-drop
+ * path ("No longer on the menu: …"), which is the one case that pauses for a
+ * "Continue to checkout" tap instead of landing there directly (T8).
  * Deployed-only (E2E_LIVE_CHECKOUT=1): the PR-gate build has no /api proxy.
  */
 const deployedLive = process.env["E2E_LIVE_CHECKOUT"] === "1" ? test : test.skip;
@@ -52,7 +53,11 @@ deployedLive("reorder re-seeds the cart from a past order against the live menu"
   await expect(page.getByText(/Added 1 item to your cart/)).toBeVisible();
   await expect(page.getByText(/No longer on the menu: Ghost Dish/)).toBeVisible();
 
-  // The seeded cart is real client state: the /menu mini-bar shows qty 2.
-  await page.goto("/menu");
-  await expect(page.getByText("2 items")).toBeVisible();
+  // T8: the next tap is the checkout itself, with the seeded cart (qty 2)
+  // in the open order summary — not /menu.
+  await page.getByRole("link", { name: /continue to checkout/i }).click();
+  await page.waitForURL("**/checkout?mode=alacarte");
+  await expect(page.getByRole("heading", { name: "Checkout" })).toBeVisible();
+  await expect(page.getByTestId("alc-order-summary").getByText(dish!.name)).toBeVisible();
+  await expect(page.getByTestId("alc-order-summary").getByText("2 items")).toBeVisible();
 });

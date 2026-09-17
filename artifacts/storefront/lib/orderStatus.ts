@@ -40,6 +40,30 @@ export interface OrderStatus {
   scheduledFor: string | null;
   /** e.g. "12:00-14:00". Only meaningful when `timing === "scheduled"`. */
   deliveryWindow: string | null;
+  /** The order's own meal lines ({id,name,qty,price} as persisted), for
+   *  "Order this again" (T8). Empty for aggregator orders and on api-server
+   *  builds predating the field. */
+  items: OrderStatusLine[];
+}
+
+export interface OrderStatusLine {
+  id: number;
+  name: string;
+  qty: number;
+  price: number;
+}
+
+function parseLines(raw: unknown): OrderStatusLine[] {
+  if (!Array.isArray(raw)) return [];
+  const out: OrderStatusLine[] = [];
+  for (const l of raw) {
+    if (!l || typeof l !== "object") continue;
+    const { id, name, qty, price } = l as Record<string, unknown>;
+    if (typeof id === "number" && typeof name === "string" && typeof qty === "number" && typeof price === "number") {
+      out.push({ id, name, qty, price });
+    }
+  }
+  return out;
 }
 
 const ORDER_TIMINGS: ReadonlySet<string> = new Set(["on_demand", "scheduled", "pending"]);
@@ -147,6 +171,7 @@ export async function fetchOrderStatus(
         deliveryWindow: timing === "scheduled" && typeof body.deliveryWindow === "string"
           ? body.deliveryWindow
           : null,
+        items: parseLines((body as { items?: unknown }).items),
       },
     };
   } catch {

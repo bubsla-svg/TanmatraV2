@@ -4,7 +4,7 @@
 // track's three dishes are shown, never lets the buyer compose their own.
 
 import { useState } from "react";
-import Image from "next/image";
+import { DishImage } from "@/components/menu/DishImage";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { StickyAction } from "@/components/primitives/StickyAction";
@@ -15,11 +15,19 @@ import { TRIAL_COPY } from "@/lib/trial";
 import type { TrialTrack, TrioDish } from "@/lib/trialTrio";
 import { KitchenSafetyChip } from "@/components/trust/KitchenSafetySheet";
 import { checkoutHref } from "@/lib/checkoutIntent";
+import { PLAN_CHECKOUT_ENABLED } from "@/lib/flags";
+import { useCart } from "@/components/cart/CartProvider";
+import { trioTotalPaise, withTrioInCart } from "@/lib/trialBundle";
 
 // The shape lives in lib/trialTrio.ts, where the resolver that BUILDS it also
 // lives — /trial and the QR landing both render this trio, and a second local
 // copy of the type is how the two surfaces start disagreeing about it.
 export type { TrioDish } from "@/lib/trialTrio";
+
+/** The à-la-carte promise, in place of the subscription one (T1): what is
+ *  in the cart is three dishes at their menu price, and nothing recurs. */
+export const TRIO_ORDER_COPY =
+  "Three dishes at their menu price, in your cart. Order once — nothing renews.";
 
 const TRACKS: { id: TrialTrack; label: string }[] = [
   { id: "veg", label: "Veg" },
@@ -41,10 +49,24 @@ export function TrialStart({
   pricePaise: number;
 }) {
   const router = useRouter();
+  const { cart, setCart } = useCart();
   const [track, setTrack] = useState<TrialTrack>("veg");
   const trio = trios[track];
+  // T1: with plan checkout dark, the trio is three ordinary cart lines and the
+  // price is the sum of their catalog prices — the server's figures, summed
+  // for display. With the flag on, the spine's trial price is what is billed.
+  const ctaPaise = PLAN_CHECKOUT_ENABLED ? pricePaise : trioTotalPaise(trio);
 
   function start() {
+    if (!PLAN_CHECKOUT_ENABLED) {
+      setCart(withTrioInCart(cart, trio));
+      for (const d of trio) {
+        emitFunnel("add_to_cart", { dish_id: d.slug, price_paise: d.pricePaise, source: "trial_trio" });
+      }
+      emitFunnel("begin_checkout", { source: "trial_trio", track });
+      router.push(checkoutHref({ mode: "alacarte" }));
+      return;
+    }
     emitFunnel("cuj_checkout_start", { planId: "trial_3day", track });
     router.push(checkoutHref({ mode: "plan", planId: "trial_3day", track }));
   }
@@ -90,19 +112,18 @@ export function TrialStart({
             key={dish.slug}
             className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface"
           >
-            <div className="relative aspect-square w-full overflow-hidden bg-surface-raised">
-              {/* `fill` inside the aspect-square box keeps CLS at zero. sizes:
-                  the trio sits in /trial's max-w-md (28rem) px-4 column, three
-                  columns with two 12px gaps — (448 − 32 − 24)/3 ≈ 131px once
-                  the container is capped, and (100vw − 56px)/3 below that. */}
-              <Image
-                src={dish.image}
-                alt=""
-                fill
-                sizes="(min-width: 28rem) 131px, calc((100vw - 3.5rem) / 3)"
-                className="object-cover"
-              />
-            </div>
+            {/* DishImage, not a bare next/image (audit 2026-09-17): two trio
+                dishes had no -800 derivative in the photo library and rendered
+                as broken images. The branded tile is the honest fallback. sizes:
+                the trio sits in /trial's max-w-md (28rem) px-4 column, three
+                columns with two 12px gaps — (448 − 32 − 24)/3 ≈ 131px once the
+                container is capped, and (100vw − 56px)/3 below that. */}
+            <DishImage
+              src={dish.image}
+              name={dish.name}
+              className="aspect-square w-full bg-surface-raised"
+              sizes="(min-width: 28rem) 131px, calc((100vw - 3.5rem) / 3)"
+            />
             <div className="flex flex-1 flex-col gap-1 p-2.5 text-center">
               <p className="font-display text-sm font-semibold leading-tight text-primary">{dish.name}</p>
               {dish.macros && (
@@ -118,9 +139,11 @@ export function TrialStart({
       {/* Law 1: what arrives, and when, stated before the CTA rather than
           discovered after paying. Same constants the create call books the
           delivery with, so this cannot drift from what is actually scheduled. */}
-      <p className="text-center text-xs text-ink-muted">
-        Delivered {PLAN_DELIVERY_DAYS_SENTENCE}.
-      </p>
+      {PLAN_CHECKOUT_ENABLED && (
+        <p className="text-center text-xs text-ink-muted">
+          Delivered {PLAN_DELIVERY_DAYS_SENTENCE}.
+        </p>
+      )}
 
       {/* T-07: the reassurance lines used to live INSIDE the fixed bar, which
           made it 141px on top of a 65px tab bar — a quarter of the viewport
@@ -128,7 +151,9 @@ export function TrialStart({
           the bar keeps only the one money CTA. The trust claim is the same
           tappable sheet the checkout pay bars use (T-20). */}
       <div className="flex flex-col items-center gap-2">
-        <p className="text-center text-xs text-ink-muted">{TRIAL_COPY.noAutoConvert}</p>
+        <p className="text-center text-xs text-ink-muted">
+          {PLAN_CHECKOUT_ENABLED ? TRIAL_COPY.noAutoConvert : TRIO_ORDER_COPY}
+        </p>
         <KitchenSafetyChip />
       </div>
 
@@ -140,7 +165,7 @@ export function TrialStart({
           bar to hand the bottom edge to — so the bar anchors at bottom-0, cart
           state or not. CTA only: ~72px of pinned chrome plus the safe-area
           inset. */}
-      <StickyAction className="bottom-0 z-30">
+      <StickyAction className="bottom-0 z-[var(--z-bar)]">
         <div className="mx-auto max-w-md px-4 py-3">
           <Button
             type="button"
@@ -149,7 +174,7 @@ export function TrialStart({
             size="fluid"
             className="w-full min-h-12 px-8 py-3.5 text-center text-base font-semibold"
           >
-            Start with 3 lunches · {formatPaise(pricePaise)}
+            Start with 3 lunches · {formatPaise(ctaPaise)}
           </Button>
         </div>
       </StickyAction>

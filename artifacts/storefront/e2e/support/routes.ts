@@ -43,6 +43,13 @@ export const FUNNEL_ROUTES: readonly string[] = [
   // The trial is a checkout, not a separate funnel (TrialStart's own comment),
   // and it is the one plan checkout reachable with no session — so it is the
   // deepest point of the money path this sweep can honestly reach.
-  "/checkout?plan=trial_3day&track=veg",
+  //
+  // T1 dead-funnel containment: with NEXT_PUBLIC_PLAN_CHECKOUT unset at build
+  // the plan URL is a redirect stub (middleware bounces it to /trial), the
+  // same class as bare /checkout above, and the trio lands in the à-la-carte
+  // leg — so THAT is the deepest reachable point, and what is swept instead.
+  process.env["NEXT_PUBLIC_PLAN_CHECKOUT"] === "1"
+    ? "/checkout?plan=trial_3day&track=veg"
+    : "/checkout?mode=alacarte",
   "/account",
 ];

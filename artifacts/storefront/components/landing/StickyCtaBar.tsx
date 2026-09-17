@@ -85,7 +85,7 @@ export function StickyCtaBar({
           {title && <p className="truncate text-sm font-semibold text-ink">{title}</p>}
           {subtitle && <p className="truncate text-xs text-ink-muted">{subtitle}</p>}
         </div>
-        <Button asChild shape="pill" size="fluid" className="w-full shrink-0 gap-2 px-8 py-4 font-semibold sm:w-auto shadow-lg shadow-gold/20 transition-transform duration-300 hover:scale-[1.02] hover:shadow-gold/40 active:scale-95 group">
+        <Button asChild shape="pill" size="fluid" className="w-full shrink-0 gap-2 px-8 py-4 font-semibold sm:w-auto shadow-lg shadow-gold/20 transition-transform duration-300 hover:scale-[1.02] hover:shadow-gold/40 active:scale-[0.96] group">
           <a href={ctaHref} onClick={handleClick}>
             {ctaLabel}
             <LandingIcon name="arrow-right" className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />

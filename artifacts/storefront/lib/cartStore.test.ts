@@ -14,6 +14,7 @@ import {
   subtotalPaise,
   qtyOf,
   parseStoredCart,
+  findRemovedLine,
 } from "./cartStore";
 
 const dish = { dishId: 7, kind: "dish" as const, slug: "quinoa-khichdi", name: "Quinoa Khichdi", pricePaise: 19900 };
@@ -181,4 +182,13 @@ test("existing 3-arg setQty/qtyOf call sites keep targeting the plain line only 
   s = setQty(s, 121, "dish", 5);
   assert.equal(s.lines.length, 1, "no plain line existed to update — nothing created");
   assert.equal(qtyOf(s, 121, "dish", customBread.customizations), 1, "customised line untouched");
+});
+
+test("findRemovedLine names the one line a write dropped, and nothing on a qty change", () => {
+  const b = { dishId: 8, kind: "dish" as const, slug: "b", name: "B", pricePaise: 200 };
+  const two = addLine(addLine(EMPTY_CART, dish), b);
+  assert.equal(findRemovedLine(two, two), null);
+  assert.equal(findRemovedLine(two, setQty(two, 7, "dish", 3)), null, "a quantity change removes nothing");
+  assert.equal(findRemovedLine(two, setQty(two, 7, "dish", 0))?.slug, "quinoa-khichdi", "minus at 1 drops the line");
+  assert.equal(findRemovedLine(EMPTY_CART, two), null, "adds are not removals");
 });

@@ -96,7 +96,12 @@ export function SectionChipBar({
   useEffect(() => {
     railRef.current
       ?.querySelector<HTMLElement>(`[data-anchor="${active}"]`)
-      ?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+      ?.scrollIntoView({
+        inline: "center",
+        block: "nearest",
+        // A JS behavior overrides the CSS scroll-behavior reduced-motion rule.
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      });
   }, [active]);
 
   function jump(id: string) {
@@ -167,7 +172,7 @@ export function SectionChipBar({
               // border+tint+marker idiom the diet chips use, because the
               // mini-cart bar is this screen's one gold action (DS-0).
               // min-h-11 (T-06): the visual chip stays slim inside a 44px box.
-              className={`inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-full border px-3.5 text-xs font-semibold transition-transform active:scale-95 ${
+              className={`inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-full border px-3.5 text-xs font-semibold transition-transform active:scale-[0.96] ${
                 on
                   ? "border-gold bg-primary/10 text-primary"
                   : "border-transparent bg-secondary text-ink-muted hover:text-ink"

@@ -194,7 +194,7 @@ export interface RazorpayOrderResponse {
 }
 
 export function createRazorpayOrder(
-  input: { orderId: string; subscriptionId?: number },
+  input: { orderId: string; subscriptionId?: number; magic?: boolean },
   fetchImpl?: FetchImpl,
 ): Promise<RazorpayOrderResponse> {
   return apiPost("/payments/razorpay/order", input, fetchImpl);

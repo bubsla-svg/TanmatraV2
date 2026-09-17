@@ -89,7 +89,7 @@ export default function MealFeedback({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-scrim backdrop-blur-sm">
+        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-scrim backdrop-blur-sm">
             <div className="bg-surface border border-line rounded-3xl p-6 max-w-md w-full text-ink shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
                 {/* aria-label is load-bearing now: the ligature span this
                     replaced rendered the literal word "close", which was at

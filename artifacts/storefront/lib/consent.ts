@@ -14,11 +14,22 @@
  * nothing would fake a capability (defect register: contract gap, guest
  * preference retention).
  */
-export const DPDP_POLICY_VERSION = "dpdp-2023-v2";
+export const DPDP_POLICY_VERSION = "dpdp-2023-v3";
+
+/**
+ * v3 (T6, CRO handoff 2026-09-17): the checkbox row carries ONE line; the
+ * full scope statement is one tap away in a disclosure directly beneath it.
+ * Same scope as v2 — nothing is processed that v2 did not name — only the
+ * presentation changed, and the version moves because the ledger records
+ * the words the customer actually ticked.
+ */
+export const DPDP_CONSENT_SHORT =
+  "I agree to Tanmatra processing my details to prepare and deliver this order (DPDP Act 2023).";
+
 
 export const DPDP_CONSENT_COPY =
   "I agree that Tanmatra may process my contact, address and order details — including the dietary-safety screening needed to prepare and deliver this order — under the DPDP Act 2023.";
 
-/** Rendered beside the required consent so its limits are explicit. */
+/** Rendered inside the "What this covers" disclosure so its limits are explicit. */
 export const DPDP_SCOPE_NOTE =
   "Used only to fulfil and support this order. No health profile is retained for guest orders.";

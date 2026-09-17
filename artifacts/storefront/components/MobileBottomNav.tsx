@@ -121,7 +121,7 @@ export function MobileBottomNav() {
           // is a side drawer), so per the runbook this adopts the styling
           // idiom while the tab-bar interaction model stays — a product
           // decision, not a skin.
-          const tabCls = `relative flex flex-col items-center justify-center gap-1 w-full h-full min-h-[44px] transition-transform active:scale-95 ${
+          const tabCls = `relative flex flex-col items-center justify-center gap-1 w-full h-full min-h-[44px] transition-transform active:scale-[0.96] ${
             isActive ? "text-gold font-semibold" : "text-ink-muted hover:text-ink"
           }`;
           const indicator = (

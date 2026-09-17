@@ -28,7 +28,7 @@ let cachedAuth: Auth | null = null;
 
 /**
  * The client Auth instance. Throws if the build shipped no Firebase config —
- * callers gate on firebaseConfigured() / LIVE_CHECKOUT_ENABLED first.
+ * callers gate on firebaseConfigured() first.
  *
  * ASYNC because the SDK is imported here rather than at module scope. The two
  * static imports this replaces put ~150 KB of firebase/app + firebase/auth into

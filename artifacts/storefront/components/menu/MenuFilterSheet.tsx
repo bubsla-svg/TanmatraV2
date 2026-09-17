@@ -80,7 +80,7 @@ export function MenuFilterSheet({
             </DrawerTitle>
             <DrawerClose
               aria-label="Close filters"
-              className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink transition-transform active:scale-95"
+              className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink transition-transform active:scale-[0.96]"
             >
               <span aria-hidden className="text-xl leading-none">✕</span>
             </DrawerClose>
@@ -109,7 +109,7 @@ export function MenuFilterSheet({
             <button
               type="button"
               onClick={() => setDraft(EMPTY_FILTERS)}
-              className="min-h-[44px] shrink-0 rounded-full border border-line bg-surface-raised px-5 text-sm font-semibold text-ink transition-transform active:scale-95"
+              className="min-h-[44px] shrink-0 rounded-full border border-line bg-surface-raised px-5 text-sm font-semibold text-ink transition-transform active:scale-[0.96]"
             >
               Clear filters
             </button>
@@ -174,7 +174,7 @@ function ChipGroup<K extends FilterGroupKey>({
               type="button"
               aria-pressed={active}
               onClick={() => onToggle(toggleFilter(draft, group, opt.key))}
-              className={`min-h-[44px] rounded-full border px-4 text-xs font-semibold transition-transform active:scale-95 ${
+              className={`min-h-[44px] rounded-full border px-4 text-xs font-semibold transition-transform active:scale-[0.96] ${
                 active
                   ? "border-gold bg-primary/10 text-primary"
                   : "border-transparent bg-secondary text-ink-muted hover:text-ink"

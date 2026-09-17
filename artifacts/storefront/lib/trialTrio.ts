@@ -16,6 +16,12 @@ import { TRIAL_TRIO } from "./trial";
 export type TrialTrack = "veg" | "nonveg";
 
 export interface TrioDish {
+  /** Catalog id and menu price — what the à-la-carte cart line needs when the
+   *  trio is sold as three ordinary lines (T1 dead-funnel containment). The
+   *  price is the server's catalog figure, never restated here. */
+  id: number;
+  pricePaise: number;
+  isAvailable: boolean;
   slug: string;
   name: string;
   image: string;
@@ -47,6 +53,9 @@ export function resolveTrio(
     .map((slug) => findDish(slug, dishes))
     .filter((d): d is DishData => Boolean(d))
     .map((d) => ({
+      id: d.id,
+      pricePaise: d.price,
+      isAvailable: d.isAvailable !== false,
       slug: d.slug,
       name: d.name,
       image: d.image,

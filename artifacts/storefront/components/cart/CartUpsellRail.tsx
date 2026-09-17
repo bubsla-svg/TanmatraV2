@@ -1,8 +1,18 @@
 "use client"; // Justification: renders inside the client-only cart drawer; "+ Add" writes the local cart.
 
 import { formatPaise } from "@/lib/format";
-import type { MarketplaceItem } from "@/lib/marketplaceApi";
 import { Rail } from "@/components/primitives/Rail";
+
+/** One card on the rail, already resolved to a kind-agnostic shape: a food
+ *  dish and a pantry item render identically, and `onAdd` carries the
+ *  kind-specific cart write (useCartUpsell builds these). */
+export interface UpsellRailItem {
+  key: string;
+  name: string;
+  description: string;
+  pricePaise: number;
+  onAdd: () => void;
+}
 
 /**
  * Upsell rail in the cart drawer — REAL catalog items only, shaped so it can
@@ -13,9 +23,10 @@ import { Rail } from "@/components/primitives/Rail";
  * line: checkout excluded it (marketplace lines ship separately) and told the
  * customer to buy it from the marketplace — where the product did not exist.
  * A dead end wearing a recommendation, priced with numbers no server quoted.
- * The candidates now come from the same public catalog the marketplace grid
- * renders; CartDrawer owns that query (same key as MarketplaceGrid, so the
- * cache is shared) and the selection rules live in lib/upsell.ts.
+ * The candidates now come from the public menu (food, for a cart with a
+ * meal in it) or the marketplace catalog (pantry, for a pantry-only cart);
+ * useCartUpsell owns those queries and the selection rules live in
+ * lib/upsell.ts.
  *
  * Shape: ONE horizontal row of fixed-width cards — the shared Rail primitive
  * with its trailing fade as the continuation cue — so the rail is the same
@@ -29,13 +40,7 @@ import { Rail } from "@/components/primitives/Rail";
  * the cart would be noise exactly when the customer is trying to pay.
  * Nothing here gates the money path.
  */
-export function CartUpsellRail({
-  items,
-  onAdd,
-}: {
-  items: MarketplaceItem[];
-  onAdd: (item: MarketplaceItem) => void;
-}) {
+export function CartUpsellRail({ items }: { items: UpsellRailItem[] }) {
   if (items.length === 0) return null;
 
   return (
@@ -46,7 +51,7 @@ export function CartUpsellRail({
       <Rail as="ul" aria-label="Recommended add-ons" className="-mx-3 mt-2 gap-2 px-3 scroll-pl-3">
         {items.map((item) => (
           <li
-            key={item.id}
+            key={item.key}
             className="flex w-56 shrink-0 snap-start items-center justify-between gap-2 rounded-xl bg-surface p-2.5"
           >
             <div className="min-w-0 flex-1">
@@ -60,9 +65,9 @@ export function CartUpsellRail({
                 drawer's own Checkout button, which stays the one gold action. */}
             <button
               type="button"
-              onClick={() => onAdd(item)}
+              onClick={item.onAdd}
               aria-label={`Add ${item.name}`}
-              className="min-h-11 shrink-0 rounded-full border border-line-strong bg-surface px-3.5 py-1.5 text-xs font-bold text-ink transition-transform active:scale-95 hover:bg-surface-raised"
+              className="min-h-11 shrink-0 rounded-full border border-line-strong bg-surface px-3.5 py-1.5 text-xs font-bold text-ink transition-transform active:scale-[0.96] hover:bg-surface-raised"
             >
               + Add
             </button>

@@ -4,6 +4,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod/v4";
 import { requireRole } from "../lib/adminGate";
 import { REFUND_EVENT_NAMES, remainingRefundablePaise } from "../lib/paymentIntegrity";
+import { issueRazorpayRefund } from "../lib/refundGateway";
 
 const router: IRouter = Router();
 
@@ -13,10 +14,6 @@ function razorpayCredentials(): [string, string] | null {
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
   if (!keyId || !keySecret) return null;
   return [keyId, keySecret];
-}
-
-function basicAuth(keyId: string, keySecret: string): string {
-  return Buffer.from(`${keyId}:${keySecret}`).toString("base64");
 }
 
 const listQuery = z.object({
@@ -227,41 +224,26 @@ router.post("/admin/refunds/:id/approve", async (req: Request, res: Response) =>
   // in `routes/payments.ts` are what make that optimism safe — `failed` deletes
   // the premature `order_refunded` event (so the cap stops counting money that
   // never left) and restores `previousOrderStatus` from its meta.
-  let refundId: string;
-  let gatewayRefundStatus: string | null = null;
-  try {
-    const rpRes = await fetch(
-      `https://api.razorpay.com/v1/payments/${encodeURIComponent(claimed.razorpayPaymentId)}/refund`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${basicAuth(keyId, keySecret)}`,
-          "Content-Type": "application/json",
-          "Idempotency-Key": `refund-${claimed.id}`,
-        },
-        body: JSON.stringify({
-          amount: claimed.amountPaise,
-          speed: "normal",
-          notes: { orderId: claimed.externalOrderId ?? "", refundRequestId: String(claimed.id) },
-        }),
-      },
-    );
-    if (!rpRes.ok) {
-      let body: unknown;
-      try { body = await rpRes.json(); } catch { body = await rpRes.text(); }
-      req.log.error({ status: rpRes.status, body, refundId: claimed.id }, "razorpay refund failed");
+  const issued = await issueRazorpayRefund(
+    {
+      razorpayPaymentId: claimed.razorpayPaymentId,
+      amountPaise: claimed.amountPaise,
+      idempotencyKey: `refund-${claimed.id}`,
+      notes: { orderId: claimed.externalOrderId ?? "", refundRequestId: String(claimed.id) },
+    },
+    [keyId, keySecret],
+  );
+  if (!issued.ok) {
+    if (issued.kind === "gateway_error") {
+      req.log.error({ status: issued.status, body: issued.body, refundId: claimed.id }, "razorpay refund failed");
       await db
         .update(refundRequestsTable)
-        .set({ status: "failed", note: `gateway ${rpRes.status}` })
+        .set({ status: "failed", note: `gateway ${issued.status}` })
         .where(eq(refundRequestsTable.id, id));
       res.status(502).json({ error: "payment gateway error" });
       return;
     }
-    const refund = (await rpRes.json()) as { id: string; status?: string };
-    refundId = refund.id;
-    gatewayRefundStatus = typeof refund.status === "string" ? refund.status : null;
-  } catch (err) {
-    req.log.error({ err, refundId: claimed.id }, "razorpay refund threw");
+    req.log.error({ err: issued.error, refundId: claimed.id }, "razorpay refund threw");
     await db
       .update(refundRequestsTable)
       .set({ status: "failed", note: "gateway unreachable" })
@@ -269,6 +251,8 @@ router.post("/admin/refunds/:id/approve", async (req: Request, res: Response) =>
     res.status(502).json({ error: "payment gateway unreachable" });
     return;
   }
+  const refundId = issued.refundId;
+  const gatewayRefundStatus = issued.status;
 
   // Success — record the gateway refund, mark the order refunded, and audit.
   const [updated] = await db

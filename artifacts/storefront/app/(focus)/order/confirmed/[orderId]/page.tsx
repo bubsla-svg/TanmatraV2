@@ -6,6 +6,7 @@ import { PlanPerks } from "@/components/order/PlanPerks";
 import { ThankYouRecommendations } from "@/components/order/ThankYouRecommendations";
 import { ClaimOrder } from "@/components/order/ClaimOrder";
 import { ReferralShare } from "@/components/order/ReferralShare";
+import { ReorderButton } from "@/components/account/ReorderButton";
 
 /** Tone → status-label colour — same mapping as route-12's OrderRow, so a
  *  customer landing here straight from checkout and later revisiting via
@@ -58,7 +59,7 @@ export default async function ConfirmedPage({
     );
   }
 
-  const { status, timing, etaMinutes, scheduledFor, deliveryWindow } = result.status;
+  const { status, timing, etaMinutes, scheduledFor, deliveryWindow, items } = result.status;
   const tone = statusTone(status);
   // Allowlist, fails safe — see TRACKABLE_STATUSES in lib/orderStatus. A
   // delivered or cancelled order gets no dead Track CTA.
@@ -134,6 +135,15 @@ export default async function ConfirmedPage({
               <Link href="/menu">Back to the menu</Link>
             </Button>
           </div>
+          {/* T8: the customer who just paid is the likeliest to pay again —
+              one tap re-seeds this order and lands on a prefilled checkout.
+              Only for money that settled (tone !== failed), and only when the
+              status endpoint carried replayable lines. */}
+          {tone !== "failed" && items.length > 0 && (
+            <div className="mt-4 text-center">
+              <ReorderButton items={items} source="order_confirmed" label="Order this again" />
+            </div>
+          )}
         </div>
 
         {/* Secondary, visually subordinate, stacked below a clear break from

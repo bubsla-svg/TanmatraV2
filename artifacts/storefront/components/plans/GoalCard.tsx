@@ -4,6 +4,8 @@
 import Link from "next/link";
 import { emitFunnel } from "@/lib/funnel";
 import { menuHrefForPlan } from "@/lib/planGoalFilter";
+import { PLAN_CHECKOUT_ENABLED } from "@/lib/flags";
+import { planLandingHref } from "@/lib/planLanding";
 
 /**
  * One "what's lunch for?" answer, shared by BOTH surfaces that ask the
@@ -33,11 +35,15 @@ export function GoalCard({
   source: string;
 }) {
   const mealsHref = menuHrefForPlan(planId);
+  // T1: with plan checkout dark the primary door IS the menu door, so the
+  // second one would only repeat it.
+  const primaryHref = PLAN_CHECKOUT_ENABLED ? `/plan/${planId}` : planLandingHref(planId);
+  const showMealsDoor = PLAN_CHECKOUT_ENABLED && mealsHref;
   return (
     <div className="flex flex-col rounded-2xl border border-line bg-surface transition-colors hover:border-line-strong">
       <Link
-        href={`/plan/${planId}`}
-        onClick={() => emitFunnel("cuj_router_answer", { planId, answer: promise, source })}
+        href={primaryHref}
+        onClick={() => emitFunnel("cuj_router_answer", { planId, answer: promise, source, ...(PLAN_CHECKOUT_ENABLED ? {} : { door: "menu" }) })}
         className="flex min-h-[72px] items-center justify-between gap-3 p-5 text-left active:scale-[0.98]"
       >
         <span className="flex min-w-0 flex-col gap-0.5">
@@ -48,7 +54,7 @@ export function GoalCard({
           &rarr;
         </span>
       </Link>
-      {mealsHref && (
+      {showMealsDoor && (
         <Link
           href={mealsHref}
           onClick={() => emitFunnel("cuj_router_answer", { planId, answer: promise, source, door: "menu" })}

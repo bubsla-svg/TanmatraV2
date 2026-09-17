@@ -2,6 +2,7 @@
 // "use client" justification: the PDP drawer is a URL-driven interactive
 // island (§4.2) — open state syncs to ?dish=<slug> so shares and back-button
 // behave; closing rewrites the URL. Everything around it stays RSC.
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { isAlaCarteEnabled, type DishData } from "@workspace/menu-catalog";
@@ -29,6 +30,13 @@ import { DishImage } from "@/components/menu/DishImage";
 export function DishDrawer({ dish }: { dish: DishData }) {
   const router = useRouter();
   const { cart, setCartOpen } = useCart();
+  // Close runs in two steps (audit 2026-09-17): the sheet animates out, and
+  // only on Vaul's animation-end does the URL drop ?dish= and — when the
+  // post-add CTA asked for it — the cart open. Opening the cart in the same
+  // tick as the close raced this sheet's focus restore against the cart's
+  // opener capture, and cart-close could hand focus to a detached node.
+  const [open, setOpen] = useState(true);
+  const openCartAfterClose = useRef(false);
   const count = itemCount(cart);
   const subtotal = subtotalPaise(cart);
   // Same spellings as the card, the cart and the PDP — lib/format.ts is the
@@ -44,9 +52,17 @@ export function DishDrawer({ dish }: { dish: DishData }) {
 
   return (
     <Drawer
-      open
-      onOpenChange={(open) => {
-        if (!open) router.replace("/menu", { scroll: false });
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) setOpen(false);
+      }}
+      onAnimationEnd={(isOpen) => {
+        if (isOpen) return;
+        router.replace("/menu", { scroll: false });
+        if (openCartAfterClose.current) {
+          openCartAfterClose.current = false;
+          setCartOpen(true);
+        }
       }}
     >
       <DrawerContent aria-describedby={undefined} data-ui-generation="stitch-74" data-screen-id="5.4" data-screen-state="dish-quick-view-open">
@@ -74,7 +90,7 @@ export function DishDrawer({ dish }: { dish: DishData }) {
                   offered only the drag handle, the scrim and Escape. */}
               <DrawerClose
                 aria-label="Close"
-                className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-ink transition-transform active:scale-95"
+                className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-ink transition-transform active:scale-[0.96]"
               >
                 <span aria-hidden className="text-xl leading-none">✕</span>
               </DrawerClose>
@@ -88,12 +104,25 @@ export function DishDrawer({ dish }: { dish: DishData }) {
           <DishRationale dishId={dish.id} />
 
           <dl className="mt-4 grid grid-cols-4 gap-2">
-            {macros.map(([label, value]) => (
-              <div key={label} className="rounded-2xl bg-secondary p-2.5 text-center">
-                <dd className="font-display text-lg font-semibold text-primary">{value}</dd>
+            {macros.map(([label, value]) => {
+              // Four tiles share 393px, so each value has ~66px. "460 kcal"
+              // in the display face does not fit that; "≈1060 kcal" is
+              // wider still. The formatter's NBSP marks where the unit
+              // starts, so the number keeps the display size and the unit
+              // drops to a small trailing span instead of clipping.
+              const nbsp = value.indexOf("\u00a0");
+              const num = nbsp === -1 ? value : value.slice(0, nbsp);
+              const unit = nbsp === -1 ? null : value.slice(nbsp + 1);
+              return (
+              <div key={label} className="min-w-0 rounded-2xl bg-secondary p-2.5 text-center">
+                <dd className="font-display text-lg font-semibold leading-tight text-primary">
+                  {num}
+                  {unit && <span className="ml-0.5 text-[11px] font-sans font-semibold text-ink-muted">{unit}</span>}
+                </dd>
                 <dt className="mt-0.5 text-[10px] font-bold uppercase tracking-[.14em] text-ink-muted">{label}</dt>
               </div>
-            ))}
+              );
+            })}
           </dl>
 
           <DishSpec dish={dish} />
@@ -115,7 +144,7 @@ export function DishDrawer({ dish }: { dish: DishData }) {
               /* 93×20 before, and it sits in the drawer footer beside the Add
                  button — the densest row on the surface, so the easiest to
                  mis-tap. */
-              className="touch-target-min text-sm font-medium text-ink-muted underline-offset-4 hover:text-ink hover:underline"
+              className="touch-target-min text-sm font-medium text-ink-muted underline-offset-4 transition-transform hover:text-ink hover:underline active:scale-[0.98]"
             >
               Open full page
             </Link>
@@ -137,9 +166,10 @@ export function DishDrawer({ dish }: { dish: DishData }) {
                 // Close this sheet first, then open the cart: two Vaul
                 // drawers must never be open at once (each locks scroll and
                 // traps focus — stacking them strands the focus ring in the
-                // dismissed one).
-                router.replace("/menu", { scroll: false });
-                setCartOpen(true);
+                // dismissed one). The open itself is deferred to
+                // onAnimationEnd above.
+                openCartAfterClose.current = true;
+                setOpen(false);
               }}
               shape="pill"
               size="fluid"
