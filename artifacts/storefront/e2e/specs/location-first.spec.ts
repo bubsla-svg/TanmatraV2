@@ -71,10 +71,16 @@ test("an unserviceable PIN turns the ask into the waitlist, disables every Add, 
   const ask = page.getByRole("region", { name: /where should we deliver/i });
   await ask.getByLabel("Delivery PIN code").fill(UNSERVICEABLE);
   await ask.getByRole("button", { name: "Confirm" }).click();
-  // The ask stands down; the header's own bar carries the ONE waitlist form.
+  // The ask stands down; the header carries the ONE waitlist form, in its
+  // bottom sheet (opened once, on the verdict) — the header itself stays a
+  // one-line pill so the sticky bar never grows with the verdict.
   await expect(ask).toHaveCount(0);
-  await expect(page.getByText(/not in 110001/i)).toHaveCount(1);
-  await expect(page.getByRole("button", { name: /notify me/i })).toHaveCount(1);
+  const sheet = page.getByRole("dialog");
+  await expect(sheet.getByText(/not in 110001 yet/i)).toBeVisible();
+  await expect(sheet.getByRole("button", { name: /notify me/i })).toHaveCount(1);
+  await page.keyboard.press("Escape");
+  await expect(sheet).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /don.t deliver to 110001/i })).toBeVisible();
   // Every Add stands down.
   const menu = new MenuPage(page);
   const add = menu.card(ORDERABLE_DISH.name).getByRole("button", { name: /not in your area/i });
