@@ -97,17 +97,17 @@ if (!schedulersDisabled) {
   // scheduler's first tick is delayed past that. FUNNEL_ROLLUP_DISABLED=1
   // gates it off individually.
   startFunnelRollupScheduler();
-  // Razorpay dropped-webhook backstop. INSIDE the gate on purpose: it does
-  // not self-gate (a timer registers whenever Razorpay creds exist), and it
-  // moves order state — production disabled schedulers deliberately, and a
-  // money-touching timer must not be the one exception smuggled past that.
-  // Arming it in prod is an operator decision (dedicated flag or an external
-  // scheduler hitting an admin endpoint), not a default.
+  // Razorpay dropped-webhook backstop. Inside the gate: it does not self-gate
+  // (a timer registers whenever Razorpay creds exist) and it moves order
+  // state. deploy.yml still sets DISABLE_SCHEDULERS=true in production —
+  // T3 (2026-09-17) removed the checkout containment gates but left this
+  // switch to an explicit operator decision; flipping it arms every periodic
+  // job here at once, the money-touching ones included.
   startReconciliationScheduler();
   void resumeActiveSimulations();
 }
 
-// Outside the blanket DISABLE_SCHEDULERS gate (which production sets), for the
+// Outside the blanket DISABLE_SCHEDULERS gate, for the
 // same reason startAnalyticsScheduler is: it self-gates. It registers no timer
 // at all unless PETPOOJA_INVENTORY_RID + the three PETPOOJA_* secrets are
 // present, so it is inert everywhere the integration has not been wired up.

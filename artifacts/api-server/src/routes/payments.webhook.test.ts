@@ -20,6 +20,10 @@ import {
   deliveryEventsTable,
   refundRequestsTable,
   funnelEventsTable,
+  usersTable,
+  subscriptionsTable,
+  subscriptionMandatesTable,
+  preDebitNotificationsTable,
 } from "@workspace/db";
 
 import paymentsRouter from "./payments";
@@ -771,4 +775,60 @@ test("order.paid is a second capture signal: it promotes a placed order, and a l
 
   for (const r of purchases) await db.delete(funnelEventsTable).where(eq(funnelEventsTable.id, r.id));
   await db.delete(ordersTable).where(eq(ordersTable.id, seeded!.id));
+});
+
+test("token.cancelled: the gateway-side mandate revoke cancels the mandate, purges notices and halts the subscription (T3)", async () => {
+  const userId = randomUUID();
+  await db.insert(usersTable).values({ id: userId, email: `t3-${userId}@example.test`, firstName: "Mandate", lastName: "Revoker" });
+  const startDate = new Date(Date.now() + 2 * 86400000);
+  const [sub] = await db
+    .insert(subscriptionsTable)
+    .values({
+      userId,
+      cadence: "weekly",
+      mealsPerDelivery: 5,
+      deliveryWindow: "12:00-14:00",
+      status: "active",
+      startDate,
+      nextDeliveryAt: startDate,
+      pricePerDeliveryPaise: 380000,
+    })
+    .returning({ id: subscriptionsTable.id });
+  const tokenId = `token_t3_${randomUUID().slice(0, 8)}`;
+  await db.insert(subscriptionMandatesTable).values({
+    subscriptionId: sub!.id,
+    razorpayCustomerId: "cust_t3",
+    razorpayTokenId: tokenId,
+    status: "active",
+    nextChargeAt: new Date(Date.now() + 5 * 86400000),
+  });
+  await db.insert(preDebitNotificationsTable).values({
+    subscriptionId: sub!.id,
+    scheduledChargeAt: new Date(Date.now() + 5 * 86400000),
+    status: "pending",
+  });
+
+  const eventId = `evt_token_cancelled_${randomUUID()}`;
+  CREATED_EVENT_IDS.push(eventId);
+  const res = await postWebhook(
+    { event: "token.cancelled", payload: { token: { entity: { id: tokenId, customer_id: "cust_t3", status: "cancelled" } } } },
+    eventId,
+  );
+  assert.equal(res.status, 200);
+
+  const [mandate] = await db.select().from(subscriptionMandatesTable).where(eq(subscriptionMandatesTable.subscriptionId, sub!.id));
+  assert.equal(mandate!.status, "cancelled");
+  assert.equal(mandate!.nextChargeAt, null);
+  const notices = await db.select().from(preDebitNotificationsTable).where(eq(preDebitNotificationsTable.subscriptionId, sub!.id));
+  assert.equal(notices.length, 0, "pending notices are purged so no charge is triggered later");
+  const [after] = await db.select({ status: subscriptionsTable.status }).from(subscriptionsTable).where(eq(subscriptionsTable.id, sub!.id));
+  assert.equal(after!.status, "halted");
+  const events = await db.select().from(funnelEventsTable).where(and(eq(funnelEventsTable.name, "mandate_revoked"), eq(funnelEventsTable.userId, userId)));
+  assert.equal(events.length, 1);
+  assert.equal((events[0]!.props as Record<string, unknown>).reason, "token.cancelled");
+
+  for (const e of events) await db.delete(funnelEventsTable).where(eq(funnelEventsTable.id, e.id));
+  await db.delete(subscriptionMandatesTable).where(eq(subscriptionMandatesTable.subscriptionId, sub!.id));
+  await db.delete(subscriptionsTable).where(eq(subscriptionsTable.id, sub!.id));
+  await db.delete(usersTable).where(eq(usersTable.id, userId));
 });

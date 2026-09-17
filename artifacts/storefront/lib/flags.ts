@@ -48,6 +48,10 @@ export const RD_SERVICES_ENABLED = process.env.NEXT_PUBLIC_RD_SERVICES === "1";
  * at menu price (/trial, /start), plan cards open the goal-filtered menu, and
  * a stale `/checkout?plan=` or `/plan/<id>` link redirects the same way.
  * Turning plans back on is this env flip; nothing is deleted.
+ *
+ * T3 (2026-09-17): the api-server gate is gone and deploy.yml builds the
+ * storefront with NEXT_PUBLIC_PLAN_CHECKOUT=1, so production runs with plans
+ * ON. Local and PR-gate builds keep the default (off).
  */
 export const PLAN_CHECKOUT_ENABLED = process.env.NEXT_PUBLIC_PLAN_CHECKOUT === "1";
 

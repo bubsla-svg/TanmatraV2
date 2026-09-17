@@ -630,7 +630,7 @@ jobs:
             --image asia-south2-docker.pkg.dev/${GCP_PROJECT}/wellness/${SERVICE}:${{ github.sha }} \
             --region ${GCP_REGION} \
             --project ${GCP_PROJECT} \
-            --update-env-vars "^;^ADMIN_USERNAME=${ADMIN_USERNAME};ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH};DISABLE_SCHEDULERS=true;FLAG_PLAN_V2=true;PLAN_CHECKOUT_DISABLED=1;ORDER_FINALIZE_DISABLED=1;SESSION_SAMESITE=none;ALLOWED_ORIGINS=https://tanmatra.food,https://www.tanmatra.food,https://tanmatra-yftxztp3xq-em.a.run.app,https://tanmatra-475157072474.asia-south2.run.app,http://localhost:5173,http://localhost:3000;RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID};RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET};PETPOOJA_RESTAURANT_ID=cq5hnj3629;PETPOOJA_MENU_SHARING_CODE=cq5hnj3629;PETPOOJA_INVENTORY_RID=355738;PETPOOJA_PURCHASE_SYNC_DRY_RUN=1;PETPOOJA_STOCK_SYNC_DRY_RUN=1;REDIS_HOST=redis-17230.crce280.asia-south1-1.gcp.cloud.redislabs.com;REDIS_PORT=17230;REDIS_PASSWORD=${REDIS_PASSWORD};BULLMQ_PREFIX=prod;GOOGLE_VERTEX_PROJECT=${GCP_PROJECT};GOOGLE_VERTEX_LOCATION=global;RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET};PRIVATE_OBJECT_DIR=${PRIVATE_OBJECT_DIR};BUILD_SHA=${{ github.sha }};BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --update-env-vars "^;^ADMIN_USERNAME=${ADMIN_USERNAME};ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH};DISABLE_SCHEDULERS=true;FLAG_PLAN_V2=true;SESSION_SAMESITE=none;ALLOWED_ORIGINS=https://tanmatra.food,https://www.tanmatra.food,https://tanmatra-yftxztp3xq-em.a.run.app,https://tanmatra-475157072474.asia-south2.run.app,http://localhost:5173,http://localhost:3000;RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID};RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET};PETPOOJA_RESTAURANT_ID=cq5hnj3629;PETPOOJA_MENU_SHARING_CODE=cq5hnj3629;PETPOOJA_INVENTORY_RID=355738;PETPOOJA_PURCHASE_SYNC_DRY_RUN=1;PETPOOJA_STOCK_SYNC_DRY_RUN=1;REDIS_HOST=redis-17230.crce280.asia-south1-1.gcp.cloud.redislabs.com;REDIS_PORT=17230;REDIS_PASSWORD=${REDIS_PASSWORD};BULLMQ_PREFIX=prod;GOOGLE_VERTEX_PROJECT=${GCP_PROJECT};GOOGLE_VERTEX_LOCATION=global;RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET};PRIVATE_OBJECT_DIR=${PRIVATE_OBJECT_DIR};BUILD_SHA=${{ github.sha }};BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --set-secrets "ADMIN_SESSION_SECRET=brand-tanmatra-admin-session-secret:latest,DATABASE_URL=brand-tanmatra-database-url:latest,SESSION_SECRET=brand-tanmatra-session-secret:latest,CLINICAL_KMS_MASTER_KEY=brand-tanmatra-clinical-kms-key:latest,PETPOOJA_APP_KEY=brand-tanmatra-petpooja-app-key:latest,PETPOOJA_APP_SECRET=brand-tanmatra-petpooja-app-secret:latest,PETPOOJA_ACCESS_TOKEN=brand-tanmatra-petpooja-access-token:latest,GOOGLE_API_KEY=brand-tanmatra-google-api-key:latest" \
             --add-cloudsql-instances "${GCP_PROJECT}:asia-south2:brand-tanmatra-db" \
             --memory=1Gi \
@@ -1143,6 +1143,12 @@ jobs:
                 - BUILDKIT_INLINE_CACHE=1
                 - --build-arg
                 - NEXT_PUBLIC_API_BASE=
+                # T3 (2026-09-17): plan checkout is live again — the api-server's
+                # POST /subscriptions gate is removed, so the storefront's plan
+                # CTAs route to the real PlanCheckout instead of the à-la-carte
+                # fallback.
+                - --build-arg
+                - NEXT_PUBLIC_PLAN_CHECKOUT=1
                 # First-party funnel sink (api-server routes/events.ts via the
                 # same-origin /api/* rewrite). Left unset, lib/funnel.ts drops
                 # every payment_opened/payment_failed beacon client-side — the

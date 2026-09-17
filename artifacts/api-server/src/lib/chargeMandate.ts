@@ -7,14 +7,11 @@
 // place that resolves the amount, calls the gateway, and persists the
 // outcome — never two copies drifting apart.
 //
-// AUTH NOTE: a separate, independent hardening task is expected to add a
-// service-credential requirement to the POST /payments/charge-mandate HTTP
-// route (see the route file for the marker comment). This module is
-// unaffected either way: chargeMandateScheduler calls chargeMandateCore()
-// directly, in-process — it never goes over HTTP, so it never needs to carry
-// that credential in the first place. If/when the HTTP route grows an auth
-// check, it slots in purely as a guard at the top of the route handler,
-// before chargeMandateCore() is invoked; nothing here needs to change.
+// AUTH: POST /payments/charge-mandate is gated by requireRole(req, res,
+// "finance") (routes/payments.ts) — the same finance-scope gate as the refunds
+// console — so the hardening this note used to anticipate is in place.
+// chargeMandateScheduler still calls chargeMandateCore() directly, in-process;
+// it never goes over HTTP and carries no credential.
 //
 // Gateway shape (see the confidence note in the PR/report): the previous
 // implementation POSTed to https://api.razorpay.com/v1/payments/charge,

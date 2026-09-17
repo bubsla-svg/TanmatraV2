@@ -1,5 +1,13 @@
 # Guest money path — post-fix production verification record
 
+> **2026-09-17 (T3, CRO handoff):** the two containment gates described in §5 —
+> `PLAN_CHECKOUT_DISABLED` on `POST /subscriptions` / plan-draft convert and
+> `ORDER_FINALIZE_DISABLED` on `POST /orders/finalize` — are removed from the code.
+> The gate references below are historical. Gateway-side mandate revocation
+> (`token.cancelled` / `token.paused` / `token.rejected`) now halts the subscription
+> via the webhook.
+
+
 > 2026-08-09. **This is not a feature cutover.** `NEXT_PUBLIC_LIVE_CHECKOUT=1`
 > has been baked into the production storefront build all along (deploy.yml
 > build-arg), Razorpay keys are live on the api-server, and à-la-carte checkout

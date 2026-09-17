@@ -19,7 +19,10 @@ type ServerEventName =
   | "trial_started"
   | "delivery_completed"
   | "meal_swapped"
-  | "consult_booked";
+  | "consult_booked"
+  // T3: the gateway told us the customer revoked/paused the UPI Autopay
+  // mandate (token.cancelled / token.paused / token.rejected webhook).
+  | "mandate_revoked";
 
 /**
  * Insert a server-emitted funnel event. Never throws and never blocks the

@@ -7,6 +7,8 @@ import {
   usersTable,
   subscriptionsTable,
   subscriptionDeliveriesTable,
+  subscriptionMandatesTable,
+  preDebitNotificationsTable,
   refundRequestsTable,
   deliveryEventsTable,
   isLiveTrialState,
@@ -817,6 +819,8 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
       payment_link?: { entity?: { id?: string; reference_id?: string; amount?: number; amount_paid?: number; status?: string } };
       /** order.paid carries the order beside the payment. */
       order?: { entity?: { id?: string; amount?: number; amount_paid?: number; status?: string } };
+      /** token.* — the UPI Autopay mandate's own lifecycle. */
+      token?: { entity?: { id?: string; customer_id?: string; status?: string } };
       refund?: {
         entity?: {
           id?: string;
@@ -1143,6 +1147,39 @@ router.post("/payments/razorpay/webhook", async (req: Request, res: Response) =>
         }
       }
       req.log.warn({ razorpayOrderId }, "webhook: payment failed");
+    } else if (eventType === "token.cancelled" || eventType === "token.paused" || eventType === "token.rejected") {
+      // T3 (CRO handoff 2026-09-17): the customer revoked or paused the UPI
+      // Autopay mandate from their bank app, or the bank rejected it. Until
+      // now only OUR cancel path flipped the mandate row, so a gateway-side
+      // revoke left `subscription_mandates.status = 'active'` with a live
+      // nextChargeAt and the scheduler kept attempting a charge the mandate
+      // could no longer honour (each attempt then counted toward the halt
+      // threshold instead of stopping at once). Same local flip as
+      // cancelAutopayMandate, minus the gateway DELETE (the gateway is the
+      // one telling us), and the subscription goes to `halted` — billing
+      // stops, deliveries stay, and re-authorising through the plan-change
+      // flow reactivates it.
+      const tokenId = event.payload?.token?.entity?.id ?? "";
+      if (tokenId) {
+        const revoked = await db
+          .update(subscriptionMandatesTable)
+          .set({ status: "cancelled", nextChargeAt: null })
+          .where(and(eq(subscriptionMandatesTable.razorpayTokenId, tokenId), eq(subscriptionMandatesTable.status, "active")))
+          .returning({ subscriptionId: subscriptionMandatesTable.subscriptionId });
+        for (const { subscriptionId } of revoked) {
+          await db
+            .delete(preDebitNotificationsTable)
+            .where(and(eq(preDebitNotificationsTable.subscriptionId, subscriptionId), inArray(preDebitNotificationsTable.status, ["pending", "sent"])));
+          const [sub] = await db
+            .update(subscriptionsTable)
+            .set({ status: "halted", updatedAt: new Date() })
+            .where(and(eq(subscriptionsTable.id, subscriptionId), eq(subscriptionsTable.status, "active")))
+            .returning({ userId: subscriptionsTable.userId });
+          void emitServerEvent("mandate_revoked", { subscription_id: subscriptionId, reason: eventType }, sub?.userId ?? null);
+          req.log.warn({ subscriptionId, tokenId, eventType }, "webhook: autopay mandate revoked at the gateway — subscription halted");
+        }
+        if (revoked.length === 0) req.log.info({ tokenId, eventType }, "webhook: token event matched no active mandate");
+      }
     } else if (eventType === "refund.processed" || eventType === "refund.failed") {
       // ─────────────────────────────────────────────────────────────────────
       // The refund lifecycle. Nothing here handled it before, and the console
