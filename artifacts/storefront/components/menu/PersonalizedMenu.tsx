@@ -12,11 +12,12 @@
 // out of the client bundle. `dishes` is still needed here alongside `rows`
 // because ranking/filtering are computed over the DishData themselves — only
 // the rendering is server-side now.
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useScrollHide } from "@/lib/useScrollHide";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { DishForMatch, PreferencesForMatch } from "@workspace/preferences-match";
 import { apiGet } from "@/lib/apiClient";
+import { usePullRefresh } from "@/components/PullToRefresh";
 import { MenuGrid, type MenuGridRow } from "@/components/MenuGrid";
 import { DishFitProvider } from "@/components/menu/DishFitContext";
 import { isMeaningful, rankDishes } from "@/lib/menuFit";
@@ -91,6 +92,12 @@ export function PersonalizedMenu({
   );
   const [filterOpen, setFilterOpen] = useState(false);
 
+  // Pull-to-refresh re-fetches the server-rendered rows via router.refresh();
+  // the preferences ranking is client-fetched, so it re-pulls on the same
+  // gesture through this tick.
+  const [refreshTick, setRefreshTick] = useState(0);
+  usePullRefresh(useCallback(() => setRefreshTick((t) => t + 1), []));
+
   useEffect(() => {
     let live = true;
     apiGet<{ preferences: PrefsRow | null }>("/preferences")
@@ -112,7 +119,7 @@ export function PersonalizedMenu({
     return () => {
       live = false;
     };
-  }, []);
+  }, [refreshTick]);
 
   // Law 4: a chip tap is the visitor telling us how they want to eat, and it
   // used to live only in this component's state and the URL — so the wizard,
