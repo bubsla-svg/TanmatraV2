@@ -333,6 +333,7 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
   }
 
   let isRecurring = false;
+  let autopayUnavailable = false;
   let razorpayCustomerId: string | null = null;
   if (subscriptionId) {
     const [sub] = await db
@@ -363,11 +364,31 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
           req.log
         );
       } catch (err) {
-        res.status(500).json({ error: "failed to setup customer for recurring payment" });
-        return;
+        // WAS: a 500 that ended the purchase. Two things were wrong with it.
+        // The customer saw "We couldn't price this order just now" — the
+        // storefront's cart-shaped fallback for any server message it cannot
+        // read — which is false twice over: the order WAS priced, and this is
+        // not a pricing step. And it dead-ended a customer who had already
+        // chosen a plan, over a mandate-setup call, before any money was
+        // asked for.
+        //
+        // Autopay is an optimisation on top of the sale, not the sale. When
+        // its setup fails we charge this cycle as a one-off and mint no
+        // token, which is exactly the state a quarterly subscriber is in —
+        // an existing, supported shape, not a new one: the renewal sweep in
+        // chargeMandateScheduler only ever touches subscriptions that HAVE an
+        // active mandate row, so a mandate-less subscription cannot be
+        // silently auto-debited later. The customer is told, on the checkout
+        // sheet, that renewal will be asked for rather than taken.
+        autopayUnavailable = true;
+        req.log.error(
+          { err, orderId, subscriptionId, cadence: sub.cadence },
+          "Razorpay customer setup failed — charging this cycle as a one-off, no mandate minted",
+        );
       }
     }
   }
+  if (autopayUnavailable) isRecurring = false;
 
   // T0 (CRO handoff 2026-09-17): a logged-in customer paying a ONE-OFF order
   // also gets a Razorpay customer_id on the gateway order. Together with the
@@ -375,7 +396,10 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
   // their saved card / VPA instead of re-typing it. No `token` block is sent
   // here, so no mandate is ever minted off this path. Best-effort: a failed
   // customer lookup must never block taking the money.
-  if (!razorpayCustomerId && order.userId) {
+  // `autopayUnavailable` short-circuits this: the customers call we would make
+  // here is the one that just failed, and repeating it only spends another 8 s
+  // of the customer's wait on the same outcome.
+  if (!razorpayCustomerId && order.userId && !autopayUnavailable) {
     try {
       razorpayCustomerId = await getOrCreateRazorpayCustomer(order.userId, keyId, keySecret, req.log);
     } catch (err) {
@@ -452,6 +476,16 @@ router.post("/payments/razorpay/order", async (req: Request, res: Response) => {
     amount: rp.amount,
     currency: rp.currency,
     keyId,
+    // Present only when autopay setup failed and this cycle is being charged
+    // as a one-off. The storefront renders it verbatim beside the pay button,
+    // so the customer is not told they are on autopay when they are not.
+    ...(autopayUnavailable
+      ? {
+          autopay: false,
+          autopayNotice:
+            "We couldn't set up automatic renewal for this plan, so you're paying for this cycle only. We'll ask you before the next one — nothing will be taken automatically.",
+        }
+      : {}),
   });
 });
 

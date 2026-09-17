@@ -183,3 +183,18 @@ test("a retryable failure says wait; a deterministic one says change something",
   assert.match(humanizePurchaseError(new ApiError(429, "x", "x")), /Try again in a moment\./);
   assert.match(humanizePurchaseError(new ApiError(402, "x", "x")), /different payment method/);
 });
+
+test("a gateway failure is not reported as a pricing failure", () => {
+  // Reported live on the Desk Fuel plan screen: POST /payments/razorpay/order
+  // answered 500 {"error":"failed to setup customer for recurring payment"},
+  // which isCustomerReadable rejects, so the customer read "We couldn't price
+  // this order just now" — on a screen where pricing had already succeeded and
+  // the only thing that had failed was the gateway. The server no longer
+  // dead-ends that case at all (it charges the cycle as a one-off), but every
+  // genuine gateway outage still arrives here as a 502, and must not claim a
+  // pricing problem or imply the cart needs changing.
+  const msg = humanizeOrderError(new ApiError(502, "payment gateway error", "payment gateway error"));
+  assert.doesNotMatch(msg, /price this order/i, `pricing vocabulary in: ${msg}`);
+  assert.match(msg, /have not been charged/, `no reassurance about money in: ${msg}`);
+  assert.match(msg, /Try again in a moment\./, `no next action in: ${msg}`);
+});

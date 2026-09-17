@@ -178,7 +178,13 @@ export async function finishPlanPayment(
   return {
     orderId: verified.orderId,
     status: verified.status,
-    autopayDisclaimer: verified.autopayDisclaimer,
+    // When the gateway order came back with autopay off, that notice REPLACES
+    // the verify step's disclaimer. The verify disclaimer describes the
+    // mandate this subscription's cadence normally carries ("Weekly payments
+    // use UPI Autopay"), and on this path no mandate was minted — showing it
+    // would tell the customer money will be taken automatically when it will
+    // not be.
+    autopayDisclaimer: order.autopay === false ? order.autopayNotice : verified.autopayDisclaimer,
   };
 }
 
