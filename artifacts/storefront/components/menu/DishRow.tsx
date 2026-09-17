@@ -44,9 +44,14 @@ export function DishRow({
   const vegClass = resolveVegClass(dish);
   const trust = macroTrust(dish, sharedMacroKeys);
   return (
+    // `isolate`: the Add wrapper below carries z-10, and 10 is also --z-chrome,
+    // the sticky section-chip strip's layer. Without a stacking context on the
+    // row that z-10 competes with the strip in document order and "Add" /
+    // "Not in your area" paints over the chips as the row scrolls under them
+    // — the same defect DishCard fixed with the same class.
     <article
       data-dish-row
-      className="flex items-center gap-3 py-1"
+      className="isolate flex items-center gap-3 py-1"
     >
       <Link
         href={`/menu?dish=${dish.slug}`}
