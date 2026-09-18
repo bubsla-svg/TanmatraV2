@@ -63,6 +63,13 @@ export const usersTable = pgTable("users", {
   whatsappMarketingConsentAt: timestamp("whatsapp_marketing_consent_at", { withTimezone: true }),
   smsFallbackConsentAt: timestamp("sms_fallback_consent_at", { withTimezone: true }),
   familyGroupId: varchar("family_group_id", { length: 64 }),
+  /** The customer's id at Razorpay, stored the moment it is created rather
+   *  than when a payment verifies. `subscription_mandates` also carries one,
+   *  but that row only exists after a verified payment — so before this
+   *  column, an abandoned checkout lost the id and every retry re-POSTed
+   *  /v1/customers into a 400 "Customer already exists". See
+   *  getOrCreateRazorpayCustomer. */
+  razorpayCustomerId: varchar("razorpay_customer_id", { length: 64 }),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

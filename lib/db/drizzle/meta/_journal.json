@@ -253,6 +253,13 @@
       "when": 1787200000000,
       "tag": "0035_orders_acquisition",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1787286400000,
+      "tag": "0036_users_razorpay_customer",
+      "breakpoints": true
     }
   ]
 }
