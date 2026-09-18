@@ -1,0 +1,16 @@
+-- The Razorpay customer id, on the USER.
+--
+-- It already existed on `subscription_mandates`, but that row is only written
+-- after a payment is verified — and no payment has ever been verified on this
+-- account (Cloud Logging, 90 days: nine gateway-order attempts, zero verify
+-- calls). So the id was created at Razorpay and then immediately forgotten,
+-- and every later attempt by the same customer POSTed /v1/customers again and
+-- got 400 "Customer already exists for the merchant", which the API turned
+-- into a 500 and the storefront rendered as "We couldn't price this order
+-- just now."
+--
+-- That made one abandoned checkout permanently brick plan purchases for that
+-- customer. Storing the id here, at creation time rather than at payment
+-- time, is what breaks the loop. Nullable: a customer who has never reached
+-- the payment step does not have one yet.
+ALTER TABLE "users" ADD COLUMN "razorpay_customer_id" varchar(64);
