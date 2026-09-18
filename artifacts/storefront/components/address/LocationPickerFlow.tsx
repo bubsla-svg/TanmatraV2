@@ -2,7 +2,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
-import { reverseGeocode, searchLocation, DEFAULT_MAP_CENTER, type GeoPlace } from "@/lib/geoClient";
+import {
+  reverseGeocode,
+  autocompletePlaces,
+  resolvePlace,
+  newPlacesSession,
+  DEFAULT_MAP_CENTER,
+  type GeoPlace,
+  type PlaceSuggestion,
+} from "@/lib/geoClient";
 import { gradeGpsAccuracy, type GpsConfidence } from "@/lib/geolocation";
 import { checkServiceability } from "@/lib/serviceabilityApi";
 import { useOverlayHistory } from "@/components/ui/useOverlayHistory";
@@ -27,7 +35,9 @@ export function LocationPickerFlow({
   const [place, setPlace] = useState<GeoPlace | null>(null);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<GeoPlace[]>([]);
+  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
+  // One Places billing session per opened picker (see newPlacesSession).
+  const placesSession = useRef(newPlacesSession());
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [mounted, setMounted] = useState(false);
   // null until a GPS fix has actually been taken — an un-attempted fix is not
@@ -97,7 +107,8 @@ export function LocationPickerFlow({
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (query.trim().length >= 3) void searchLocation(query).then(setSuggestions);
+      if (query.trim().length >= 3)
+        void autocompletePlaces(query, placesSession.current).then(setSuggestions);
       else setSuggestions([]);
     }, 300);
     return () => clearTimeout(timer);
@@ -124,10 +135,37 @@ export function LocationPickerFlow({
     );
   }
 
-  function handleSuggestionSelect(item: GeoPlace) {
-    setPlace(item);
+  async function handleSuggestionSelect(item: PlaceSuggestion) {
     setQuery("");
     setSuggestions([]);
+    // The geocoder-fallback shape carries its address inline and has no
+    // coordinates to offer, so the pin stays where it is — same as before.
+    if (!item.placeId) {
+      if (item.place) setPlace(item.place);
+      return;
+    }
+    setLoading(true);
+    const resolved = await resolvePlace(item.placeId, placesSession.current);
+    // A resolved selection is the one point where we learn BOTH the PIN and
+    // the coordinates. Moving the pin as well as the address is the fix for
+    // the older bug where confirming a searched area submitted the map's
+    // default Sector 18 coordinates with that area's name attached.
+    if (resolved) {
+      setPlace({
+        formattedAddress: resolved.formattedAddress,
+        city: resolved.city,
+        pincode: resolved.pincode,
+      });
+      if (Number.isFinite(resolved.lat) && Number.isFinite(resolved.lng) && resolved.lat !== 0) {
+        setCoords({ lat: resolved.lat, lng: resolved.lng });
+        setRecenterSeq((s) => s + 1);
+        // A place-id fix is authoritative; it retires any GPS accuracy warning.
+        setGpsConfidence(null);
+      }
+      // Each resolved selection ends its billing session.
+      placesSession.current = newPlacesSession();
+    }
+    setLoading(false);
   }
 
   // Stable identity so `memo(LocationPickerMap)` — and the Leaflet listener
@@ -191,7 +229,7 @@ export function LocationPickerFlow({
         {suggestions.length > 0 && (
           <ul className="absolute left-4 right-4 top-14 z-50 max-h-60 overflow-y-auto rounded-2xl border border-line bg-surface p-1.5 shadow-[var(--shadow-raised)]">
             {suggestions.map((item, idx) => (
-              <li key={idx}><button type="button" onClick={() => handleSuggestionSelect(item)} className="w-full rounded-xl px-3 py-2.5 text-left hover:bg-bg"><div className="text-sm font-bold text-ink">{item.city || "Area"}</div><div className="truncate text-xs text-ink-muted">{item.formattedAddress}</div></button></li>
+              <li key={item.placeId || idx}><button type="button" onClick={() => void handleSuggestionSelect(item)} className="w-full rounded-xl px-3 py-2.5 text-left hover:bg-bg"><div className="text-sm font-bold text-ink">{item.primary || "Area"}</div><div className="truncate text-xs text-ink-muted">{item.secondary}</div></button></li>
             ))}
           </ul>
         )}

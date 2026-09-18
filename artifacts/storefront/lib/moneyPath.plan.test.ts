@@ -184,3 +184,56 @@ test("settled:false (or absent) always goes through the gateway — the safe def
   assert.deepEqual(calls, ["rzp-order", "verify"]);
   assert.equal(result.status, "preparing");
 });
+
+// ── Autopay that could not be set up (server degrade path) ───────────────────
+
+test("a cycle charged without a mandate reports that, not the autopay disclaimer", async () => {
+  // When POST /payments/razorpay/order cannot create the Razorpay customer it
+  // no longer 500s the purchase — it charges this cycle as a one-off, mints no
+  // mandate, and says so with autopay:false. The verify step still returns the
+  // cadence's normal disclaimer ("Weekly payments use UPI Autopay"), which on
+  // this path would promise an automatic debit that will never happen. The
+  // server's notice has to win.
+  const calls: string[] = [];
+  const deps: MoneyPathDeps = {
+    ...makeDeps(calls),
+    createRazorpayOrder: async () => ({
+      razorpayOrderId: "rzp_plan_abc",
+      amount: 129900,
+      currency: "INR",
+      keyId: "key_x",
+      autopay: false,
+      autopayNotice: "We couldn't set up automatic renewal for this plan, so you're paying for this cycle only.",
+    }),
+    verifyPayment: async () => ({
+      ok: true,
+      orderId: "sub-42",
+      status: "preparing",
+      autopayDisclaimer: "Weekly payments use UPI Autopay.",
+    }),
+  };
+  const result = await runCheckout(
+    { subscription: SUBSCRIPTION_INPUT, razorpay: payingAdapter },
+    deps,
+  );
+  assert.match(result.autopayDisclaimer ?? "", /this cycle only/);
+  assert.doesNotMatch(result.autopayDisclaimer ?? "", /UPI Autopay/);
+});
+
+test("a normal cycle still carries the cadence's autopay disclaimer", async () => {
+  const calls: string[] = [];
+  const deps: MoneyPathDeps = {
+    ...makeDeps(calls),
+    verifyPayment: async () => ({
+      ok: true,
+      orderId: "sub-42",
+      status: "preparing",
+      autopayDisclaimer: "Weekly payments use UPI Autopay.",
+    }),
+  };
+  const result = await runCheckout(
+    { subscription: SUBSCRIPTION_INPUT, razorpay: payingAdapter },
+    deps,
+  );
+  assert.equal(result.autopayDisclaimer, "Weekly payments use UPI Autopay.");
+});

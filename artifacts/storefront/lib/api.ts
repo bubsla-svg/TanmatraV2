@@ -191,6 +191,13 @@ export interface RazorpayOrderResponse {
   amount: number;
   currency: string;
   keyId: string;
+  /** Present, and false, only when the server could not set up the autopay
+   *  mandate and is charging this cycle as a one-off instead. */
+  autopay?: boolean;
+  /** The sentence to show the customer when `autopay` is false. Server-written
+   *  so the promise the customer is given and the mandate the server did (not)
+   *  mint can never disagree. */
+  autopayNotice?: string;
 }
 
 export function createRazorpayOrder(
@@ -222,58 +229,9 @@ export function verifyPayment(
 }
 
 // ── Addresses (SF-04 — session required; 401 without the sid cookie) ──────────
-// Grounded contract (userAddresses.ts): GET/POST/PATCH/DELETE /addresses, all
-// behind requireAuthUser. The first saved address auto-defaults; an unserviceable
-// pincode is refused with 422 `unserviceable_pincode`.
-export type AddressType = "home" | "work" | "other";
-
-export interface Address {
-  id: string;
-  label: string;
-  type: AddressType;
-  line1: string;
-  line2: string;
-  city: string;
-  pincode: string;
-  phone: string;
-  isDefault: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AddressInput {
-  label: string;
-  type?: AddressType;
-  line1: string;
-  line2?: string | null;
-  city: string;
-  pincode: string;
-  phone: string;
-  isDefault?: boolean;
-}
-
-export function getAddresses(fetchImpl?: FetchImpl): Promise<{ addresses: Address[] }> {
-  return apiGet("/addresses", fetchImpl);
-}
-
-export function createAddress(
-  body: AddressInput,
-  fetchImpl?: FetchImpl,
-): Promise<{ address: Address }> {
-  return apiPost("/addresses", body, fetchImpl);
-}
-
-export function updateAddress(
-  id: string,
-  patch: Partial<AddressInput>,
-  fetchImpl?: FetchImpl,
-): Promise<{ address: Address }> {
-  return apiPatch(`/addresses/${encodeURIComponent(id)}`, patch, fetchImpl);
-}
-
-export function deleteAddress(id: string, fetchImpl?: FetchImpl): Promise<{ ok: true }> {
-  return apiDelete(`/addresses/${encodeURIComponent(id)}`, fetchImpl);
-}
+// Extracted to ./addressesApi when this file crossed the filecap; re-exported
+// so `@/lib/api` stays the single import surface.
+export * from "./addressesApi";
 
 // ── Session (account surfaces) ───────────────────────────────────────────────
 /** The session's user, or null — GET /auth/user answers 200 either way. */

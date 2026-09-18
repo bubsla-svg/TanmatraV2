@@ -104,6 +104,15 @@ export function humanizeOrderError(e: unknown): string {
     if (e.code === "alc_checkout_disabled") {
       return "Single-order checkout is temporarily paused — plans are still available. Try again shortly, or switch to a plan below.";
     }
+    // A 502 from this API only ever means one thing: we reached Razorpay and
+    // Razorpay refused or did not answer. Falling through to the generic copy
+    // below told the customer we "couldn't price this order", which is false —
+    // pricing succeeded, which is why we got as far as the gateway — and on
+    // the plan screen it was the exact wrong sentence under a Continue button
+    // that had already taken them past pricing.
+    if (e.status === 502) {
+      return "Our payment provider didn't respond just now — you have not been charged. Try again in a moment.";
+    }
     // No bespoke case. The old behaviour returned e.message verbatim, which is
     // exactly the defect this module's header describes — "Safety block" reached
     // customers that way — just narrowed to whichever code nobody has mapped

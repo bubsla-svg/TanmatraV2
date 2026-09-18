@@ -136,23 +136,31 @@ export function PullToRefresh() {
         opacity: visible ? 1 : 0,
       }}
     >
-      <div className="flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink shadow-[var(--shadow-raised)]">
-        {phase === "refreshing" ? (
-          <RefreshCw aria-hidden className="h-3.5 w-3.5 animate-spin text-ink-muted motion-reduce:animate-none" />
-        ) : (
-          <span
-            aria-hidden
-            className="inline-block text-ink-muted"
-            style={{
-              transform: reduce.current ? undefined : `rotate(${progress * 180}deg)`,
-              transition: "transform 120ms",
-            }}
-          >
-            ↓
-          </span>
-        )}
-        <span>{label}</span>
-      </div>
+      {/* The live region above stays mounted (an aria-live region added to the
+          DOM at announce time is not reliably announced), but it is EMPTY at
+          rest. Rendering the pill unconditionally left "↓ Pull to refresh"
+          sitting in a populated polite region on every route, which screen
+          readers re-announce on each navigation — a persistent hint read aloud
+          to people who cannot perform the gesture. */}
+      {visible && (
+        <div className="flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink shadow-[var(--shadow-raised)]">
+          {phase === "refreshing" ? (
+            <RefreshCw aria-hidden className="h-3.5 w-3.5 animate-spin text-ink-muted motion-reduce:animate-none" />
+          ) : (
+            <span
+              aria-hidden
+              className="inline-block text-ink-muted"
+              style={{
+                transform: reduce.current ? undefined : `rotate(${progress * 180}deg)`,
+                transition: "transform 120ms",
+              }}
+            >
+              ↓
+            </span>
+          )}
+          <span>{label}</span>
+        </div>
+      )}
     </div>
   );
 }
