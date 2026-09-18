@@ -2,6 +2,17 @@ import type { Metadata } from "next";
 import { getChallengesOrReason } from "@/lib/challengesApi";
 import { ChallengeCard } from "@/components/challenges/ChallengeCard";
 
+// Served per request, not from the build-time prerender.
+//
+// This page's server fetch swallows a failure into an empty list, and the
+// build ran with the API unreachable — so an EMPTY page was baked into the
+// image and shipped. On Cloud Run every cold instance serves that stale
+// prerender first and only revalidates behind it, so customers kept landing
+// on "currently empty" while the API had items the whole time. Same defect
+// class as /custom-build, which was pinned this way for the same reason.
+export const dynamic = "force-dynamic";
+
+
 export const metadata: Metadata = {
   title: "Challenges",
   description:

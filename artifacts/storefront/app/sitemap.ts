@@ -2,9 +2,7 @@ import type { MetadataRoute } from "next";
 import { PLAN_CATALOG } from "@workspace/subscription-rules";
 import { getLegalDocuments } from "@/lib/legalApi";
 import { fetchMenu } from "@/lib/catalog";
-import { getRecipes } from "@/lib/recipesApi";
 import { getChallenges } from "@/lib/challengesApi";
-import { getTeamProfiles } from "@/lib/teamApi";
 import { getRds } from "@/lib/rdApi";
 import { RD_SERVICES_ENABLED } from "@/lib/flags";
 import { SITE_URL } from "@/lib/siteUrl";
@@ -129,21 +127,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // sitemap is always emitted even if enumeration itself throws.
   }
 
-  // Recipe detail pages. getRecipes() returns [] on a cold/unreachable API, so
-  // this never breaks the build — the recipe URLs simply appear once the API is
-  // reachable at revalidate time.
-  let recipeEntries: MetadataRoute.Sitemap = [];
-  try {
-    const recipes = await getRecipes();
-    recipeEntries = recipes.map((r) => ({
-      url: `${SITE_URL}/recipes/${r.slug}`,
-      lastModified: now,
-      changeFrequency: "monthly" as const,
-      priority: 0.6,
-    }));
-  } catch {
-    // getRecipes already swallows failures; last-resort guard.
-  }
+  // Recipe detail pages: NOT LISTED. There is no app/(global)/recipes/[slug]
+  // route, so every URL this block used to emit was a 404 — four of them,
+  // submitted to Google under priority 0.6. Listing a page before it exists
+  // costs crawl budget and teaches the crawler the section is unreliable.
+  // Restore this block in the same commit that adds the route.
+  const recipeEntries: MetadataRoute.Sitemap = [];
 
   // Challenge detail (Event) pages. getChallenges() returns [] on a cold API.
   let challengeEntries: MetadataRoute.Sitemap = [];
@@ -159,20 +148,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // getChallenges already swallows failures; last-resort guard.
   }
 
-  // Team profile pages. getTeamProfiles() returns [] on a cold/unreachable API,
-  // so this never breaks the build — the URLs appear once the API is reachable.
-  let teamEntries: MetadataRoute.Sitemap = [];
-  try {
-    const profiles = await getTeamProfiles();
-    teamEntries = profiles.map((p) => ({
-      url: `${SITE_URL}/team/${p.slug}`,
-      lastModified: now,
-      changeFrequency: "monthly" as const,
-      priority: 0.4,
-    }));
-  } catch {
-    // getTeamProfiles already swallows failures; last-resort guard.
-  }
+  // Team profile pages: NOT LISTED, for the same reason as recipes above —
+  // there is no app/(global)/team/[slug] route and all seven URLs 404. The
+  // /team index itself is also still a placeholder, so the section is not
+  // ready to be crawled at all. Restore when the routes ship.
+  const teamEntries: MetadataRoute.Sitemap = [];
 
   // RD profile pages. getRds() returns [] on a cold/unreachable API, so this
   // never breaks the build — profile URLs appear once the API is reachable.
